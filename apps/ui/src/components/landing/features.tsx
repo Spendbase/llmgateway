@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { GlowingEffect } from "./glowing-effect";
@@ -325,7 +326,7 @@ interface GridItemProps {
 const GridItem = ({ icon, title, description, slug }: GridItemProps) => {
 	return (
 		<li className="min-h-[14rem] list-none">
-			<Link href={`/features/${slug}`} className="block h-full">
+			<Link href={`/features/${slug}`} className="block h-full group">
 				<div className="relative h-full rounded-[1.25rem] border-[0.75px] border-border p-2 md:rounded-[1.5rem] md:p-3 transition-transform hover:scale-[1.02]">
 					<GlowingEffect
 						spread={40}
@@ -348,6 +349,10 @@ const GridItem = ({ icon, title, description, slug }: GridItemProps) => {
 									{description}
 								</h2>
 							</div>
+						</div>
+						<div className="flex items-center gap-1 text-sm font-medium text-primary">
+							<span>Learn more</span>
+							<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
 						</div>
 					</div>
 				</div>
