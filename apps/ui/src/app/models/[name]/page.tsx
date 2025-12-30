@@ -363,7 +363,8 @@ export async function generateMetadata({
 		model.description ||
 		`Details, pricing, and capabilities for ${model.name || model.id} on LLM Gateway.`;
 
-	const ogImageUrl = `/models/${encodeURIComponent(decodedName)}/opengraph-image`;
+	const primaryProvider = model.providers[0]?.providerId || "default";
+	const ogImageUrl = `/api/og/${encodeURIComponent(decodedName)}/${encodeURIComponent(primaryProvider)}`;
 
 	return {
 		title,
