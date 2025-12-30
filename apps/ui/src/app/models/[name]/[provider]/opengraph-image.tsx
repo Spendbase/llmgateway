@@ -11,10 +11,15 @@ import {
 } from "@llmgateway/models";
 import { getProviderIcon } from "@llmgateway/shared/components";
 
-const size = {
+export const size = {
 	width: 1200,
 	height: 630,
 };
+export const contentType = "image/png";
+
+interface ImageProps {
+	params: Promise<{ name: string; provider: string }>;
+}
 
 function getEffectivePricePerMillion(
 	mapping: ProviderModelMapping | undefined,
@@ -48,10 +53,7 @@ function getEffectivePricePerMillion(
 	};
 }
 
-export async function GET(
-	_request: Request,
-	{ params }: { params: Promise<{ name: string; provider: string }> },
-) {
+export default async function ModelProviderOgImage({ params }: ImageProps) {
 	try {
 		const { name, provider } = await params;
 		const decodedName = decodeURIComponent(name);
