@@ -18,7 +18,10 @@ export function getConfig(): AppConfig {
 	const apiUrl = process.env.API_URL || "http://localhost:4002";
 	return {
 		hosted: process.env.HOSTED === "true",
-		appUrl: process.env.APP_URL || "http://localhost:3002",
+		appUrl:
+			process.env.NODE_ENV === "production"
+				? "https://llmgateway.io"
+				: "http://localhost:3002",
 		apiUrl,
 		apiBackendUrl: process.env.API_BACKEND_URL || apiUrl,
 		githubUrl:
