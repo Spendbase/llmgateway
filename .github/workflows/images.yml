@@ -83,7 +83,7 @@ jobs:
             -f infra/split.dockerfile \
             --target ${{ matrix.app }} \
             --build-arg APP_VERSION=${{ github.event_name == 'pull_request' && 'pr-test' || needs.setup.outputs.image_tag }} \
-            -t $ECR_REGISTRY/llmgateway-${{ matrix.app }}:$IMAGE_TAG \
+            -t $ECR_REGISTRY/llmgateway/${{ matrix.app }}:$IMAGE_TAG \
             ${{ github.event_name != 'pull_request' && '--push' || '' }} \
             .
 
@@ -93,8 +93,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
         run: |
-          docker tag $ECR_REGISTRY/llmgateway-${{ matrix.app }}:$IMAGE_TAG $ECR_REGISTRY/llmgateway-${{ matrix.app }}:latest
-          docker push $ECR_REGISTRY/llmgateway-${{ matrix.app }}:latest
+          docker tag $ECR_REGISTRY/llmgateway/${{ matrix.app }}:$IMAGE_TAG $ECR_REGISTRY/llmgateway/${{ matrix.app }}:latest
+          docker push $ECR_REGISTRY/llmgateway/${{ matrix.app }}:latest
 
   test:
     runs-on: k8s-arm64
@@ -131,7 +131,7 @@ jobs:
         run: |
           for app in api gateway playground ui docs worker admin; do
             echo "Pulling $app image..."
-            docker pull $ECR_REGISTRY/llmgateway-$app:$IMAGE_TAG
+            docker pull $ECR_REGISTRY/llmgateway/$app:$IMAGE_TAG
           done
 
       - name: Test split Docker images
