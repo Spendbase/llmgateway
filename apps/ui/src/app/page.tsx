@@ -4,14 +4,14 @@ import { Faq } from "@/components/landing/faq";
 import Features from "@/components/landing/features";
 import Footer from "@/components/landing/footer";
 import { Graph } from "@/components/landing/graph";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 import { PricingPlans } from "@/components/landing/pricing-plans";
 import { Testimonials } from "@/components/landing/testimonials";
 
 export default function Home() {
 	return (
 		<>
-			<HeroRSC />
+			<Hero>{null}</Hero>
 			<Features />
 			<Graph />
 			<CodeExample />

@@ -1,12 +1,12 @@
 import Footer from "@/components/landing/footer";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 import { ModelsSupported } from "@/components/models-supported";
 
 export default function ProvidersPage() {
 	return (
 		<div className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
 			<main>
-				<HeroRSC navbarOnly />
+				<Hero navbarOnly>{null}</Hero>
 				<ModelsSupported />
 			</main>
 			<Footer />

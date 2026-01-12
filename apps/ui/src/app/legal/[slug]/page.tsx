@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import Footer from "@/components/landing/footer";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 import { getMarkdownOptions } from "@/lib/utils/markdown";
 
 import type { Legal } from "content-collections";
@@ -27,7 +27,7 @@ export default async function LegalEntryPage({ params }: LegalEntryPageProps) {
 
 	return (
 		<>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<div className="min-h-screen bg-white text-black dark:bg-black dark:text-white pt-30">
 				<main className="container mx-auto px-4 py-8">
 					<div className="max-w-4xl mx-auto">

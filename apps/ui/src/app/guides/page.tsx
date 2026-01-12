@@ -1,6 +1,6 @@
 import { IntegrationCards } from "@/components/integrations/integration-cards";
 import Footer from "@/components/landing/footer";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 
 export const metadata = {
 	title: "Guides | LLM Gateway",
@@ -16,7 +16,7 @@ export const metadata = {
 export default function GuidesPage() {
 	return (
 		<div>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<section className="py-20 sm:py-28">
 				<div className="container mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="mx-auto max-w-2xl text-center mb-16">
