@@ -13,7 +13,6 @@ import organization from "./organization.js";
 import { payments } from "./payments.js";
 import playground from "./playground.js";
 import projects from "./projects.js";
-import { subscriptions } from "./subscriptions.js";
 import team from "./team.js";
 import { user } from "./user.js";
 
@@ -53,4 +52,3 @@ routes.route("/team", team);
 routes.route("/payments", payments);
 routes.route("/chat", chat);
 routes.route("/chats", chats);
-routes.route("/subscriptions", subscriptions);
