@@ -17,5 +17,10 @@ export function useDefaultOrganization() {
 		};
 	}
 
-	return { data: data.organizations[0], error };
+	// Override plan to always be "pro" (paywall removed)
+	const organization = data.organizations[0];
+	return {
+		data: organization ? { ...organization, plan: "pro" as const } : null,
+		error,
+	};
 }

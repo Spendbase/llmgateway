@@ -3078,10 +3078,6 @@ chat.openapi(completions, async (c) => {
 									webSearchCount,
 								);
 
-								// Always include costs in response
-								const shouldIncludeCosts = true;
-								const showUpgradeMessage = false;
-
 								const finalUsageChunk = {
 									id: `chatcmpl-${Date.now()}`,
 									object: "chat.completion.chunk",
@@ -3114,16 +3110,11 @@ chat.openapi(completions, async (c) => {
 												(reasoningTokens || 0);
 											return Math.max(1, finalTotalTokens ?? fallbackTotal);
 										})(),
-										...(shouldIncludeCosts && {
-											cost_usd_total: streamingCosts.totalCost,
-											cost_usd_input: streamingCosts.inputCost,
-											cost_usd_output: streamingCosts.outputCost,
-											cost_usd_cached_input: streamingCosts.cachedInputCost,
-											cost_usd_request: streamingCosts.requestCost,
-										}),
-										...(showUpgradeMessage && {
-											info: "upgrade to pro to include usd cost breakdown",
-										}),
+										cost_usd_total: streamingCosts.totalCost,
+										cost_usd_input: streamingCosts.inputCost,
+										cost_usd_output: streamingCosts.outputCost,
+										cost_usd_cached_input: streamingCosts.cachedInputCost,
+										cost_usd_request: streamingCosts.requestCost,
 									},
 								};
 
