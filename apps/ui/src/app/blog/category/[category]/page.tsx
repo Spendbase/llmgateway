@@ -1,5 +1,5 @@
 import { BlogList } from "@/components/blog/list";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 
 import type { Metadata } from "next";
 
@@ -41,7 +41,7 @@ export default async function BlogCategoryPage({ params }: CategoryPageProps) {
 
 	return (
 		<>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<BlogList
 				entries={filtered}
 				selectedCategory={slug}

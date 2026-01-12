@@ -1,5 +1,5 @@
 import Footer from "@/components/landing/footer";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 
 import type { Metadata } from "next";
 
@@ -21,7 +21,7 @@ export default function BrandLayout({
 }) {
 	return (
 		<div>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			{children}
 			<Footer />
 		</div>

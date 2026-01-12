@@ -1,5 +1,5 @@
 import { BlogList } from "@/components/blog/list";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 
 interface BlogItem {
 	id: string;
@@ -22,7 +22,7 @@ export default async function BlogPage() {
 
 	return (
 		<div>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<BlogList
 				entries={sortedEntries}
 				heading="Blog"
