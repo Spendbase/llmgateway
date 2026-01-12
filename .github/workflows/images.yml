@@ -35,11 +35,9 @@ jobs:
             SHORT_SHA=$(git rev-parse --short HEAD)
             echo "IMAGE_TAG=v0.0.0-${SHORT_SHA}" >> $GITHUB_OUTPUT
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # For PRs, use a local tag that won't be pushed
             SHORT_SHA=$(git rev-parse --short HEAD)
             echo "IMAGE_TAG=pr-${SHORT_SHA}" >> $GITHUB_OUTPUT
           else
-            # Validate that the tag only contains allowed characters
             if [[ ! "${{ github.event.release.tag_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9_-]+)*$ ]]; then
               echo "Invalid tag name for Docker: ${{ github.event.release.tag_name }}"
               exit 1
@@ -47,7 +45,7 @@ jobs:
             echo "IMAGE_TAG=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           fi
 
-  build-split:
+  build:
     needs: setup
     if: |
       (github.event_name != 'pull_request' && needs.setup.result == 'success') ||
@@ -98,15 +96,15 @@ jobs:
           docker tag $ECR_REGISTRY/llmgateway-${{ matrix.app }}:$IMAGE_TAG $ECR_REGISTRY/llmgateway-${{ matrix.app }}:latest
           docker push $ECR_REGISTRY/llmgateway-${{ matrix.app }}:latest
 
-  test-split:
+  test:
     runs-on: k8s-arm64
     needs:
       - setup
-      - build-split
+      - build
     if: |
       always() &&
       needs.setup.result == 'success' &&
-      needs.build-split.result == 'success'
+      needs.build.result == 'success'
     permissions:
       contents: read
       packages: read
@@ -143,91 +141,3 @@ jobs:
         run: |
           chmod +x .github/test-split-docker.sh
           .github/test-split-docker.sh $ECR_REGISTRY/llmgateway $IMAGE_TAG
-
-  build-unified:
-    needs: setup
-    if: |
-      (github.event_name != 'pull_request' && needs.setup.result == 'success') ||
-      (github.event_name == 'pull_request')
-    runs-on: k8s-arm64
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build, tag, and push Docker image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
-        run: |
-          docker build \
-            -f infra/unified.dockerfile \
-            --build-arg APP_VERSION=${{ github.event_name == 'pull_request' && 'pr-test' || needs.setup.outputs.image_tag }} \
-            -t $ECR_REGISTRY/llmgateway-unified:$IMAGE_TAG \
-            ${{ github.event_name != 'pull_request' && '--push' || '' }} \
-            .
-
-      - name: Tag as latest (non-PR only)
-        if: github.event_name != 'pull_request'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
-        run: |
-          docker tag $ECR_REGISTRY/llmgateway-unified:$IMAGE_TAG $ECR_REGISTRY/llmgateway-unified:latest
-          docker push $ECR_REGISTRY/llmgateway-unified:latest
-
-  test-unified:
-    runs-on: k8s-arm64
-    needs:
-      - setup
-      - build-unified
-    if: |
-      always() &&
-      needs.setup.result == 'success' &&
-      needs.build-unified.result == 'success'
-    permissions:
-      contents: read
-      packages: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Pull unified Docker image for testing
-        if: github.event_name != 'pull_request'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
-        run: |
-          docker pull $ECR_REGISTRY/llmgateway-unified:$IMAGE_TAG
-
-      - name: Test unified Docker image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
-        run: |
-          chmod +x .github/test-unified-docker.sh
-          .github/test-unified-docker.sh $ECR_REGISTRY/llmgateway-unified:$IMAGE_TAG
