@@ -1,4 +1,4 @@
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 import { AllModels } from "@/components/models/all-models";
 
 export const metadata = {
@@ -22,7 +22,9 @@ export const metadata = {
 export default function ModelsPage() {
 	return (
 		<AllModels>
-			<HeroRSC navbarOnly sticky={false} />
+			<Hero navbarOnly sticky={false}>
+				{null}
+			</Hero>
 		</AllModels>
 	);
 }

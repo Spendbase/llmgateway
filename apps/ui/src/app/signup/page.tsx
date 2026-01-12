@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { FaGoogle } from "react-icons/fa";
 import { z } from "zod";
 
 import { useUser } from "@/hooks/useUser";
@@ -199,36 +200,68 @@ export default function Signup() {
 						<span className="bg-background px-2 text-muted-foreground">Or</span>
 					</div>
 				</div>
-				<Button
-					onClick={async () => {
-						setIsLoading(true);
-						try {
-							const res = await signIn.social({
-								provider: "github",
-								callbackURL:
-									location.protocol + "//" + location.host + "/dashboard",
-							});
-							if (res?.error) {
-								toast({
-									title: res.error.message || "Failed to sign up with GitHub",
-									variant: "destructive",
+				<div className="grid grid-cols-1 gap-3">
+					<Button
+						onClick={async () => {
+							setIsLoading(true);
+							try {
+								const res = await signIn.social({
+									provider: "google",
+									callbackURL:
+										location.protocol + "//" + location.host + "/dashboard",
 								});
+								if (res?.error) {
+									toast({
+										title: res.error.message || "Failed to sign up with Google",
+										variant: "destructive",
+									});
+								}
+							} finally {
+								setIsLoading(false);
 							}
-						} finally {
-							setIsLoading(false);
-						}
-					}}
-					variant="outline"
-					className="w-full"
-					disabled={isLoading}
-				>
-					{isLoading ? (
-						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-					) : (
-						<Github className="mr-2 h-4 w-4" />
-					)}
-					Sign up with GitHub
-				</Button>
+						}}
+						variant="outline"
+						className="w-full"
+						disabled={isLoading}
+					>
+						{isLoading ? (
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						) : (
+							<FaGoogle className="mr-2 h-4 w-4" />
+						)}
+						Sign up with Google
+					</Button>
+					<Button
+						onClick={async () => {
+							setIsLoading(true);
+							try {
+								const res = await signIn.social({
+									provider: "github",
+									callbackURL:
+										location.protocol + "//" + location.host + "/dashboard",
+								});
+								if (res?.error) {
+									toast({
+										title: res.error.message || "Failed to sign up with GitHub",
+										variant: "destructive",
+									});
+								}
+							} finally {
+								setIsLoading(false);
+							}
+						}}
+						variant="outline"
+						className="w-full"
+						disabled={isLoading}
+					>
+						{isLoading ? (
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						) : (
+							<Github className="mr-2 h-4 w-4" />
+						)}
+						Sign up with GitHub
+					</Button>
+				</div>
 				<p className="px-8 text-center text-sm text-muted-foreground">
 					<Link
 						href="/login"

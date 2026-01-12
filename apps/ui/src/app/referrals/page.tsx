@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import Footer from "@/components/landing/footer";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 import { AuthLink } from "@/components/shared/auth-link";
 import { Badge } from "@/lib/components/badge";
 import { Button } from "@/lib/components/button";
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 export default function ReferralsPublicPage() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<section className="relative overflow-hidden border-b bg-linear-to-b from-primary/5 via-background to-background">
 				<div className="absolute inset-0 bg-grid-slate-100 mask-[linear-gradient(0deg,transparent,black)] dark:bg-grid-slate-800" />
 				<div className="container relative mx-auto px-4 py-16 md:py-24 lg:py-32">

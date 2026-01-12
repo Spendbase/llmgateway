@@ -1,5 +1,5 @@
 import { Changelog } from "@/components/changelog";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 
 import type { Changelog as ChangelogType } from "content-collections";
 
@@ -16,7 +16,7 @@ export default async function ChangelogPage() {
 
 	return (
 		<div>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<Changelog entries={sortedEntries} />
 		</div>
 	);

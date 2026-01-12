@@ -5,13 +5,13 @@ import { OpenSourceEnterprise } from "@/components/enterprise/open-source";
 import { PricingEnterprise } from "@/components/enterprise/pricing";
 // import { SecurityEnterprise } from "@/components/enterprise/security";
 import Footer from "@/components/landing/footer";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 import { Testimonials } from "@/components/landing/testimonials";
 
 export default function EnterprisePage() {
 	return (
 		<div>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<HeroEnterprise />
 			<FeaturesEnterprise />
 			{/* <SecurityEnterprise /> */}

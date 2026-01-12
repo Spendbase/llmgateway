@@ -505,6 +505,10 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				clientId: process.env.GITHUB_CLIENT_ID!,
 				clientSecret: process.env.GITHUB_CLIENT_SECRET!,
 			},
+			google: {
+				clientId: process.env.GOOGLE_CLIENT_ID!,
+				clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+			},
 		},
 		emailVerification: isHosted
 			? {
