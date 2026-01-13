@@ -160,11 +160,9 @@ payments.openapi(createSetupIntent, async (c) => {
 	}
 
 	const organizationId = userOrganization.organization.id;
-	const stripeCustomerId = await ensureStripeCustomer(organizationId);
 
 	const setupIntent = await stripe.setupIntents.create({
 		usage: "off_session",
-		customer: stripeCustomerId,
 		automatic_payment_methods: {
 			enabled: true,
 		},
