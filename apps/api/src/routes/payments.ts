@@ -163,6 +163,9 @@ payments.openapi(createSetupIntent, async (c) => {
 
 	const setupIntent = await stripe.setupIntents.create({
 		usage: "off_session",
+		automatic_payment_methods: {
+			enabled: true,
+		},
 		metadata: {
 			organizationId,
 		},
