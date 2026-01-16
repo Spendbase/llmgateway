@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import { and, db, eq, gte, lt, sql, tables } from "@llmgateway/db";
 
+// import { publicUserSchema } from "./user.js";
+
 import type { ServerTypes } from "@/vars.js";
 
 export const admin = new OpenAPIHono<ServerTypes>();
@@ -38,6 +40,19 @@ const adminTokenMetricsSchema = z.object({
 	mostUsedModel: z.string().nullable(),
 	mostUsedProvider: z.string().nullable(),
 	mostUsedModelRequestCount: z.number(),
+});
+
+// const userSchema = publicUserSchema
+//   .and(
+//     z.object({
+//       balance: z.bigint().nullable(),
+//     })
+//   )
+//   .nullable();
+
+const balanceSchema = z.object({
+	userId: z.string().openapi({ example: "user_123" }),
+	amount: z.number().positive().openapi({ example: 100 }),
 });
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -86,6 +101,25 @@ const getTokenMetrics = createRoute({
 				},
 			},
 			description: "Admin token usage metrics.",
+		},
+	},
+});
+
+const addBalanceToUser = createRoute({
+	method: "post",
+	path: "/add-balance",
+	request: {
+		body: {
+			content: {
+				"application/json": {
+					schema: balanceSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			description: "Balance added to user.",
 		},
 	},
 });
@@ -388,6 +422,40 @@ admin.openapi(getTokenMetrics, async (c) => {
 		mostUsedProvider,
 		mostUsedModelRequestCount,
 	});
+});
+
+admin.openapi(addBalanceToUser, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const { userId, amount } = c.req.valid("json");
+
+	const [updatedUser] = await db
+		.update(tables.user)
+		.set({
+			balance: sql`${tables.user.balance} + ${amount}`,
+		})
+		.where(eq(tables.user.id, userId))
+		.returning({
+			newBalance: tables.user.balance,
+		});
+
+	if (!updatedUser) {
+		throw new HTTPException(404, { message: "User not found" });
+	}
+
+	return c.json({});
 });
 
 export default admin;
