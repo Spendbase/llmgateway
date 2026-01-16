@@ -180,6 +180,22 @@ export const providers = [
 		announcement: null,
 	},
 	{
+		id: "elevenlabs",
+		name: "ElevenLabs",
+		description:
+			"AI audio platform for lifelike text-to-speech and voice synthesis",
+		env: {
+			required: {
+				apiKey: "LLM_ELEVENLABS_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#000000",
+		website: "https://elevenlabs.io",
+		announcement: null,
+	},
+	{
 		id: "alibaba",
 		name: "Alibaba Cloud",
 		description:

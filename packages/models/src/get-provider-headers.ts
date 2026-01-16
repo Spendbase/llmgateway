@@ -39,6 +39,10 @@ export function getProviderHeaders(
 			return {
 				"api-key": token,
 			};
+		case "elevenlabs":
+			return {
+				"xi-api-key": token,
+			};
 		case "openai":
 		case "inference.net":
 		case "xai":
