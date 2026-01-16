@@ -20,8 +20,8 @@ For a limited time, get **50% off Claude Code** through our RouteWay provider in
 To access Claude Code with the 50% discount, configure these environment variables:
 
 ```shell
-export ANTHROPIC_BASE_URL=https://api.llmgateway.io
-export ANTHROPIC_AUTH_TOKEN=llmgtwy_.... # your llmgateway.io api key here
+export ANTHROPIC_BASE_URL=https://api.llmapi.ai
+export ANTHROPIC_AUTH_TOKEN=llmgtwy_.... # your llmapi.ai api key here
 
 # now run claude!
 claude

@@ -13,9 +13,9 @@ image:
 
 We're excited to announce support for **Alibaba's Qwen Image model family**, a suite of text-to-image generation models that excel at rendering text within images. This addition expands our image generation capabilities with multiple model variants to fit your needs.
 
-**[Try them now in the Chat Playground](https://chat.llmgateway.io/?model=alibaba/qwen-image-max)** 🎨
+**[Try them now in the Chat Playground](https://chat.llmapi.ai/?model=alibaba/qwen-image-max)** 🎨
 
-**[Learn more about Alibaba models in our docs](https://docs.llmgateway.io/features/image-generation#alibaba-models)** 📚
+**[Learn more about Alibaba models in our docs](https://docs.llmapi.ai/features/image-generation#alibaba-models)** 📚
 
 ## 📊 Model Specifications
 
@@ -56,7 +56,7 @@ We've added four variants to suit different needs:
 Access any Qwen Image model through our OpenAI-compatible API:
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -77,8 +77,8 @@ curl -X POST https://api.llmgateway.io/v1/chat/completions \
 
 ---
 
-**[Try Qwen Image Models in the Playground](https://chat.llmgateway.io/?model=alibaba/qwen-image-max)** 🎨
+**[Try Qwen Image Models in the Playground](https://chat.llmapi.ai/?model=alibaba/qwen-image-max)** 🎨
 
-**[Read the full documentation](https://docs.llmgateway.io/features/image-generation#alibaba-models)** 📚
+**[Read the full documentation](https://docs.llmapi.ai/features/image-generation#alibaba-models)** 📚
 
 **[Get started now](/signup)** 🚀

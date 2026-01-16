@@ -27,7 +27,7 @@ import type { ServerTypes } from "./vars.js";
 export const config = {
 	servers: [
 		{
-			url: "https://api.llmgateway.io",
+			url: "https://api.llmapi.ai",
 		},
 		{
 			url: "http://localhost:4001",
@@ -39,7 +39,7 @@ export const config = {
 		title: "LLMGateway API",
 	},
 	externalDocs: {
-		url: "https://docs.llmgateway.io",
+		url: "https://docs.llmapi.ai",
 		description: "LLMGateway Documentation",
 	},
 	components: {
@@ -70,7 +70,7 @@ app.use(
 	"*",
 	cors({
 		origin: process.env.ORIGIN_URLS?.split(",") || [
-			"https://docs.llmgateway.io",
+			"https://docs.llmapi.ai",
 			"http://localhost:3002",
 			"http://localhost:3003",
 			"http://localhost:3005",

@@ -11,7 +11,7 @@ description: "Review the Terms of Use for LLM Gateway. Learn about account eligi
 **Effective Date:** October 21, 2025  
 **Last Updated:** October 21, 2025
 
-Welcome to **LLM Gateway** (“we”, “our”, or “us”). These Terms of Use (“Terms”) govern your access to and use of the LLM Gateway platform, including our website **https://llmgateway.io**, APIs, SDKs, and any related products or services (collectively, the “Service”).
+Welcome to **LLM Gateway** (“we”, “our”, or “us”). These Terms of Use (“Terms”) govern your access to and use of the LLM Gateway platform, including our website **https://llmapi.ai**, APIs, SDKs, and any related products or services (collectively, the “Service”).
 
 By accessing or using the Service, you agree to be bound by these Terms. If you do not agree, please discontinue use immediately.
 
@@ -67,7 +67,7 @@ All fees are non-refundable unless required by law.
 
 ## 5. Data and Privacy
 
-Your data is processed according to our [Privacy Policy](https://llmgateway.io/privacy).  
+Your data is processed according to our [Privacy Policy](https://llmapi.ai/privacy).  
 You control how your data is stored under **Settings → Policies**, including whether to:
 
 - **Retain All Data** (request payloads and responses)
@@ -167,7 +167,7 @@ You agree to indemnify and hold harmless **LLM Gateway**, its founders, employee
 ## 14. Modifications
 
 We may update or modify these Terms at any time.  
-The latest version will always be available at [https://llmgateway.io/terms](https://llmgateway.io/terms).  
+The latest version will always be available at [https://llmapi.ai/terms](https://llmapi.ai/terms).  
 Your continued use of the Service after any change constitutes acceptance of the updated Terms.
 
 ---
@@ -182,8 +182,8 @@ Any disputes shall be resolved in the courts located in Delaware, USA.
 ## 16. Contact Us
 
 If you have questions about these Terms, contact us at:  
-📧 **contact@llmgateway.io**  
-🌐 **https://llmgateway.io**
+📧 **contact@llmapi.ai**  
+🌐 **https://llmapi.ai**
 
 ---
 

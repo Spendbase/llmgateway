@@ -121,7 +121,7 @@ Depending on your location, you may have the right to:
 - Export your data in a machine-readable format
 - Withdraw consent for specific processing activities
 
-You can make requests via **[contact@llmgateway.io](mailto:contact@llmgateway.io)**.
+You can make requests via **[contact@llmapi.ai](mailto:contact@llmapi.ai)**.
 
 ---
 
@@ -142,12 +142,12 @@ We do not knowingly collect personal information from minors.
 ## 10. Changes to This Policy
 
 We may update this Privacy Policy periodically.  
-The latest version will always be available at [https://llmgateway.io/privacy](https://llmgateway.io/privacy).
+The latest version will always be available at [https://llmapi.ai/privacy](https://llmapi.ai/privacy).
 
 ---
 
 ## 11. Contact Us
 
 If you have any questions about this Privacy Policy or your data, contact us at:  
-📧 **contact@llmgateway.io**  
-🌐 **https://llmgateway.io**
+📧 **contact@llmapi.ai**  
+🌐 **https://llmapi.ai**

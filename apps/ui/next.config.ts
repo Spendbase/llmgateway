@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
 			},
 			{
 				source: "/docs",
-				destination: "https://docs.llmgateway.io",
+				destination: "https://docs.llmapi.ai",
 				permanent: true,
 			},
 			{

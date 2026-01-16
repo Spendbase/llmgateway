@@ -139,7 +139,7 @@ The biggest Pro feature - use your own provider keys **with reduced fees**:
 
 Start using LLM Gateway in minutes:
 
-**Sign up** - Create your free account at [llmgateway.io](/)
+**Sign up** - Create your free account at [llmapi.ai](/)
 
 **Get API key** - Generate your authentication key
 
@@ -166,7 +166,7 @@ Migrate existing applications effortlessly:
 ```javascript
 // Just change the base URL - everything else stays the same
 const openai = new OpenAI({
-  baseURL: "https://api.llmgateway.io/v1",
+  baseURL: "https://api.llmapi.ai/v1",
   apiKey: "your-llmgateway-key",
 });
 ```

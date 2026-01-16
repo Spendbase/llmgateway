@@ -45,7 +45,7 @@ export const providers = [
 		streaming: true,
 		cancellation: true,
 		color: "#6366f1",
-		website: "https://llmgateway.io",
+		website: "https://llmapi.ai",
 		announcement: null,
 	},
 	{
@@ -231,7 +231,7 @@ export const providers = [
 		announcement: null,
 		apiKeyInstructions:
 			"Use AWS Bedrock Long-Term API Keys (not IAM service account or private keys)",
-		learnMore: "https://docs.llmgateway.io/integrations/aws-bedrock",
+		learnMore: "https://docs.llmapi.ai/integrations/aws-bedrock",
 	},
 	{
 		id: "azure",
@@ -255,7 +255,7 @@ export const providers = [
 		announcement: null,
 		apiKeyInstructions:
 			"The resource name can be found in your Azure base URL: https://<resource-name>.openai.azure.com",
-		learnMore: "https://docs.llmgateway.io/integrations/azure",
+		learnMore: "https://docs.llmapi.ai/integrations/azure",
 	},
 	{
 		id: "zai",

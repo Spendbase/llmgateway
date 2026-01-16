@@ -232,11 +232,11 @@ export async function sendContactEmail(data: ContactFormData) {
 		body: JSON.stringify({
 			sender: {
 				name: "LLMGateway Contact Form",
-				email: "contact@llmgateway.io",
+				email: "contact@llmapi.ai",
 			},
 			to: [
 				{
-					email: "contact@llmgateway.io",
+					email: "contact@llmapi.ai",
 					name: "LLMGateway Enterprise",
 				},
 			],

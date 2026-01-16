@@ -1405,7 +1405,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 
 								<div className="flex items-center gap-2">
 									<Link
-										href="https://docs.llmgateway.io/v1_models"
+										href="https://docs.llmapi.ai/v1_models"
 										target="_blank"
 										rel="noopener noreferrer"
 									>

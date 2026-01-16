@@ -11,7 +11,7 @@ image:
   height: 677
 ---
 
-We've revamped our [**self-hosting docs**](https://docs.llmgateway.io/self-host) to make it easier than ever to run LLM Gateway on your own terms.
+We've revamped our [**self-hosting docs**](https://docs.llmapi.ai/self-host) to make it easier than ever to run LLM Gateway on your own terms.
 
 ## 🚀 Simple Setup with Docker
 
@@ -35,4 +35,4 @@ All of the docker images are public so you can fully customize the hosting to yo
 
 Whether you're just getting started with a single Docker command or building a production-grade deployment with Docker Compose – LLM Gateway now makes it easier to go self-hosted at any scale.
 
-Get started in less than a minute here: [**self-hosting docs**](https://docs.llmgateway.io/self-host)
+Get started in less than a minute here: [**self-hosting docs**](https://docs.llmapi.ai/self-host)

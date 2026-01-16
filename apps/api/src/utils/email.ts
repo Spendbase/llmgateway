@@ -21,8 +21,8 @@ const smtpHost = process.env.SMTP_HOST;
 const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
-const smtpFromEmail = process.env.SMTP_FROM_EMAIL || "contact@llmgateway.io";
-const replyToEmail = process.env.SMTP_REPLY_TO_EMAIL || "contact@llmgateway.io";
+const smtpFromEmail = process.env.SMTP_FROM_EMAIL || "contact@llmapi.ai";
+const replyToEmail = process.env.SMTP_REPLY_TO_EMAIL || "contact@llmapi.ai";
 
 export interface TransactionalEmailOptions {
 	to: string;
@@ -210,7 +210,7 @@ export function generateTrialStartedEmailHtml(
 									<tr>
 										<td align="center" style="padding: 10px 0;">
 											<a
-												href="https://llmgateway.io/dashboard"
+												href="https://llmapi.ai/dashboard"
 												style="display: inline-block; background-color: #000000; color: #ffffff; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px;"
 											>Go to Dashboard</a>
 										</td>
@@ -231,7 +231,7 @@ export function generateTrialStartedEmailHtml(
 							>
 								<p style="margin: 0 0 12px; color: #666666; font-size: 14px; line-height: 1.6;">
 									Need help getting started? Check out our <a
-									href="https://docs.llmgateway.io" style="color: #000000; text-decoration: none;"
+									href="https://docs.llmapi.ai" style="color: #000000; text-decoration: none;"
 								>documentation</a> or reply to this email for any questions.
 								</p>
 								<p style="margin: 0; color: #999999; font-size: 12px;">
@@ -292,7 +292,7 @@ export function generateSubscriptionCancelledEmailHtml(
 									<!-- CTA Button -->
 									<div style="text-align: center; margin: 30px 0;">
 										<a
-											href="https://llmgateway.io/dashboard/settings/org/billing"
+											href="https://llmapi.ai/dashboard/settings/org/billing"
 											style="display: inline-block; background-color: #000000; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px;"
 										>Manage Subscription</a>
 									</div>
@@ -310,7 +310,7 @@ export function generateSubscriptionCancelledEmailHtml(
 									>
 										<p style="margin: 0 0 12px; color: #666666; font-size: 14px; line-height: 1.6;">
 											Need help getting started? Check out our <a
-											href="https://docs.llmgateway.io" style="color: #000000; text-decoration: none;"
+											href="https://docs.llmapi.ai" style="color: #000000; text-decoration: none;"
 										>documentation</a> or reply to this email for any questions.
 										</p>
 										<p style="margin: 0; color: #999999; font-size: 12px;">

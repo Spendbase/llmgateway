@@ -85,7 +85,7 @@ export const features: FeatureDefinition[] = [
 			code: `import OpenAI from "openai";
 
 const client = new OpenAI({
-	baseURL: "https://api.llmgateway.io/v1",
+	baseURL: "https://api.llmapi.ai/v1",
 	apiKey: process.env.LLMGATEWAY_API_KEY,
 });
 

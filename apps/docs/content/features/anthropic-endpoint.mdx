@@ -31,7 +31,7 @@ The Anthropic endpoint transforms requests from Anthropic's message format to th
 This endpoint is perfect for configuring Claude Code to use any model available in LLMGateway:
 
 ```bash
-export ANTHROPIC_BASE_URL=https://api.llmgateway.io
+export ANTHROPIC_BASE_URL=https://api.llmapi.ai
 export ANTHROPIC_AUTH_TOKEN=llmgtwy_your_api_key_here
 # optional: specify a model, otherwise it uses the default Claude model
 export ANTHROPIC_MODEL=gpt-5  # or any model from our catalog
@@ -42,7 +42,7 @@ claude
 
 ### Choosing Models
 
-You can use any model from the [models page](https://llmgateway.io/models). Popular options for Claude Code include:
+You can use any model from the [models page](https://llmapi.ai/models). Popular options for Claude Code include:
 
 ```bash
 # Use OpenAI's latest model
@@ -78,7 +78,7 @@ Specifies a smaller, faster model used for background functionality and internal
 
 ```bash
 # Example configuration
-export ANTHROPIC_BASE_URL=https://api.llmgateway.io
+export ANTHROPIC_BASE_URL=https://api.llmapi.ai
 export ANTHROPIC_AUTH_TOKEN=llmgtwy_your_api_key_here
 export ANTHROPIC_MODEL=gpt-5
 export ANTHROPIC_SMALL_FAST_MODEL=gpt-5-nano
@@ -89,7 +89,7 @@ export ANTHROPIC_SMALL_FAST_MODEL=gpt-5-nano
 ### Making a manual request
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/messages" \
+curl -X POST "https://api.llmapi.ai/v1/messages" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
