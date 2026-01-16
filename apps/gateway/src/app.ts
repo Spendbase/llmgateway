@@ -17,6 +17,7 @@ import { logger } from "@llmgateway/logger";
 import { HealthChecker } from "@llmgateway/shared";
 
 import { anthropic } from "./anthropic/anthropic.js";
+import { audio } from "./audio/index.js";
 import { chat } from "./chat/chat.js";
 import { tracingMiddleware } from "./middleware/tracing.js";
 import { models } from "./models/route.js";
@@ -231,6 +232,7 @@ v1.route("/chat", chat);
 v1.route("/models", models);
 v1.route("/messages", anthropic);
 v1.route("/responses", responses);
+v1.route("/audio", audio);
 
 app.route("/v1", v1);
 
