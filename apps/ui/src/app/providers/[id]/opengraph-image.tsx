@@ -345,7 +345,7 @@ export default async function ProviderOgImage({ params }: ImageProps) {
 						}}
 					>
 						<span>{provider.id}</span>
-						<span>llmgateway.io</span>
+						<span>llmapi.ai</span>
 					</div>
 				</div>
 			),

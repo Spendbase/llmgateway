@@ -74,7 +74,7 @@ const typescriptExample = {
 
 const client = new OpenAI({
   apiKey: process.env.LLM_GATEWAY_API_KEY,
-  baseURL: "https://api.llmgateway.io/v1"
+  baseURL: "https://api.llmapi.ai/v1"
 });
 
 const response = await client.chat.completions.create({

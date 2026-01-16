@@ -107,7 +107,7 @@ export function Graph() {
 								<TooltipContent>
 									Could be your model?{" "}
 									<a
-										href="mailto:contact@llmgateway.io"
+										href="mailto:contact@llmapi.ai"
 										className="text-blue-500 underline"
 										target="_blank"
 									>

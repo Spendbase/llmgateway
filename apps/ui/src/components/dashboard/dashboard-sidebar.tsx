@@ -714,13 +714,13 @@ export function DashboardSidebar({
 				href:
 					process.env.NODE_ENV === "development"
 						? "http://localhost:3003"
-						: "https://chat.llmgateway.io",
+						: "https://chat.llmapi.ai",
 				label: "Chat",
 				icon: BotMessageSquare,
 				internal: false,
 			},
 			{
-				href: "https://docs.llmgateway.io",
+				href: "https://docs.llmapi.ai",
 				label: "Documentation",
 				icon: ExternalLink,
 				internal: false,

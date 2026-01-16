@@ -22,7 +22,7 @@ const mono = Geist_Mono({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-	metadataBase: new URL("https://llmgateway.io"),
+	metadataBase: new URL("https://llmapi.ai"),
 	title: "LLM Gateway Documentation",
 	description:
 		"LLM Gateway Documentation - Route, manage, and analyze your LLM requests across multiple providers with a unified API interface.",

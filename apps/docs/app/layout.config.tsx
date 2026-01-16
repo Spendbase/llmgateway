@@ -34,7 +34,7 @@ export const baseOptions: BaseLayoutProps = {
 	links: [
 		{
 			text: "Dashboard",
-			url: "https://llmgateway.io/dashboard",
+			url: "https://llmapi.ai/dashboard",
 			active: "none",
 		},
 	],

@@ -70,7 +70,7 @@ export async function OpenSourceEnterprise() {
 							<div className="flex flex-wrap gap-3">
 								<Button asChild size="lg">
 									<Link
-										href="https://docs.llmgateway.io"
+										href="https://docs.llmapi.ai"
 										target="_blank"
 										rel="noopener noreferrer"
 									>

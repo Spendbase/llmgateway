@@ -907,7 +907,7 @@ chat.openapi(completions, async (c) => {
 		// If web_search tool is specifically requested, ensure the model supports it
 		if (webSearchTool && !supportsWebSearch) {
 			throw new HTTPException(400, {
-				message: `Model ${requestedModel} does not support native web search. Remove the web_search tool or use a model that supports it. See https://llmgateway.io/models?features=webSearch for supported models.`,
+				message: `Model ${requestedModel} does not support native web search. Remove the web_search tool or use a model that supports it. See https://llmapi.ai/models?features=webSearch for supported models.`,
 			});
 		}
 	}

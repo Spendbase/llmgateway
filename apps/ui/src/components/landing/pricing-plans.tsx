@@ -160,7 +160,7 @@ export function PricingPlans() {
 	const handlePlanSelection = (planName: string) => {
 		switch (planName) {
 			case "Self-Host":
-				router.push("https://docs.llmgateway.io");
+				router.push("https://docs.llmapi.ai");
 				return;
 			case "Enterprise":
 				router.push("/enterprise");
@@ -438,7 +438,7 @@ export function PricingPlans() {
 						<br />
 						Need a custom solution?{" "}
 						<a
-							href="mailto:contact@llmgateway.io"
+							href="mailto:contact@llmapi.ai"
 							className="text-primary hover:underline"
 						>
 							Contact our sales team

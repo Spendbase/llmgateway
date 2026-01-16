@@ -83,7 +83,7 @@ export function PlanChoiceStep({
 										<ArrowRight className="ml-2 h-4 w-4" />
 									</>
 								) : (
-									"Only available on llmgateway.io"
+									"Only available on llmapi.ai"
 								)}
 							</Button>
 						</CardContent>

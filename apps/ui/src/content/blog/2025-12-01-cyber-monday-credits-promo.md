@@ -20,6 +20,6 @@ For a limited time, you can **get 50% off both credits and the Pro plan** by usi
 
 Plain and simple: enter `CYBERMONDAY` where you see the promo code field, and your price will be cut in half.
 
-If you have any questions, reach out on [GitHub](https://github.com/theopenco/llmgateway) or [Discord](https://llmgateway.io/discord).
+If you have any questions, reach out on [GitHub](https://github.com/theopenco/llmgateway) or [Discord](https://llmapi.ai/discord).
 
 Happy building – and happy Cyber Monday. 🎉

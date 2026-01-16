@@ -14,10 +14,10 @@ LLMGateway provides flexible and intelligent routing options to help you get the
 
 ### Any Model Name
 
-You can use any model name from our [models page](https://llmgateway.io/models) or discover available models programmatically through the [/v1/models endpoint](/v1_models).
+You can use any model name from our [models page](https://llmapi.ai/models) or discover available models programmatically through the [/v1/models endpoint](/v1_models).
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -96,7 +96,7 @@ To use a specific provider without any fallbacks, prefix the model name with the
 
 ```bash
 # Use OpenAI specifically
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -105,7 +105,7 @@ curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
   }'
 
 # Use the CloudRift provider specifically
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -130,7 +130,7 @@ If you need to bypass this protection and always use the exact provider you spec
 
 ```bash
 # Force use of a specific provider even if it has low uptime
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -H "X-No-Fallback: true" \
@@ -162,7 +162,7 @@ The auto routing system currently:
 
 ```bash
 # Let LLMGateway choose the optimal model
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -177,7 +177,7 @@ When using auto routing, you can restrict the selection to only free models (mod
 
 ```bash
 # Auto route to free models only
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -205,7 +205,7 @@ Just specify the `reasoning_effort` value and only a model which supports reason
 
 ```bash
 # Auto route only to reasoning models
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -221,7 +221,7 @@ When using auto routing, you can exclude reasoning models from selection by sett
 
 ```bash
 # Auto route excluding reasoning models
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

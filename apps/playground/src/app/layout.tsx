@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-	metadataBase: new URL("https://chat.llmgateway.io"),
+	metadataBase: new URL("https://chat.llmapi.ai"),
 	title: "LLM Gateway Chat",
 	description: "Chat with your favorite LLM models through LLM Gateway.",
 	icons: {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 		description: "Chat with your favorite LLM models through LLM Gateway.",
 		images: ["/opengraph.png?v=1"],
 		type: "website",
-		url: "https://chat.llmgateway.io",
+		url: "https://chat.llmapi.ai",
 	},
 	twitter: {
 		card: "summary_large_image",

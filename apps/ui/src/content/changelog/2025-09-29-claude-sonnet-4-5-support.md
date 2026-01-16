@@ -44,7 +44,7 @@ const { text } = await generateText({
 ## API
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -55,4 +55,4 @@ curl -X POST https://api.llmgateway.io/v1/chat/completions \
 
 ---
 
-**[Try it now in the new Chat Playground](https://chat.llmgateway.io/?model=anthropic/claude-sonnet-4-5)** 🚀
+**[Try it now in the new Chat Playground](https://chat.llmapi.ai/?model=anthropic/claude-sonnet-4-5)** 🚀

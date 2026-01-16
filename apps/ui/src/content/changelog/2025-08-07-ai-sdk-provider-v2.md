@@ -58,4 +58,4 @@ Access all models using the familiar provider/model format:
 - `groq/llama-3.1-70b-versatile`
 - And 40+ more models across 14+ providers
 
-Check out the [full documentation](https://docs.llmgateway.io/quick-start#3--sdk-integrations) and explore the package on [npm](https://www.npmjs.com/package/@llmgateway/ai-sdk-provider?utm_source=llmgateway.io).
+Check out the [full documentation](https://docs.llmapi.ai/quick-start#3--sdk-integrations) and explore the package on [npm](https://www.npmjs.com/package/@llmgateway/ai-sdk-provider?utm_source=llmapi.ai).

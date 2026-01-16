@@ -501,7 +501,7 @@ export default async function ModelProviderOgImage({ params }: ImageProps) {
 								color: "#6B7280",
 							}}
 						>
-							llmgateway.io
+							llmapi.ai
 						</span>
 					</div>
 				</div>
