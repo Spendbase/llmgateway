@@ -37,4 +37,4 @@ We're excited to announce support for **Kimi K2 Thinking**, Moonshot AI's advanc
 
 ---
 
-**[Try it now in the Playground](https://chat.llmgateway.io/?model=moonshot/kimi-k2-thinking)** 🚀
+**[Try it now in the Playground](https://chat.llmapi.ai/?model=moonshot/kimi-k2-thinking)** 🚀

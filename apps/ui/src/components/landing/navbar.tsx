@@ -87,7 +87,7 @@ export const Navbar = ({
 		href:
 			process.env.NODE_ENV === "development"
 				? "http://localhost:3003"
-				: "https://chat.llmgateway.io",
+				: "https://chat.llmapi.ai",
 		external: true,
 	};
 
@@ -100,7 +100,7 @@ export const Navbar = ({
 		{ name: "Guides", href: "/guides" },
 		{ name: "Model Timeline", href: "/timeline" },
 		{ name: "Compare", href: "/models/compare" },
-		{ name: "Contact Us", href: "mailto:contact@llmgateway.io" },
+		{ name: "Contact Us", href: "mailto:contact@llmapi.ai" },
 	];
 
 	const resourcesLinks: Array<{

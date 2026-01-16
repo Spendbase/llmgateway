@@ -89,7 +89,7 @@ Azure provides enterprise-grade access to OpenAI models with enhanced security, 
 <Step>
 ### Navigate to Provider Keys
 
-1. Log into [LLM Gateway Dashboard](https://llmgateway.io/dashboard)
+1. Log into [LLM Gateway Dashboard](https://llmapi.ai/dashboard)
 2. Select your organization and project
 3. Go to **Provider Keys** in the sidebar
 
@@ -117,7 +117,7 @@ The system will validate your key and confirm the connection.
 Test your integration with a simple API call:
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer YOUR_LLMGATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -146,7 +146,7 @@ Once configured, you can access your Azure deployments through LLM Gateway:
 
 **Note**: Only models you have deployed in Azure Studio will be available. Ensure your deployment names match the expected model identifiers.
 
-Browse all available models at [llmgateway.io/models](https://llmgateway.io/models?provider=azure)
+Browse all available models at [llmapi.ai/models](https://llmapi.ai/models?provider=azure)
 
 ## Troubleshooting
 

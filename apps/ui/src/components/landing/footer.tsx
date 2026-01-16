@@ -191,7 +191,7 @@ export default function Footer() {
 								</li>
 								<li>
 									<a
-										href="mailto:contact@llmgateway.io"
+										href="mailto:contact@llmapi.ai"
 										target="_blank"
 										className="text-sm hover:text-black dark:hover:text-white"
 									>

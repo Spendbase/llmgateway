@@ -29,7 +29,7 @@ All this data is automatically collected and presented in an intuitive dashboard
 Using LLM Gateway is simple. Just swap out your current LLM provider URL with the LLM Gateway API endpoint:
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -d '{
@@ -46,7 +46,7 @@ LLM Gateway maintains compatibility with the OpenAI API format, making migration
 
 You can use LLM Gateway in two ways:
 
-- **Hosted Version**: For immediate use without setup, visit [llmgateway.io](https://llmgateway.io) to create an account and get an API key.
+- **Hosted Version**: For immediate use without setup, visit [llmapi.ai](https://llmapi.ai) to create an account and get an API key.
 - **Self-Hosted**: Deploy LLM Gateway on your own infrastructure for complete control over your data and configuration.
 
 The self-hosted version offers additional customization options and ensures your LLM traffic never leaves your infrastructure if desired.
