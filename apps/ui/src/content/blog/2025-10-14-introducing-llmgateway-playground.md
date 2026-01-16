@@ -12,7 +12,7 @@ image:
   height: 1198
 ---
 
-We're excited to announce the launch of [**LLM Gateway Chat**](https://chat.llmgateway.io) - a powerful, modern chat interface that lets you interact with any LLM model in our ecosystem. Built with the latest AI technologies, it's the fastest way to explore, compare, and build with cutting-edge language models.
+We're excited to announce the launch of [**LLM Gateway Chat**](https://chat.llmapi.ai) - a powerful, modern chat interface that lets you interact with any LLM model in our ecosystem. Built with the latest AI technologies, it's the fastest way to explore, compare, and build with cutting-edge language models.
 
 ## A Playground Built on Modern AI Stack
 
@@ -61,7 +61,7 @@ We're not stopping here. These features are already in progress:
 
 ## Try It Now
 
-The playground is available to all LLMGateway users at [chat.llmgateway.io](https://chat.llmgateway.io).
+The playground is available to all LLMGateway users at [chat.llmapi.ai](https://chat.llmapi.ai).
 
 ### Getting Started
 
@@ -69,7 +69,7 @@ The playground is available to all LLMGateway users at [chat.llmgateway.io](http
 2. Choose a model from any provider
 3. Start chatting!
 
-New to LLMGateway? [Sign up for free](https://llmgateway.io/signup) and get instant access to the playground along with comprehensive analytics, cost tracking, and multi-provider routing.
+New to LLMGateway? [Sign up for free](https://llmapi.ai/signup) and get instant access to the playground along with comprehensive analytics, cost tracking, and multi-provider routing.
 
 ## Built for Developers
 
@@ -84,10 +84,10 @@ All usage in the playground is tracked in your analytics dashboard, so you can m
 
 ## Open Source Foundation
 
-Like LLMGateway itself, the playground is built on open-source principles. The code leverages proven technologies and follows best practices for AI application development. Check out our [documentation](https://docs.llmgateway.io) to learn how to build similar experiences in your own applications.
+Like LLMGateway itself, the playground is built on open-source principles. The code leverages proven technologies and follows best practices for AI application development. Check out our [documentation](https://docs.llmapi.ai) to learn how to build similar experiences in your own applications.
 
 ---
 
-Ready to explore? Head to [chat.llmgateway.io](https://chat.llmgateway.io) and experience the future of AI interaction.
+Ready to explore? Head to [chat.llmapi.ai](https://chat.llmapi.ai) and experience the future of AI interaction.
 
-Have feedback or feature requests? We'd love to hear from you on [GitHub](https://github.com/theopenco/llmgateway) or [Discord](https://llmgateway.io/discord).
+Have feedback or feature requests? We'd love to hear from you on [GitHub](https://github.com/theopenco/llmgateway) or [Discord](https://llmapi.ai/discord).

@@ -19,7 +19,7 @@ You can now register custom OpenAI-compatible providers in LLM Gateway. Perfect 
 Add a provider in the UI (lowercase name, base URL, and token). Then call models via `{providerName}/{modelName}`:
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -28,4 +28,4 @@ curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
   }'
 ```
 
-Requirements include a lowercase provider name and a valid HTTPS base URL. See details in the docs: [Custom Providers](https://docs.llmgateway.io/features/custom-providers).
+Requirements include a lowercase provider name and a valid HTTPS base URL. See details in the docs: [Custom Providers](https://docs.llmapi.ai/features/custom-providers).

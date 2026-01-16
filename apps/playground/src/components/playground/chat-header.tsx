@@ -60,7 +60,7 @@ export const ChatHeader = ({
 					href={
 						process.env.NODE_ENV === "development"
 							? "http://localhost:3002/dashboard"
-							: "https://llmgateway.io/dashboard"
+							: "https://llmapi.ai/dashboard"
 					}
 					target="_blank"
 					rel="noopener noreferrer"

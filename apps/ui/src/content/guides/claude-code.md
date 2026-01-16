@@ -19,7 +19,7 @@ Watch this quick video guide on setting up Claude Code with LLM Gateway:
 Configure Claude Code to use LLM Gateway with these environment variables:
 
 ```bash
-export ANTHROPIC_BASE_URL=https://api.llmgateway.io
+export ANTHROPIC_BASE_URL=https://api.llmapi.ai
 export ANTHROPIC_AUTH_TOKEN=llmgtwy_your_api_key_here
 # optional: specify a model, otherwise it uses the default Claude model
 export ANTHROPIC_MODEL=gpt-5  # or any model from our catalog
@@ -39,7 +39,7 @@ The Anthropic endpoint transforms requests from Anthropic's message format to th
 
 ## Choosing Models
 
-You can use any model from the [models page](https://llmgateway.io/models). Popular options for Claude Code include:
+You can use any model from the [models page](https://llmapi.ai/models). Popular options for Claude Code include:
 
 ### Use OpenAI's Latest Models
 
@@ -77,7 +77,7 @@ Specifies the main model to use for primary requests.
 ### Complete Configuration Example
 
 ```bash
-export ANTHROPIC_BASE_URL=https://api.llmgateway.io
+export ANTHROPIC_BASE_URL=https://api.llmapi.ai
 export ANTHROPIC_AUTH_TOKEN=llmgtwy_your_api_key_here
 export ANTHROPIC_MODEL=gpt-5
 export ANTHROPIC_SMALL_FAST_MODEL=gpt-5-nano
@@ -88,7 +88,7 @@ export ANTHROPIC_SMALL_FAST_MODEL=gpt-5-nano
 If you want to test the endpoint directly, you can make manual requests:
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/messages" \
+curl -X POST "https://api.llmapi.ai/v1/messages" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

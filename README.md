@@ -18,13 +18,13 @@ LLM Gateway is an open-source API gateway for Large Language Models (LLMs). It a
 
 You can use LLM Gateway in two ways:
 
-- **Hosted Version**: For immediate use without setup, visit [llmgateway.io](https://llmgateway.io) to create an account and get an API key.
+- **Hosted Version**: For immediate use without setup, visit [llmapi.ai](https://llmapi.ai) to create an account and get an API key.
 - **Self-Hosted**: Deploy LLM Gateway on your own infrastructure for complete control over your data and configuration.
 
 ### Using LLM Gateway API
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -d '{
@@ -85,4 +85,4 @@ LLMGateway is available under a dual license:
 - Priority support
 - And more to be defined
 
-For enterprise licensing, please contact us at contact@llmgateway.io
+For enterprise licensing, please contact us at contact@llmapi.ai

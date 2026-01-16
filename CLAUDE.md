@@ -203,4 +203,4 @@ LLM Gateway is available under a dual license:
 - Priority support
 - And more to be defined
 
-For enterprise licensing, please contact us at contact@llmgateway.io
+For enterprise licensing, please contact us at contact@llmapi.ai

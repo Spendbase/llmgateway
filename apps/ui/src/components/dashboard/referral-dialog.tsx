@@ -41,7 +41,7 @@ export function ReferralDialog({
 	const { buildOrgUrl } = useDashboardNavigation();
 	const [open, setOpen] = useState(false);
 	const [mode, setMode] = useState<"overview" | "simulation">("overview");
-	const [origin, setOrigin] = useState<string>("https://llmgateway.io");
+	const [origin, setOrigin] = useState<string>("https://llmapi.ai");
 	const [copied, setCopied] = useState(false);
 	const [referredTeams, setReferredTeams] = useState(5);
 	const [avgMonthlySpend, setAvgMonthlySpend] = useState(500);

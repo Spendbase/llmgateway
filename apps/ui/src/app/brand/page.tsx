@@ -147,10 +147,10 @@ export default function BrandPage() {
 								<span className="text-primary font-bold">•</span>
 								For questions about brand usage, contact us at{" "}
 								<a
-									href="mailto:contact@llmgateway.io"
+									href="mailto:contact@llmapi.ai"
 									className="text-primary hover:underline"
 								>
-									contact@llmgateway.io
+									contact@llmapi.ai
 								</a>
 							</li>
 						</ul>

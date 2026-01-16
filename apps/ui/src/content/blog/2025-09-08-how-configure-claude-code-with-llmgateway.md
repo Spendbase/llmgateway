@@ -26,8 +26,8 @@ Claude Code is a powerful CLI tool that can be configured to use any LLM model t
 Set these environment variables to configure Claude Code with LLMGateway:
 
 ```bash
-export ANTHROPIC_BASE_URL=https://api.llmgateway.io
-export ANTHROPIC_AUTH_TOKEN=llmgtwy_.... # your llmgateway.io api key here
+export ANTHROPIC_BASE_URL=https://api.llmapi.ai
+export ANTHROPIC_AUTH_TOKEN=llmgtwy_.... # your llmapi.ai api key here
 # optionally, choose your model, otherwise it will use the default Claude model via LLMGateway
 export ANTHROPIC_MODEL=gpt-5 # choose your model on llmgateway which supports tool calls
 
@@ -37,13 +37,13 @@ claude
 
 ### Getting Your API Key
 
-1. Sign up at [llmgateway.io](https://llmgateway.io)
+1. Sign up at [llmapi.ai](https://llmapi.ai)
 2. Create a project and generate an API key
 3. Configure your preferred LLM provider keys in the dashboard
 
 ### Choosing a Model
 
-Visit [llmgateway.io/models](https://llmgateway.io/models?filters=1&tools=true) to browse available models with tool calling support. Popular options include:
+Visit [llmapi.ai/models](https://llmapi.ai/models?filters=1&tools=true) to browse available models with tool calling support. Popular options include:
 
 - `openai/gpt-5` - OpenAI's Flagship GPT-5 model
 - `anthropic/claude-sonnet-4-20250514` - Anthropic's default model
@@ -63,14 +63,14 @@ export ANTHROPIC_MODEL=openai/gpt-4o-mini
 export ANTHROPIC_MODEL=anthropic/claude-3-5-sonnet-20241022
 ```
 
-To see the full list of models available to you, check out [models with tool calls](https://llmgateway.io/models?filters=1&tools=true)
+To see the full list of models available to you, check out [models with tool calls](https://llmapi.ai/models?filters=1&tools=true)
 
 ### Persistent Configuration
 
 Add the environment variables to your shell profile (`.bashrc`, `.zshrc`, or `.profile`) for persistent configuration:
 
 ```bash
-echo 'export ANTHROPIC_BASE_URL=https://api.llmgateway.io' >> ~/.zshrc
+echo 'export ANTHROPIC_BASE_URL=https://api.llmapi.ai' >> ~/.zshrc
 echo 'export ANTHROPIC_AUTH_TOKEN=llmgtwy_your_key_here' >> ~/.zshrc
 echo 'export ANTHROPIC_MODEL=openai/gpt-4o' >> ~/.zshrc
 source ~/.zshrc
@@ -92,8 +92,8 @@ LLMGateway provides automatic failover and retry logic, ensuring Claude Code con
 
 ## Next Steps
 
-- Explore the [Models page](https://llmgateway.io/models) to discover new models
-- Check out [Usage Analytics](https://llmgateway.io/analytics) to optimize costs
-- Read more about [LLMGateway features](https://docs.llmgateway.io) in our documentation
+- Explore the [Models page](https://llmapi.ai/models) to discover new models
+- Check out [Usage Analytics](https://llmapi.ai/analytics) to optimize costs
+- Read more about [LLMGateway features](https://docs.llmapi.ai) in our documentation
 
 With this configuration, Claude Code becomes a gateway to the entire ecosystem of LLM models, giving you the flexibility to choose the right tool for each task.
