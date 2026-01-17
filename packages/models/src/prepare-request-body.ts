@@ -981,6 +981,30 @@ export async function prepareRequestBody(
 				}
 				requestBody.output_config.effort = effort;
 			}
+
+			// Handle response_format for Anthropic - transform to output_format
+			// Anthropic uses output_format with type: "json_schema" and a schema object
+			if (response_format) {
+				if (
+					response_format.type === "json_schema" &&
+					response_format.json_schema
+				) {
+					// Ensure schema has additionalProperties: false as required by Anthropic
+					const schema = {
+						...response_format.json_schema.schema,
+						additionalProperties: false,
+					} as Record<string, unknown>;
+					requestBody.output_format = {
+						type: "json_schema",
+						schema,
+					};
+				} else if (response_format.type === "json_object") {
+					// For json_object, we cannot use structured outputs directly
+					// as Anthropic requires a specific schema. Instead, we skip output_format
+					// and rely on system prompt instructions for JSON output.
+					// Note: The model capability (jsonOutput) should ensure the prompt guides JSON output.
+				}
+			}
 			break;
 		}
 		case "aws-bedrock": {
@@ -1191,6 +1215,26 @@ export async function prepareRequestBody(
 
 			if (Object.keys(inferenceConfig).length > 0) {
 				requestBody.inferenceConfig = inferenceConfig;
+			}
+
+			// Handle response_format for AWS Bedrock via additionalModelRequestFields
+			// This passes Anthropic-specific parameters through the Converse API
+			if (
+				response_format?.type === "json_schema" &&
+				response_format.json_schema
+			) {
+				const schema = {
+					...response_format.json_schema.schema,
+					additionalProperties: false,
+				} as Record<string, unknown>;
+				requestBody.additionalModelRequestFields = {
+					anthropic_beta: ["structured-outputs-2025-11-13"],
+					output_format: {
+						type: "json_schema",
+						schema,
+					},
+				};
+				requestBody.additionalModelResponseFieldPaths = ["/output_format"];
 			}
 
 			break;
