@@ -47,24 +47,24 @@ const transitionVariants: { item: Variants } = {
 const PROVIDER_LOGOS: { name: string; providerId: ProviderId }[] = [
 	{ name: "OpenAI", providerId: "openai" },
 	{ name: "Anthropic", providerId: "anthropic" },
-	// { name: "Together AI", providerId: "together.ai" },
-	// { name: "Cloudrift", providerId: "cloudrift" },
-	// { name: "Groq", providerId: "groq" },
-	// { name: "xAI", providerId: "xai" },
-	// { name: "DeepSeek", providerId: "deepseek" },
-	// { name: "Perplexity", providerId: "perplexity" },
+	{ name: "Together AI", providerId: "together.ai" },
+	{ name: "Cloudrift", providerId: "cloudrift" },
+	{ name: "Groq", providerId: "groq" },
+	{ name: "xAI", providerId: "xai" },
+	{ name: "DeepSeek", providerId: "deepseek" },
+	{ name: "Perplexity", providerId: "perplexity" },
 	{ name: "Ai Studio", providerId: "google-ai-studio" },
 	{ name: "Vertex", providerId: "google-vertex" },
-	// { name: "Moonshot", providerId: "moonshot" },
-	// { name: "Novita", providerId: "novita" },
-	// { name: "Nebius", providerId: "nebius" },
-	// { name: "Zai", providerId: "zai" },
-	// { name: "Routeway", providerId: "routeway" },
-	// { name: "NanoGPT", providerId: "nanogpt" },
-	// { name: "Canopywave", providerId: "canopywave" },
-	// { name: "AWS Bedrock", providerId: "aws-bedrock" },
+	{ name: "Moonshot", providerId: "moonshot" },
+	{ name: "Novita", providerId: "novita" },
+	{ name: "Nebius", providerId: "nebius" },
+	{ name: "Zai", providerId: "zai" },
+	{ name: "Routeway", providerId: "routeway" },
+	{ name: "NanoGPT", providerId: "nanogpt" },
+	{ name: "Canopywave", providerId: "canopywave" },
+	{ name: "AWS Bedrock", providerId: "aws-bedrock" },
 	// { name: "Azure", providerId: "azure" },
-	// { name: "Inference.net", providerId: "inference.net" },
+	{ name: "Inference.net", providerId: "inference.net" },
 ];
 
 // TypeScript code example
@@ -389,7 +389,7 @@ export function Hero({
 									<ChevronRight className="ml-1 inline-block size-3" />
 								</Link>
 							</div>
-							<div className="group-hover:blur-xs mx-auto mt-12 grid max-w-2xl grid-cols-4 gap-x-12 gap-y-8 transition-all duration-500 group-hover:opacity-50 sm:gap-x-16 sm:gap-y-14">
+							<div className="group-hover:blur-xs mx-auto mt-12 grid max-w-2xl grid-cols-5 gap-x-12 gap-y-8 transition-all duration-500 group-hover:opacity-50 sm:gap-x-16 sm:gap-y-14">
 								{PROVIDER_LOGOS.map((provider) => {
 									const LogoComponent = providerLogoUrls[provider.providerId];
 

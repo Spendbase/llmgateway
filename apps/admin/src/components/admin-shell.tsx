@@ -1,7 +1,13 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { KeyRound, LayoutDashboard, LogOut, Users } from "lucide-react";
+import {
+	Briefcase,
+	KeyRound,
+	LayoutDashboard,
+	LogOut,
+	Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -86,6 +92,12 @@ export function AdminShell({ children }: AdminShellProps) {
 									<SidebarMenuButton isActive={isTokens} size="lg">
 										<KeyRound className="h-4 w-4" />
 										<span>Tokens</span>
+									</SidebarMenuButton>
+								</Link>
+								<Link href="/organizations" className="block">
+									<SidebarMenuButton size="lg">
+										<Briefcase className="h-4 w-4" />
+										<span>Organizations</span>
 									</SidebarMenuButton>
 								</Link>
 							</SidebarMenuItem>
