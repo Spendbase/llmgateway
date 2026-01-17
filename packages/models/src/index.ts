@@ -14,3 +14,6 @@ export * from "./get-provider-endpoint.js";
 export * from "./get-cheapest-from-available-providers.js";
 export * from "./validate-provider-key.js";
 export * from "./get-cheapest-model-for-provider.js";
+export * from "./audio-types.js";
+export * from "./audio-models.js";
+export * from "./audio-voices.js";

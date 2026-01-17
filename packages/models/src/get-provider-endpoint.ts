@@ -81,6 +81,9 @@ export function getProviderEndpoint(
 			case "deepseek":
 				url = "https://api.deepseek.com";
 				break;
+			case "elevenlabs":
+				url = "https://api.elevenlabs.io";
+				break;
 			case "perplexity":
 				url = "https://api.perplexity.ai";
 				break;
