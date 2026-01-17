@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 
 // Removed API key manager for playground; we rely on server-set cookie
-import { getStoredGithubMcpToken } from "@/components/connectors/github-connector";
 import { ModelSelector } from "@/components/model-selector";
 import { AuthDialog } from "@/components/playground/auth-dialog";
 import { ChatHeader } from "@/components/playground/chat-header";
@@ -107,45 +106,6 @@ export default function ChatPageClient({
 	const panelIdCounterRef = useRef(1);
 	// Flag to indicate we should clear messages on next URL change (set by handleChatSelect)
 	const shouldClearMessagesRef = useRef(false);
-
-	const [githubToken, setGithubToken] = useState<string | null>(null);
-	const [mcpEnabled, setMcpEnabled] = useState(false);
-
-	useEffect(() => {
-		// initial read
-		setGithubToken(getStoredGithubMcpToken());
-		// react to changes from other tabs/components
-		const onStorage = (e: StorageEvent) => {
-			if (e.key === "github_mcp_token") {
-				setGithubToken(e.newValue);
-			}
-		};
-		window.addEventListener("storage", onStorage);
-		return () => window.removeEventListener("storage", onStorage);
-	}, []);
-
-	useEffect(() => {
-		if (typeof window === "undefined") {
-			return;
-		}
-		const stored = window.localStorage.getItem("llmgateway_mcp_enabled");
-		if (!githubToken) {
-			setMcpEnabled(false);
-			return;
-		}
-		if (stored === null) {
-			setMcpEnabled(true);
-			return;
-		}
-		setMcpEnabled(stored === "true");
-	}, [githubToken]);
-
-	useEffect(() => {
-		if (typeof window === "undefined") {
-			return;
-		}
-		window.localStorage.setItem("llmgateway_mcp_enabled", String(mcpEnabled));
-	}, [mcpEnabled]);
 
 	const { messages, setMessages, sendMessage, status, stop, regenerate } =
 		useChat({
@@ -406,15 +366,10 @@ export default function ChatPageClient({
 				...options,
 				headers: {
 					...(options?.headers || {}),
-					...(githubToken && mcpEnabled
-						? { "x-github-token": githubToken }
-						: {}),
 					...(noFallback ? { "x-no-fallback": "true" } : {}),
 				},
 				body: {
 					...(options?.body || {}),
-					...(githubToken && mcpEnabled ? { githubToken } : {}),
-					...(mcpEnabled ? { mcp_enabled: true } : { mcp_enabled: false }),
 					...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
 					...(imageConfig ? { image_config: imageConfig } : {}),
 					...(webSearchEnabled && supportsWebSearch
@@ -427,8 +382,6 @@ export default function ChatPageClient({
 		},
 		[
 			sendMessage,
-			githubToken,
-			mcpEnabled,
 			reasoningEffort,
 			supportsImageGen,
 			imageAspectRatio,
@@ -1001,9 +954,6 @@ export default function ChatPageClient({
 											setWebSearchEnabled={setWebSearchEnabled}
 											supportsWebSearch={supportsWebSearch}
 											webSearchEnabled={webSearchEnabled}
-											mcpAvailable={!!githubToken}
-											mcpEnabled={mcpEnabled}
-											setMcpEnabled={setMcpEnabled}
 										/>
 									</div>
 								</div>
@@ -1035,9 +985,6 @@ export default function ChatPageClient({
 										onUserMessage={handleUserMessage}
 										isLoading={isLoading || isChatLoading}
 										error={error}
-										mcpAvailable={!!githubToken}
-										mcpEnabled={mcpEnabled}
-										setMcpEnabled={setMcpEnabled}
 									/>
 								</div>
 							)}
@@ -1053,9 +1000,6 @@ export default function ChatPageClient({
 												providers={providers}
 												availableModels={availableModels}
 												initialModel={selectedModel}
-												githubToken={githubToken}
-												mcpEnabled={mcpEnabled}
-												setMcpEnabled={setMcpEnabled}
 												syncInput={syncInput}
 												syncedText={syncedText}
 												setSyncedText={setSyncedText}
@@ -1082,9 +1026,6 @@ interface ExtraChatPanelProps {
 	providers: ApiProvider[];
 	availableModels: ComboboxModel[];
 	initialModel: string;
-	githubToken: string | null;
-	mcpEnabled: boolean;
-	setMcpEnabled: (value: boolean) => void;
 	syncInput: boolean;
 	syncedText: string;
 	setSyncedText: (value: string) => void;
@@ -1100,9 +1041,6 @@ function ExtraChatPanel({
 	providers,
 	availableModels,
 	initialModel,
-	githubToken,
-	mcpEnabled,
-	setMcpEnabled,
 	syncInput,
 	syncedText,
 	setSyncedText,
@@ -1229,15 +1167,10 @@ function ExtraChatPanel({
 				...options,
 				headers: {
 					...(options?.headers || {}),
-					...(githubToken && mcpEnabled
-						? { "x-github-token": githubToken }
-						: {}),
 					...(noFallback ? { "x-no-fallback": "true" } : {}),
 				},
 				body: {
 					...(options?.body || {}),
-					...(githubToken && mcpEnabled ? { githubToken } : {}),
-					...(mcpEnabled ? { mcp_enabled: true } : { mcp_enabled: false }),
 					...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
 					...(imageConfig ? { image_config: imageConfig } : {}),
 					...(webSearchEnabled && supportsWebSearch
@@ -1250,8 +1183,6 @@ function ExtraChatPanel({
 		},
 		[
 			sendMessage,
-			githubToken,
-			mcpEnabled,
 			reasoningEffort,
 			supportsImageGen,
 			imageAspectRatio,
@@ -1355,9 +1286,6 @@ function ExtraChatPanel({
 					setWebSearchEnabled={setWebSearchEnabled}
 					isLoading={false}
 					error={null}
-					mcpAvailable={!!githubToken}
-					mcpEnabled={mcpEnabled}
-					setMcpEnabled={setMcpEnabled}
 				/>
 			</div>
 		</div>
