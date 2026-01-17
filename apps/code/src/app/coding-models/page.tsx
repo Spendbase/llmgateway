@@ -13,6 +13,8 @@ export const metadata: Metadata = {
 		"High-performance AI models optimized for coding tasks with tool support, JSON output, streaming, and prompt caching.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function CodingModelsPage() {
 	const config = getConfig();
 
