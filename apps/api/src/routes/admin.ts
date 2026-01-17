@@ -5,6 +5,7 @@ import { z } from "zod";
 import { and, db, eq, gte, lt, sql, tables } from "@llmgateway/db";
 
 import type { ServerTypes } from "@/vars.js";
+import type { Organization } from "@llmgateway/db";
 
 export const admin = new OpenAPIHono<ServerTypes>();
 
@@ -480,11 +481,10 @@ admin.openapi(getOrganizations, async (c) => {
 		});
 	}
 
-	const organizations = await db.query.organization;
-
-	const organizations = userOrganizations
-		.map((uo) => uo.organization!)
-		.filter((org) => org.status !== "deleted");
+	const organizations = await db.query.organization.findMany({
+		where: (org: Organization, { ne }: any) => ne(org.status, "deleted"),
+		orderBy: (org, { desc }) => [desc(org.createdAt)],
+	});
 
 	return c.json({
 		organizations,
