@@ -160,13 +160,6 @@ describe(
 						provider: providerId,
 						token: envVarValue,
 						organizationId: orgId,
-						...(providerId === "azure"
-							? {
-									options: {
-										azure_validation_model: "gpt-4o-mini",
-									},
-								}
-							: {}),
 					}),
 				});
 

@@ -815,28 +815,22 @@ chat.openapi(completions, async (c) => {
 		// Additional validation for json_schema type
 		if (response_format?.type === "json_schema") {
 			// For non-auto/custom models, check if the provider supports json_schema
-			if (requestedModel !== "auto" && requestedModel !== "custom") {
-				const supportsJsonSchema = providersToCheck.some(
-					(provider) =>
-						(provider as ProviderModelMapping).jsonOutputSchema === true,
-				);
+			const supportsJsonSchema = providersToCheck.some(
+				(provider) =>
+					(provider as ProviderModelMapping).jsonOutputSchema === true,
+			);
 
-				if (!supportsJsonSchema) {
-					throw new HTTPException(400, {
-						message: `Model ${requestedModel} does not support JSON schema output mode. Use response_format type 'json_object' instead.`,
-					});
-				}
+			if (!supportsJsonSchema) {
+				throw new HTTPException(400, {
+					message: `Model ${requestedModel} does not support JSON schema output mode. Use response_format type 'json_object' instead.`,
+				});
 			}
 		}
 	}
 
 	// Check if reasoning_effort is specified but model doesn't support reasoning
 	// Skip this check for "auto" and "custom" models as they will be resolved dynamically
-	if (
-		reasoning_effort !== undefined &&
-		requestedModel !== "auto" &&
-		requestedModel !== "custom"
-	) {
+	if (reasoning_effort !== undefined) {
 		// Check if any provider for this model supports reasoning
 		const supportsReasoning = modelInfo.providers.some(
 			(provider) => (provider as ProviderModelMapping).reasoning === true,
@@ -864,11 +858,7 @@ chat.openapi(completions, async (c) => {
 
 	// Check if tools are specified but model doesn't support them
 	// Skip this check for "auto" and "custom" models as they will be resolved dynamically
-	if (
-		(tools !== undefined || tool_choice !== undefined) &&
-		requestedModel !== "auto" &&
-		requestedModel !== "custom"
-	) {
+	if (tools !== undefined || tool_choice !== undefined) {
 		// Filter providers by requestedProvider if specified
 		const providersToCheck = requestedProvider
 			? modelInfo.providers.filter(
@@ -1038,10 +1028,7 @@ chat.openapi(completions, async (c) => {
 	}
 
 	// Apply routing logic after apiKey and project are available
-	if (
-		(usedProvider === "llmgateway" && usedModel === "auto") ||
-		usedModel === "auto"
-	) {
+	if (usedProvider === "llmgateway") {
 		// Estimate the context size needed based on the request
 		let requiredContextSize = 0;
 
@@ -1144,10 +1131,6 @@ chat.openapi(completions, async (c) => {
 		let lowestPrice = Number.MAX_VALUE;
 
 		for (const modelDef of models) {
-			if (modelDef.id === "auto" || modelDef.id === "custom") {
-				continue;
-			}
-
 			// Only consider allowed models for auto selection
 			if (!allowedAutoModels.includes(modelDef.id)) {
 				continue;
@@ -1298,12 +1281,6 @@ chat.openapi(completions, async (c) => {
 			usedModel = "gpt-5-nano";
 			usedProvider = "openai";
 		}
-	} else if (
-		(usedProvider === "llmgateway" && usedModel === "custom") ||
-		usedModel === "custom"
-	) {
-		usedProvider = "llmgateway";
-		usedModel = "custom";
 	}
 
 	// Check uptime for specifically requested providers (not llmgateway or custom)
@@ -1637,12 +1614,7 @@ chat.openapi(completions, async (c) => {
 
 	// Auto-set reasoning_effort for auto-routing when model supports reasoning
 	// Skip when web_search tool is present since it's incompatible with "minimal" reasoning effort
-	if (
-		requestedModel === "auto" &&
-		reasoning_effort === undefined &&
-		finalModelInfo &&
-		!webSearchTool
-	) {
+	if (reasoning_effort === undefined && finalModelInfo && !webSearchTool) {
 		// Check if the selected model supports reasoning
 		const selectedModelSupportsReasoning = finalModelInfo.providers.some(
 			(provider) => (provider as ProviderModelMapping).reasoning === true,
@@ -1886,7 +1858,7 @@ chat.openapi(completions, async (c) => {
 			isImageGeneration,
 		);
 	} catch (error) {
-		if (usedProvider === "llmgateway" && usedModel !== "custom") {
+		if (usedProvider === "llmgateway") {
 			throw new HTTPException(400, {
 				message: `Invalid model: ${usedModel} for provider: ${usedProvider}`,
 			});

@@ -33,13 +33,7 @@ export async function validateProviderKey(
 	try {
 		// Determine the validation model first (needed for endpoint URL)
 		let validationModel: string;
-		if (provider === "azure" && providerKeyOptions?.azure_validation_model) {
-			validationModel = providerKeyOptions.azure_validation_model;
-			logger.debug("Using Azure validation model from options", {
-				provider,
-				validationModel,
-			});
-		} else if (provider === "openai") {
+		if (provider === "openai") {
 			validationModel = "gpt-4o-mini";
 			logger.debug("Using fixed OpenAI validation model", {
 				provider,
@@ -69,10 +63,7 @@ export async function validateProviderKey(
 		const modelId = modelDef?.id;
 
 		// For Azure, if we have a custom validation model, use it directly as modelId
-		const effectiveModelId =
-			provider === "azure" && providerKeyOptions?.azure_validation_model
-				? providerKeyOptions.azure_validation_model
-				: modelId;
+		const effectiveModelId = modelId;
 
 		logger.debug("Validation endpoint configuration", {
 			provider,
@@ -113,9 +104,7 @@ export async function validateProviderKey(
 		const supportedParameters = (
 			providerMapping as ProviderModelMapping | undefined
 		)?.supportedParameters;
-		const supportsMaxTokens =
-			supportedParameters?.includes("max_tokens") &&
-			providerMapping?.providerId !== "azure";
+		const supportsMaxTokens = supportedParameters?.includes("max_tokens");
 
 		const payload = await prepareRequestBody(
 			provider,

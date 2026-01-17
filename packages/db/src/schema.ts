@@ -11,7 +11,6 @@ import {
 	text,
 	timestamp,
 	unique,
-	doublePrecision,
 } from "drizzle-orm/pg-core";
 import { customAlphabet } from "nanoid";
 
@@ -51,7 +50,6 @@ export const user = pgTable("user", {
 	emailVerified: boolean().notNull().default(false),
 	image: text(),
 	onboardingCompleted: boolean().notNull().default(false),
-	balance: doublePrecision("balance").notNull().default(0),
 });
 
 export const session = pgTable(

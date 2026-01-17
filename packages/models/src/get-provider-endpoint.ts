@@ -119,20 +119,20 @@ export function getProviderEndpoint(
 						"https://bedrock-runtime.us-east-1.amazonaws.com",
 					) || "https://bedrock-runtime.us-east-1.amazonaws.com";
 				break;
-			case "azure": {
-				const resource =
-					providerKeyOptions?.azure_resource ||
-					getProviderEnvValue("azure", "resource", configIndex);
+			// case "azure": {
+			// 	const resource =
+			// 		providerKeyOptions?.azure_resource ||
+			// 		getProviderEnvValue("azure", "resource", configIndex);
 
-				if (!resource) {
-					const azureEnv = getProviderEnvConfig("azure");
-					throw new Error(
-						`Azure resource is required - set via provider options or ${azureEnv?.required.resource || "LLM_AZURE_RESOURCE"} env var`,
-					);
-				}
-				url = `https://${resource}.openai.azure.com`;
-				break;
-			}
+			// 	if (!resource) {
+			// 		const azureEnv = getProviderEnvConfig("azure");
+			// 		throw new Error(
+			// 			`Azure resource is required - set via provider options or ${azureEnv?.required.resource || "LLM_AZURE_RESOURCE"} env var`,
+			// 		);
+			// 	}
+			// 	url = `https://${resource}.openai.azure.com`;
+			// 	break;
+			// }
 			case "canopywave":
 				url = "https://inference.canopywave.io";
 				break;
@@ -235,35 +235,35 @@ export function getProviderEndpoint(
 			const endpoint = stream ? "converse-stream" : "converse";
 			return `${url}/model/${prefix}${modelName}/${endpoint}`;
 		}
-		case "azure": {
-			const deploymentType =
-				providerKeyOptions?.azure_deployment_type ||
-				getProviderEnvValue(
-					"azure",
-					"deploymentType",
-					configIndex,
-					"ai-foundry",
-				) ||
-				"ai-foundry";
+		// case "azure": {
+		// 	const deploymentType =
+		// 		providerKeyOptions?.azure_deployment_type ||
+		// 		getProviderEnvValue(
+		// 			"azure",
+		// 			"deploymentType",
+		// 			configIndex,
+		// 			"ai-foundry",
+		// 		) ||
+		// 		"ai-foundry";
 
-			if (deploymentType === "openai") {
-				// Traditional Azure (deployment-based)
-				const apiVersion =
-					providerKeyOptions?.azure_api_version ||
-					getProviderEnvValue(
-						"azure",
-						"apiVersion",
-						configIndex,
-						"2024-10-21",
-					) ||
-					"2024-10-21";
+		// 	if (deploymentType === "openai") {
+		// 		// Traditional Azure (deployment-based)
+		// 		const apiVersion =
+		// 			providerKeyOptions?.azure_api_version ||
+		// 			getProviderEnvValue(
+		// 				"azure",
+		// 				"apiVersion",
+		// 				configIndex,
+		// 				"2024-10-21",
+		// 			) ||
+		// 			"2024-10-21";
 
-				return `${url}/openai/deployments/${modelName}/chat/completions?api-version=${apiVersion}`;
-			} else {
-				// Azure AI Foundry (unified endpoint)
-				return `${url}/openai/v1/chat/completions`;
-			}
-		}
+		// 		return `${url}/openai/deployments/${modelName}/chat/completions?api-version=${apiVersion}`;
+		// 	} else {
+		// 		// Azure AI Foundry (unified endpoint)
+		// 		return `${url}/openai/v1/chat/completions`;
+		// 	}
+		// }
 		case "openai": {
 			// Use responses endpoint for models that support responses API
 			if (model) {
