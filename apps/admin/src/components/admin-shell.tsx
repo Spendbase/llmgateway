@@ -44,6 +44,7 @@ export function AdminShell({ children }: AdminShellProps) {
 
 	const isDashboard = pathname === "/" || pathname === "";
 	const isTokens = pathname === "/tokens";
+	const isOrganizations = pathname === "/organizations";
 
 	const handleSignOut = async () => {
 		await signOut({
@@ -95,7 +96,7 @@ export function AdminShell({ children }: AdminShellProps) {
 									</SidebarMenuButton>
 								</Link>
 								<Link href="/organizations" className="block">
-									<SidebarMenuButton size="lg">
+									<SidebarMenuButton isActive={isOrganizations} size="lg">
 										<Briefcase className="h-4 w-4" />
 										<span>Organizations</span>
 									</SidebarMenuButton>
