@@ -904,6 +904,150 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/organizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of all organizations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            organizations: {
+                                id: string;
+                                createdAt: string;
+                                updatedAt: string;
+                                name: string;
+                                billingEmail: string;
+                                billingCompany: string | null;
+                                billingAddress: string | null;
+                                billingTaxId: string | null;
+                                billingNotes: string | null;
+                                credits: string;
+                                /** @enum {string} */
+                                plan: "free" | "pro";
+                                planExpiresAt: string | null;
+                                /** @enum {string} */
+                                retentionLevel: "retain" | "none";
+                                /** @enum {string|null} */
+                                status: "active" | "inactive" | "deleted" | null;
+                                autoTopUpEnabled: boolean;
+                                autoTopUpThreshold: string | null;
+                                autoTopUpAmount: string | null;
+                                referralEarnings: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/deposit-credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @example org_123456 */
+                        organizationId: string;
+                        /** @example 50 */
+                        amount: number;
+                        /** @example Compensation for downtime */
+                        description: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Credits successfully deposited */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                            newBalance: string | number;
+                            transactionId: string;
+                        };
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Organization not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/keys/api": {
         parameters: {
             query?: never;

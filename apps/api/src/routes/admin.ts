@@ -2,10 +2,9 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
-import { and, db, eq, gte, lt, sql, tables } from "@llmgateway/db";
+import { and, db, desc, eq, gte, lt, sql, tables } from "@llmgateway/db";
 
 import type { ServerTypes } from "@/vars.js";
-import type { Organization } from "@llmgateway/db";
 
 export const admin = new OpenAPIHono<ServerTypes>();
 
@@ -41,40 +40,37 @@ const adminTokenMetricsSchema = z.object({
 	mostUsedModelRequestCount: z.number(),
 });
 
+const transactionObjectSchema = z.object({
+	id: z.string(),
+	organizationId: z.string(),
+	creditAmount: z.string(),
+	description: z.string(),
+});
+
 const depositRequestSchema = z.object({
 	organizationId: z.string().openapi({ example: "org_123456" }),
 	amount: z.number().positive().openapi({ example: 50.0 }),
 	description: z
 		.string()
-		.min(1)
+		.trim()
+		.min(1, "Description cannot be empty")
 		.openapi({ example: "Compensation for downtime" }),
 });
 
 const depositResponseSchema = z.object({
 	success: z.boolean(),
+	transaction: transactionObjectSchema,
 	newBalance: z.string().or(z.number()),
-	transactionId: z.string(),
 });
 
 const organizationSchema = z.object({
 	id: z.string(),
-	createdAt: z.date(),
-	updatedAt: z.date(),
 	name: z.string(),
 	billingEmail: z.string(),
-	billingCompany: z.string().nullable(),
-	billingAddress: z.string().nullable(),
-	billingTaxId: z.string().nullable(),
-	billingNotes: z.string().nullable(),
 	credits: z.string(),
 	plan: z.enum(["free", "pro"]),
-	planExpiresAt: z.date().nullable(),
-	retentionLevel: z.enum(["retain", "none"]),
 	status: z.enum(["active", "inactive", "deleted"]).nullable(),
-	autoTopUpEnabled: z.boolean(),
-	autoTopUpThreshold: z.string().nullable(),
-	autoTopUpAmount: z.string().nullable(),
-	referralEarnings: z.string(),
+	createdAt: z.date(),
 });
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -475,16 +471,18 @@ admin.openapi(getTokenMetrics, async (c) => {
 
 admin.openapi(getOrganizations, async (c) => {
 	const user = c.get("user");
+
 	if (!user) {
 		throw new HTTPException(401, {
 			message: "Unauthorized",
 		});
 	}
 
-	const organizations = await db.query.organization.findMany({
-		where: (org: Organization, { ne }: any) => ne(org.status, "deleted"),
-		orderBy: (org, { desc }) => [desc(org.createdAt)],
-	});
+	const organizations = await db
+		.select()
+		.from(tables.organization)
+		.where(eq(tables.organization.status, "active"))
+		.orderBy(desc(tables.organization.createdAt));
 
 	return c.json({
 		organizations,
@@ -547,7 +545,12 @@ admin.openapi(depositCredits, async (c) => {
 				.returning({ newBalance: tables.organization.credits });
 
 			return {
-				txId: newTx.id,
+				transaction: {
+					id: newTx.id,
+					organizationId: newTx.organizationId,
+					creditAmount: Number(newTx.creditAmount),
+					description: newTx.description,
+				},
 				newBalance: Number(updatedOrg.newBalance),
 			};
 		});
