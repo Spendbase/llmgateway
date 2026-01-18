@@ -233,30 +233,30 @@ export const providers = [
 			"Use AWS Bedrock Long-Term API Keys (not IAM service account or private keys)",
 		learnMore: "https://docs.llmapi.ai/integrations/aws-bedrock",
 	},
-	// {
-	// 	id: "azure",
-	// 	name: "Azure",
-	// 	description: "Microsoft Azure - enterprise-grade OpenAI models",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_AZURE_API_KEY",
-	// 			resource: "LLM_AZURE_RESOURCE",
-	// 		},
-	// 		optional: {
-	// 			deploymentType: "LLM_AZURE_DEPLOYMENT_TYPE",
-	// 			apiVersion: "LLM_AZURE_API_VERSION",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#0078D4",
-	// 	website:
-	// 		"https://azure.microsoft.com/en-us/products/ai-services/openai-service",
-	// 	announcement: null,
-	// 	apiKeyInstructions:
-	// 		"The resource name can be found in your Azure base URL: https://<resource-name>.openai.azure.com",
-	// 	learnMore: "https://docs.llmapi.ai/integrations/azure",
-	// },
+	{
+		id: "azure",
+		name: "Azure",
+		description: "Microsoft Azure - enterprise-grade OpenAI models",
+		env: {
+			required: {
+				apiKey: "LLM_AZURE_API_KEY",
+				resource: "LLM_AZURE_RESOURCE",
+			},
+			optional: {
+				deploymentType: "LLM_AZURE_DEPLOYMENT_TYPE",
+				apiVersion: "LLM_AZURE_API_VERSION",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#0078D4",
+		website:
+			"https://azure.microsoft.com/en-us/products/ai-services/openai-service",
+		announcement: null,
+		apiKeyInstructions:
+			"The resource name can be found in your Azure base URL: https://<resource-name>.openai.azure.com",
+		learnMore: "https://docs.llmapi.ai/integrations/azure",
+	},
 	{
 		id: "zai",
 		name: "Z AI",
