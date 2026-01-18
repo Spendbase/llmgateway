@@ -152,8 +152,8 @@ export function ApiKeyStep() {
 					</h1>
 					<p className="text-muted-foreground">
 						{hasExistingKeys
-							? "Use these keys to authenticate requests to the LLM Gateway."
-							: "Create an API key to authenticate requests to the LLM Gateway."}
+							? "Use these keys to authenticate requests to the LLM API."
+							: "Create an API key to authenticate requests to the LLM API."}
 					</p>
 					{isError || !defaultProject ? (
 						<p className="text-destructive text-sm">

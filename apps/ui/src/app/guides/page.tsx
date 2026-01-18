@@ -3,13 +3,13 @@ import Footer from "@/components/landing/footer";
 import { Hero } from "@/components/landing/hero";
 
 export const metadata = {
-	title: "Guides | LLM Gateway",
+	title: "Guides | LLM API",
 	description:
-		"Step-by-step guides for integrating LLM Gateway with Claude Code, Cursor, Cline, n8n, and more.",
+		"Step-by-step guides for integrating LLM API with Claude Code, Cursor, Cline, n8n, and more.",
 	openGraph: {
-		title: "Guides | LLM Gateway",
+		title: "Guides | LLM API",
 		description:
-			"Step-by-step guides for integrating LLM Gateway with Claude Code, Cursor, Cline, n8n, and more.",
+			"Step-by-step guides for integrating LLM API with Claude Code, Cursor, Cline, n8n, and more.",
 	},
 };
 
@@ -24,7 +24,7 @@ export default function GuidesPage() {
 							Guides
 						</h1>
 						<p className="text-lg text-muted-foreground leading-relaxed">
-							Step-by-step tutorials to help you integrate LLM Gateway with your
+							Step-by-step tutorials to help you integrate LLM API with your
 							favorite development tools and workflows.
 						</p>
 					</div>

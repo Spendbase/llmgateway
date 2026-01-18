@@ -134,7 +134,7 @@ export const Navbar = ({
 		{
 			title: "Changelog",
 			href: "/changelog",
-			description: "What's new in LLM Gateway across releases.",
+			description: "What's new in LLM API across releases.",
 		},
 		{
 			title: "Referral Program",
@@ -189,7 +189,7 @@ export const Navbar = ({
 							>
 								<Logo className="h-8 w-8 rounded-full text-black dark:text-white" />
 								<span className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
-									LLM Gateway
+									LLM API
 								</span>
 							</Link>
 

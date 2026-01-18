@@ -67,7 +67,7 @@ export function GithubConnector() {
 				<div className="font-medium">GitHub Connector</div>
 			</div>
 			<p className="text-muted-foreground text-sm">
-				Connect your GitHub account and install the LLM Gateway GitHub App. Then
+				Connect your GitHub account and install the LLM API GitHub App. Then
 				store a token for the GitHub MCP tools.
 			</p>
 

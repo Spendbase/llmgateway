@@ -100,17 +100,17 @@ export async function generateMetadata({
 	}
 
 	return {
-		title: `${guide.title} - Guides - LLM Gateway`,
-		description: guide.description || "LLM Gateway integration guide",
+		title: `${guide.title} - Guides - LLM API`,
+		description: guide.description || "LLM API integration guide",
 		openGraph: {
-			title: `${guide.title} - Guides - LLM Gateway`,
-			description: guide.description || "LLM Gateway integration guide",
+			title: `${guide.title} - Guides - LLM API`,
+			description: guide.description || "LLM API integration guide",
 			type: "article",
 		},
 		twitter: {
 			card: "summary_large_image",
-			title: `${guide.title} - Guides - LLM Gateway`,
-			description: guide.description || "LLM Gateway integration guide",
+			title: `${guide.title} - Guides - LLM API`,
+			description: guide.description || "LLM API integration guide",
 		},
 	};
 }

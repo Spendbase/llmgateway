@@ -186,7 +186,7 @@ export default async function Page() {
 					value={percentFormatter.format(
 						safeNumber(metrics.customerInfraReplacementRate),
 					)}
-					subtitle="Weighted metric combining % of LLM traffic routed through LLM Gateway and % of infra control-plane features replaced"
+					subtitle="Weighted metric combining % of LLM traffic routed through LLM API and % of infra control-plane features replaced"
 					icon={<Server className="h-4 w-4" />}
 					accent="purple"
 				/>

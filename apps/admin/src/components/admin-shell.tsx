@@ -68,7 +68,7 @@ export function AdminShell({ children }: AdminShellProps) {
 							</div>
 							<div className="flex flex-col">
 								<span className="text-sm font-semibold leading-tight">
-									LLM Gateway
+									LLM API
 								</span>
 								<span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
 									Admin

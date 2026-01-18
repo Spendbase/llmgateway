@@ -113,7 +113,7 @@ export function ProviderKeysList({
 		organizationKeys.map((key) => [key.provider, key]),
 	);
 
-	// Filter out LLM Gateway from the providers list
+	// Filter out LLM API from the providers list
 	const availableProviders = providers.filter(
 		(provider) => provider.id !== "llmgateway",
 	);

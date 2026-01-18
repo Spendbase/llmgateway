@@ -150,7 +150,7 @@ export async function POST(req: Request) {
 			sendSources: true,
 		});
 	} catch (error: any) {
-		const message = error.message || "LLM Gateway request failed";
+		const message = error.message || "LLM API request failed";
 		const status = error.status || 500;
 		return new Response(JSON.stringify({ error: message, details: error }), {
 			status,

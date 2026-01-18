@@ -80,7 +80,7 @@ const integrations: Integration[] = [
 	{
 		name: "Claude Code",
 		description:
-			"Use LLM Gateway with Claude Code for AI-powered terminal assistance and coding.",
+			"Use LLM API with Claude Code for AI-powered terminal assistance and coding.",
 		href: "/guides/claude-code",
 		icon: AnthropicIcon,
 		comingSoon: false,
@@ -88,7 +88,7 @@ const integrations: Integration[] = [
 	{
 		name: "Cursor",
 		description:
-			"Use LLM Gateway with Cursor IDE for AI-powered code editing and chat.",
+			"Use LLM API with Cursor IDE for AI-powered code editing and chat.",
 		href: "https://docs.llmapi.ai/guides/cursor",
 		icon: CursorIcon,
 		comingSoon: false,
@@ -97,7 +97,7 @@ const integrations: Integration[] = [
 	{
 		name: "Cline",
 		description:
-			"Use LLM Gateway with Cline for AI-powered coding assistance in VS Code.",
+			"Use LLM API with Cline for AI-powered coding assistance in VS Code.",
 		href: "https://docs.llmapi.ai/guides/cline",
 		icon: ClineIcon,
 		comingSoon: false,
@@ -105,7 +105,7 @@ const integrations: Integration[] = [
 	{
 		name: "n8n",
 		description:
-			"Connect n8n workflow automation to LLM Gateway for AI-powered workflows.",
+			"Connect n8n workflow automation to LLM API for AI-powered workflows.",
 		href: "https://docs.llmapi.ai/guides/n8n",
 		icon: N8nIcon,
 		comingSoon: false,
@@ -113,7 +113,7 @@ const integrations: Integration[] = [
 	{
 		name: "OpenCode",
 		description:
-			"Use LLM Gateway with OpenCode for AI-powered development workflows.",
+			"Use LLM API with OpenCode for AI-powered development workflows.",
 		href: "/guides/opencode",
 		icon: OpenCodeIcon,
 		comingSoon: false,

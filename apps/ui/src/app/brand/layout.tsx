@@ -4,13 +4,13 @@ import { Hero } from "@/components/landing/hero";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Brand Assets | LLM Gateway",
+	title: "Brand Assets | LLM API",
 	description:
-		"Download official LLM Gateway logos and brand assets. Get our logo in PNG or SVG format, with or without the name, in black and white variants.",
+		"Download official LLM API logos and brand assets. Get our logo in PNG or SVG format, with or without the name, in black and white variants.",
 	openGraph: {
-		title: "Brand Assets | LLM Gateway",
+		title: "Brand Assets | LLM API",
 		description:
-			"Download official LLM Gateway logos and brand assets. Get our logo in PNG or SVG format, with or without the name, in black and white variants.",
+			"Download official LLM API logos and brand assets. Get our logo in PNG or SVG format, with or without the name, in black and white variants.",
 	},
 };
 
