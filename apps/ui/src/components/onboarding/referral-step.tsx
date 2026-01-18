@@ -48,7 +48,7 @@ export function ReferralStep({ onComplete }: ReferralStepProps) {
 					How did you hear about us?
 				</h2>
 				<p className="text-muted-foreground">
-					Help us understand how people discover LLM Gateway (Optional)
+					Help us understand how people discover LLM API (Optional)
 				</p>
 			</div>
 

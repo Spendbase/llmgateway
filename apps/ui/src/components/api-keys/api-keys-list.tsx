@@ -555,9 +555,8 @@ export function ApiKeysList({
 														/>
 													</div>
 													<div className="text-muted-foreground text-sm">
-														Usage includes both usage from LLM Gateway credits
-														and usage from your own provider keys when
-														applicable.
+														Usage includes both usage from LLM API credits and
+														usage from your own provider keys when applicable.
 													</div>
 												</div>
 												<DialogFooter className="pt-8">
@@ -835,7 +834,7 @@ export function ApiKeysList({
 													/>
 												</div>
 												<div className="text-muted-foreground text-sm">
-													Usage includes both usage from LLM Gateway credits and
+													Usage includes both usage from LLM API credits and
 													usage from your own provider keys when applicable.
 												</div>
 											</div>

@@ -2,7 +2,7 @@ import { Hero } from "@/components/landing/hero";
 import { AllModels } from "@/components/models/all-models";
 
 export const metadata = {
-	title: "AI Models Directory - Compare LLM Models & Providers | LLM Gateway",
+	title: "AI Models Directory - Compare LLM Models & Providers | LLM API",
 	description:
 		"Browse and compare 100+ AI models from leading providers like OpenAI, Anthropic, Google, and more. Filter by capabilities, pricing, and context size. Find the perfect LLM for your application.",
 	openGraph: {

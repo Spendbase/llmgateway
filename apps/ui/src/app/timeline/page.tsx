@@ -139,11 +139,11 @@ export default function TimelinePage() {
 								Model timeline
 							</Badge>
 							<h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-								LLM Gateway model support timeline
+								LLM API model support timeline
 							</h1>
 							<p className="text-muted-foreground text-sm md:text-base">
 								See when each model was released by its provider and when it was
-								added to LLM Gateway.
+								added to LLM API.
 							</p>
 						</div>
 
@@ -307,7 +307,7 @@ export default function TimelinePage() {
 																			</div>
 																			<div className="space-y-1">
 																				<p className="text-muted-foreground text-[11px] uppercase tracking-wide">
-																					Added to LLM Gateway
+																					Added to LLM API
 																				</p>
 																				<p className="font-medium">
 																					{formatDate(item.publishedAt)}

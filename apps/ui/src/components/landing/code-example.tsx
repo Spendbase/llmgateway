@@ -333,7 +333,7 @@ export function CodeExample() {
 					</div>
 
 					<p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
-						LLM Gateway routes your request to the appropriate provider while
+						LLM API routes your request to the appropriate provider while
 						tracking usage and performance across all languages and frameworks.
 					</p>
 				</div>

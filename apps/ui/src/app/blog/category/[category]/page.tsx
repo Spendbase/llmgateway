@@ -46,7 +46,7 @@ export default async function BlogCategoryPage({ params }: CategoryPageProps) {
 				entries={filtered}
 				selectedCategory={slug}
 				heading="Blog"
-				subheading="Latest news and updates from LLM Gateway"
+				subheading="Latest news and updates from LLM API"
 			/>
 		</>
 	);
@@ -67,7 +67,7 @@ export async function generateMetadata({
 	const { category } = await params;
 	const decoded = decodeURIComponent(category);
 	return {
-		title: `Blog: ${decoded} - LLM Gateway`,
-		description: `Articles in the ${decoded} category at LLM Gateway`,
+		title: `Blog: ${decoded} - LLM API`,
+		description: `Articles in the ${decoded} category at LLM API`,
 	};
 }

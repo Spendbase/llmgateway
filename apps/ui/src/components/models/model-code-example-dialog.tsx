@@ -132,7 +132,7 @@ const { text } = await generateText({
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-2xl">
 				<DialogHeader>
-					<DialogTitle>Use this model with LLM Gateway</DialogTitle>
+					<DialogTitle>Use this model with LLM API</DialogTitle>
 					<DialogDescription>
 						Code examples for{" "}
 						<code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">

@@ -13,7 +13,7 @@ export default function CallToAction() {
 						Ready to Simplify Your LLM Integration?
 					</h2>
 					<p className="text-zinc-600 dark:text-zinc-400 mb-10">
-						Start using LLM Gateway today and take control of your AI
+						Start using LLM API today and take control of your AI
 						infrastructure.
 					</p>
 
@@ -30,7 +30,7 @@ export default function CallToAction() {
 							asChild
 						>
 							<a href={config.githubUrl ?? ""} target="_blank">
-								Self-host LLM Gateway
+								Self-host LLM API
 							</a>
 						</Button>
 					</div>

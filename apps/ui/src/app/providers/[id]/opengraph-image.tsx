@@ -121,7 +121,7 @@ export default async function ProviderOgImage({ params }: ImageProps) {
 									color: "#9CA3AF",
 								}}
 							>
-								<span>LLM Gateway</span>
+								<span>LLM API</span>
 								<span style={{ opacity: 0.6 }}>•</span>
 								<span>Provider</span>
 							</div>

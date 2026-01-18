@@ -335,7 +335,7 @@ export function ChatSidebar({
 							prefetch={true}
 						>
 							<Logo className="h-10 w-10" />
-							<h1 className="text-xl font-semibold">LLM Gateway</h1>
+							<h1 className="text-xl font-semibold">LLM API</h1>
 							<Badge>Chat</Badge>
 						</Link>
 						<div className="w-full rounded-md border p-4 text-sm">
@@ -377,7 +377,7 @@ export function ChatSidebar({
 						prefetch={true}
 					>
 						<Logo className="h-10 w-10" />
-						<h1 className="text-xl font-semibold">LLM Gateway</h1>
+						<h1 className="text-xl font-semibold">LLM API</h1>
 						<Badge>Chat</Badge>
 					</Link>
 					<Button

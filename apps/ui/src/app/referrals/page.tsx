@@ -59,7 +59,7 @@ export default function ReferralsPublicPage() {
 						</h1>
 
 						<p className="text-pretty text-base text-muted-foreground sm:text-lg md:text-xl">
-							Earn passive income by referring teams to LLM Gateway. Get{" "}
+							Earn passive income by referring teams to LLM API. Get{" "}
 							<span className="font-semibold text-foreground">
 								1% of all LLM spending
 							</span>{" "}
@@ -118,7 +118,7 @@ export default function ReferralsPublicPage() {
 						</h2>
 						<p className="mx-auto max-w-2xl text-pretty text-muted-foreground md:text-lg">
 							Start earning in three simple steps. No complicated setup, just
-							straightforward rewards for helping teams discover LLM Gateway.
+							straightforward rewards for helping teams discover LLM API.
 						</p>
 					</div>
 
@@ -165,7 +165,7 @@ export default function ReferralsPublicPage() {
 									</div>
 									<p className="text-sm text-muted-foreground leading-relaxed">
 										Copy your personalized referral link from the dashboard and
-										share it with teams who could benefit from LLM Gateway.
+										share it with teams who could benefit from LLM API.
 									</p>
 								</div>
 							</CardContent>

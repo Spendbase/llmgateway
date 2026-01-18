@@ -110,11 +110,11 @@ export async function generateMetadata({
 	}
 
 	return {
-		title: `${entry.title} - Changelog - LLM Gateway`,
-		description: entry.summary || "LLM Gateway changelog entry",
+		title: `${entry.title} - Changelog - LLM API`,
+		description: entry.summary || "LLM API changelog entry",
 		openGraph: {
-			title: `${entry.title} - Changelog - LLM Gateway`,
-			description: entry.summary || "LLM Gateway changelog entry",
+			title: `${entry.title} - Changelog - LLM API`,
+			description: entry.summary || "LLM API changelog entry",
 			type: "article",
 			images: entry.image
 				? [
@@ -129,8 +129,8 @@ export async function generateMetadata({
 		},
 		twitter: {
 			card: "summary_large_image",
-			title: `${entry.title} - Changelog - LLM Gateway`,
-			description: entry.summary || "LLM Gateway changelog entry",
+			title: `${entry.title} - Changelog - LLM API`,
+			description: entry.summary || "LLM API changelog entry",
 		},
 	};
 }

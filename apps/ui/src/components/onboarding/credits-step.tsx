@@ -215,8 +215,8 @@ export function CreditsStep({
 									</p>
 								</div>
 								<p className="text-sm mt-4">
-									You&apos;re all set to start using LLM Gateway. You can always
-									add more credits later from the dashboard.
+									You&apos;re all set to start using LLM API. You can always add
+									more credits later from the dashboard.
 								</p>
 							</div>
 						)}

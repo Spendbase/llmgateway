@@ -24,8 +24,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
 	metadataBase: new URL("https://admin.llmapi.ai"),
-	title: "LLM Gateway Admin",
-	description: "Admin dashboard for LLM Gateway.",
+	title: "LLM API Admin",
+	description: "Admin dashboard for LLM API.",
 	icons: {
 		icon: "/favicon/favicon.ico?v=2",
 	},

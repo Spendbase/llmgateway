@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
 	metadataBase: new URL("https://llmapi.ai"),
-	title: "LLM Gateway",
+	title: "LLM API",
 	description:
 		"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface.",
 	icons: {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 		canonical: "./",
 	},
 	openGraph: {
-		title: "LLM Gateway",
+		title: "LLM API",
 		description:
 			"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface.",
 		images: ["/opengraph.png?v=1"],
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "LLM Gateway",
+		title: "LLM API",
 		description:
 			"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface.",
 		images: ["/opengraph.png?v=1"],

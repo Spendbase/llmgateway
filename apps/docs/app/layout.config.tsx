@@ -27,7 +27,7 @@ export const baseOptions: BaseLayoutProps = {
 						fill="currentColor"
 					/>
 				</svg>
-				LLM Gateway
+				LLM API
 			</>
 		),
 	},
