@@ -70,10 +70,6 @@ export function ModelSearch() {
 		const map = new Map<string, ModelSearchEntry>();
 
 		for (const model of models) {
-			if (model.id === "custom") {
-				continue;
-			}
-
 			const publishedAt =
 				(model.publishedAt instanceof Date ? model.publishedAt : undefined) ??
 				(model.releasedAt instanceof Date ? model.releasedAt : undefined);

@@ -929,26 +929,14 @@ export interface paths {
                         "application/json": {
                             organizations: {
                                 id: string;
-                                createdAt: string;
-                                updatedAt: string;
                                 name: string;
                                 billingEmail: string;
-                                billingCompany: string | null;
-                                billingAddress: string | null;
-                                billingTaxId: string | null;
-                                billingNotes: string | null;
                                 credits: string;
                                 /** @enum {string} */
                                 plan: "free" | "pro";
-                                planExpiresAt: string | null;
-                                /** @enum {string} */
-                                retentionLevel: "retain" | "none";
                                 /** @enum {string|null} */
                                 status: "active" | "inactive" | "deleted" | null;
-                                autoTopUpEnabled: boolean;
-                                autoTopUpThreshold: string | null;
-                                autoTopUpAmount: string | null;
-                                referralEarnings: string;
+                                createdAt: string;
                             }[];
                         };
                     };
@@ -1000,8 +988,13 @@ export interface paths {
                     content: {
                         "application/json": {
                             success: boolean;
+                            transaction: {
+                                id: string;
+                                organizationId: string;
+                                creditAmount: string;
+                                description: string;
+                            };
                             newBalance: string | number;
-                            transactionId: string;
                         };
                     };
                 };
