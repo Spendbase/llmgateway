@@ -25,7 +25,7 @@ export const providerLogoUrls: Partial<
 	routeway: ProviderIcons.routeway,
 	nanogpt: ProviderIcons.nanogpt,
 	"aws-bedrock": ProviderIcons["aws-bedrock"],
-	azure: ProviderIcons.azure,
+	// azure: ProviderIcons.azure,
 	canopywave: ProviderIcons.canopywave,
 	cerebras: ProviderIcons.cerebras,
 };

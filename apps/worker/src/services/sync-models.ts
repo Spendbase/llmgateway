@@ -56,7 +56,7 @@ export async function syncProvidersAndModels() {
 					id: modelDef.id,
 					name: modelDef.name || null,
 					family: modelDef.family,
-					free: "free" in modelDef ? modelDef.free || null : null,
+					free: "free" in modelDef ? (modelDef.free as boolean) || null : null,
 					output: "output" in modelDef ? modelDef.output || null : null,
 					status: "active",
 				})
@@ -65,7 +65,8 @@ export async function syncProvidersAndModels() {
 					set: {
 						name: modelDef.name || null,
 						family: modelDef.family,
-						free: "free" in modelDef ? modelDef.free || null : null,
+						free:
+							"free" in modelDef ? (modelDef.free as boolean) || null : null,
 						output: "output" in modelDef ? modelDef.output || null : null,
 						updatedAt: new Date(),
 					},
