@@ -36,11 +36,11 @@ export const config = {
 	openapi: "3.0.0",
 	info: {
 		version: "1.0.0",
-		title: "LLMGateway API",
+		title: "LLM API",
 	},
 	externalDocs: {
 		url: "https://docs.llmapi.ai",
-		description: "LLMGateway Documentation",
+		description: "LLM API Documentation",
 	},
 	components: {
 		securitySchemes: {
