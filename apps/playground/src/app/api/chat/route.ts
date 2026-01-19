@@ -87,13 +87,13 @@ export async function POST(req: Request) {
 		process.env.GATEWAY_URL ||
 		(process.env.NODE_ENV === "development"
 			? "http://localhost:4001/v1"
-			: "https://api.llmapi.ai/v1");
+			: "https://api.llmgateway.io/v1");
 
 	const llmgateway = createLLMGateway({
 		apiKey: finalApiKey,
 		baseUrl: gatewayUrl,
 		headers: {
-			"x-source": "chat.llmapi.ai",
+			"x-source": "chat.llmgateway.io",
 			...(noFallbackHeader ? { "x-no-fallback": noFallbackHeader } : {}),
 		},
 		extraBody: {
