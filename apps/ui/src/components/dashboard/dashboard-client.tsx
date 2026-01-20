@@ -362,7 +362,7 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 							label="Organization Credits"
 							value={`$${
 								selectedOrganization
-									? Number(selectedOrganization.credits).toFixed(8)
+									? Number(selectedOrganization.credits).toFixed(2)
 									: "0.00"
 							}`}
 							subtitle="Available balance"
