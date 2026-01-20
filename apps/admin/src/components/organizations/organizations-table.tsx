@@ -1,5 +1,3 @@
-"use client";
-
 import { DepositCreditsButton } from "@/components/deposit-credits/deposit-credits-dialog";
 
 import type { Organization } from "@/lib/types";

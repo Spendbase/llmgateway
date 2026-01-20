@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/lib/fetch-client";
 import Spinner from "@/lib/icons/Spinner";
 
@@ -75,16 +75,16 @@ export function DepositCreditsDialog({
 	const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		setDescription(e.target.value);
 	};
-	const { toast } = useToast();
-
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
 		if (!description.trim()) {
-			toast({
-				title: "Error",
+			toast.error("Validation Error", {
 				description: "Description cannot be empty or just spaces",
-				variant: "destructive",
+				style: {
+					backgroundColor: "var(--destructive)",
+					color: "var(--destructive-foreground)",
+				},
 			});
 			return;
 		}
@@ -95,8 +95,7 @@ export function DepositCreditsDialog({
 			await depositCredits({
 				body: { amount, description, organizationId: organization.id },
 			});
-			toast({
-				title: "Payment Successful",
+			toast.success("Payment Successful", {
 				description:
 					"Your credits have been added to your organization account.",
 			});
@@ -104,11 +103,14 @@ export function DepositCreditsDialog({
 			setOpen(false);
 			router.refresh();
 		} catch (error) {
-			toast({
-				title: "Payment Failed",
+			toast.error("Payment Failed", {
 				description:
 					(error as any)?.message ||
 					"An error occurred while processing your payment.",
+				style: {
+					backgroundColor: "var(--destructive)",
+					color: "var(--destructive-foreground)",
+				},
 			});
 			setLoading(false);
 		} finally {
