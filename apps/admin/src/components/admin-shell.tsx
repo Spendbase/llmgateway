@@ -45,6 +45,7 @@ export function AdminShell({ children }: AdminShellProps) {
 	const isDashboard = pathname === "/" || pathname === "";
 	const isTokens = pathname === "/tokens";
 	const isOrganizations = pathname === "/organizations";
+	const isUsers = pathname === "/users";
 
 	const handleSignOut = async () => {
 		await signOut({
@@ -108,12 +109,12 @@ export function AdminShell({ children }: AdminShellProps) {
 						<SidebarGroupLabel>People</SidebarGroupLabel>
 						<SidebarMenu>
 							<SidebarMenuItem>
-								<SidebarMenuButton size="lg" asChild>
-									<div className="flex w-full items-center gap-2 text-sidebar-foreground/80 hover:text-sidebar-accent-foreground">
+								<Link href="/users" className="block">
+									<SidebarMenuButton isActive={isUsers} size="lg">
 										<Users className="h-4 w-4" />
-										<span>Users (coming soon)</span>
-									</div>
-								</SidebarMenuButton>
+										<span>Users</span>
+									</SidebarMenuButton>
+								</Link>
 							</SidebarMenuItem>
 						</SidebarMenu>
 					</SidebarGroup>

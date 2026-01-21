@@ -169,6 +169,54 @@ const getOrganizations = createRoute({
 	},
 });
 
+const getUsers = createRoute({
+	method: "get",
+	path: "/users",
+	request: {
+		query: z.object({
+			page: z.string().optional().openapi({ example: "1" }),
+			pageSize: z.string().optional().openapi({ example: "20" }),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						users: z
+							.array(
+								z.object({
+									id: z.string(),
+									name: z.string().nullable(),
+									email: z.string(),
+									emailVerified: z.boolean(),
+									createdAt: z.date(),
+									organizations: z.array(
+										z.object({
+											organizationId: z.string(),
+											organizationName: z.string(),
+											role: z.enum(["owner", "admin", "developer"]),
+										}),
+									),
+								}),
+							)
+							.openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							totalUsers: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Paginated list of users with organizations",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
 admin.openapi(getMetrics, async (c) => {
 	const authUser = c.get("user");
 
@@ -566,6 +614,96 @@ admin.openapi(depositCredits, async (c) => {
 
 		throw new HTTPException(500, { message: "Internal Database Error" });
 	}
+});
+
+admin.openapi(getUsers, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const query = c.req.valid("query");
+	const page = Math.max(1, parseInt(query.page || "1", 10));
+	const pageSize = Math.min(
+		100,
+		Math.max(10, parseInt(query.pageSize || "20", 10)),
+	);
+	const offset = (page - 1) * pageSize;
+
+	const [totalUsersResult] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.user);
+
+	const totalUsers = Number(totalUsersResult?.count ?? 0);
+	const totalPages = Math.ceil(totalUsers / pageSize);
+
+	const usersData = await db
+		.select({
+			id: tables.user.id,
+			name: tables.user.name,
+			email: tables.user.email,
+			emailVerified: tables.user.emailVerified,
+			createdAt: tables.user.createdAt,
+		})
+		.from(tables.user)
+		.orderBy(desc(tables.user.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	const userIds = usersData.map((u) => u.id);
+
+	const userOrganizations = await db
+		.select({
+			userId: tables.userOrganization.userId,
+			organizationId: tables.userOrganization.organizationId,
+			organizationName: tables.organization.name,
+			role: tables.userOrganization.role,
+		})
+		.from(tables.userOrganization)
+		.innerJoin(
+			tables.organization,
+			eq(tables.organization.id, tables.userOrganization.organizationId),
+		)
+		.where(
+			and(
+				sql`${tables.userOrganization.userId} = ANY(${userIds})`,
+				eq(tables.organization.status, "active"),
+			),
+		);
+
+	const users = usersData.map((user) => ({
+		id: user.id,
+		name: user.name,
+		email: user.email,
+		emailVerified: user.emailVerified,
+		createdAt: user.createdAt,
+		organizations: userOrganizations
+			.filter((uo) => uo.userId === user.id)
+			.map((uo) => ({
+				organizationId: uo.organizationId,
+				organizationName: uo.organizationName,
+				role: uo.role,
+			})),
+	}));
+
+	return c.json({
+		users,
+		pagination: {
+			page,
+			pageSize,
+			totalUsers,
+			totalPages,
+		},
+	});
 });
 
 export default admin;
