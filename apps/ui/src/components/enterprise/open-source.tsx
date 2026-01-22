@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Button } from "@/lib/components/button";
 
-const GITHUB_REPO = "theopenco/llmgateway";
+const GITHUB_REPO = "Spendbase/llmgateway";
 
 interface Contributor {
 	login: string;

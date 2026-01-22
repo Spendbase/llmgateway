@@ -1,12 +1,12 @@
 ---
-title: Self Host LLMGateway
-description: Simple guide to self-hosting LLMGateway using Docker.
+title: Self Host LLM API
+description: Simple guide to self-hosting LLM API using Docker.
 icon: Server
 ---
 
-# Self Host LLMGateway
+# Self Host LLM API
 
-LLMGateway is a self-hostable platform that provides a unified API gateway for multiple LLM providers. This guide offers two simple options to get started.
+LLM API is a self-hostable platform that provides a unified API gateway for multiple LLM providers. This guide offers two simple options to get started.
 
 ## Prerequisites
 
@@ -30,17 +30,17 @@ docker run -d \
   -p 4002:4002 \
   -v ~/llmgateway_data:/var/lib/postgresql/data \
   -e AUTH_SECRET=your-secret-key-here \
-  ghcr.io/theopenco/llmgateway-unified:latest
+  ghcr.io/Spendbase/llmgateway-unified:latest
 ```
 
-Note: it is recommended to use the latest version tag from here instead of `latest`: https://github.com/theopenco/llmgateway/releases
+Note: it is recommended to use the latest version tag from here instead of `latest`: https://github.com/Spendbase/llmgateway/releases
 
 ### Using Docker Compose (Alternative for unified image)
 
 ```bash
 # Download the compose file
-curl -O https://raw.githubusercontent.com/theopenco/llmgateway/main/infra/docker-compose.unified.yml
-curl -O https://raw.githubusercontent.com/theopenco/llmgateway/main/.env.example
+curl -O https://raw.githubusercontent.com/Spendbase/llmgateway/main/infra/docker-compose.unified.yml
+curl -O https://raw.githubusercontent.com/Spendbase/llmgateway/main/.env.example
 
 # Configure environment
 cp .env.example .env
@@ -50,7 +50,7 @@ cp .env.example .env
 docker compose -f docker-compose.unified.yml up -d
 ```
 
-Note: it is recommended to replace the `latest` version tag in the image with the latest version from here: https://github.com/theopenco/llmgateway/releases
+Note: it is recommended to replace the `latest` version tag in the image with the latest version from here: https://github.com/Spendbase/llmgateway/releases
 
 ## Option 2: Separate Services with Docker Compose
 
@@ -58,7 +58,7 @@ This option uses separate containers for each service, offering more flexibility
 
 ```bash
 # Clone the repository
-git clone https://github.com/theopenco/llmgateway.git
+git clone https://github.com/Spendbase/llmgateway.git
 cd llmgateway
 
 # Configure environment
@@ -69,9 +69,9 @@ cp .env.example .env
 docker compose -f infra/docker-compose.split.yml up -d
 ```
 
-Note: it is recommended to replace the `latest` version tag in all images in the compose file with the latest version from here: https://github.com/theopenco/llmgateway/releases
+Note: it is recommended to replace the `latest` version tag in all images in the compose file with the latest version from here: https://github.com/Spendbase/llmgateway/releases
 
-## Accessing Your LLMGateway
+## Accessing Your LLM API
 
 After starting either option, you can access:
 
@@ -139,7 +139,7 @@ LLM_ANTHROPIC_API_KEY=
 
 ## Multiple API Keys and Load Balancing
 
-LLMGateway supports multiple API keys per provider for load balancing and increased availability. Simply provide comma-separated values for your API keys:
+LLM API supports multiple API keys per provider for load balancing and increased availability. Simply provide comma-separated values for your API keys:
 
 ```bash
 # Multiple OpenAI keys for load balancing
@@ -168,7 +168,7 @@ When the gateway selects `key2`, it will automatically use `project-b` and `euro
 
 ## Next Steps
 
-Once your LLMGateway is running:
+Once your LLM API is running:
 
 1. **Open the web interface** at http://localhost:3002
 2. **Create your first organization** and project
