@@ -8,7 +8,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 # Image Generation
 
-LLMGateway supports image generation models through the standard chat completions API. These models can create images based on text prompts and return them as base64-encoded data URLs.
+LLM API supports image generation models through the standard chat completions API. These models can create images based on text prompts and return them as base64-encoded data URLs.
 
 ## Available Models
 
@@ -20,7 +20,7 @@ Image generation works through the same `/v1/chat/completions` endpoint as text 
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gemini-2.5-flash-image-preview",
@@ -41,7 +41,7 @@ You can customize the generated image using the optional `image_config` paramete
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gemini-3-pro-image-preview",
@@ -67,7 +67,7 @@ curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "alibaba/qwen-image-plus",
@@ -109,7 +109,7 @@ Available Alibaba models:
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "zai/cogview-4",
@@ -146,7 +146,7 @@ Available Z.AI models:
 
 ```bash
 curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "bytedance/seedream-4-5",

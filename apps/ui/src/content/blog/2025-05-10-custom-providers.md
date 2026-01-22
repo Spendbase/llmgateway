@@ -20,7 +20,7 @@ Add a provider in the UI (lowercase name, base URL, and token). Then call models
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mycompany/custom-gpt-4",

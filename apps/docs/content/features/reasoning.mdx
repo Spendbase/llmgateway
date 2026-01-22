@@ -8,7 +8,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 # Reasoning
 
-LLMGateway supports reasoning-capable models that can show their step-by-step thought process before providing a final answer. This feature is particularly useful for complex problem-solving tasks, mathematical calculations, and logical reasoning.
+LLM API supports reasoning-capable models that can show their step-by-step thought process before providing a final answer. This feature is particularly useful for complex problem-solving tasks, mathematical calculations, and logical reasoning.
 
 ## Reasoning-Enabled Models
 
@@ -39,7 +39,7 @@ To enable reasoning output, add the `reasoning_effort` parameter to your request
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-5-preview",
@@ -89,7 +89,7 @@ When streaming is enabled, reasoning content will be streamed as part of the res
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-5-preview",
@@ -150,7 +150,7 @@ You can view detailed logs for each request in the [dashboard](https://llmapi.ai
 
 ## Auto-Routing with Reasoning
 
-When using auto-routing (specifying a model like `gpt-5` without a specific version), LLMGateway will:
+When using auto-routing (specifying a model like `gpt-5` without a specific version), LLM API will:
 
 1. Automatically set `reasoning_effort` to `minimal` for GPT-5 models
 2. Set `reasoning_effort` to `low` for other auto-routed reasoning models
@@ -160,7 +160,7 @@ This ensures optimal performance and cost when using auto-routing with reasoning
 
 ## Model-Specific Behavior
 
-Not all reasoning models return reasoning content in the same way. Some models (like OpenAI models) may reason internally but not expose the reasoning content in the response. LLMGateway makes sure the response is unified across different providers, but the depth and format of reasoning may vary.
+Not all reasoning models return reasoning content in the same way. Some models (like OpenAI models) may reason internally but not expose the reasoning content in the response. LLM API makes sure the response is unified across different providers, but the depth and format of reasoning may vary.
 
 ## Best Practices
 

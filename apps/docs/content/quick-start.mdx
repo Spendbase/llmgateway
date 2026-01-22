@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Fastest way to start using LLM Gateway in any language or framework.
+description: Fastest way to start using LLM API in any language or framework.
 icon: Rocket
 ---
 
@@ -10,9 +10,9 @@ import { DynamicCodeBlock } from "fumadocs-ui/components/dynamic-codeblock";
 
 # 🚀 Quickstart
 
-Welcome to **LLM Gateway**—a single drop‑in endpoint that lets you call today’s best large‑language models while keeping **your existing code** and development workflow intact.
+Welcome to **LLM API**—a single drop‑in endpoint that lets you call today’s best large‑language models while keeping **your existing code** and development workflow intact.
 
-> **TL;DR** — Point your HTTP requests to `https://internal.llmapi.ai/v1/…`, supply your `LLM_GATEWAY_API_KEY`, and you’re done.
+> **TL;DR** — Point your HTTP requests to `https://internal.llmapi.ai/v1/…`, supply your `LLM_API_KEY`, and you’re done.
 
 ---
 
@@ -23,7 +23,7 @@ Welcome to **LLM Gateway**—a single drop‑in endpoint that lets you call tod
 3. Export it in your shell (or a `.env` file):
 
 ```bash
-export LLM_GATEWAY_API_KEY="llmgtwy_XXXXXXXXXXXXXXXX"
+export LLM_API_KEY="llmgtwy_XXXXXXXXXXXXXXXX"
 ```
 
 ---
@@ -46,7 +46,7 @@ export LLM_GATEWAY_API_KEY="llmgtwy_XXXXXXXXXXXXXXXX"
   <Tab value="cURL">
     <DynamicCodeBlock lang="bash" code={`curl -X POST https://internal.llmapi.ai/v1/chat/completions \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \\
+  -H "Authorization: Bearer $LLM_API_KEY" \\
   -d '{
   "model": "gpt-4o",
   "messages": [
@@ -59,7 +59,7 @@ export LLM_GATEWAY_API_KEY="llmgtwy_XXXXXXXXXXXXXXXX"
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': \`Bearer \${process.env.LLM_GATEWAY_API_KEY}\`
+    'Authorization': \`Bearer \${process.env.LLM_API_KEY}\`
   },
   body: JSON.stringify({
     model: 'gpt-4o',
@@ -91,7 +91,7 @@ const res = await fetch('https://internal.llmapi.ai/v1/chat/completions', {
 method: 'POST',
 headers: {
 'Content-Type': 'application/json',
-'Authorization': \`Bearer \${process.env.REACT_APP_LLM_GATEWAY_API_KEY}\`
+'Authorization': \`Bearer \${process.env.REACT_APP_LLM_API_KEY}\`
 },
 body: JSON.stringify({
 model: 'gpt-4o',
@@ -139,7 +139,7 @@ const response = await fetch('https://internal.llmapi.ai/v1/chat/completions', {
 method: 'POST',
 headers: {
 'Content-Type': 'application/json',
-'Authorization': \`Bearer \${process.env.LLM_GATEWAY_API_KEY}\`
+'Authorization': \`Bearer \${process.env.LLM_API_KEY}\`
 },
 body: JSON.stringify({
 model: 'gpt-4o',
@@ -176,7 +176,7 @@ response = requests.post(
 'https://internal.llmapi.ai/v1/chat/completions',
 headers={
 'Content-Type': 'application/json',
-'Authorization': f'Bearer {os.getenv("LLM_GATEWAY_API_KEY")}'
+'Authorization': f'Bearer {os.getenv("LLM_API_KEY")}'
 },
 json={
 'model': 'gpt-4o',
@@ -196,7 +196,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.URI;
 
-String apiKey = System.getenv("LLM_GATEWAY_API_KEY");
+String apiKey = System.getenv("LLM_API_KEY");
 String requestBody = """
 {
 \"model\": \"gpt-4o\",
@@ -227,7 +227,7 @@ use std::env;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 let client = Client::new();
-let api_key = env::var("LLM_GATEWAY_API_KEY")?;
+let api_key = env::var("LLM_API_KEY")?;
 
     let response = client
         .post("https://internal.llmapi.ai/v1/chat/completions")
@@ -271,7 +271,7 @@ Content string ` + "`json:\"content\"`" + `
 }
 
 func main() {
-apiKey := os.Getenv("LLM_GATEWAY_API_KEY")
+apiKey := os.Getenv("LLM_API_KEY")
 
     requestBody := ChatRequest{
         Model: "gpt-4o",
@@ -295,7 +295,7 @@ apiKey := os.Getenv("LLM_GATEWAY_API_KEY")
   </Tab>
   <Tab value="PHP">
     <DynamicCodeBlock lang="php" code={`<?php
-$apiKey = $_ENV['LLM_GATEWAY_API_KEY'];
+$apiKey = $_ENV['LLM_API_KEY'];
 
 $data = [
 'model' => 'gpt-4o',
@@ -342,7 +342,7 @@ http.use_ssl = true
 
 request = Net::HTTP::Post.new(uri)
 request['Content-Type'] = 'application/json'
-request['Authorization'] = "Bearer #{ENV['LLM_GATEWAY_API_KEY']}"
+request['Authorization'] = "Bearer #{ENV['LLM_API_KEY']}"
 
 request.body = {
 model: 'gpt-4o',
@@ -382,7 +382,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 const llmgateway = createOpenAI({
 	baseURL: "https://internal.llmapi.ai/v1",
-	apiKey: process.env.LLM_GATEWAY_API_KEY!,
+	apiKey: process.env.LLM_API_KEY!,
 });
 
 const completion = await llmgateway.chat({
@@ -398,7 +398,7 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({
 	baseURL: "https://internal.llmapi.ai/v1",
-	apiKey: process.env.LLM_GATEWAY_API_KEY,
+	apiKey: process.env.LLM_API_KEY,
 });
 
 const completion = await openai.chat.completions.create({

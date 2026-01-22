@@ -18,7 +18,7 @@ const codeExamples = {
 		language: "bash",
 		code: `curl -X POST https://internal.llmapi.ai/v1/chat/completions \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \\
+  -H "Authorization: Bearer $LLM_API_KEY" \\
   -d '{
   "model": "gpt-4o",
   "messages": [
@@ -32,7 +32,7 @@ const codeExamples = {
 		code: `import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: process.env.LLM_GATEWAY_API_KEY, // or your API key string
+  apiKey: process.env.LLM_API_KEY, // or your API key string
   baseURL: "https://internal.llmapi.ai/v1/"
 });
 
@@ -64,7 +64,7 @@ const { text } = await generateText({
 		code: `import openai
 
 client = openai.OpenAI(
-    api_key="YOUR_LLM_GATEWAY_API_KEY",
+    api_key="YOUR_LLM_API_KEY",
     base_url="https://internal.llmapi.ai/v1"
 )
 
@@ -86,7 +86,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        String apiKey = System.getenv("LLM_GATEWAY_API_KEY");
+        String apiKey = System.getenv("LLM_API_KEY");
         OpenAiService service = new OpenAiService(apiKey, 60);
         service.setOpenAiApiUrl("https://internal.llmapi.ai/v1/");
 
@@ -111,7 +111,7 @@ use std::env;
 
 #[tokio::main]
 async fn main() {
-    let api_key = env::var("LLM_GATEWAY_API_KEY").unwrap();
+    let api_key = env::var("LLM_API_KEY").unwrap();
     let openai = OpenAI::new(&api_key).with_base_url("https://internal.llmapi.ai/v1");
 
     let request = ChatCompletionRequest::new(
@@ -138,7 +138,7 @@ import (
 )
 
 func main() {
-    client := openai.NewClientWithConfig(openai.DefaultConfig(os.Getenv("LLM_GATEWAY_API_KEY"), "https://internal.llmapi.ai/v1"))
+    client := openai.NewClientWithConfig(openai.DefaultConfig(os.Getenv("LLM_API_KEY"), "https://internal.llmapi.ai/v1"))
     resp, err := client.CreateChatCompletion(
         context.Background(),
         openai.ChatCompletionRequest{
@@ -161,7 +161,7 @@ func main() {
 		code: `<?php
 require 'vendor/autoload.php';
 
-$client = OpenAI::client('YOUR_LLM_GATEWAY_API_KEY', [
+$client = OpenAI::client('YOUR_LLM_API_KEY', [
     'base_uri' => 'https://internal.llmapi.ai/v1',
 ]);
 
@@ -181,7 +181,7 @@ echo $response['choices'][0]['message']['content'];
 		code: `require "openai"
 
 client = OpenAI::Client.new(
-  access_token: ENV["LLM_GATEWAY_API_KEY"],
+  access_token: ENV["LLM_API_KEY"],
   uri_base: "https://internal.llmapi.ai/v1"
 )
 

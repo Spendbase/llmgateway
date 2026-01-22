@@ -57,7 +57,7 @@ All models support streaming, tool calling, and JSON output mode:
 
 ```bash
 curl -X POST https://internal.llmapi.ai/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "canopywave/qwen3-coder",

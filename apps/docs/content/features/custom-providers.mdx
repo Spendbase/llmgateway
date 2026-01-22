@@ -1,6 +1,6 @@
 ---
 title: Custom Providers
-description: Learn how to integrate custom OpenAI-compatible providers with LLMGateway for enhanced flexibility and control.
+description: Learn how to integrate custom OpenAI-compatible providers with LLM API for enhanced flexibility and control.
 icon: Columns3Cog
 ---
 
@@ -8,7 +8,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 # Custom Providers
 
-LLMGateway supports integrating custom OpenAI-compatible providers, allowing you to use any API that follows the OpenAI chat completions format. This feature is perfect for:
+LLM API supports integrating custom OpenAI-compatible providers, allowing you to use any API that follows the OpenAI chat completions format. This feature is perfect for:
 
 - Private or self-hosted LLM deployments
 - Specialized AI providers not natively supported
@@ -33,7 +33,7 @@ Once configured, make requests using the format `{customName}/{modelName}`:
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mycompany/custom-gpt-4",
@@ -62,7 +62,7 @@ curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
 
 - Must be a valid HTTPS URL
 - Should point to your provider's base endpoint
-- LLMGateway will append `/v1/chat/completions` automatically
+- LLM API will append `/v1/chat/completions` automatically
 - **Example**: `https://api.example.com` → `https://api.example.com/v1/chat/completions`
 
 ### API Token
@@ -77,4 +77,4 @@ curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
 
 ## Supported Features
 
-Custom providers inherit full LLMGateway functionality.
+Custom providers inherit full LLM API functionality.
