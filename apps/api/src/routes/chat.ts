@@ -52,7 +52,7 @@ chat.openapi(completionRoute, async (c) => {
 
 		const response = await fetch(
 			process.env.NODE_ENV === "production"
-				? "https://api.llmapi.ai/v1/chat/completions"
+				? "https://internal.llmapi.ai/v1/chat/completions"
 				: "http://localhost:4001/v1/chat/completions",
 			{
 				method: "POST",

@@ -51,19 +51,19 @@ When cost breakdown is enabled, your API responses will include additional cost 
 
 ## Cost Fields
 
-| Field                   | Description                                                                        |
-| ----------------------- | ---------------------------------------------------------------------------------- |
-| `cost_usd_total`        | Total inference cost for the request in USD (excludes storage)                     |
-| `cost_usd_input`        | Cost for input/prompt tokens in USD                                                |
-| `cost_usd_output`       | Cost for output/completion tokens in USD                                           |
-| `cost_usd_cached_input` | Cost for cached input tokens in USD (discounted rate)                              |
-| `cost_usd_request`      | Per-request cost in USD (for models with request-based pricing)                    |
+| Field                   | Description                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| `cost_usd_total`        | Total inference cost for the request in USD (excludes storage)                 |
+| `cost_usd_input`        | Cost for input/prompt tokens in USD                                            |
+| `cost_usd_output`       | Cost for output/completion tokens in USD                                       |
+| `cost_usd_cached_input` | Cost for cached input tokens in USD (discounted rate)                          |
+| `cost_usd_request`      | Per-request cost in USD (for models with request-based pricing)                |
 | `cost_usd_data_storage` | LLM API storage cost in USD ($0.01 per 1M tokens, only when retention enabled) |
 
 <Callout type="info">
 	**Note:** `cost_usd_total` includes only provider/inference costs. Data
-	storage costs (`cost_usd_data_storage`) are billed separately by LLM API
-	when data retention is enabled in organization policies.
+	storage costs (`cost_usd_data_storage`) are billed separately by LLM API when
+	data retention is enabled in organization policies.
 </Callout>
 
 ## Streaming Responses
@@ -105,7 +105,7 @@ import OpenAI from "openai";
 
 const client = new OpenAI({
 	apiKey: process.env.LLM_GATEWAY_API_KEY,
-	baseURL: "https://api.llmapi.ai/v1",
+	baseURL: "https://internal.llmapi.ai/v1",
 });
 
 async function trackCosts() {
