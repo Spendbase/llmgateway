@@ -1,5 +1,4 @@
 "use client";
-import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { GithubIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -45,7 +44,7 @@ export default function Footer() {
 							>
 								<XIcon className="h-5 w-5" />
 							</a>
-							<a
+							{/* <a
 								href={config.discordUrl}
 								target="_blank"
 								rel="noopener noreferrer"
@@ -53,7 +52,7 @@ export default function Footer() {
 								aria-label="Discord"
 							>
 								<DiscordLogoIcon className="h-5 w-5" />
-							</a>
+							</a> */}
 						</div>
 					</div>
 
@@ -231,7 +230,7 @@ export default function Footer() {
 										Twitter
 									</a>
 								</li>
-								<li>
+								{/* <li>
 									<a
 										href={config.discordUrl}
 										target="_blank"
@@ -240,7 +239,7 @@ export default function Footer() {
 									>
 										Discord
 									</a>
-								</li>
+								</li> */}
 							</ul>
 						</div>
 
