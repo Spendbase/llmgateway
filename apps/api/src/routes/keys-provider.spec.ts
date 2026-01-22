@@ -105,15 +105,15 @@ describe("provider keys route", () => {
 				Cookie: token,
 			},
 			body: JSON.stringify({
-				provider: "inference.net",
-				token: "inference-test-token",
+				provider: "aws-bedrock",
+				token: "aws-bedrock-test-token",
 				organizationId: "test-org-id",
 			}),
 		});
 		expect(res.status).toBe(200);
 		const json = await res.json();
 		expect(json).toHaveProperty("providerKey");
-		expect(json.providerKey.provider).toBe("inference.net");
+		expect(json.providerKey.provider).toBe("aws-bedrock");
 		expect(json.providerKey.maskedToken).toBeDefined();
 		expect(json.providerKey.maskedToken).toContain("•");
 		expect(json.providerKey.token).toBeUndefined();
@@ -122,12 +122,12 @@ describe("provider keys route", () => {
 		const providerKey = await db.query.providerKey.findFirst({
 			where: {
 				provider: {
-					eq: "inference.net",
+					eq: "aws-bedrock",
 				},
 			},
 		});
 		expect(providerKey).not.toBeNull();
-		expect(providerKey?.provider).toBe("inference.net");
+		expect(providerKey?.provider).toBe("aws-bedrock");
 	});
 
 	test("POST /keys/provider with invalid provider", async () => {
