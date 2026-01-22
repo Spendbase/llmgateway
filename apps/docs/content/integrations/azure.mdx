@@ -1,12 +1,12 @@
 ---
 title: Azure Integration
-description: Connect Azure to LLM Gateway for enterprise-grade OpenAI models
+description: Connect Azure to LLM API for enterprise-grade OpenAI models
 icon: Cloud
 ---
 
 import { Step, Steps } from "fumadocs-ui/components/steps";
 
-Azure provides access to OpenAI's powerful language models through Microsoft's enterprise cloud infrastructure. This guide shows how to create an Azure resource, deploy models, and integrate them with LLM Gateway.
+Azure provides access to OpenAI's powerful language models through Microsoft's enterprise cloud infrastructure. This guide shows how to create an Azure resource, deploy models, and integrate them with LLM API.
 
 <Callout type="info">
 	Only OpenAI models are supported via Azure at this time. [Open an
@@ -17,11 +17,11 @@ Azure provides access to OpenAI's powerful language models through Microsoft's e
 ## Prerequisites
 
 - An Azure account with an active subscription
-- LLM Gateway account (Pro plan required for provider keys) or self-hosted instance (free)
+- LLM API account (Pro plan required for provider keys) or self-hosted instance (free)
 
 ## Overview
 
-Azure provides enterprise-grade access to OpenAI models with enhanced security, compliance, and regional availability. LLM Gateway integrates seamlessly with Azure deployments.
+Azure provides enterprise-grade access to OpenAI models with enhanced security, compliance, and regional availability. LLM API integrates seamlessly with Azure deployments.
 
 ## Create Azure Resource
 
@@ -83,13 +83,13 @@ Azure provides enterprise-grade access to OpenAI models with enhanced security, 
 
 </Steps>
 
-## Add to LLM Gateway
+## Add to LLM API
 
 <Steps>
 <Step>
 ### Navigate to Provider Keys
 
-1. Log into [LLM Gateway Dashboard](https://llmapi.ai/dashboard)
+1. Log into [LLM API Dashboard](https://llmapi.ai/dashboard)
 2. Select your organization and project
 3. Go to **Provider Keys** in the sidebar
 
@@ -131,14 +131,14 @@ curl -X POST https://api.llmapi.ai/v1/chat/completions \
   }'
 ```
 
-Replace `YOUR_LLMGATEWAY_API_KEY` with your LLM Gateway API key.
+Replace `YOUR_LLMGATEWAY_API_KEY` with your LLM API API key.
 
 </Step>
 </Steps>
 
 ## Available Models
 
-Once configured, you can access your Azure deployments through LLM Gateway:
+Once configured, you can access your Azure deployments through LLM API:
 
 - **GPT-4o**: `azure/gpt-4o`
 - **GPT-4o Mini**: `azure/gpt-4o-mini`

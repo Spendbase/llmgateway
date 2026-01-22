@@ -153,7 +153,7 @@ describe("provider keys route", () => {
 				Cookie: token,
 			},
 			body: JSON.stringify({
-				provider: "openai",
+				provider: "aws-bedrock",
 				organizationId: "test-org-id",
 			}),
 		});
