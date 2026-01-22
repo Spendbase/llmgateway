@@ -24,7 +24,7 @@ You can use LLM Gateway in two ways:
 ### Using LLM Gateway API
 
 ```bash
-curl -X POST https://api.llmapi.ai/v1/chat/completions \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -d '{
