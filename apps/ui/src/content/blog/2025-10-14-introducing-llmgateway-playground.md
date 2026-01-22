@@ -90,4 +90,4 @@ Like LLMGateway itself, the playground is built on open-source principles. The c
 
 Ready to explore? Head to [chat.llmapi.ai](https://chat.llmapi.ai) and experience the future of AI interaction.
 
-Have feedback or feature requests? We'd love to hear from you on [GitHub](https://github.com/theopenco/llmgateway) or [Discord](https://llmapi.ai/discord).
+Have feedback or feature requests? We'd love to hear from you on [GitHub](https://github.com/Spendbase/llmgateway) or [Discord](https://llmapi.ai/discord).

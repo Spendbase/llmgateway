@@ -307,7 +307,7 @@ export const ModelsSupported = ({ isDashboard }: { isDashboard?: boolean }) => {
 					<div className="flex justify-center gap-4 flex-col md:flex-row">
 						<Button variant="outline" asChild>
 							<a
-								href="https://github.com/theopenco/llmgateway/issues/new?assignees=&labels=enhancement%2Cmodel-request&projects=&template=model-request.md&title=%5BModel+Request%5D+"
+								href="https://github.com/Spendbase/llmgateway/issues/new?assignees=&labels=enhancement%2Cmodel-request&projects=&template=model-request.md&title=%5BModel+Request%5D+"
 								target="_blank"
 								rel="noopener noreferrer"
 								className="inline-flex items-center gap-2"
@@ -318,7 +318,7 @@ export const ModelsSupported = ({ isDashboard }: { isDashboard?: boolean }) => {
 						</Button>
 						<Button variant="outline" asChild>
 							<a
-								href="https://github.com/theopenco/llmgateway/issues/new?assignees=&labels=enhancement%2Cprovider-request&projects=&template=provider-request.md&title=%5BProvider+Request%5D+"
+								href="https://github.com/Spendbase/llmgateway/issues/new?assignees=&labels=enhancement%2Cprovider-request&projects=&template=provider-request.md&title=%5BProvider+Request%5D+"
 								target="_blank"
 								rel="noopener noreferrer"
 								className="inline-flex items-center gap-2"
@@ -339,7 +339,7 @@ export const ModelsSupported = ({ isDashboard }: { isDashboard?: boolean }) => {
 						<div className="flex gap-2 mt-4 md:mt-0">
 							<Button variant="outline" size="sm" asChild>
 								<a
-									href="https://github.com/theopenco/llmgateway/issues/new?assignees=&labels=enhancement%2Cmodel-request&projects=&template=model-request.md&title=%5BModel+Request%5D+"
+									href="https://github.com/Spendbase/llmgateway/issues/new?assignees=&labels=enhancement%2Cmodel-request&projects=&template=model-request.md&title=%5BModel+Request%5D+"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="inline-flex items-center gap-2"
@@ -350,7 +350,7 @@ export const ModelsSupported = ({ isDashboard }: { isDashboard?: boolean }) => {
 							</Button>
 							<Button variant="outline" size="sm" asChild>
 								<a
-									href="https://github.com/theopenco/llmgateway/issues/new?assignees=&labels=enhancement%2Cprovider-request&projects=&template=provider-request.md&title=%5BProvider+Request%5D+"
+									href="https://github.com/Spendbase/llmgateway/issues/new?assignees=&labels=enhancement%2Cprovider-request&projects=&template=provider-request.md&title=%5BProvider+Request%5D+"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="inline-flex items-center gap-2"
