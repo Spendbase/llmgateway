@@ -84,31 +84,98 @@ function convertOpenAISchemaToGoogle(schema: any): any {
 }
 
 /**
- * Recursively strips unsupported properties from JSON schema for Google
- * Google doesn't support additionalProperties, $schema, and some other JSON schema properties
+ * Resolves a $ref path like "#/$defs/QuestionOption" to the actual definition
  */
-function stripUnsupportedSchemaProperties(schema: any): any {
+function resolveRef(ref: string, rootDefs: Record<string, any>): any {
+	// Handle JSON Pointer format: #/$defs/Name or #/definitions/Name
+	const match = ref.match(/^#\/(\$defs|definitions)\/(.+)$/);
+	if (match) {
+		const defName = match[2];
+		return rootDefs[defName];
+	}
+	return null;
+}
+
+/**
+ * Recursively strips unsupported properties and expands $ref references for Google
+ * Google doesn't support $ref, additionalProperties, $schema, and some other JSON schema properties
+ */
+function stripUnsupportedSchemaProperties(
+	schema: any,
+	rootDefs?: Record<string, any>,
+): any {
 	if (!schema || typeof schema !== "object") {
 		return schema;
 	}
 
 	if (Array.isArray(schema)) {
-		return schema.map(stripUnsupportedSchemaProperties);
+		return schema.map((item) =>
+			stripUnsupportedSchemaProperties(item, rootDefs),
+		);
+	}
+
+	// Extract $defs or definitions from root schema if present (only on first call)
+	const defs = rootDefs ?? schema.$defs ?? schema.definitions ?? {};
+
+	// Handle $ref - expand the reference inline
+	if (schema.$ref) {
+		const resolved = resolveRef(schema.$ref, defs);
+		if (resolved) {
+			// Expand the reference, preserving only description and default from the original node
+			const expanded = stripUnsupportedSchemaProperties({ ...resolved }, defs);
+			if (schema.description && !expanded.description) {
+				expanded.description = schema.description;
+			}
+			if (schema.default !== undefined && expanded.default === undefined) {
+				expanded.default = schema.default;
+			}
+			return expanded;
+		}
+		// If reference couldn't be resolved, remove $ref and continue
 	}
 
 	const cleaned: any = {};
 
 	for (const [key, value] of Object.entries(schema)) {
 		// Skip unsupported properties
-		if (key === "additionalProperties" || key === "$schema") {
+		// Google doesn't support: additionalProperties, $schema, $defs, definitions, $ref, ref (non-standard), maxLength, minLength, minimum, maximum, pattern
+		if (
+			key === "additionalProperties" ||
+			key === "$schema" ||
+			key === "$defs" ||
+			key === "definitions" ||
+			key === "$ref" ||
+			key === "ref" ||
+			key === "maxLength" ||
+			key === "minLength" ||
+			key === "minimum" ||
+			key === "maximum" ||
+			key === "pattern"
+		) {
 			continue;
 		}
 
 		// Recursively clean nested objects
 		if (value && typeof value === "object") {
-			cleaned[key] = stripUnsupportedSchemaProperties(value);
+			cleaned[key] = stripUnsupportedSchemaProperties(value, defs);
 		} else {
 			cleaned[key] = value;
+		}
+	}
+
+	// Filter 'required' array to only include properties that exist in 'properties'
+	if (
+		cleaned.required &&
+		Array.isArray(cleaned.required) &&
+		cleaned.properties
+	) {
+		const existingProps = Object.keys(cleaned.properties);
+		cleaned.required = cleaned.required.filter((prop: string) =>
+			existingProps.includes(prop),
+		);
+		// Remove empty required array
+		if (cleaned.required.length === 0) {
+			delete cleaned.required;
 		}
 	}
 
@@ -127,6 +194,99 @@ function transformMessagesForNoSystemRole(messages: any[]): any[] {
 			};
 		}
 		return message;
+	});
+}
+
+/**
+ * Transforms message content types for OpenAI's Responses API.
+ * The Responses API uses different content type identifiers:
+ * - "text" -> "input_text" (for user/system/tool messages) or "output_text" (for assistant messages)
+ * - "image_url" -> "input_image"
+ */
+function transformContentForResponsesApi(content: any, role: string): any {
+	// Handle string content - wrap it in the appropriate format
+	if (typeof content === "string") {
+		if (role === "assistant") {
+			return [{ type: "output_text", text: content }];
+		}
+		return [{ type: "input_text", text: content }];
+	}
+
+	// Handle array content
+	if (Array.isArray(content)) {
+		return content.map((part: any) => {
+			if (part.type === "text") {
+				// Transform "text" to "input_text" or "output_text" based on role
+				if (role === "assistant") {
+					return { type: "output_text", text: part.text };
+				}
+				return { type: "input_text", text: part.text };
+			}
+			if (part.type === "image_url") {
+				// Transform "image_url" to "input_image"
+				// The Responses API expects the image URL directly or base64 data
+				const imageUrl = part.image_url?.url || part.image_url;
+
+				// Check if it's a base64 data URL
+				if (typeof imageUrl === "string" && imageUrl.startsWith("data:")) {
+					// Parse data URL: data:image/jpeg;base64,/9j/4AAQ...
+					const matches = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+					if (matches) {
+						return {
+							type: "input_image",
+							image_url: imageUrl,
+						};
+					}
+				}
+
+				// For regular URLs, pass directly
+				return {
+					type: "input_image",
+					image_url: imageUrl,
+				};
+			}
+			// Return other content types as-is (they may need additional handling)
+			return part;
+		});
+	}
+
+	// Return as-is if not string or array
+	return content;
+}
+
+/**
+ * Transforms messages for OpenAI's Responses API format.
+ * This includes:
+ * - Converting content types (text -> input_text/output_text, image_url -> input_image)
+ * - Removing unsupported fields (tool_calls, tool_call_id)
+ * - Converting tool role to user role
+ */
+function transformMessagesForResponsesApi(messages: any[]): any[] {
+	return messages.map((msg: any) => {
+		const transformed: any = {
+			role: msg.role,
+		};
+
+		// Responses API doesn't support 'tool' role - convert to 'user'
+		if (transformed.role === "tool") {
+			transformed.role = "user";
+		}
+
+		// Transform content types
+		transformed.content = transformContentForResponsesApi(
+			msg.content,
+			transformed.role,
+		);
+
+		// Copy name if present (for developer/system messages)
+		if (msg.name) {
+			transformed.name = msg.name;
+		}
+
+		// Note: tool_calls and tool_call_id are intentionally NOT copied
+		// as they are not supported in Responses API input
+
+		return transformed;
 	});
 }
 
@@ -162,82 +322,6 @@ export async function prepareRequestBody(
 	imageGenerations?: boolean,
 	webSearchTool?: WebSearchTool,
 ): Promise<ProviderRequestBody> {
-	// Handle Z.AI image generation models
-	if (imageGenerations && usedProvider === "zai") {
-		// Extract prompt from last user message
-		const lastUserMessage = [...messages]
-			.reverse()
-			.find((m) => m.role === "user");
-		let prompt = "";
-		if (lastUserMessage) {
-			if (typeof lastUserMessage.content === "string") {
-				prompt = lastUserMessage.content;
-			} else if (Array.isArray(lastUserMessage.content)) {
-				prompt = lastUserMessage.content
-					.filter((p): p is { type: "text"; text: string } => p.type === "text")
-					.map((p) => p.text)
-					.join("\n");
-			}
-		}
-
-		// Z.AI CogView uses OpenAI-compatible image generation format
-		const zaiImageRequest: any = {
-			model: usedModel,
-			prompt,
-			...(image_config?.image_size && { size: image_config.image_size }),
-			...(image_config?.n && { n: image_config.n }),
-		};
-
-		return zaiImageRequest;
-	}
-
-	// Handle Alibaba image generation models
-	if (imageGenerations && usedProvider === "alibaba") {
-		// Extract prompt from last user message
-		const lastUserMessage = [...messages]
-			.reverse()
-			.find((m) => m.role === "user");
-		let prompt = "";
-		if (lastUserMessage) {
-			if (typeof lastUserMessage.content === "string") {
-				prompt = lastUserMessage.content;
-			} else if (Array.isArray(lastUserMessage.content)) {
-				prompt = lastUserMessage.content
-					.filter((p): p is { type: "text"; text: string } => p.type === "text")
-					.map((p) => p.text)
-					.join("\n");
-			}
-		}
-
-		// Alibaba DashScope multimodal generation format
-		const alibabaImageRequest: any = {
-			model: usedModel,
-			input: {
-				messages: [
-					{
-						role: "user",
-						content: [{ text: prompt }],
-					},
-				],
-			},
-			parameters: {
-				watermark: false,
-				...(image_config?.n && { n: image_config.n }),
-				...(image_config?.seed !== undefined && { seed: image_config.seed }),
-			},
-		};
-
-		// Map image_size to Alibaba format (uses * instead of x)
-		if (image_config?.image_size) {
-			alibabaImageRequest.parameters.size = image_config.image_size.replace(
-				"x",
-				"*",
-			);
-		}
-
-		return alibabaImageRequest;
-	}
-
 	// Check if the model supports system role
 	// Look up by model ID first, then fall back to provider modelName
 	const modelDef = models.find(
@@ -281,6 +365,16 @@ export async function prepareRequestBody(
 		temperature = 1;
 	}
 
+	// OpenAI family models require max_tokens >= 16
+	if (
+		modelDef?.family === "openai" &&
+		max_tokens !== undefined &&
+		max_tokens < 16
+	) {
+		// eslint-disable-next-line no-param-reassign
+		max_tokens = 16;
+	}
+
 	switch (usedProvider) {
 		case "openai": {
 			// Check if the model supports responses API
@@ -296,23 +390,12 @@ export async function prepareRequestBody(
 				// gpt-5-pro only supports "high" reasoning effort
 				const defaultEffort = usedModel === "gpt-5-pro" ? "high" : "medium";
 
-				// Transform messages for responses API - remove tool_calls and convert tool results
-				const transformedMessages = processedMessages.map((msg: any) => {
-					const transformed = { ...msg };
-					// Remove tool_calls from assistant messages (not supported in responses API input)
-					if (transformed.tool_calls) {
-						delete transformed.tool_calls;
-					}
-					// Responses API doesn't support tool_call_id in tool messages
-					if (transformed.tool_call_id) {
-						delete transformed.tool_call_id;
-					}
-					// Responses API doesn't support 'tool' role - convert to 'user'
-					if (transformed.role === "tool") {
-						transformed.role = "user";
-					}
-					return transformed;
-				});
+				// Transform messages for responses API:
+				// - Convert content types (text -> input_text/output_text, image_url -> input_image)
+				// - Remove tool_calls and tool_call_id (not supported)
+				// - Convert tool role to user role
+				const transformedMessages =
+					transformMessagesForResponsesApi(processedMessages);
 
 				const responsesBody: OpenAIResponsesRequestBody = {
 					model: usedModel,
@@ -468,59 +551,6 @@ export async function prepareRequestBody(
 				if (reasoning_effort !== undefined) {
 					requestBody.reasoning_effort = reasoning_effort;
 				}
-			}
-			break;
-		}
-		case "zai": {
-			if (stream) {
-				requestBody.stream_options = {
-					include_usage: true,
-				};
-			}
-			if (response_format) {
-				requestBody.response_format = response_format;
-			}
-
-			// Add web search tool for ZAI
-			// ZAI uses a web_search tool with enable flag and search_engine config
-			if (webSearchTool) {
-				if (!requestBody.tools) {
-					requestBody.tools = [];
-				}
-				requestBody.tools.push({
-					type: "web_search",
-					web_search: {
-						enable: true,
-						search_engine: "search-prime",
-					},
-				});
-			}
-
-			// Add optional parameters if they are provided
-			if (temperature !== undefined) {
-				requestBody.temperature = temperature;
-			}
-			if (max_tokens !== undefined) {
-				requestBody.max_tokens = max_tokens;
-			}
-			if (top_p !== undefined) {
-				requestBody.top_p = top_p;
-			}
-			if (frequency_penalty !== undefined) {
-				requestBody.frequency_penalty = frequency_penalty;
-			}
-			if (presence_penalty !== undefined) {
-				requestBody.presence_penalty = presence_penalty;
-			}
-			// ZAI/GLM models use 'thinking' parameter for reasoning instead of 'reasoning_effort'
-			if (supportsReasoning) {
-				requestBody.thinking = {
-					type: "enabled",
-				};
-			}
-			// Add sensitive_word_check if provided (Z.ai specific)
-			if (sensitive_word_check) {
-				requestBody.sensitive_word_check = sensitive_word_check;
 			}
 			break;
 		}
@@ -719,6 +749,30 @@ export async function prepareRequestBody(
 					requestBody.output_config = {};
 				}
 				requestBody.output_config.effort = effort;
+			}
+
+			// Handle response_format for Anthropic - transform to output_format
+			// Anthropic uses output_format with type: "json_schema" and a schema object
+			if (response_format) {
+				if (
+					response_format.type === "json_schema" &&
+					response_format.json_schema
+				) {
+					// Ensure schema has additionalProperties: false as required by Anthropic
+					const schema = {
+						...response_format.json_schema.schema,
+						additionalProperties: false,
+					} as Record<string, unknown>;
+					requestBody.output_format = {
+						type: "json_schema",
+						schema,
+					};
+				} else if (response_format.type === "json_object") {
+					// For json_object, we cannot use structured outputs directly
+					// as Anthropic requires a specific schema. Instead, we skip output_format
+					// and rely on system prompt instructions for JSON output.
+					// Note: The model capability (jsonOutput) should ensure the prompt guides JSON output.
+				}
 			}
 			break;
 		}
@@ -932,6 +986,26 @@ export async function prepareRequestBody(
 				requestBody.inferenceConfig = inferenceConfig;
 			}
 
+			// Handle response_format for AWS Bedrock via additionalModelRequestFields
+			// This passes Anthropic-specific parameters through the Converse API
+			if (
+				response_format?.type === "json_schema" &&
+				response_format.json_schema
+			) {
+				const schema = {
+					...response_format.json_schema.schema,
+					additionalProperties: false,
+				} as Record<string, unknown>;
+				requestBody.additionalModelRequestFields = {
+					anthropic_beta: ["structured-outputs-2025-11-13"],
+					output_format: {
+						type: "json_schema",
+						schema,
+					},
+				};
+				requestBody.additionalModelResponseFieldPaths = ["/output_format"];
+			}
+
 			break;
 		}
 		case "google-ai-studio":
@@ -1062,82 +1136,6 @@ export async function prepareRequestBody(
 				},
 			];
 
-			break;
-		}
-		case "inference.net":
-		case "together.ai": {
-			if (usedModel.startsWith(`${usedProvider}/`)) {
-				requestBody.model = usedModel.substring(usedProvider.length + 1);
-			}
-
-			// Add optional parameters if they are provided
-			if (temperature !== undefined) {
-				requestBody.temperature = temperature;
-			}
-			if (max_tokens !== undefined) {
-				requestBody.max_tokens = max_tokens;
-			}
-			if (top_p !== undefined) {
-				requestBody.top_p = top_p;
-			}
-			if (frequency_penalty !== undefined) {
-				requestBody.frequency_penalty = frequency_penalty;
-			}
-			if (presence_penalty !== undefined) {
-				requestBody.presence_penalty = presence_penalty;
-			}
-			break;
-		}
-		case "cerebras": {
-			if (stream) {
-				requestBody.stream_options = {
-					include_usage: true,
-				};
-			}
-			if (response_format) {
-				// Cerebras requires strict: true for json_schema mode
-				if (response_format.type === "json_schema") {
-					requestBody.response_format = {
-						...response_format,
-						json_schema: {
-							...response_format.json_schema,
-							strict: true,
-						},
-					};
-				} else {
-					requestBody.response_format = response_format;
-				}
-			}
-
-			// Cerebras requires strict: true inside each tool's function object
-			if (requestBody.tools && Array.isArray(requestBody.tools)) {
-				requestBody.tools = requestBody.tools.map((tool: any) => ({
-					...tool,
-					function: {
-						...tool.function,
-						strict: true,
-					},
-				}));
-			}
-			// Add optional parameters if they are provided
-			if (temperature !== undefined) {
-				requestBody.temperature = temperature;
-			}
-			if (max_tokens !== undefined) {
-				requestBody.max_tokens = max_tokens;
-			}
-			if (top_p !== undefined) {
-				requestBody.top_p = top_p;
-			}
-			if (frequency_penalty !== undefined) {
-				requestBody.frequency_penalty = frequency_penalty;
-			}
-			if (presence_penalty !== undefined) {
-				requestBody.presence_penalty = presence_penalty;
-			}
-			if (reasoning_effort !== undefined) {
-				requestBody.reasoning_effort = reasoning_effort;
-			}
 			break;
 		}
 		default: {

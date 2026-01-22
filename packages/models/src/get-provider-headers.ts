@@ -40,18 +40,6 @@ export function getProviderHeaders(
 		// 		"api-key": token,
 		// 	};
 		case "openai":
-		case "inference.net":
-		case "xai":
-		case "groq":
-		case "deepseek":
-		case "perplexity":
-		case "novita":
-		case "moonshot":
-		case "alibaba":
-		case "nebius":
-		case "zai":
-		case "canopywave":
-		case "custom":
 		default:
 			return {
 				Authorization: `Bearer ${token}`,

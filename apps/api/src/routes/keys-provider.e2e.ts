@@ -116,24 +116,14 @@ describe(
 			return { token, orgId };
 		}
 
-		const testProviders = providers
-			.filter((provider) => provider.id !== "llmgateway")
-			.map((provider) => ({
-				providerId: provider.id,
-				name: provider.name,
-			}));
+		const testProviders = providers.map((provider) => ({
+			providerId: provider.id,
+			name: provider.name,
+		}));
 
 		test.each(testProviders)(
 			"POST /keys/provider with $name key",
 			async ({ providerId }) => {
-				// TODO temporarily skip routeway and nanogpt
-				if (
-					providerId === "routeway" ||
-					providerId === "inference.net" ||
-					providerId === "nanogpt"
-				) {
-					return;
-				}
 				const envVarName = getProviderEnvVar(providerId);
 				const envVarValue = envVarName ? process.env[envVarName] : undefined;
 				if (!envVarValue) {
