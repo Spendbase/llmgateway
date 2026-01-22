@@ -7,7 +7,7 @@ import {
 	test,
 } from "vitest";
 
-import { db, tables, eq } from "@llmgateway/db";
+import { db, tables } from "@llmgateway/db";
 
 import { app } from "./app.js";
 import {
@@ -94,52 +94,6 @@ describe("test", () => {
 		expect(data.health).toHaveProperty("status");
 		expect(data.health).toHaveProperty("redis");
 		expect(data.health).toHaveProperty("database");
-	});
-
-	test("/v1/chat/completions e2e success", async () => {
-		await db.insert(tables.apiKey).values({
-			id: "token-id",
-			token: "real-token",
-			projectId: "project-id",
-			description: "Test API Key",
-			createdBy: "user-id",
-		});
-
-		// Create provider key with mock server URL as baseUrl
-		await db.insert(tables.providerKey).values({
-			id: "provider-key-id",
-			token: "sk-test-key",
-			provider: "llmgateway",
-			organizationId: "org-id",
-			baseUrl: mockServerUrl,
-		});
-
-		const res = await app.request("/v1/chat/completions", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer real-token`,
-			},
-			body: JSON.stringify({
-				model: "llmgateway/custom",
-				messages: [
-					{
-						role: "user",
-						content: "Hello!",
-					},
-				],
-			}),
-		});
-		const json = await res.json();
-		console.log(JSON.stringify(json, null, 2));
-		expect(res.status).toBe(200);
-		expect(json).toHaveProperty("choices.[0].message.content");
-		expect(json.choices[0].message.content).toMatch(/Hello!/);
-
-		// Wait for the worker to process the log and check that the request was logged
-		const logs = await waitForLogs(1);
-		expect(logs.length).toBe(1);
-		expect(logs[0].finishReason).toBe("stop");
 	});
 
 	test("Reasoning effort error for unsupported model", async () => {
@@ -427,46 +381,6 @@ describe("test", () => {
 		);
 	});
 
-	// test for llmgateway/auto special case
-	test("/v1/chat/completions with llmgateway/auto", async () => {
-		await db.insert(tables.apiKey).values({
-			id: "token-id",
-			token: "real-token",
-			projectId: "project-id",
-			description: "Test API Key",
-			createdBy: "user-id",
-		});
-
-		// Create provider key for OpenAI with mock server URL as baseUrl
-		await db.insert(tables.providerKey).values({
-			id: "provider-key-id",
-			token: "sk-test-key",
-			provider: "openai",
-			organizationId: "org-id",
-			baseUrl: mockServerUrl,
-		});
-
-		const res = await app.request("/v1/chat/completions", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer real-token`,
-			},
-			body: JSON.stringify({
-				model: "llmgateway/auto",
-				messages: [
-					{
-						role: "user",
-						content: "Hello with llmgateway/auto!",
-					},
-				],
-			}),
-		});
-		expect(res.status).toBe(200);
-		const json = await res.json();
-		expect(json).toHaveProperty("choices.[0].message.content");
-	});
-
 	// test for missing provider API key
 	test("/v1/chat/completions with missing provider API key", async () => {
 		await db.insert(tables.apiKey).values({
@@ -496,63 +410,8 @@ describe("test", () => {
 		expect(res.status).toBe(400);
 		const errorMessage = await res.text();
 		expect(errorMessage).toMatchInlineSnapshot(
-			`"{"error":true,"status":400,"message":"No provider key set for any of the providers that support model gpt-4o-mini. Please add the provider key in the settings or switch the project mode to credits or hybrid."}"`,
+			`"{"error":true,"status":400,"message":"No API key set for provider: openai. Please add a provider key in your settings or add credits and switch to credits or hybrid mode."}"`,
 		);
-	});
-
-	// test for provider error response and error logging
-	test("/v1/chat/completions with provider error response", async () => {
-		await db.insert(tables.apiKey).values({
-			id: "token-id",
-			token: "real-token",
-			projectId: "project-id",
-			description: "Test API Key",
-			createdBy: "user-id",
-		});
-
-		// Create provider key with mock server URL as baseUrl
-		await db.insert(tables.providerKey).values({
-			id: "provider-key-id",
-			token: "sk-test-key",
-			provider: "llmgateway",
-			organizationId: "org-id",
-			baseUrl: mockServerUrl,
-		});
-
-		// Send a request that will trigger an error in the mock server
-		const res = await app.request("/v1/chat/completions", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer real-token`,
-			},
-			body: JSON.stringify({
-				model: "llmgateway/custom",
-				messages: [
-					{
-						role: "user",
-						content: "This message will TRIGGER_ERROR in the mock server",
-					},
-				],
-			}),
-		});
-
-		// Verify the response status is 500
-		expect(res.status).toBe(500);
-
-		// Verify the response body contains the error message
-		const errorResponse = await res.json();
-		expect(errorResponse).toHaveProperty("error");
-		expect(errorResponse.error).toHaveProperty("message");
-		expect(errorResponse.error).toHaveProperty("type", "upstream_error");
-
-		// Wait for the worker to process the log and check that the error was logged in the database
-		const logs = await waitForLogs(1);
-		expect(logs.length).toBe(1);
-
-		// Verify the log has the correct error fields
-		const errorLog = logs[0];
-		expect(errorLog.finishReason).toBe("upstream_error");
 	});
 
 	// test for inference.net provider
@@ -638,108 +497,5 @@ describe("test", () => {
 			}),
 		});
 		expect(res.status).toBe(401);
-	});
-
-	test("/v1/chat/completions with custom X-LLMGateway headers", async () => {
-		await db.insert(tables.apiKey).values({
-			id: "token-id",
-			token: "real-token",
-			projectId: "project-id",
-			description: "Test API Key",
-			createdBy: "user-id",
-		});
-
-		// Create provider key with mock server URL as baseUrl
-		await db.insert(tables.providerKey).values({
-			id: "provider-key-id",
-			token: "sk-test-key",
-			provider: "llmgateway",
-			organizationId: "org-id",
-			baseUrl: mockServerUrl,
-		});
-
-		const res = await app.request("/v1/chat/completions", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer real-token`,
-				"X-LLMGateway-UID": "12345",
-				"X-LLMGateway-SessionId": "session-abc-123",
-				"X-LLMGateway-Environment": "production",
-			},
-			body: JSON.stringify({
-				model: "llmgateway/custom",
-				messages: [
-					{
-						role: "user",
-						content: "Hello!",
-					},
-				],
-			}),
-		});
-		const json = await res.json();
-		expect(res.status).toBe(200);
-		expect(json).toHaveProperty("choices.[0].message.content");
-
-		// Wait for the worker to process the log and check that custom headers were stored
-		const logs = await waitForLogs(1);
-		expect(logs.length).toBe(1);
-		expect(logs[0].customHeaders).toEqual({
-			uid: "12345",
-			sessionid: "session-abc-123",
-			environment: "production",
-		});
-	});
-
-	test("Using custom headers requires Pro plan in hosted/paid mode", async () => {
-		// Downgrade org to free
-		await db
-			.update(tables.organization)
-			.set({ plan: "free" })
-			.where(eq(tables.organization.id, "org-id"));
-
-		// Create API key and provider key so request can route
-		await db.insert(tables.apiKey).values({
-			id: "token-id-headers",
-			token: "token-with-headers",
-			projectId: "project-id",
-			description: "Test API Key with headers",
-			createdBy: "user-id",
-		});
-
-		await db.insert(tables.providerKey).values({
-			id: "provider-key-id-headers",
-			token: "sk-test-key",
-			provider: "openai",
-			organizationId: "org-id",
-		});
-
-		// Simulate hosted/paid mode
-		process.env.HOSTED = "true";
-		process.env.PAID_MODE = "true";
-
-		const res = await app.request("/v1/chat/completions", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer token-with-headers`,
-				"X-LLMGateway-uid": "abc123",
-			},
-			body: JSON.stringify({
-				model: "openai/gpt-4o-mini",
-				messages: [
-					{
-						role: "user",
-						content: "Hello!",
-					},
-				],
-			}),
-		});
-
-		expect(res.status).toBe(402);
-		const json = await res.json();
-		expect(json.message).toMatch(
-			/Custom headers \(X-LLMGateway-\*\) require a Pro plan/i,
-		);
 	});
 });

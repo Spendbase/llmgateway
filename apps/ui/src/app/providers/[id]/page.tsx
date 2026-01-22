@@ -35,7 +35,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
 
 	const provider = providerDefinitions.find((p) => p.id === id);
 
-	if (!provider || provider.name === "LLM Gateway") {
+	if (!provider) {
 		notFound();
 	}
 
@@ -137,11 +137,9 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
 }
 
 export async function generateStaticParams() {
-	return providerDefinitions
-		.filter((provider) => provider.name !== "LLM Gateway")
-		.map((provider) => ({
-			id: provider.id,
-		}));
+	return providerDefinitions.map((provider) => ({
+		id: provider.id,
+	}));
 }
 
 export async function generateMetadata({
@@ -151,22 +149,22 @@ export async function generateMetadata({
 
 	const provider = providerDefinitions.find((p) => p.id === id);
 
-	if (!provider || provider.name === "LLM Gateway") {
+	if (!provider) {
 		return {};
 	}
 
 	return {
-		title: `${provider.name} - LLM Gateway`,
-		description: `Learn about ${provider.name} integration with LLM Gateway. Access ${provider.name} models through our unified API.`,
+		title: `${provider.name} - LLM API`,
+		description: `Learn about ${provider.name} integration with LLM API. Access ${provider.name} models through our unified API.`,
 		openGraph: {
-			title: `${provider.name} - LLM Gateway`,
-			description: `Learn about ${provider.name} integration with LLM Gateway. Access ${provider.name} models through our unified API.`,
+			title: `${provider.name} - LLM API`,
+			description: `Learn about ${provider.name} integration with LLM API. Access ${provider.name} models through our unified API.`,
 			type: "website",
 		},
 		twitter: {
 			card: "summary_large_image",
-			title: `${provider.name} - LLM Gateway`,
-			description: `Learn about ${provider.name} integration with LLM Gateway.`,
+			title: `${provider.name} - LLM API`,
+			description: `Learn about ${provider.name} integration with LLM API.`,
 		},
 	};
 }

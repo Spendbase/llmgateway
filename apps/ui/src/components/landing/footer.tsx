@@ -11,9 +11,6 @@ import { providers as providerDefinitions } from "@llmgateway/models";
 
 export default function Footer() {
 	const config = useAppConfig();
-	const filteredProviders = providerDefinitions.filter(
-		(p) => p.name !== "LLM Gateway",
-	);
 
 	return (
 		<footer className="border-t border-zinc-200 dark:border-zinc-800 py-12 bg-white dark:bg-black">
@@ -278,7 +275,7 @@ export default function Footer() {
 								Providers
 							</h3>
 							<ul className="space-y-2">
-								{filteredProviders.map((provider) => (
+								{providerDefinitions.map((provider) => (
 									<li key={provider.id}>
 										<Link
 											href={`/providers/${provider.id}`}

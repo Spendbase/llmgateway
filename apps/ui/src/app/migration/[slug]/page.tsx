@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import Footer from "@/components/landing/footer";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 import { getMarkdownOptions } from "@/lib/utils/markdown";
 
 import type { Migration } from "content-collections";
@@ -29,7 +29,7 @@ export default async function MigrationPage({ params }: MigrationPageProps) {
 
 	return (
 		<>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<div className="min-h-screen bg-white text-black dark:bg-black dark:text-white pt-30">
 				<main className="container mx-auto px-4 py-8">
 					<div className="max-w-4xl mx-auto">
@@ -94,17 +94,17 @@ export async function generateMetadata({
 	}
 
 	return {
-		title: `${migration.title} - Migration Guides - LLM Gateway`,
-		description: migration.description || "Migration guide for LLM Gateway",
+		title: `${migration.title} - Migration Guides - LLM API`,
+		description: migration.description || "Migration guide for LLM API",
 		openGraph: {
-			title: `${migration.title} - Migration Guides - LLM Gateway`,
-			description: migration.description || "Migration guide for LLM Gateway",
+			title: `${migration.title} - Migration Guides - LLM API`,
+			description: migration.description || "Migration guide for LLM API",
 			type: "article",
 		},
 		twitter: {
 			card: "summary_large_image",
-			title: `${migration.title} - Migration Guides - LLM Gateway`,
-			description: migration.description || "Migration guide for LLM Gateway",
+			title: `${migration.title} - Migration Guides - LLM API`,
+			description: migration.description || "Migration guide for LLM API",
 		},
 	};
 }
