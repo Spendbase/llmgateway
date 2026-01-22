@@ -174,8 +174,13 @@ const getUsers = createRoute({
 	path: "/users",
 	request: {
 		query: z.object({
-			page: z.string().optional().openapi({ example: "1" }),
-			pageSize: z.string().optional().openapi({ example: "20" }),
+			page: z.coerce.number().int().min(1).default(1).openapi({ example: 1 }),
+			pageSize: z.coerce
+				.number()
+				.int()
+				.min(1)
+				.default(20)
+				.openapi({ example: 20 }),
 		}),
 	},
 	responses: {
@@ -632,11 +637,8 @@ admin.openapi(getUsers, async (c) => {
 	}
 
 	const query = c.req.valid("query");
-	const page = Math.max(1, parseInt(query.page || "1", 10));
-	const pageSize = Math.min(
-		100,
-		Math.max(10, parseInt(query.pageSize || "20", 10)),
-	);
+	const page = query.page;
+	const pageSize = Math.min(100, query.pageSize);
 	const offset = (page - 1) * pageSize;
 
 	const [totalUsersResult] = await db
@@ -661,24 +663,33 @@ admin.openapi(getUsers, async (c) => {
 
 	const userIds = usersData.map((u) => u.id);
 
-	const userOrganizations = await db
-		.select({
-			userId: tables.userOrganization.userId,
-			organizationId: tables.userOrganization.organizationId,
-			organizationName: tables.organization.name,
-			role: tables.userOrganization.role,
-		})
-		.from(tables.userOrganization)
-		.innerJoin(
-			tables.organization,
-			eq(tables.organization.id, tables.userOrganization.organizationId),
-		)
-		.where(
-			and(
-				sql`${tables.userOrganization.userId} = ANY(${userIds})`,
-				eq(tables.organization.status, "active"),
-			),
-		);
+	let userOrganizations: Array<{
+		userId: string;
+		organizationId: string;
+		organizationName: string;
+		role: "owner" | "admin" | "developer";
+	}> = [];
+
+	if (userIds.length > 0) {
+		userOrganizations = await db
+			.select({
+				userId: tables.userOrganization.userId,
+				organizationId: tables.userOrganization.organizationId,
+				organizationName: tables.organization.name,
+				role: tables.userOrganization.role,
+			})
+			.from(tables.userOrganization)
+			.innerJoin(
+				tables.organization,
+				eq(tables.organization.id, tables.userOrganization.organizationId),
+			)
+			.where(
+				and(
+					sql`${tables.userOrganization.userId} = ANY(${userIds})`,
+					eq(tables.organization.status, "active"),
+				),
+			);
+	}
 
 	const users = usersData.map((user) => ({
 		id: user.id,
