@@ -16,7 +16,7 @@ export function getConfig(): AppConfig {
 		apiUrl,
 		apiBackendUrl: process.env.API_BACKEND_URL || apiUrl,
 		githubUrl:
-			process.env.GITHUB_URL || "https://github.com/theopenco/llmgateway",
+			process.env.GITHUB_URL || "https://github.com/Spendbase/llmgateway",
 		discordUrl: process.env.DISCORD_URL || "https://discord.gg/gcqcZeYWEz",
 		twitterUrl: process.env.TWITTER_URL || "https://x.com/llmgateway",
 		docsUrl: process.env.DOCS_URL || "http://localhost:3005",
