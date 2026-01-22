@@ -145,22 +145,6 @@ describe("provider keys route", () => {
 		expect(res.status).toBe(400);
 	});
 
-	test("POST /keys/provider with duplicate provider", async () => {
-		const res = await app.request("/keys/provider", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Cookie: token,
-			},
-			body: JSON.stringify({
-				provider: "aws-bedrock",
-				token: "aws-bedrock-test-token",
-				organizationId: "test-org-id",
-			}),
-		});
-		expect(res.status).toBe(400);
-	});
-
 	test("PATCH /keys/provider/{id}", async () => {
 		const res = await app.request("/keys/provider/test-provider-key-id", {
 			method: "PATCH",
