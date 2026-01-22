@@ -49,7 +49,7 @@ macOS/Linux:
       "npm": "@ai-sdk/openai-compatible",
       "name": "LLM Gateway",
       "options": {
-        "baseURL": "https://api.llmapi.ai/v1"
+        "baseURL": "https://internal.llmapi.ai/v1"
       },
       "models": {
         "gpt-5": {
@@ -173,7 +173,7 @@ Make sure the provider ID in your `config.json` matches exactly: `"llmgateway"` 
 
 ### 404 Not Found errors
 
-Verify your `baseURL` is set to `https://api.llmapi.ai/v1` (note the `/v1` at the end).
+Verify your `baseURL` is set to `https://internal.llmapi.ai/v1` (note the `/v1` at the end).
 
 ### Models not showing up
 

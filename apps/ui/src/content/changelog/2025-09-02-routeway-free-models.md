@@ -20,7 +20,7 @@ We're excited to expand our **auto-routing capabilities** with **5 new free mode
 **Example Usage**: Use auto-routing with the `free_models_only` flag to prioritize these cost-effective models:
 
 ```bash
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
