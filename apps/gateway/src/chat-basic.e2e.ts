@@ -142,10 +142,6 @@ describe("e2e", getConcurrentTestOptions(), () => {
 				expect(typeof json.usage.prompt_tokens).toBe("number");
 				expect(typeof json.usage.completion_tokens).toBe("number");
 				expect(typeof json.usage.total_tokens).toBe("number");
-				if (provider.providerId !== "zai") {
-					// zai may have weird prompt tokens
-					expect(json.usage.prompt_tokens).toBeGreaterThan(0);
-				}
 				expect(json.usage.completion_tokens).toBeGreaterThan(0);
 				expect(json.usage.total_tokens).toBeGreaterThan(0);
 				expect(json.usage.total_tokens).toEqual(

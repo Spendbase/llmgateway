@@ -132,13 +132,51 @@ curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
 
 Available Z.AI models:
 
-| Model           | Price       | Description                                                   |
-| --------------- | ----------- | ------------------------------------------------------------- |
-| `zai/cogview-4` | $0.01/image | CogView-4 with bilingual support and excellent text rendering |
+| Model           | Price        | Description                                                                                                         |
+| --------------- | ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `zai/cogview-4` | $0.01/image  | CogView-4 with bilingual support and excellent text rendering                                                       |
+| `zai/glm-image` | $0.015/image | GLM-Image with hybrid auto-regressive architecture, excellent for text-rendering and knowledge-intensive generation |
 
 <Callout type="info">
 	CogView-4 supports both Chinese and English prompts and excels at generating
 	images with embedded text.
+</Callout>
+
+### ByteDance Models
+
+```bash
+curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "bytedance/seedream-4-5",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Generate an image of a futuristic cyberpunk city at night"
+      }
+    ],
+    "image_config": {
+      "image_size": "2048x2048"
+    }
+  }'
+```
+
+| Parameter    | Type   | Description                                                                                      |
+| ------------ | ------ | ------------------------------------------------------------------------------------------------ |
+| `image_size` | string | Image dimensions in `WIDTHxHEIGHT` format. Examples: `"1024x1024"`, `"2048x2048"`, `"4096x4096"` |
+
+Available ByteDance models:
+
+| Model                    | Price        | Description                                                     |
+| ------------------------ | ------------ | --------------------------------------------------------------- |
+| `bytedance/seedream-4-0` | $0.035/image | High-quality text-to-image generation with 2K default output    |
+| `bytedance/seedream-4-5` | $0.045/image | Enhanced quality and consistency with improved prompt adherence |
+
+<Callout type="info">
+	Seedream models support up to 2-10 reference images for multi-image fusion and
+	generation. The default output resolution is 2048×2048 (2K), with support up
+	to 4096×4096 (4K).
 </Callout>
 
 ## Response Format

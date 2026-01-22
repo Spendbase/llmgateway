@@ -37,14 +37,6 @@ export function getProviderEndpoint(
 		url = baseUrl;
 	} else {
 		switch (provider) {
-			case "llmgateway":
-				if (model === "custom" || model === "auto") {
-					// For custom model, use a default URL for testing
-					url = "https://api.openai.com";
-				} else {
-					throw new Error(`Provider ${provider} requires a baseUrl`);
-				}
-				break;
 			case "openai":
 				url = "https://api.openai.com";
 				break;
@@ -57,59 +49,6 @@ export function getProviderEndpoint(
 			case "google-vertex":
 				url = "https://aiplatform.googleapis.com";
 				break;
-			case "inference.net":
-				url = "https://api.inference.net";
-				break;
-			case "together.ai":
-				url = "https://api.together.ai";
-				break;
-			case "cloudrift":
-				url = "https://inference.cloudrift.ai";
-				break;
-			case "mistral":
-				url = "https://api.mistral.ai";
-				break;
-			case "xai":
-				url = "https://api.x.ai";
-				break;
-			case "groq":
-				url = "https://api.groq.com/openai";
-				break;
-			case "cerebras":
-				url = "https://api.cerebras.ai";
-				break;
-			case "deepseek":
-				url = "https://api.deepseek.com";
-				break;
-			case "perplexity":
-				url = "https://api.perplexity.ai";
-				break;
-			case "novita":
-				url = "https://api.novita.ai/v3/openai";
-				break;
-			case "moonshot":
-				url = "https://api.moonshot.ai";
-				break;
-			case "alibaba":
-				// Use different base URL for image generation vs chat completions
-				if (imageGenerations) {
-					url = "https://dashscope-intl.aliyuncs.com";
-				} else {
-					url = "https://dashscope-intl.aliyuncs.com/compatible-mode";
-				}
-				break;
-			case "nebius":
-				url = "https://api.studio.nebius.com";
-				break;
-			case "zai":
-				url = "https://api.z.ai";
-				break;
-			case "routeway":
-				url = "https://api.routeway.ai";
-				break;
-			case "nanogpt":
-				url = "https://nano-gpt.com/api";
-				break;
 			case "aws-bedrock":
 				url =
 					getProviderEnvValue(
@@ -118,29 +57,6 @@ export function getProviderEndpoint(
 						configIndex,
 						"https://bedrock-runtime.us-east-1.amazonaws.com",
 					) || "https://bedrock-runtime.us-east-1.amazonaws.com";
-				break;
-			// case "azure": {
-			// 	const resource =
-			// 		providerKeyOptions?.azure_resource ||
-			// 		getProviderEnvValue("azure", "resource", configIndex);
-
-			// 	if (!resource) {
-			// 		const azureEnv = getProviderEnvConfig("azure");
-			// 		throw new Error(
-			// 			`Azure resource is required - set via provider options or ${azureEnv?.required.resource || "LLM_AZURE_RESOURCE"} env var`,
-			// 		);
-			// 	}
-			// 	url = `https://${resource}.openai.azure.com`;
-			// 	break;
-			// }
-			case "canopywave":
-				url = "https://inference.canopywave.io";
-				break;
-			case "custom":
-				if (!baseUrl) {
-					throw new Error(`Custom provider requires a baseUrl`);
-				}
-				url = baseUrl;
 				break;
 			default:
 				throw new Error(`Provider ${provider} requires a baseUrl`);
@@ -217,15 +133,6 @@ export function getProviderEndpoint(
 				? `${baseEndpoint}?${queryParams.join("&")}`
 				: baseEndpoint;
 		}
-		case "perplexity":
-			return `${url}/chat/completions`;
-		case "novita":
-			return `${url}/chat/completions`;
-		case "zai":
-			if (imageGenerations) {
-				return `${url}/api/paas/v4/images/generations`;
-			}
-			return `${url}/api/paas/v4/chat/completions`;
 		case "aws-bedrock": {
 			const prefix =
 				providerKeyOptions?.aws_bedrock_region_prefix ||
@@ -235,35 +142,6 @@ export function getProviderEndpoint(
 			const endpoint = stream ? "converse-stream" : "converse";
 			return `${url}/model/${prefix}${modelName}/${endpoint}`;
 		}
-		// case "azure": {
-		// 	const deploymentType =
-		// 		providerKeyOptions?.azure_deployment_type ||
-		// 		getProviderEnvValue(
-		// 			"azure",
-		// 			"deploymentType",
-		// 			configIndex,
-		// 			"ai-foundry",
-		// 		) ||
-		// 		"ai-foundry";
-
-		// 	if (deploymentType === "openai") {
-		// 		// Traditional Azure (deployment-based)
-		// 		const apiVersion =
-		// 			providerKeyOptions?.azure_api_version ||
-		// 			getProviderEnvValue(
-		// 				"azure",
-		// 				"apiVersion",
-		// 				configIndex,
-		// 				"2024-10-21",
-		// 			) ||
-		// 			"2024-10-21";
-
-		// 		return `${url}/openai/deployments/${modelName}/chat/completions?api-version=${apiVersion}`;
-		// 	} else {
-		// 		// Azure AI Foundry (unified endpoint)
-		// 		return `${url}/openai/v1/chat/completions`;
-		// 	}
-		// }
 		case "openai": {
 			// Use responses endpoint for models that support responses API
 			if (model) {
@@ -288,24 +166,6 @@ export function getProviderEndpoint(
 			}
 			return `${url}/v1/chat/completions`;
 		}
-		case "alibaba":
-			if (imageGenerations) {
-				return `${url}/api/v1/services/aigc/multimodal-generation/generation`;
-			}
-			return `${url}/v1/chat/completions`;
-		case "inference.net":
-		case "llmgateway":
-		case "cloudrift":
-		case "xai":
-		case "groq":
-		case "cerebras":
-		case "deepseek":
-		case "moonshot":
-		case "nebius":
-		case "routeway":
-		case "nanogpt":
-		case "canopywave":
-		case "custom":
 		default:
 			return `${url}/v1/chat/completions`;
 	}

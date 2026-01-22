@@ -73,6 +73,7 @@ app.use(
 			"https://docs.llmapi.ai",
 			"http://localhost:3002",
 			"http://localhost:3003",
+			"http://localhost:3004",
 			"http://localhost:3005",
 			"http://localhost:3006",
 		],
