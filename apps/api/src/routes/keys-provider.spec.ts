@@ -154,6 +154,7 @@ describe("provider keys route", () => {
 			},
 			body: JSON.stringify({
 				provider: "aws-bedrock",
+				token: "aws-bedrock-test-token",
 				organizationId: "test-org-id",
 			}),
 		});
