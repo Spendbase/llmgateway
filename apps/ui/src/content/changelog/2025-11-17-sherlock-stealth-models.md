@@ -69,7 +69,7 @@ Use these models just like any other model in our gateway:
 
 ```bash
 curl -X POST https://internal.llmapi.ai/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "sherlock/sherlock-dash-alpha",

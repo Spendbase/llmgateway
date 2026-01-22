@@ -90,7 +90,7 @@ If you want to test the endpoint directly, you can make manual requests:
 
 ```bash
 curl -X POST "https://internal.llmapi.ai/v1/messages" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-5",

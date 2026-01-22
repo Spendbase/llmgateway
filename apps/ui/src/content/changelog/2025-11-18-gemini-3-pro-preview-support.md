@@ -46,7 +46,7 @@ Gemini 3 Pro Preview comes with comprehensive capabilities:
 
 ```bash
 curl -X POST https://internal.llmapi.ai/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "google-ai-studio/gemini-3-pro-preview",
@@ -58,7 +58,7 @@ curl -X POST https://internal.llmapi.ai/v1/chat/completions \
 
 ```bash
 curl -X POST https://internal.llmapi.ai/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "google-vertex/gemini-3-pro-preview",
