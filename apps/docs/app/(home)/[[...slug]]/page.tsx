@@ -55,7 +55,7 @@ export default async function Page(props: {
 	}
 
 	const time = await getGithubLastEdit({
-		owner: "theopenco",
+		owner: "spendbase",
 		repo: "llmgateway",
 		path: `apps/docs/content/${page.path}`,
 	});
@@ -74,7 +74,7 @@ export default async function Page(props: {
 			<div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
 				<ViewOptions
 					markdownUrl={`${page.url}.mdx`}
-					githubUrl={`https://github.com/theopenco/llmgateway/blob/main/apps/docs/content/${page.path}`}
+					githubUrl={`https://github.com/Spendbase/llmgateway/blob/main/apps/docs/content/${page.path}`}
 				/>
 			</div>
 			<DocsTitle>{page.data.title}</DocsTitle>
@@ -92,7 +92,7 @@ export default async function Page(props: {
 					"use server";
 					posthog.capture("on_rate_docs", feedback);
 					return {
-						githubUrl: `https://github.com/theopenco/llmgateway/blob/main/apps/docs/content${url}.mdx`,
+						githubUrl: `https://github.com/Spendbase/llmgateway/blob/main/apps/docs/content${url}.mdx`,
 					};
 				}}
 			/>

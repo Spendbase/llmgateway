@@ -15,7 +15,7 @@ const docsOptions: DocsLayoutProps = {
 		{
 			type: "custom",
 			children: (
-				<GithubInfo owner="theopenco" repo="llmgateway" className="lg:-mx-2" />
+				<GithubInfo owner="spendbase" repo="llmgateway" className="lg:-mx-2" />
 			),
 		},
 	],
