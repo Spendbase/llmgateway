@@ -2,18 +2,18 @@ import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 
 import Footer from "@/components/landing/footer";
-import { HeroRSC } from "@/components/landing/hero-rsc";
+import { Hero } from "@/components/landing/hero";
 
 import type { Migration } from "content-collections";
 
 export const metadata = {
-	title: "Migration Guides | LLM Gateway",
+	title: "Migration Guides | LLM API",
 	description:
-		"Step-by-step guides to migrate from OpenRouter, Vercel AI Gateway, LiteLLM, and other LLM providers to LLM Gateway.",
+		"Step-by-step guides to migrate from OpenRouter, Vercel AI Gateway, LiteLLM, and other LLM providers to LLM API.",
 	openGraph: {
-		title: "Migration Guides | LLM Gateway",
+		title: "Migration Guides | LLM API",
 		description:
-			"Step-by-step guides to migrate from OpenRouter, Vercel AI Gateway, LiteLLM, and other LLM providers to LLM Gateway.",
+			"Step-by-step guides to migrate from OpenRouter, Vercel AI Gateway, LiteLLM, and other LLM providers to LLM API.",
 	},
 };
 
@@ -42,7 +42,7 @@ export default async function MigrationPage() {
 
 	return (
 		<div>
-			<HeroRSC navbarOnly />
+			<Hero navbarOnly>{null}</Hero>
 			<section className="py-20 sm:py-28">
 				<div className="container mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="mx-auto max-w-2xl text-center mb-16">

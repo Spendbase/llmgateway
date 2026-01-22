@@ -24,7 +24,7 @@ export default async function ProviderOgImage({ params }: ImageProps) {
 
 		const provider = providerDefinitions.find((p) => p.id === decodedId);
 
-		if (!provider || provider.name === "LLM Gateway") {
+		if (!provider) {
 			return new ImageResponse(
 				(
 					<div
