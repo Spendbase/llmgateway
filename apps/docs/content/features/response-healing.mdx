@@ -8,7 +8,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 # Response Healing
 
-Response Healing is a plugin that automatically validates and repairs malformed JSON responses from AI models. When enabled, LLM Gateway ensures that API responses conform to your specified schemas even when the model's formatting is imperfect.
+Response Healing is a plugin that automatically validates and repairs malformed JSON responses from AI models. When enabled, LLM API ensures that API responses conform to your specified schemas even when the model's formatting is imperfect.
 
 ## Why Response Healing?
 
@@ -44,7 +44,7 @@ curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
 
 ## How It Works
 
-When Response Healing is enabled, LLM Gateway applies a series of repair strategies to malformed JSON responses:
+When Response Healing is enabled, LLM API applies a series of repair strategies to malformed JSON responses:
 
 ### 1. Markdown Extraction
 
