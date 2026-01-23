@@ -18,6 +18,7 @@ export function getProviderEndpoint(
 	providerKeyOptions?: ProviderKeyOptions,
 	configIndex?: number,
 	imageGenerations?: boolean,
+	isOAuth2?: boolean,
 ): string {
 	let modelName = model;
 	if (model && model !== "custom") {
@@ -123,7 +124,9 @@ export function getProviderEndpoint(
 			}
 
 			const queryParams = [];
-			if (token) {
+			// Only add API key to URL for non-OAuth2 authentication
+			// OAuth2 tokens go in Authorization header instead
+			if (token && !isOAuth2) {
 				queryParams.push(`key=${token}`);
 			}
 			if (stream) {
