@@ -2,7 +2,47 @@ import { GoogleAuth } from "google-auth-library";
 
 import { logger } from "@llmgateway/logger";
 
+import type { AuthClient } from "google-auth-library";
+
 const GOOGLE_CLOUD_SCOPES = ["https://www.googleapis.com/auth/cloud-platform"];
+
+/**
+ * Cached Google Auth client promise to avoid recreating on every request
+ * Initialized once and reused across all function calls
+ */
+let cachedAuthClientPromise: Promise<AuthClient> | null = null;
+
+/**
+ * Get or create the cached Google Auth client
+ * Creates a single GoogleAuth instance and client for reuse across requests
+ */
+async function getOrCreateAuthClient(): Promise<AuthClient> {
+	if (cachedAuthClientPromise) {
+		return await cachedAuthClientPromise;
+	}
+
+	// Create the auth client promise (only once)
+	cachedAuthClientPromise = (async () => {
+		const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+
+		const auth = credentialsJson
+			? new GoogleAuth({
+					credentials: JSON.parse(credentialsJson),
+					scopes: GOOGLE_CLOUD_SCOPES,
+				})
+			: new GoogleAuth({
+					scopes: GOOGLE_CLOUD_SCOPES,
+					// Will use GOOGLE_APPLICATION_CREDENTIALS env var or other ADC sources
+				});
+
+		// Get authenticated client once and cache it
+		const client = await auth.getClient();
+		logger.debug("Google Auth client initialized and cached");
+		return client;
+	})();
+
+	return await cachedAuthClientPromise;
+}
 
 /**
  * Get OAuth2 access token for Google Vertex AI using Application Default Credentials (ADC)
@@ -24,21 +64,8 @@ const GOOGLE_CLOUD_SCOPES = ["https://www.googleapis.com/auth/cloud-platform"];
  */
 export async function getGoogleVertexToken(): Promise<string> {
 	try {
-		// Check for inline JSON credentials first (Docker/K8s friendly)
-		const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-
-		const auth = credentialsJson
-			? new GoogleAuth({
-					credentials: JSON.parse(credentialsJson),
-					scopes: GOOGLE_CLOUD_SCOPES,
-				})
-			: new GoogleAuth({
-					scopes: GOOGLE_CLOUD_SCOPES,
-					// Will use GOOGLE_APPLICATION_CREDENTIALS env var or other ADC sources
-				});
-
-		// Get authenticated client
-		const client = await auth.getClient();
+		// Use cached auth client
+		const client = await getOrCreateAuthClient();
 
 		// Get access token (library handles caching and refresh automatically)
 		const tokenResponse = await client.getAccessToken();
@@ -92,19 +119,8 @@ export async function hasGoogleVertexCredentials(): Promise<boolean> {
 	// Full ADC probe: try to get a client from the entire credential chain
 	// (includes gcloud CLI, metadata server, etc.)
 	try {
-		const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-
-		const auth = credentialsJson
-			? new GoogleAuth({
-					credentials: JSON.parse(credentialsJson),
-					scopes: GOOGLE_CLOUD_SCOPES,
-				})
-			: new GoogleAuth({
-					scopes: GOOGLE_CLOUD_SCOPES,
-				});
-
-		// Attempt to get authenticated client
-		await auth.getClient();
+		// Use the same cached client logic
+		await getOrCreateAuthClient();
 		return true;
 	} catch {
 		// Any error means no valid credentials in ADC chain
