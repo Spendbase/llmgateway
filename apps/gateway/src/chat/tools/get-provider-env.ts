@@ -48,11 +48,31 @@ export async function getProviderEnv(
 					isOAuth2: true,
 				};
 			} catch (error) {
-				logger.warn(
-					"Failed to get Google Vertex OAuth2 token, falling back to API key",
-					error instanceof Error ? error : new Error(String(error)),
-				);
-				// Fall through to API key logic below
+				// Check if API key is configured as fallback
+				const envVar = getProviderEnvVar(usedProvider);
+				const apiKeyConfigured = envVar && !!process.env[envVar];
+
+				if (apiKeyConfigured) {
+					// API key is available, fall through to use it
+					logger.warn(
+						"Failed to get Google Vertex OAuth2 token, falling back to API key",
+						error instanceof Error ? error : new Error(String(error)),
+					);
+					// Fall through to API key logic below
+				} else {
+					// No API key fallback available, surface the OAuth2 error
+					logger.error(
+						"Failed to get Google Vertex OAuth2 token and no API key configured",
+						error instanceof Error ? error : new Error(String(error)),
+					);
+					// Rethrow the original error with additional context
+					const originalError =
+						error instanceof Error ? error : new Error(String(error));
+					throw new HTTPException(500, {
+						message: `Google Vertex AI OAuth2 authentication failed and no API key fallback configured: ${originalError.message}`,
+						cause: originalError,
+					});
+				}
 			}
 		}
 	}
