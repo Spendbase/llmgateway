@@ -767,7 +767,9 @@ export default function ChatPageClient({
 		if (!params.get("model")) {
 			params.set("model", selectedModel);
 		}
-		router.push(params.toString() ? `/?${params.toString()}` : "/");
+		const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+		router.push(newUrl);
+		router.refresh(); // Force server re-fetch
 	};
 
 	const handleOrganizationCreated = (org: Organization) => {
@@ -777,7 +779,9 @@ export default function ChatPageClient({
 		if (!params.get("model")) {
 			params.set("model", selectedModel);
 		}
-		router.push(params.toString() ? `/?${params.toString()}` : "/");
+		const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+		router.push(newUrl);
+		router.refresh(); // Force server re-fetch
 	};
 
 	const handleSelectProject = (project: Project | null) => {
@@ -790,7 +794,9 @@ export default function ChatPageClient({
 		if (!params.get("model")) {
 			params.set("model", selectedModel);
 		}
-		router.push(params.toString() ? `/?${params.toString()}` : "/");
+		const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+		router.push(newUrl);
+		router.refresh(); // Force server re-fetch
 	};
 
 	const handleProjectCreated = (project: Project) => {
@@ -800,7 +806,9 @@ export default function ChatPageClient({
 		if (!params.get("model")) {
 			params.set("model", selectedModel);
 		}
-		router.push(params.toString() ? `/?${params.toString()}` : "/");
+		const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+		router.push(newUrl);
+		router.refresh(); // Force server re-fetch
 	};
 
 	return (
