@@ -37,7 +37,7 @@ export async function getProviderEnv(
 	if (usedProvider === "google-vertex") {
 		if (await hasGoogleVertexCredentials()) {
 			try {
-				logger.info(
+				logger.debug(
 					"Using Google Vertex AI OAuth2 authentication with Application Default Credentials",
 				);
 				const accessToken = await getGoogleVertexToken();
