@@ -26,6 +26,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useUser } from "@/hooks/useUser";
 import { useAuth } from "@/lib/auth-client";
 
 import { Logo } from "./ui/logo";
@@ -45,6 +46,11 @@ export function AdminShell({ children }: AdminShellProps) {
 	const isDashboard = pathname === "/" || pathname === "";
 	const isTokens = pathname === "/tokens";
 	const isOrganizations = pathname === "/organizations";
+
+	const { user, isLoading } = useUser({
+		redirectTo: pathname,
+		redirectWhen: "unauthenticated",
+	});
 
 	const handleSignOut = async () => {
 		await signOut({
@@ -118,17 +124,19 @@ export function AdminShell({ children }: AdminShellProps) {
 						</SidebarMenu>
 					</SidebarGroup>
 				</SidebarContent>
-				<SidebarFooter className="border-t border-sidebar-border/60">
-					<Button
-						variant="ghost"
-						size="sm"
-						className="w-full justify-start gap-2 text-xs text-muted-foreground"
-						onClick={handleSignOut}
-					>
-						<LogOut className="h-3.5 w-3.5" />
-						<span>Sign out</span>
-					</Button>
-				</SidebarFooter>
+				{!!user && !isLoading && (
+					<SidebarFooter className="border-t border-sidebar-border/60">
+						<Button
+							variant="ghost"
+							size="sm"
+							className="w-full justify-start gap-2 text-xs text-muted-foreground"
+							onClick={handleSignOut}
+						>
+							<LogOut className="h-3.5 w-3.5" />
+							<span>Sign out</span>
+						</Button>
+					</SidebarFooter>
+				)}
 			</Sidebar>
 			<SidebarInset>{children}</SidebarInset>
 		</SidebarProvider>

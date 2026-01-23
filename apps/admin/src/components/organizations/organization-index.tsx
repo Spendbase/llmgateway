@@ -14,7 +14,7 @@ export default function OrganizationPage({
 }) {
 	const { user, isLoading } = useUser();
 
-	if (!isLoading && !user?.isAdmin) {
+	if ((!isLoading && !user?.isAdmin) || isLoading) {
 		return <SignInPrompt />;
 	}
 
