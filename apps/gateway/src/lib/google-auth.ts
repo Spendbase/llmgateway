@@ -15,6 +15,7 @@ let cachedAuthClientPromise: Promise<AuthClient> | null = null;
 /**
  * Get or create the cached Google Auth client
  * Creates a single GoogleAuth instance and client for reuse across requests
+ * Clears cache on error to allow retries
  */
 async function getOrCreateAuthClient(): Promise<AuthClient> {
 	if (cachedAuthClientPromise) {
@@ -23,22 +24,28 @@ async function getOrCreateAuthClient(): Promise<AuthClient> {
 
 	// Create the auth client promise (only once)
 	cachedAuthClientPromise = (async () => {
-		const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+		try {
+			const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
-		const auth = credentialsJson
-			? new GoogleAuth({
-					credentials: JSON.parse(credentialsJson),
-					scopes: GOOGLE_CLOUD_SCOPES,
-				})
-			: new GoogleAuth({
-					scopes: GOOGLE_CLOUD_SCOPES,
-					// Will use GOOGLE_APPLICATION_CREDENTIALS env var or other ADC sources
-				});
+			const auth = credentialsJson
+				? new GoogleAuth({
+						credentials: JSON.parse(credentialsJson),
+						scopes: GOOGLE_CLOUD_SCOPES,
+					})
+				: new GoogleAuth({
+						scopes: GOOGLE_CLOUD_SCOPES,
+						// Will use GOOGLE_APPLICATION_CREDENTIALS env var or other ADC sources
+					});
 
-		// Get authenticated client once and cache it
-		const client = await auth.getClient();
-		logger.debug("Google Auth client initialized and cached");
-		return client;
+			// Get authenticated client once and cache it
+			const client = await auth.getClient();
+			logger.debug("Google Auth client initialized and cached");
+			return client;
+		} catch (error) {
+			// Clear cache on error to allow retries
+			cachedAuthClientPromise = null;
+			throw error;
+		}
 	})();
 
 	return await cachedAuthClientPromise;
