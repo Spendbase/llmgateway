@@ -6,6 +6,8 @@ import {
 	KeyRound,
 	LayoutDashboard,
 	LogOut,
+	Server,
+	Sparkles,
 	Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -46,6 +48,8 @@ export function AdminShell({ children }: AdminShellProps) {
 	const isDashboard = pathname === "/" || pathname === "";
 	const isTokens = pathname === "/tokens";
 	const isOrganizations = pathname === "/organizations";
+	const isProviders = pathname.startsWith("/providers");
+	const isModels = pathname.startsWith("/models");
 
 	const { user, isLoading } = useUser({
 		redirectTo: pathname,
@@ -105,6 +109,25 @@ export function AdminShell({ children }: AdminShellProps) {
 									<SidebarMenuButton isActive={isOrganizations} size="lg">
 										<Briefcase className="h-4 w-4" />
 										<span>Organizations</span>
+									</SidebarMenuButton>
+								</Link>
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarGroup>
+					<SidebarGroup>
+						<SidebarGroupLabel>Platform</SidebarGroupLabel>
+						<SidebarMenu>
+							<SidebarMenuItem>
+								<Link href="/providers" className="block">
+									<SidebarMenuButton isActive={isProviders} size="lg">
+										<Server className="h-4 w-4" />
+										<span>Providers</span>
+									</SidebarMenuButton>
+								</Link>
+								<Link href="/models" className="block">
+									<SidebarMenuButton isActive={isModels} size="lg">
+										<Sparkles className="h-4 w-4" />
+										<span>Models</span>
 									</SidebarMenuButton>
 								</Link>
 							</SidebarMenuItem>
