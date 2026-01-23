@@ -1395,6 +1395,7 @@ chat.openapi(completions, async (c) => {
 	let usedToken: string | undefined;
 	let configIndex = 0; // Index for round-robin environment variables
 	let envVarName: string | undefined; // Environment variable name for health tracking
+	let isOAuth2 = false; // Flag for OAuth2 authentication (vs API key)
 
 	if (project.mode === "api-keys") {
 		// Get the provider key from the database using cached helper function
@@ -1459,10 +1460,11 @@ chat.openapi(completions, async (c) => {
 			});
 		}
 
-		const envResult = getProviderEnv(usedProvider);
+		const envResult = await getProviderEnv(usedProvider);
 		usedToken = envResult.token;
 		configIndex = envResult.configIndex;
 		envVarName = envResult.envVarName;
+		isOAuth2 = envResult.isOAuth2 ?? false;
 	} else if (project.mode === "hybrid") {
 		// First try to get the provider key from the database
 		providerKey = await db.query.providerKey.findFirst({
@@ -1524,10 +1526,11 @@ chat.openapi(completions, async (c) => {
 				});
 			}
 
-			const envResult = getProviderEnv(usedProvider);
+			const envResult = await getProviderEnv(usedProvider);
 			usedToken = envResult.token;
 			configIndex = envResult.configIndex;
 			envVarName = envResult.envVarName;
+			isOAuth2 = envResult.isOAuth2 ?? false;
 		}
 	} else {
 		throw new HTTPException(400, {
@@ -1604,6 +1607,7 @@ chat.openapi(completions, async (c) => {
 			providerKey?.options || undefined,
 			configIndex,
 			isImageGeneration,
+			isOAuth2,
 		);
 	} catch (error) {
 		throw new HTTPException(500, {
@@ -2138,6 +2142,7 @@ chat.openapi(completions, async (c) => {
 			try {
 				const headers = getProviderHeaders(usedProvider, usedToken, {
 					webSearchEnabled: !!webSearchTool,
+					isOAuth2,
 				});
 				headers["Content-Type"] = "application/json";
 
@@ -3855,6 +3860,7 @@ chat.openapi(completions, async (c) => {
 	try {
 		const headers = getProviderHeaders(usedProvider, usedToken, {
 			webSearchEnabled: !!webSearchTool,
+			isOAuth2,
 		});
 		headers["Content-Type"] = "application/json";
 
