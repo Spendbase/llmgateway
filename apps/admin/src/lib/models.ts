@@ -52,15 +52,17 @@ export interface Model {
 export async function getModels(): Promise<Model[] | null> {
 	try {
 		const cookieStore = await cookies();
-		const sessionCookie = cookieStore.get("better-auth.session_token");
-
-		if (!sessionCookie) {
-			return null;
-		}
+		const key = "better-auth.session_token";
+		const sessionCookie = cookieStore.get(key);
+		const secureSessionCookie = cookieStore.get(`__Secure-${key}`);
 
 		const response = await fetch(`${API_URL}/internal/models`, {
 			headers: {
-				Cookie: `better-auth.session_token=${sessionCookie.value}`,
+				Cookie: secureSessionCookie
+					? `__Secure-${key}=${secureSessionCookie.value}`
+					: sessionCookie
+						? `${key}=${sessionCookie.value}`
+						: "",
 			},
 			cache: "no-store",
 		});
