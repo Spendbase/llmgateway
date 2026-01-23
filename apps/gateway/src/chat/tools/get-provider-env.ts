@@ -35,7 +35,7 @@ export async function getProviderEnv(
 ): Promise<ProviderEnvResult> {
 	// Special handling for Google Vertex AI - try OAuth2 first
 	if (usedProvider === "google-vertex") {
-		if (hasGoogleVertexCredentials()) {
+		if (await hasGoogleVertexCredentials()) {
 			try {
 				logger.info(
 					"Using Google Vertex AI OAuth2 authentication with Application Default Credentials",

@@ -76,11 +76,38 @@ export async function getGoogleVertexToken(): Promise<string> {
 
 /**
  * Check if Google Vertex AI credentials are configured
- * @returns true if credentials are available
+ * Probes the full ADC (Application Default Credentials) chain by attempting
+ * to create an authenticated client
+ * @returns Promise<true> if credentials are available and valid, false otherwise
  */
-export function hasGoogleVertexCredentials(): boolean {
-	return !!(
+export async function hasGoogleVertexCredentials(): Promise<boolean> {
+	// Quick path: check env vars first
+	if (
 		process.env.GOOGLE_APPLICATION_CREDENTIALS ||
 		process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
-	);
+	) {
+		return true;
+	}
+
+	// Full ADC probe: try to get a client from the entire credential chain
+	// (includes gcloud CLI, metadata server, etc.)
+	try {
+		const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+
+		const auth = credentialsJson
+			? new GoogleAuth({
+					credentials: JSON.parse(credentialsJson),
+					scopes: GOOGLE_CLOUD_SCOPES,
+				})
+			: new GoogleAuth({
+					scopes: GOOGLE_CLOUD_SCOPES,
+				});
+
+		// Attempt to get authenticated client
+		await auth.getClient();
+		return true;
+	} catch {
+		// Any error means no valid credentials in ADC chain
+		return false;
+	}
 }
