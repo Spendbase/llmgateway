@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Linkedin, Share2 } from "lucide-react";
+import { Check, Copy, Share2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/lib/components/button";
@@ -10,7 +10,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/lib/components/dropdown-menu";
-import { XIcon } from "@/lib/icons/XIcon";
+// import { XIcon } from "@/lib/icons/XIcon";
 
 interface ShareButtonsProps {
 	url: string;
@@ -20,8 +20,8 @@ interface ShareButtonsProps {
 export function ShareButtons({ url, title }: ShareButtonsProps) {
 	const [copied, setCopied] = useState(false);
 
-	const encodedUrl = encodeURIComponent(url);
-	const encodedTitle = encodeURIComponent(title);
+	// const encodedUrl = encodeURIComponent(url);
+	// const encodedTitle = encodeURIComponent(title);
 
 	const handleCopy = async () => {
 		await navigator.clipboard.writeText(url);
@@ -29,8 +29,8 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
 		setTimeout(() => setCopied(false), 2000);
 	};
 
-	const xUrl = `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-	const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+	// const xUrl = `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+	// const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
 
 	return (
 		<DropdownMenu>
@@ -49,7 +49,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
 					)}
 					{copied ? "Copied!" : "Copy URL"}
 				</DropdownMenuItem>
-				<DropdownMenuItem asChild className="cursor-pointer">
+				{/* <DropdownMenuItem asChild className="cursor-pointer">
 					<a href={xUrl} target="_blank" rel="noopener noreferrer">
 						<XIcon className="h-4 w-4 mr-2" />
 						Share on X
@@ -60,7 +60,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
 						<Linkedin className="h-4 w-4 mr-2" />
 						Share on LinkedIn
 					</a>
-				</DropdownMenuItem>
+				</DropdownMenuItem> */}
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
