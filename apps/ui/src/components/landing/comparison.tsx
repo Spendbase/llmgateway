@@ -143,12 +143,12 @@ export function Comparison() {
 								optimization
 							</span>
 						</div>
-						<div className="flex items-start gap-2">
+						{/* <div className="flex items-start gap-2">
 							<Check className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
 							<span className="text-foreground">
 								<strong>Can be self hosted</strong> for complete control
 							</span>
-						</div>
+						</div> */}
 						<div className="flex items-start gap-2">
 							<Check className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
 							<span className="text-foreground">

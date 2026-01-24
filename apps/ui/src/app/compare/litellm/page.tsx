@@ -10,7 +10,7 @@ export default function CompareLiteLLMPage() {
 					content={{
 						heading: "Why Choose LLM API Over LiteLLM?",
 						description:
-							"Compare our production-ready managed gateway with advanced analytics, routing, and enterprise features against LiteLLM's self-hosted proxy solution.",
+							"Compare our production-ready managed gateway with advanced analytics, routing, and enterprise features against LiteLLM's {/* self-hosted */} proxy solution.",
 						badges: [
 							"Managed Infrastructure",
 							"Advanced Analytics",
@@ -41,18 +41,18 @@ export async function generateMetadata() {
 	return {
 		title: "LLM API vs LiteLLM - Feature Comparison | LLM API",
 		description:
-			"Compare LLM API's managed infrastructure, advanced analytics, and enterprise features against LiteLLM's self-hosted proxy solution. See why teams choose our production-ready API gateway.",
+			"Compare LLM API's managed infrastructure, advanced analytics, and enterprise features against LiteLLM's {/* self-hosted */} proxy solution. See why teams choose our production-ready API gateway.",
 		openGraph: {
 			title: "LLM API vs LiteLLM - Feature Comparison",
 			description:
-				"Compare LLM API's managed infrastructure, advanced analytics, and enterprise features against LiteLLM's self-hosted proxy solution. See why teams choose our production-ready API gateway.",
+				"Compare LLM API's managed infrastructure, advanced analytics, and enterprise features against LiteLLM's {/* self-hosted */} proxy solution. See why teams choose our production-ready API gateway.",
 			type: "website",
 		},
 		twitter: {
 			card: "summary_large_image",
 			title: "LLM API vs LiteLLM - Feature Comparison",
 			description:
-				"Compare LLM API's managed infrastructure, advanced analytics, and enterprise features against LiteLLM's self-hosted proxy solution.",
+				"Compare LLM API's managed infrastructure, advanced analytics, and enterprise features against LiteLLM's {/* self-hosted */} proxy solution.",
 		},
 	};
 }
