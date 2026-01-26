@@ -58,6 +58,7 @@ export default async function Page(props: {
 		owner: "spendbase",
 		repo: "llmgateway",
 		path: `apps/docs/content/${page.path}`,
+		token: process.env.GITHUB_TOKEN,
 	});
 
 	const MDXContent = page.data.body;
