@@ -5,7 +5,6 @@ import Features from "@/components/landing/features";
 import Footer from "@/components/landing/footer";
 import { Graph } from "@/components/landing/graph";
 import { Hero } from "@/components/landing/hero";
-import { Testimonials } from "@/components/landing/testimonials";
 
 export default function Home() {
 	return (
@@ -14,7 +13,6 @@ export default function Home() {
 			<Features />
 			<Graph />
 			<CodeExample />
-			<Testimonials />
 			<Faq />
 			<CallToAction />
 			<Footer />
