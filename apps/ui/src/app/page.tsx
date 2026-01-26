@@ -1,6 +1,5 @@
 import { CodeExample } from "@/components/landing/code-example";
 import CallToAction from "@/components/landing/cta";
-import { Faq } from "@/components/landing/faq";
 import Features from "@/components/landing/features";
 import Footer from "@/components/landing/footer";
 import { Graph } from "@/components/landing/graph";
@@ -13,7 +12,6 @@ export default function Home() {
 			<Features />
 			<Graph />
 			<CodeExample />
-			<Faq />
 			<CallToAction />
 			<Footer />
 		</>
