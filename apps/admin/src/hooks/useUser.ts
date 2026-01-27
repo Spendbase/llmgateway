@@ -31,8 +31,8 @@ export function useUser(options?: UseUserOptions) {
 		{},
 		{
 			retry: 0,
-			staleTime: 5 * 60 * 1000, // 5 minutes
-			refetchOnWindowFocus: false,
+			staleTime: 0, // retry immediately (fix for mobile login)
+			refetchOnWindowFocus: true,
 		},
 	);
 
