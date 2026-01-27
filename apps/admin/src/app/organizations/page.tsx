@@ -4,10 +4,9 @@ import { fetchServerData } from "@/lib/server-api";
 import type { Organization } from "@/lib/types";
 
 export default async function OrganizationsPage() {
-	const { organizations }: { organizations: Organization[] } =
-		(await fetchServerData("GET", "/admin/organizations")) || {
-			organizations: [],
-		};
+	const data = await fetchServerData<{
+		organizations: Organization[];
+	} | null>("GET", "/admin/organizations");
 
-	return <OrganizationsIndex organizations={organizations} />;
+	return <OrganizationsIndex organizations={data?.organizations || []} />;
 }
