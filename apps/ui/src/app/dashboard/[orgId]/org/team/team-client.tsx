@@ -2,9 +2,11 @@
 
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { FaGoogle } from "react-icons/fa";
 
 import { UpgradeToProDialog } from "@/components/shared/upgrade-to-pro-dialog";
 import { useDashboardNavigation } from "@/hooks/useDashboardNavigation";
+import { useGoogleWorkspace } from "@/hooks/useGoogleWorkspace";
 import {
 	useTeamMembers,
 	useAddTeamMember,
@@ -62,6 +64,10 @@ export function TeamClient() {
 	const addMemberMutation = useAddTeamMember(organizationId);
 	const updateMemberMutation = useUpdateTeamMember(organizationId);
 	const removeMemberMutation = useRemoveTeamMember(organizationId);
+
+	const { connect } = useGoogleWorkspace({
+		organizationId,
+	});
 
 	const [email, setEmail] = useState("");
 	const [role, setRole] = useState<"owner" | "admin" | "developer">(
@@ -140,15 +146,37 @@ export function TeamClient() {
 		});
 	};
 
+	const connectGoogleWorkspace = async () => {
+		try {
+			await connect();
+
+			toast({
+				title: "Success",
+				description: "Google Workspace connected!",
+			});
+		} catch (error) {
+			toast({
+				title: "Failed to connect",
+				description: error.response || "Something went wrong",
+			});
+		}
+	};
+
 	return (
 		<div className="flex flex-col">
 			<div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
 				<div className="flex items-center justify-between">
 					<h2 className="text-3xl font-bold tracking-tight">Team</h2>
 					<Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-						<DialogTrigger asChild>
-							<Button disabled={isRestricted}>Add Member</Button>
-						</DialogTrigger>
+						<div className="flex items-center gap-4">
+							<Button onClick={connectGoogleWorkspace}>
+								<FaGoogle className="mr-2 h-4 w-4" />
+								Connect Google Workspace
+							</Button>
+							<DialogTrigger asChild>
+								<Button disabled={isRestricted}>Add Member</Button>
+							</DialogTrigger>
+						</div>
 						<DialogContent>
 							<DialogHeader>
 								<DialogTitle>Add Team Member</DialogTitle>

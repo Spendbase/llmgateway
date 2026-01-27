@@ -19,6 +19,7 @@ import { redisClient } from "./auth/config.js";
 import { authHandler } from "./auth/handler.js";
 import { tracingMiddleware } from "./middleware/tracing.js";
 import { beacon } from "./routes/beacon.js";
+import { googleWorkspace } from "./routes/google-workspace.js";
 import { routes } from "./routes/index.js";
 import { internalModels } from "./routes/internal-models.js";
 import { referral } from "./routes/referral.js";
@@ -193,3 +194,5 @@ app.get("/docs", swaggerUI({ url: "./json" }));
 app.route("/", authHandler);
 
 app.route("/", routes);
+
+app.route("/google-workspace", googleWorkspace);

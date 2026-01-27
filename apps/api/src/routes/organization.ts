@@ -644,4 +644,128 @@ organization.openapi(getReferralStats, async (c) => {
 	});
 });
 
+const AuthUrlResponseSchema = z.object({
+	url: z
+		.string()
+		.openapi({ description: "The Google OAuth2 URL to redirect the user to" }),
+});
+
+const FetchUsersRequestSchema = z.object({
+	accessToken: z
+		.string()
+		.openapi({ description: "Temporary Google Access Token" }),
+});
+
+const GoogleUserSchema = z.object({
+	email: z.string().email(),
+	firstName: z.string().optional(),
+	lastName: z.string().optional(),
+	fullName: z.string().optional(),
+	department: z.string().optional(),
+});
+
+const FetchUsersResponseSchema = z.array(GoogleUserSchema);
+
+const initiateGoogleWorkspace = createRoute({
+	method: "post",
+	path: "/{id}/google-workspace/initiate",
+	summary: "Get Google OAuth URL",
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: AuthUrlResponseSchema,
+				},
+			},
+			description: "Returns the auth URL",
+		},
+	},
+});
+
+organization.openapi(initiateGoogleWorkspace, async (c) => {
+	const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+
+	const clientId = process.env.GOOGLE_WORKSPACE_CLIENT_ID!;
+	const redirectUri = process.env.GOOGLE_WORKSPACE_REDIRECT_URI!;
+
+	const options = {
+		redirect_uri: redirectUri,
+		client_id: clientId,
+		access_type: "online",
+		response_type: "code",
+		prompt: "consent",
+		scope: [
+			"https://www.googleapis.com/auth/admin.directory.user.readonly",
+			"email",
+			"profile",
+		].join(" "),
+	};
+
+	const qs = new URLSearchParams(options).toString();
+	return c.json({ url: `${rootUrl}?${qs}` });
+});
+
+const fetchUsers = createRoute({
+	method: "post",
+	path: "/{id}/google-workspace/fetch-users",
+	summary: "Fetch users from Google Directory",
+	request: {
+		body: {
+			content: {
+				"application/json": {
+					schema: FetchUsersRequestSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: FetchUsersResponseSchema,
+				},
+			},
+			description: "List of users from Google Workspace",
+		},
+		400: { description: "Bad Request" },
+		500: { description: "Internal Server Error" },
+	},
+});
+
+organization.openapi(fetchUsers, async (c) => {
+	const { accessToken } = c.req.valid("json");
+
+	try {
+		const googleUrl = new URL(
+			"https://admin.googleapis.com/admin/directory/v1/users",
+		);
+		googleUrl.searchParams.append("customer", "my_customer");
+		googleUrl.searchParams.append("maxResults", "100");
+		googleUrl.searchParams.append("query", "isSuspended=false");
+		googleUrl.searchParams.append("orderBy", "email");
+
+		const response = await fetch(googleUrl.toString(), {
+			headers: { Authorization: `Bearer ${accessToken}` },
+		});
+
+		if (!response.ok) {
+			return c.json([], 500);
+		}
+
+		const data = await response.json();
+
+		const users = (data.users || []).map((u: any) => ({
+			email: u.primaryEmail,
+			firstName: u.name?.givenName || "",
+			lastName: u.name?.familyName || "",
+			fullName: u.name?.fullName || "",
+			organization: u.organizations?.[0]?.department || "General",
+		}));
+
+		return c.json(users);
+	} catch {
+		return c.json([], 500);
+	}
+});
+
 export default organization;
