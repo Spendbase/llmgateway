@@ -15,7 +15,9 @@ We're excited to announce Kimi K2 Thinking from **CanopyWave** with an exclusive
 
 ## **Kimi-K2-Thinking** - Advanced Model with Reasoning
 
-**Model ID**: `canopywave/kimi-k2-thinking`
+```bash
+canopywave/kimi-k2-thinking
+```
 
 **Context Window**: 262,144 tokens (262.1K)
 
@@ -28,8 +30,8 @@ Enhanced reasoning and tool calling capabilities
 All models support streaming, tool calling, and JSON output mode:
 
 ```bash
-curl -X POST https://api.llmapi.ai/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "canopywave/kimi-k2-thinking",

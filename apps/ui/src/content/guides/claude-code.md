@@ -71,8 +71,9 @@ When configuring Claude Code, you can use these environment variables:
 
 Specifies the main model to use for primary requests.
 
-- **Default**: `claude-sonnet-4-20250514`
-- **Example**: `export ANTHROPIC_MODEL=gpt-5`
+```bash
+export ANTHROPIC_MODEL=gpt-5
+```
 
 ### Complete Configuration Example
 
@@ -88,8 +89,8 @@ export ANTHROPIC_SMALL_FAST_MODEL=gpt-5-nano
 If you want to test the endpoint directly, you can make manual requests:
 
 ```bash
-curl -X POST "https://api.llmapi.ai/v1/messages" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/messages" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-5",

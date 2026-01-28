@@ -24,7 +24,7 @@ You can use LLM Gateway in two ways:
 ### Using LLM Gateway API
 
 ```bash
-curl -X POST https://api.llmapi.ai/v1/chat/completions \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
   -d '{
@@ -60,7 +60,9 @@ curl -X POST https://api.llmapi.ai/v1/chat/completions \
 
 ## Folder Structure
 
-- `apps/ui`: Vite + React frontend
+- `apps/ui`: Next.js dashboard frontend
+- `apps/playground`: Next.js LLM playground
+- `apps/code`: Next.js Dev Plans + coding tools landing & dashboard
 - `apps/api`: Hono backend
 - `apps/gateway`: API gateway for routing LLM requests
 - `apps/docs`: Documentation site

@@ -1,5 +1,4 @@
 "use client";
-import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { GithubIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -11,9 +10,6 @@ import { providers as providerDefinitions } from "@llmgateway/models";
 
 export default function Footer() {
 	const config = useAppConfig();
-	const filteredProviders = providerDefinitions.filter(
-		(p) => p.name !== "LLM Gateway",
-	);
 
 	return (
 		<footer className="border-t border-zinc-200 dark:border-zinc-800 py-12 bg-white dark:bg-black">
@@ -48,7 +44,7 @@ export default function Footer() {
 							>
 								<XIcon className="h-5 w-5" />
 							</a>
-							<a
+							{/* <a
 								href={config.discordUrl}
 								target="_blank"
 								rel="noopener noreferrer"
@@ -56,7 +52,7 @@ export default function Footer() {
 								aria-label="Discord"
 							>
 								<DiscordLogoIcon className="h-5 w-5" />
-							</a>
+							</a> */}
 						</div>
 					</div>
 
@@ -234,7 +230,7 @@ export default function Footer() {
 										Twitter
 									</a>
 								</li>
-								<li>
+								{/* <li>
 									<a
 										href={config.discordUrl}
 										target="_blank"
@@ -243,7 +239,7 @@ export default function Footer() {
 									>
 										Discord
 									</a>
-								</li>
+								</li> */}
 							</ul>
 						</div>
 
@@ -278,7 +274,7 @@ export default function Footer() {
 								Providers
 							</h3>
 							<ul className="space-y-2">
-								{filteredProviders.map((provider) => (
+								{providerDefinitions.map((provider) => (
 									<li key={provider.id}>
 										<Link
 											href={`/providers/${provider.id}`}

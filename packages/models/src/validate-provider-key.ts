@@ -26,10 +26,6 @@ export async function validateProviderKey(
 	}
 
 	// Skip validation for custom providers since they don't have predefined models
-	if (provider === "custom") {
-		return { valid: true };
-	}
-
 	try {
 		// Determine the validation model first (needed for endpoint URL)
 		let validationModel: string;

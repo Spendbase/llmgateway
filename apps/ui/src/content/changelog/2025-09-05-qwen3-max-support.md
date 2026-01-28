@@ -25,7 +25,10 @@ We're excited to announce support for **Qwen3 Max**, Alibaba's most advanced lan
 
 **Qwen3 Max**
 
-- **Model ID**: `qwen/qwen3-max`
+```bash
+qwen/qwen3-max
+```
+
 - **Provider**: Alibaba Cloud
 - **Context Window**: 256,000 tokens
 - **Input Price**: $3.00 per million tokens
@@ -71,7 +74,7 @@ const { text } = await generateText({
 ```
 
 ```bash
-curl -X POST https://api.llmapi.ai/v1/chat/completions \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

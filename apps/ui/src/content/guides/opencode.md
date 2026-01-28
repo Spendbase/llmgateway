@@ -28,8 +28,17 @@ Create a file named `config.json` in the OpenCode configuration directory:
 
 **Location:**
 
-- **Windows**: `C:\Users\YourUsername\.config\opencode\config.json`
-- **macOS/Linux**: `~/.config/opencode/config.json`
+Windows:
+
+```
+C:\Users\YourUsername\.config\opencode\config.json
+```
+
+macOS/Linux:
+
+```
+~/.config/opencode/config.json
+```
 
 **File contents:**
 
@@ -40,7 +49,7 @@ Create a file named `config.json` in the OpenCode configuration directory:
       "npm": "@ai-sdk/openai-compatible",
       "name": "LLM Gateway",
       "options": {
-        "baseURL": "https://api.llmapi.ai/v1"
+        "baseURL": "https://internal.llmapi.ai/v1"
       },
       "models": {
         "gpt-5": {
@@ -65,7 +74,7 @@ Create a file named `config.json` in the OpenCode configuration directory:
 **Configuration explained:**
 
 - `npm`: The adapter package OpenCode uses to communicate with OpenAI-compatible APIs
-- `baseURL`: LLM Gateway's API endpoint
+- `baseURL`: LLM API's API endpoint
 - `models`: The models you want to use (you can add more from our [models page](https://llmapi.ai/models))
 - `model`: Your default model selection
 
@@ -164,7 +173,7 @@ Make sure the provider ID in your `config.json` matches exactly: `"llmgateway"` 
 
 ### 404 Not Found errors
 
-Verify your `baseURL` is set to `https://api.llmapi.ai/v1` (note the `/v1` at the end).
+Verify your `baseURL` is set to `https://internal.llmapi.ai/v1` (note the `/v1` at the end).
 
 ### Models not showing up
 

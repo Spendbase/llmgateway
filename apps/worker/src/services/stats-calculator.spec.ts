@@ -1,3 +1,4 @@
+import { eq, and } from "drizzle-orm";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import {
@@ -11,8 +12,6 @@ import {
 	organization,
 	project,
 	apiKey,
-	eq,
-	and,
 	user,
 } from "@llmgateway/db";
 

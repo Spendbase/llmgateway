@@ -14,7 +14,7 @@ services:
       POSTGRES_DB: db
       CI: ${CI}
     volumes:
-      - ./packages/db/init:/docker-entrypoint-initdb.d
+      - ./packages/db/init:/docker-entrypoint-initdb.d:Z
 
   redis:
     container_name: redis

@@ -29,7 +29,9 @@ You can now access DeepSeek v3.1 at unprecedented pricing:
 
 ## 🧠 DeepSeek v3.1 Through CanopyWave
 
-**Model ID**: `canopywave/deepseek-v3.1`
+```bash
+canopywave/deepseek-v3.1
+```
 
 **Context Window**: 128,000 tokens
 
@@ -52,7 +54,7 @@ const { text } = await generateText({
 ```
 
 ```bash
-curl -X POST https://api.llmapi.ai/v1/chat/completions \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

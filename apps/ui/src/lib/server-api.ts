@@ -81,7 +81,7 @@ export async function fetchServerData<T>(
 				throw new Error(`Unsupported HTTP method: ${method}`);
 		}
 
-		if (response.error) {
+		if (!response || response.error) {
 			return null;
 		}
 

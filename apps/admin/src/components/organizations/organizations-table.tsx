@@ -1,4 +1,5 @@
 import { DepositCreditsButton } from "@/components/deposit-credits/deposit-credits-dialog";
+import { Badge } from "@/components/ui/badge";
 
 import type { Organization } from "@/lib/types";
 
@@ -8,35 +9,51 @@ export function OrganizationsTable({
 	organizations: Organization[];
 }) {
 	return (
-		<div className="rounded-md border">
-			<table className="w-full text-sm text-left">
-				<thead className="bg-gray-50 text-gray-700">
-					<tr>
-						<th className="p-4">Organization Name</th>
-						<th className="p-4">Billing Email</th>
-						<th className="p-4">Current Credit Balance</th>
-						<th className="p-4">Plan type</th>
-						<th className="p-4 text-center">Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					{organizations.map((org: Organization) => (
-						<tr key={org.id} className="border-t-amber-400">
-							<td className="p-4 font-medium">{org.name}</td>
-							<td className="p-4">{org.billingEmail}</td>
-							<td className="p-4 font-mono">
-								${Number(org.credits).toFixed(2)}
-							</td>
-							<td className="p-4 font-mono">
-								{org.plan ? org.plan.toUpperCase() : "-"}
-							</td>
-							<td className="p-4 flex justify-center">
-								<DepositCreditsButton organization={org} />
-							</td>
+		<div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
+			<div className="overflow-x-auto">
+				<table className="w-full text-sm">
+					<thead className="border-b border-border/60 bg-muted/40">
+						<tr>
+							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+								Organization
+							</th>
+							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+								Billing Email
+							</th>
+							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+								Current Credit Balance
+							</th>
+							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+								Plan type
+							</th>
+							<th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+								Actions
+							</th>
 						</tr>
-					))}
-				</tbody>
-			</table>
+					</thead>
+					<tbody className="divide-y divide-border/40">
+						{organizations.map((org: Organization) => (
+							<tr key={org.id} className="hover:bg-muted/30 transition-colors">
+								<td className="px-4 py-4 font-medium">{org.name}</td>
+								<td className="px-4 py-4 ">{org.billingEmail}</td>
+								<td className="px-4 py-4 font-mono">
+									${Number(org.credits).toFixed(2)}
+								</td>
+								<td className="px-4 py-4 font-mono">
+									<Badge
+										variant={org.plan === "pro" ? "default" : "destructive"}
+									>
+										{org.plan ? org.plan.toUpperCase() : "-"}
+									</Badge>
+								</td>
+								<td className="px-4 py-4 flex justify-center">
+									<DepositCreditsButton organization={org} />
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
 		</div>
 	);
 }

@@ -46,8 +46,8 @@ export function PricingEnterprise() {
 						Enterprise pricing that scales with you
 					</h2>
 					<p className="text-lg text-muted-foreground text-balance leading-relaxed">
-						Choose between self-hosted control or fully managed convenience.
-						Both options include all enterprise features.
+						Choose between {/* self-hosted */} control or fully managed
+						convenience. Both options include all enterprise features.
 					</p>
 				</div>
 				<div className="mx-auto max-w-5xl grid gap-8 lg:grid-cols-2">

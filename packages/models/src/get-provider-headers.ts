@@ -5,6 +5,11 @@ export interface ProviderHeaderOptions {
 	 * Enable web search beta header for Anthropic
 	 */
 	webSearchEnabled?: boolean;
+	/**
+	 * Flag indicating OAuth2 authentication (vs API key)
+	 * When true, token should be added to Authorization header
+	 */
+	isOAuth2?: boolean;
 }
 
 /**
@@ -28,30 +33,32 @@ export function getProviderHeaders(
 			};
 		}
 		case "google-ai-studio":
+			// Google AI Studio uses API key in URL query parameter
+			return {};
 		case "google-vertex":
+			// For OAuth2 authentication, add Bearer token to Authorization header
+			if (options?.isOAuth2) {
+				return {
+					Authorization: `Bearer ${token}`,
+				};
+			}
+			// For API key authentication, token goes in URL query parameter
 			return {};
 		case "aws-bedrock":
 			return {
 				Authorization: `Bearer ${token}`,
 				"Content-Type": "application/json",
 			};
+		case "elevenlabs":
+			return {
+				"xi-api-key": token,
+			};
 		// case "azure":
 		// 	return {
 		// 		"api-key": token,
 		// 	};
 		case "openai":
-		case "inference.net":
-		case "xai":
-		case "groq":
-		case "deepseek":
-		case "perplexity":
-		case "novita":
-		case "moonshot":
 		case "alibaba":
-		case "nebius":
-		case "zai":
-		case "canopywave":
-		case "custom":
 		default:
 			return {
 				Authorization: `Bearer ${token}`,

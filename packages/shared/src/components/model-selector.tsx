@@ -421,19 +421,22 @@ export function ModelSelector({
 		}[] = [];
 		const now = new Date();
 
-		// Sort models by publishedAt date (when added to LLM Gateway), newest first
-		// Falls back to releasedAt if publishedAt is not available
+		// Sort models by createdAt (when added to LLM Gateway), newest first
+		// Falls back to releasedAt if createdAt is not available
+		// Note: createdAt comes from API response, releasedAt is in the models package
 		const sortedModels = [...models].sort((a, b) => {
-			const dateA = a.publishedAt
-				? new Date(a.publishedAt).getTime()
-				: a.releasedAt
-					? new Date(a.releasedAt).getTime()
-					: 0;
-			const dateB = b.publishedAt
-				? new Date(b.publishedAt).getTime()
-				: b.releasedAt
-					? new Date(b.releasedAt).getTime()
-					: 0;
+			const dateA =
+				"createdAt" in a && a.createdAt
+					? new Date(a.createdAt as string | Date).getTime()
+					: a.releasedAt
+						? new Date(a.releasedAt).getTime()
+						: 0;
+			const dateB =
+				"createdAt" in b && b.createdAt
+					? new Date(b.createdAt as string | Date).getTime()
+					: b.releasedAt
+						? new Date(b.releasedAt).getTime()
+						: 0;
 			return dateB - dateA;
 		});
 
@@ -549,9 +552,10 @@ export function ModelSelector({
 				}
 
 				const price = e.mapping.inputPrice || 0;
+				const requestPrice = e.mapping.requestPrice || 0;
 				switch (filters.priceRange) {
 					case "free":
-						return price === 0;
+						return price === 0 && requestPrice === 0;
 					case "low":
 						return price > 0 && price <= 0.000001;
 					case "medium":
@@ -962,7 +966,11 @@ export function ModelSelector({
 												if (isRoot) {
 													const entryKey = `${model.id}-root-${index}`;
 													const _aggregate = getRootAggregateInfo(model);
-													const isFreeRoot = model.free === true;
+													const hasRequestPrice = model.providers.some(
+														(p) => p.requestPrice && p.requestPrice > 0,
+													);
+													const isFreeRoot =
+														model.free === true && !hasRequestPrice;
 													const isSelected =
 														selectedModel?.id === model.id &&
 														!selectedProviderId;
@@ -1036,7 +1044,10 @@ export function ModelSelector({
 												const isDeprecated =
 													mapping!.deprecatedAt &&
 													new Date(mapping!.deprecatedAt) <= new Date();
-												const isFreeMapping = model.free === true;
+												const hasRequestPrice =
+													mapping!.requestPrice && mapping!.requestPrice > 0;
+												const isFreeMapping =
+													model.free === true && !hasRequestPrice;
 												const isSelected =
 													selectedModel?.id === model.id &&
 													selectedProviderId === mapping!.providerId;
