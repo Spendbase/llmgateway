@@ -1,6 +1,7 @@
+import { eq } from "drizzle-orm";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
-import { db, provider, model, modelProviderMapping, eq } from "@llmgateway/db";
+import { db, provider, model, modelProviderMapping } from "@llmgateway/db";
 
 import { syncProvidersAndModels } from "./sync-models.js";
 

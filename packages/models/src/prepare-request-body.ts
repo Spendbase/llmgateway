@@ -8,6 +8,7 @@ import { transformGoogleMessages } from "./transform-google-messages.js";
 
 import type { ProviderId } from "./providers.js";
 import type {
+	AnthropicTextEditorToolInput,
 	BaseMessage,
 	FunctionParameter,
 	OpenAIFunctionToolInput,
@@ -26,6 +27,36 @@ function isFunctionTool(
 	tool: OpenAIToolInput,
 ): tool is OpenAIFunctionToolInput {
 	return tool.type === "function";
+}
+
+/**
+ * Separates tools by type for provider-specific handling
+ * This enables native tool passthrough while maintaining compatibility with generic function tools
+ */
+function separateToolsByType(tools?: OpenAIToolInput[]): {
+	functionTools: OpenAIFunctionToolInput[];
+	webSearchTool?: WebSearchTool;
+	nativeAnthropicTools: AnthropicTextEditorToolInput[];
+} {
+	if (!tools || tools.length === 0) {
+		return { functionTools: [], nativeAnthropicTools: [] };
+	}
+
+	const functionTools: OpenAIFunctionToolInput[] = [];
+	const nativeAnthropicTools: AnthropicTextEditorToolInput[] = [];
+	let webSearchTool: WebSearchTool | undefined;
+
+	for (const tool of tools) {
+		if (isFunctionTool(tool)) {
+			functionTools.push(tool);
+		} else if (tool.type === "web_search") {
+			webSearchTool = tool as WebSearchTool;
+		} else if (tool.type === "text_editor_20250429") {
+			nativeAnthropicTools.push(tool as AnthropicTextEditorToolInput);
+		}
+	}
+
+	return { functionTools, webSearchTool, nativeAnthropicTools };
 }
 
 /**
@@ -558,6 +589,21 @@ export async function prepareRequestBody(
 			// Remove generic tool_choice that was added earlier
 			delete requestBody.tool_choice;
 
+			// Separate tools by type for native tool passthrough
+			const { functionTools, nativeAnthropicTools } =
+				separateToolsByType(tools);
+
+			// Validate that native tools are only used with Anthropic
+			if (nativeAnthropicTools.length > 0) {
+				// This validation happens here as a safeguard, though the gateway should prevent
+				// non-Anthropic providers from reaching this code with native tools
+				if (usedProvider !== "anthropic") {
+					throw new Error(
+						`Native Anthropic tools (text_editor_20250429) are only supported by Anthropic provider, but provider is ${usedProvider}`,
+					);
+				}
+			}
+
 			// Set max_tokens, ensuring it's higher than thinking budget when reasoning is enabled
 			const getThinkingBudget = (effort?: string) => {
 				if (!supportsReasoning) {
@@ -671,16 +717,25 @@ export async function prepareRequestBody(
 				minCacheableChars, // Model-specific minimum cacheable characters
 			);
 
-			// Transform tools from OpenAI format to Anthropic format
-			if (tools && tools.length > 0) {
-				// Filter to only function tools (web_search is handled separately)
-				const functionTools = tools.filter(isFunctionTool);
+			// Transform function tools from OpenAI format to Anthropic format
+			// Native tools are passed through without transformation
+			if (functionTools.length > 0 || nativeAnthropicTools.length > 0) {
+				requestBody.tools = [];
+
+				// Add transformed function tools
 				if (functionTools.length > 0) {
-					requestBody.tools = functionTools.map((tool) => ({
-						name: tool.function.name,
-						description: tool.function.description,
-						input_schema: tool.function.parameters,
-					}));
+					requestBody.tools.push(
+						...functionTools.map((tool) => ({
+							name: tool.function.name,
+							description: tool.function.description,
+							input_schema: tool.function.parameters,
+						})),
+					);
+				}
+
+				// Add native Anthropic tools directly (passthrough without transformation)
+				if (nativeAnthropicTools.length > 0) {
+					requestBody.tools.push(...nativeAnthropicTools);
 				}
 			}
 
@@ -960,7 +1015,12 @@ export async function prepareRequestBody(
 						tools: functionTools.map((tool) => ({
 							toolSpec: {
 								name: tool.function.name,
-								description: tool.function.description,
+								// AWS Bedrock requires description to be non-empty (length >= 1)
+								description:
+									tool.function.description &&
+									tool.function.description.trim().length > 0
+										? tool.function.description
+										: "No description provided",
 								inputSchema: {
 									json: tool.function.parameters,
 								},

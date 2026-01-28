@@ -33,3 +33,26 @@ export type SerializedOrganization = Omit<
 	updatedAt: string;
 	planExpiresAt: string | null;
 };
+
+export interface AdminUser {
+	id: string;
+	name: string | null;
+	email: string;
+	emailVerified: boolean;
+	createdAt: Date;
+	organizations: Array<{
+		organizationId: string;
+		organizationName: string;
+		role: "owner" | "admin" | "developer";
+	}>;
+}
+
+export interface UsersPaginationResponse {
+	users: AdminUser[];
+	pagination: {
+		page: number;
+		pageSize: number;
+		totalUsers: number;
+		totalPages: number;
+	};
+}

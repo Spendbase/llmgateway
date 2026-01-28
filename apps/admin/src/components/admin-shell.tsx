@@ -48,6 +48,7 @@ export function AdminShell({ children }: AdminShellProps) {
 	const isDashboard = pathname === "/" || pathname === "";
 	const isTokens = pathname === "/tokens";
 	const isOrganizations = pathname === "/organizations";
+	const isUsers = pathname === "/users";
 	const isProviders = pathname.startsWith("/providers");
 	const isModels = pathname.startsWith("/models");
 
@@ -74,7 +75,7 @@ export function AdminShell({ children }: AdminShellProps) {
 					<div className="flex h-12 items-center justify-between px-2">
 						<div className="flex items-center gap-2 px-1">
 							<div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
-								<Logo className="h-4 w-4" />
+								<Logo className="h-7 w-7" />
 							</div>
 							<div className="flex flex-col">
 								<span className="text-sm font-semibold leading-tight">
@@ -137,12 +138,12 @@ export function AdminShell({ children }: AdminShellProps) {
 						<SidebarGroupLabel>People</SidebarGroupLabel>
 						<SidebarMenu>
 							<SidebarMenuItem>
-								<SidebarMenuButton size="lg" asChild>
-									<div className="flex w-full items-center gap-2 text-sidebar-foreground/80 hover:text-sidebar-accent-foreground">
+								<Link href="/users" className="block">
+									<SidebarMenuButton isActive={isUsers} size="lg">
 										<Users className="h-4 w-4" />
-										<span>Users (coming soon)</span>
-									</div>
-								</SidebarMenuButton>
+										<span>Users</span>
+									</SidebarMenuButton>
+								</Link>
 							</SidebarMenuItem>
 						</SidebarMenu>
 					</SidebarGroup>
