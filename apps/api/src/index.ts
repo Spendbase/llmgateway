@@ -195,4 +195,4 @@ app.route("/", authHandler);
 
 app.route("/", routes);
 
-app.route("/google-workspace", googleWorkspace);
+app.route("/api/google-workspace", googleWorkspace);

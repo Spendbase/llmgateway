@@ -13,22 +13,20 @@ export function useGoogleWorkspace({ organizationId }: GoogleWorkspaceParams) {
 
 	const initiateMutation = api.useMutation(
 		"post",
-		"/orgs/{organizationId}/google-workspace/initiate",
+		"/orgs/{id}/google-workspace/initiate",
 	);
 
 	const fetchUsersMutation = api.useMutation(
 		"post",
-		"/orgs/{organizationId}/google-workspace/fetch-users",
+		"/orgs/{id}/google-workspace/fetch-users",
 	);
 
 	const connect = async () => {
 		setIsLoading(true);
 		try {
 			const initData = await initiateMutation.mutateAsync({
-				params: { path: { organizationId } },
+				params: { path: { id: organizationId } },
 			});
-
-			console.log(initData);
 
 			if (!initData.url) {
 				throw new Error("No URL returned");
@@ -37,7 +35,7 @@ export function useGoogleWorkspace({ organizationId }: GoogleWorkspaceParams) {
 			const token = await openPopupAndWaitForToken(initData.url);
 
 			const users = await fetchUsersMutation.mutateAsync({
-				params: { path: { organizationId } },
+				params: { path: { id: organizationId } },
 				body: { accessToken: token },
 			});
 
@@ -46,6 +44,7 @@ export function useGoogleWorkspace({ organizationId }: GoogleWorkspaceParams) {
 		} catch (error: any) {
 			console.error(error);
 			toast.error(error.message || "Something went wrong");
+			return error;
 		} finally {
 			setIsLoading(false);
 		}

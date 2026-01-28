@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { FaGoogle } from "react-icons/fa";
 
+import GoogleImportDialog from "@/components/dashboard/google-import-dialog";
 import { UpgradeToProDialog } from "@/components/shared/upgrade-to-pro-dialog";
 import { useDashboardNavigation } from "@/hooks/useDashboardNavigation";
 import { useGoogleWorkspace } from "@/hooks/useGoogleWorkspace";
@@ -56,6 +58,7 @@ export function TeamClient() {
 	const config = useAppConfig();
 	const organizationId = params.orgId as string;
 	const { selectedOrganization } = useDashboardNavigation();
+	const queryClient = useQueryClient();
 
 	const isProPlan = selectedOrganization?.plan === "pro";
 	const isRestricted = config.hosted && !isProPlan;
@@ -74,6 +77,8 @@ export function TeamClient() {
 		"developer",
 	);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+	const existingEmails = data?.members?.map((m) => m.user.email) || [];
 
 	const handleAddMember = async () => {
 		if (!email) {
@@ -154,7 +159,7 @@ export function TeamClient() {
 				title: "Success",
 				description: "Google Workspace connected!",
 			});
-		} catch (error) {
+		} catch (error: any) {
 			toast({
 				title: "Failed to connect",
 				description: error.response || "Something went wrong",
@@ -371,6 +376,17 @@ export function TeamClient() {
 					</CardContent>
 				</Card>
 			</div>
+
+			<GoogleImportDialog
+				isOpen={modalOpen}
+				onClose={() => setModalOpen(false)}
+				accessToken={token}
+				organizationId={organizationId}
+				existingEmails={existingEmails}
+				onSuccess={() => {
+					queryClient.invalidateQueries(["team", orgId]);
+				}}
+			/>
 		</div>
 	);
 }
