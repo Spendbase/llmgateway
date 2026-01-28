@@ -297,9 +297,21 @@ const completionsRequestSchema = z.object({
 					search_context_size: z.enum(["low", "medium", "high"]).optional(),
 					max_uses: z.number().optional(),
 				}),
+				z.object({
+					type: z.literal("text_editor_20250429"),
+					name: z.string().openapi({
+						description:
+							"Name of the text editor tool (e.g., 'str_replace_based_edit_tool')",
+						example: "str_replace_based_edit_tool",
+					}),
+				}),
 			]),
 		)
-		.optional(),
+		.optional()
+		.openapi({
+			description:
+				"Tools available to the model. Supports function tools (cross-provider), web_search tools, and provider-specific native tools like Anthropic's text_editor_20250429 for optimized code editing.",
+		}),
 	tool_choice: z
 		.union([
 			z.literal("auto"),
@@ -1011,6 +1023,32 @@ chat.openapi(completions, async (c) => {
 	);
 	if (!iamValidation.allowed) {
 		throwIamException(iamValidation.reason!);
+	}
+
+	// Validate native Anthropic tools can only be used with Anthropic provider
+	const hasNativeAnthropicTools =
+		tools?.some((tool: any) => tool.type === "text_editor_20250429") ?? false;
+	if (hasNativeAnthropicTools) {
+		// Check if requestedProvider is specified and is not Anthropic
+		if (requestedProvider && requestedProvider !== "anthropic") {
+			throw new HTTPException(400, {
+				message: `Native Anthropic tools (text_editor_20250429) are only supported by Anthropic provider, but provider ${requestedProvider} was requested. Remove the text_editor tool or use anthropic/model-name format.`,
+			});
+		}
+
+		// If no provider is specified, check if the model has Anthropic as a provider option
+		if (!requestedProvider && modelInfo) {
+			const hasAnthropicProvider = modelInfo.providers.some(
+				(p: any) => p.providerId === "anthropic",
+			);
+			if (!hasAnthropicProvider) {
+				throw new HTTPException(400, {
+					message: `Native Anthropic tools (text_editor_20250429) are only supported by Anthropic provider, but model ${requestedModel} does not support Anthropic. Use a model with Anthropic support or remove the text_editor tool.`,
+				});
+			}
+			// Force routing to Anthropic when native tools are present
+			requestedProvider = "anthropic";
+		}
 	}
 
 	// Check uptime for specifically requested providers (not llmgateway or custom)
