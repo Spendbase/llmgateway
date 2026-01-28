@@ -664,6 +664,10 @@ export interface paths {
                                     /** @enum {string} */
                                     search_context_size?: "low" | "medium" | "high";
                                     max_uses?: number;
+                                } | {
+                                    /** @enum {string} */
+                                    type: "text_editor_20250429";
+                                    name: string;
                                 })[] | null;
                                 toolChoice: "none" | "auto" | "required" | {
                                     /** @enum {string} */
@@ -1075,6 +1079,78 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Paginated list of users with organizations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            users: {
+                                id: string;
+                                name: string | null;
+                                email: string;
+                                emailVerified: boolean;
+                                createdAt: string;
+                                organizations: {
+                                    organizationId: string;
+                                    organizationName: string;
+                                    /** @enum {string} */
+                                    role: "owner" | "admin" | "developer";
+                                }[];
+                            }[];
+                            pagination: {
+                                page: number;
+                                pageSize: number;
+                                totalUsers: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

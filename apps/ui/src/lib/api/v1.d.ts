@@ -664,6 +664,10 @@ export interface paths {
                                     /** @enum {string} */
                                     search_context_size?: "low" | "medium" | "high";
                                     max_uses?: number;
+                                } | {
+                                    /** @enum {string} */
+                                    type: "text_editor_20250429";
+                                    name: string;
                                 })[] | null;
                                 toolChoice: "none" | "auto" | "required" | {
                                     /** @enum {string} */

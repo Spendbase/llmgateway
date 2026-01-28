@@ -179,22 +179,38 @@ export const providers = [
 	// 	website: "https://deepseek.com",
 	// 	announcement: null,
 	// },
-	// {
-	// 	id: "alibaba",
-	// 	name: "Alibaba Cloud",
-	// 	description:
-	// 		"Alibaba Cloud's Qwen large language models with OpenAI-compatible API",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_ALIBABA_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#FF6A00",
-	// 	website: "https://www.alibabacloud.com",
-	// 	announcement: null,
-	// },
+	{
+		id: "elevenlabs",
+		name: "ElevenLabs",
+		description:
+			"AI audio platform for lifelike text-to-speech and voice synthesis",
+		env: {
+			required: {
+				apiKey: "LLM_ELEVENLABS_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#000000",
+		website: "https://elevenlabs.io",
+		announcement: null,
+	},
+	{
+		id: "alibaba",
+		name: "Alibaba Cloud",
+		description:
+			"Alibaba Cloud's Qwen large language models with OpenAI-compatible API",
+		env: {
+			required: {
+				apiKey: "LLM_ALIBABA_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#FF6A00",
+		website: "https://www.alibabacloud.com",
+		announcement: null,
+	},
 	// {
 	// 	id: "novita",
 	// 	name: "NovitaAI",

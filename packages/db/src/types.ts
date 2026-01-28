@@ -34,7 +34,16 @@ export const webSearchTool = z.object({
 	max_uses: z.number().optional(),
 });
 
-export const tool = z.union([functionTool, webSearchTool]);
+export const anthropicTextEditorTool = z.object({
+	type: z.literal("text_editor_20250429"),
+	name: z.string(),
+});
+
+export const tool = z.union([
+	functionTool,
+	webSearchTool,
+	anthropicTextEditorTool,
+]);
 
 export const toolChoice = z.union([
 	z.literal("none"),

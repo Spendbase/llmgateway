@@ -50,6 +50,62 @@ export function getProviderEndpoint(
 			case "google-vertex":
 				url = "https://aiplatform.googleapis.com";
 				break;
+			// case "inference.net":
+			// 	url = "https://api.inference.net";
+			// 	break;
+			// case "together.ai":
+			// 	url = "https://api.together.ai";
+			// 	break;
+			// case "cloudrift":
+			// 	url = "https://inference.cloudrift.ai";
+			// 	break;
+			// case "mistral":
+			// 	url = "https://api.mistral.ai";
+			// 	break;
+			// case "xai":
+			// 	url = "https://api.x.ai";
+			// 	break;
+			// case "groq":
+			// 	url = "https://api.groq.com/openai";
+			// 	break;
+			// case "cerebras":
+			// 	url = "https://api.cerebras.ai";
+			// 	break;
+			// case "deepseek":
+			// 	url = "https://api.deepseek.com";
+			// 	break;
+			// case "elevenlabs":
+			// 	url = "https://api.elevenlabs.io";
+			// 	break;
+			// case "perplexity":
+			// 	url = "https://api.perplexity.ai";
+			// 	break;
+			// case "novita":
+			// 	url = "https://api.novita.ai/v3/openai";
+			// 	break;
+			// case "moonshot":
+			// 	url = "https://api.moonshot.ai";
+			// 	break;
+			case "alibaba":
+				// Use different base URL for image generation vs chat completions
+				if (imageGenerations) {
+					url = "https://dashscope-intl.aliyuncs.com";
+				} else {
+					url = "https://dashscope-intl.aliyuncs.com/compatible-mode";
+				}
+				break;
+			// case "nebius":
+			// 	url = "https://api.studio.nebius.com";
+			// 	break;
+			// case "zai":
+			// 	url = "https://api.z.ai";
+			// 	break;
+			// case "routeway":
+			// 	url = "https://api.routeway.ai";
+			// 	break;
+			// case "nanogpt":
+			// 	url = "https://nano-gpt.com/api";
+			// 	break;
 			case "aws-bedrock":
 				url =
 					getProviderEnvValue(

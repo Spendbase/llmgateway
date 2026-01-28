@@ -49,11 +49,16 @@ export function getProviderHeaders(
 				Authorization: `Bearer ${token}`,
 				"Content-Type": "application/json",
 			};
+		case "elevenlabs":
+			return {
+				"xi-api-key": token,
+			};
 		// case "azure":
 		// 	return {
 		// 		"api-key": token,
 		// 	};
 		case "openai":
+		case "alibaba":
 		default:
 			return {
 				Authorization: `Bearer ${token}`,
