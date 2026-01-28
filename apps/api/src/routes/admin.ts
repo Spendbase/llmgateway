@@ -2,7 +2,17 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
-import { and, db, desc, eq, gte, lt, sql, tables } from "@llmgateway/db";
+import {
+	and,
+	db,
+	desc,
+	eq,
+	gte,
+	lt,
+	sql,
+	tables,
+	inArray,
+} from "@llmgateway/db";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -685,7 +695,7 @@ admin.openapi(getUsers, async (c) => {
 			)
 			.where(
 				and(
-					sql`${tables.userOrganization.userId} = ANY(${userIds})`,
+					inArray(tables.userOrganization.userId, userIds),
 					eq(tables.organization.status, "active"),
 				),
 			);
