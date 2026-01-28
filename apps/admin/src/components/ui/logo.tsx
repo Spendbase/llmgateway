@@ -3,12 +3,13 @@ export type LogoProps = React.HTMLAttributes<SVGElement>;
 export const Logo = (props: LogoProps) => (
 	<svg
 		{...props}
-		width="25"
-		height="29"
-		viewBox="0 0 25 29"
+		width="72"
+		height="72"
+		viewBox="0 0 72 72"
 		fill="none"
 		xmlns="http://www.w3.org/2000/svg"
 	>
+		<rect width="72" height="72" rx="8" fill="#3F35FF" />
 		<path
 			d="M6.36685 13.4413L0.444336 10.098L6.36685 6.75467L12.2893 10.098L6.36685 13.4413Z"
 			fill="white"

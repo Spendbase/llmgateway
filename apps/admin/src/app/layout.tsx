@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 	title: "LLM API Admin",
 	description: "Admin dashboard for LLM API.",
 	icons: {
-		icon: "/favicon/favicon.ico?v=2",
+		icon: "/favicon/favicon.svg?v=2",
 	},
 	robots: {
 		index: false,
