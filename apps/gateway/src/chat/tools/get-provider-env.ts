@@ -1,7 +1,12 @@
 import { HTTPException } from "hono/http-exception";
 
+import {
+	getGoogleVertexToken,
+	hasGoogleVertexCredentials,
+} from "@/lib/google-auth.js";
 import { getRoundRobinValue } from "@/lib/round-robin-env.js";
 
+import { logger } from "@llmgateway/logger";
 import {
 	getProviderEnvVar,
 	getProviderEnvConfig,
@@ -12,15 +17,67 @@ export interface ProviderEnvResult {
 	token: string;
 	configIndex: number;
 	envVarName: string;
+	isOAuth2?: boolean; // Flag to indicate OAuth2 token (vs API key)
 }
 
 /**
  * Get provider token from environment variables with round-robin support
  * Supports comma-separated values in environment variables for load balancing
+ *
+ * For Google Vertex AI: Uses OAuth2 authentication via Application Default Credentials
+ * if GOOGLE_APPLICATION_CREDENTIALS is set, otherwise falls back to API key.
+ *
  * @param usedProvider The provider to get the token for
  * @returns Object containing the token and the config index used
  */
-export function getProviderEnv(usedProvider: Provider): ProviderEnvResult {
+export async function getProviderEnv(
+	usedProvider: Provider,
+): Promise<ProviderEnvResult> {
+	// Special handling for Google Vertex AI - try OAuth2 first
+	if (usedProvider === "google-vertex") {
+		if (await hasGoogleVertexCredentials()) {
+			try {
+				logger.debug(
+					"Using Google Vertex AI OAuth2 authentication with Application Default Credentials",
+				);
+				const accessToken = await getGoogleVertexToken();
+				return {
+					token: accessToken,
+					configIndex: 0,
+					envVarName: "GOOGLE_APPLICATION_CREDENTIALS",
+					isOAuth2: true,
+				};
+			} catch (error) {
+				// Check if API key is configured as fallback
+				const envVar = getProviderEnvVar(usedProvider);
+				const apiKeyConfigured = envVar && !!process.env[envVar];
+
+				if (apiKeyConfigured) {
+					// API key is available, fall through to use it
+					logger.warn(
+						"Failed to get Google Vertex OAuth2 token, falling back to API key",
+						error instanceof Error ? error : new Error(String(error)),
+					);
+					// Fall through to API key logic below
+				} else {
+					// No API key fallback available, surface the OAuth2 error
+					logger.error(
+						"Failed to get Google Vertex OAuth2 token and no API key configured",
+						error instanceof Error ? error : new Error(String(error)),
+					);
+					// Rethrow the original error with additional context
+					const originalError =
+						error instanceof Error ? error : new Error(String(error));
+					throw new HTTPException(500, {
+						message: `Google Vertex AI OAuth2 authentication failed and no API key fallback configured: ${originalError.message}`,
+						cause: originalError,
+					});
+				}
+			}
+		}
+	}
+
+	// Standard API key authentication
 	const envVar = getProviderEnvVar(usedProvider);
 	if (!envVar) {
 		throw new HTTPException(500, {
@@ -52,5 +109,10 @@ export function getProviderEnv(usedProvider: Provider): ProviderEnvResult {
 	// Get the next token using round-robin
 	const result = getRoundRobinValue(envVar, envValue);
 
-	return { token: result.value, configIndex: result.index, envVarName: envVar };
+	return {
+		token: result.value,
+		configIndex: result.index,
+		envVarName: envVar,
+		isOAuth2: false,
+	};
 }

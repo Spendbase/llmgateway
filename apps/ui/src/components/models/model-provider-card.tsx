@@ -11,7 +11,6 @@ import {
 	Braces,
 	Play,
 	Share2,
-	Linkedin,
 	Globe,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,7 +32,6 @@ import {
 	TooltipTrigger,
 } from "@/lib/components/tooltip";
 import { useAppConfig } from "@/lib/config";
-import { XIcon } from "@/lib/icons/XIcon";
 import { formatContextSize } from "@/lib/utils";
 
 import { getProviderIcon } from "@llmgateway/shared/components";
@@ -67,7 +65,7 @@ export function ModelProviderCard({
 	const providerStability = provider.stability || modelStability;
 
 	const shareUrl = `${config.appUrl}/models/${encodeURIComponent(modelName)}/${encodeURIComponent(provider.providerId)}`;
-	const shareTitle = `${provider.providerInfo?.name || provider.providerId} - ${modelName} on LLM API`;
+	// const shareTitle = `${provider.providerInfo?.name || provider.providerId} - ${modelName} on LLM API`;
 
 	const getStabilityBadgeProps = (stability?: StabilityLevel) => {
 		switch (stability) {
@@ -196,7 +194,7 @@ export function ModelProviderCard({
 								)}
 								{urlCopied ? "Copied!" : "Copy URL"}
 							</DropdownMenuItem>
-							<DropdownMenuItem asChild className="cursor-pointer">
+							{/* <DropdownMenuItem asChild className="cursor-pointer">
 								<a
 									href={`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
 									target="_blank"
@@ -215,7 +213,7 @@ export function ModelProviderCard({
 									<Linkedin className="h-4 w-4 mr-2" />
 									Share on LinkedIn
 								</a>
-							</DropdownMenuItem>
+							</DropdownMenuItem> */}
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>

@@ -143,7 +143,7 @@ export function Graph() {
 				</Button>
 				<Button variant="outline" asChild>
 					<a
-						href="https://github.com/theopenco/llmgateway/issues/new?assignees=&labels=enhancement%2Cmodel-request&projects=&template=model-request.md&title=%5BModel+Request%5D+"
+						href="https://github.com/Spendbase/llmgateway/issues/new?assignees=&labels=enhancement%2Cmodel-request&projects=&template=model-request.md&title=%5BModel+Request%5D+"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="inline-flex items-center gap-2"

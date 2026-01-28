@@ -1,4 +1,4 @@
-import type { tables, InferSelectModel } from "@llmgateway/db";
+import type { tables } from "@llmgateway/db";
 
 export type User = {
 	id: string;
@@ -6,7 +6,7 @@ export type User = {
 	name: string | null;
 } | null;
 
-type OrganizationBase = InferSelectModel<typeof tables.organization>;
+type OrganizationBase = typeof tables.organization.$inferSelect;
 
 export type Organization = Omit<
 	OrganizationBase,

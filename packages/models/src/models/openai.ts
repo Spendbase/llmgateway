@@ -8,7 +8,6 @@ export const openaiModels = [
 			"Affordable small model for fast, lightweight tasks with text and vision capabilities.",
 		family: "openai",
 		releasedAt: new Date("2024-07-18"),
-		publishedAt: new Date("2024-07-18"),
 		providers: [
 			{
 				providerId: "openai",
@@ -48,7 +47,6 @@ export const openaiModels = [
 			"GPT-4o with native web search capabilities for up-to-date information.",
 		family: "openai",
 		releasedAt: new Date("2024-10-01"),
-		publishedAt: new Date("2024-10-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -74,7 +72,6 @@ export const openaiModels = [
 			"Cost-effective GPT-4o Mini with native web search capabilities.",
 		family: "openai",
 		releasedAt: new Date("2024-10-01"),
-		publishedAt: new Date("2024-10-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -100,7 +97,6 @@ export const openaiModels = [
 			"Original GPT-4 model with strong reasoning and tool use capabilities.",
 		family: "openai",
 		releasedAt: new Date("2023-03-14"),
-		publishedAt: new Date("2023-03-14"),
 		providers: [
 			{
 				test: "skip",
@@ -149,7 +145,6 @@ export const openaiModels = [
 			"Multimodal flagship model with vision, fast responses, and tool support.",
 		family: "openai",
 		releasedAt: new Date("2024-05-13"),
-		publishedAt: new Date("2024-05-13"),
 		providers: [
 			{
 				providerId: "openai",
@@ -193,7 +188,6 @@ export const openaiModels = [
 			"Fast and cost-effective model for simple tasks and conversational applications.",
 		family: "openai",
 		releasedAt: new Date("2022-11-30"),
-		publishedAt: new Date("2022-11-30"),
 		providers: [
 			{
 				providerId: "openai",
@@ -232,7 +226,6 @@ export const openaiModels = [
 			"Enhanced GPT-4 with vision capabilities and improved performance.",
 		family: "openai",
 		releasedAt: new Date("2023-11-06"),
-		publishedAt: new Date("2023-11-06"),
 		providers: [
 			{
 				test: "skip",
@@ -271,7 +264,6 @@ export const openaiModels = [
 		description: "Updated GPT-4 with vision support and parallel tool calls.",
 		family: "openai",
 		releasedAt: new Date("2025-04-14"),
-		publishedAt: new Date("2025-04-14"),
 		providers: [
 			{
 				providerId: "openai",
@@ -314,7 +306,6 @@ export const openaiModels = [
 			"Advanced reasoning model that thinks before responding for complex problem-solving.",
 		family: "openai",
 		releasedAt: new Date("2024-09-12"),
-		publishedAt: new Date("2024-09-12"),
 		providers: [
 			{
 				test: "skip",
@@ -358,7 +349,6 @@ export const openaiModels = [
 			"Smaller, faster reasoning model optimized for coding and math tasks.",
 		family: "openai",
 		releasedAt: new Date("2024-09-12"),
-		publishedAt: new Date("2024-09-12"),
 		providers: [
 			{
 				stability: "unstable" as const,
@@ -402,7 +392,6 @@ export const openaiModels = [
 		description: "Compact version of GPT-4.1 with vision and tool support.",
 		family: "openai",
 		releasedAt: new Date("2025-04-14"),
-		publishedAt: new Date("2025-04-14"),
 		providers: [
 			{
 				providerId: "openai",
@@ -445,7 +434,6 @@ export const openaiModels = [
 			"Ultra-lightweight GPT-4.1 variant for high-volume, cost-sensitive applications.",
 		family: "openai",
 		releasedAt: new Date("2025-04-14"),
-		publishedAt: new Date("2025-04-14"),
 		providers: [
 			{
 				providerId: "openai",
@@ -488,7 +476,6 @@ export const openaiModels = [
 			"Next-generation reasoning model with enhanced problem-solving capabilities.",
 		family: "openai",
 		releasedAt: new Date("2025-06-01"),
-		publishedAt: new Date("2025-06-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -529,7 +516,6 @@ export const openaiModels = [
 			"Compact o3 reasoning model balancing performance and cost for complex tasks.",
 		family: "openai",
 		releasedAt: new Date("2025-06-01"),
-		publishedAt: new Date("2025-06-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -572,7 +558,6 @@ export const openaiModels = [
 		// Based on August 2025 launch from AI timeline:
 		// https://raw.githubusercontent.com/NHLOCAL/AiTimeline/refs/heads/main/_data/timeline.yml
 		releasedAt: new Date("2025-08-01"),
-		publishedAt: new Date("2025-08-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -639,7 +624,6 @@ export const openaiModels = [
 			"Compact GPT-5 variant with reasoning and vision at reduced cost.",
 		family: "openai",
 		releasedAt: new Date("2025-08-01"),
-		publishedAt: new Date("2025-08-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -705,7 +689,6 @@ export const openaiModels = [
 			"Ultra-efficient GPT-5 variant for high-volume applications with reasoning support.",
 		family: "openai",
 		releasedAt: new Date("2025-08-01"),
-		publishedAt: new Date("2025-08-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -771,7 +754,6 @@ export const openaiModels = [
 			"GPT-5 optimized for conversational interactions without tool calling.",
 		family: "openai",
 		releasedAt: new Date("2025-08-01"),
-		publishedAt: new Date("2025-08-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -804,7 +786,6 @@ export const openaiModels = [
 			"Iterative improvement on GPT-5 with enhanced reasoning and tool support.",
 		family: "openai",
 		releasedAt: new Date("2025-11-01"),
-		publishedAt: new Date("2025-11-01"),
 		providers: [
 			{
 				providerId: "openai",
@@ -868,7 +849,6 @@ export const openaiModels = [
 			"Premium GPT-5 tier with extended output limits and advanced reasoning for complex tasks.",
 		family: "openai",
 		releasedAt: new Date("2025-08-01"),
-		publishedAt: new Date("2025-08-01"),
 		providers: [
 			{
 				test: "skip",
@@ -898,8 +878,7 @@ export const openaiModels = [
 		description:
 			"GPT-5.1 specialized for code generation and software development tasks.",
 		family: "openai",
-		releasedAt: new Date("2025-11-01"),
-		publishedAt: new Date("2025-11-01"),
+		releasedAt: new Date("2025-11-13"),
 		providers: [
 			{
 				providerId: "openai",
@@ -947,8 +926,7 @@ export const openaiModels = [
 		description:
 			"Lightweight code-focused model for efficient software development workflows.",
 		family: "openai",
-		releasedAt: new Date("2025-11-01"),
-		publishedAt: new Date("2025-11-01"),
+		releasedAt: new Date("2025-11-12"),
 		providers: [
 			{
 				providerId: "openai",
@@ -998,7 +976,6 @@ export const openaiModels = [
 		description: "Latest GPT-5 model with enhanced reasoning and tool support.",
 		family: "openai",
 		releasedAt: new Date("2025-12-11"),
-		publishedAt: new Date("2025-12-11"),
 		providers: [
 			{
 				providerId: "openai",
@@ -1062,7 +1039,6 @@ export const openaiModels = [
 			"Premium GPT-5.2 model with extended output limits and advanced reasoning for complex tasks.",
 		family: "openai",
 		releasedAt: new Date("2025-12-11"),
-		publishedAt: new Date("2025-12-11"),
 		providers: [
 			{
 				providerId: "openai",
@@ -1111,7 +1087,6 @@ export const openaiModels = [
 			"GPT-5.2 Chat is the ChatGPT production snapshot for chat use. Use it to try the latest chat-focused updates.",
 		family: "openai",
 		releasedAt: new Date("2025-12-11"),
-		publishedAt: new Date("2025-12-11"),
 		providers: [
 			{
 				providerId: "openai",

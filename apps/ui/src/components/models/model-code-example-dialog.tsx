@@ -47,9 +47,9 @@ export function ModelCodeExampleDialog({
 		curl: {
 			label: "cURL",
 			language: "bash",
-			code: `curl -X POST https://api.llmapi.ai/v1/chat/completions \\
+			code: `curl -X POST https://internal.llmapi.ai/v1/chat/completions \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \\
+  -H "Authorization: Bearer $LLM_API_KEY" \\
   -d '{
   "model": "${modelId}",
   "messages": [
@@ -63,8 +63,8 @@ export function ModelCodeExampleDialog({
 			code: `import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: process.env.LLM_GATEWAY_API_KEY, // or your API key string
-  baseURL: "https://api.llmapi.ai/v1/"
+  apiKey: process.env.LLM_API_KEY, // or your API key string
+  baseURL: "https://internal.llmapi.ai/v1/"
 });
 
 const response = await client.chat.completions.create({
@@ -82,7 +82,7 @@ console.log(response.choices[0].message.content);`,
 			code: `import { createLLMGateway } from "@llmgateway/ai-sdk-provider";
 import { generateText } from "ai";
 
-const llmgateway = createLLMGateway({ apiKey: process.env.LLM_GATEWAY_API_KEY });
+const llmgateway = createLLMGateway({ apiKey: process.env.LLM_API_KEY });
 
 const { text } = await generateText({
   model: llmgateway("${modelId}"),

@@ -1,6 +1,6 @@
 ---
 title: Routing
-description: Learn how LLMGateway intelligently routes your requests to the best available models and providers.
+description: Learn how LLM API intelligently routes your requests to the best available models and providers.
 icon: Route
 ---
 
@@ -8,7 +8,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 # Routing
 
-LLMGateway provides flexible and intelligent routing options to help you get the best performance and cost efficiency from your AI applications. Whether you want to use specific models, providers, or let our system automatically optimize your requests, we've got you covered.
+LLM API provides flexible and intelligent routing options to help you get the best performance and cost efficiency from your AI applications. Whether you want to use specific models, providers, or let our system automatically optimize your requests, we've got you covered.
 
 ## Model Selection
 
@@ -17,8 +17,8 @@ LLMGateway provides flexible and intelligent routing options to help you get the
 You can use any model name from our [models page](https://llmapi.ai/models) or discover available models programmatically through the [/v1/models endpoint](/v1_models).
 
 ```bash
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4o",
@@ -28,11 +28,11 @@ curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
 
 ### Model ID Routing
 
-Choose a specific model ID to route to the **best available provider** for that model. LLMGateway's smart routing algorithm considers multiple factors to find the optimal provider across all configured options.
+Choose a specific model ID to route to the **best available provider** for that model. LLM API's smart routing algorithm considers multiple factors to find the optimal provider across all configured options.
 
 #### Smart Routing Algorithm
 
-When you use a model ID without a provider prefix, LLMGateway's intelligent routing system analyzes multiple factors to select the best provider:
+When you use a model ID without a provider prefix, LLM API's intelligent routing system analyzes multiple factors to select the best provider:
 
 **Weighted Scoring System** (based on last 5 minutes of metrics):
 
@@ -96,8 +96,8 @@ To use a specific provider without any fallbacks, prefix the model name with the
 
 ```bash
 # Use OpenAI specifically
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "openai/gpt-4o",
@@ -105,8 +105,8 @@ curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
   }'
 
 # Use the CloudRift provider specifically
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "cloudrift/deepseek-v3",
@@ -116,7 +116,7 @@ curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
 
 #### Low-Uptime Protection
 
-When you specify a provider explicitly, LLMGateway checks the provider's recent uptime (last 5 minutes). If the uptime falls below 90%, the system automatically routes your request to the best available alternative provider to ensure reliability. This protects your application from providers experiencing temporary issues.
+When you specify a provider explicitly, LLM API checks the provider's recent uptime (last 5 minutes). If the uptime falls below 90%, the system automatically routes your request to the best available alternative provider to ensure reliability. This protects your application from providers experiencing temporary issues.
 
 <Callout type="info">
 	If the requested provider has low uptime but no alternative providers are
@@ -130,8 +130,8 @@ If you need to bypass this protection and always use the exact provider you spec
 
 ```bash
 # Force use of a specific provider even if it has low uptime
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -H "X-No-Fallback: true" \
   -d '{
@@ -161,9 +161,9 @@ The auto routing system currently:
 - **Handles large contexts intelligently** by selecting models with appropriate context windows
 
 ```bash
-# Let LLMGateway choose the optimal model
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+# Let LLM API choose the optimal model
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto",
@@ -177,8 +177,8 @@ When using auto routing, you can restrict the selection to only free models (mod
 
 ```bash
 # Auto route to free models only
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto",
@@ -205,8 +205,8 @@ Just specify the `reasoning_effort` value and only a model which supports reason
 
 ```bash
 # Auto route only to reasoning models
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto",
@@ -221,8 +221,8 @@ When using auto routing, you can exclude reasoning models from selection by sett
 
 ```bash
 # Auto route excluding reasoning models
-curl -X POST "https://api.llmapi.ai/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto",

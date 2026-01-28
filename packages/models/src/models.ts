@@ -1,3 +1,4 @@
+import { alibabaModels } from "./models/alibaba.js";
 import { anthropicModels } from "./models/anthropic.js";
 import { googleModels } from "./models/google.js";
 import { openaiModels } from "./models/openai.js";
@@ -220,10 +221,6 @@ export interface ModelDefinition {
 	 * Date when the model was released by the provider
 	 */
 	releasedAt?: Date;
-	/**
-	 * Date when the model was published on LLM Gateway
-	 */
-	publishedAt?: Date;
 }
 
 export const models = [
@@ -239,7 +236,7 @@ export const models = [
 	// ...microsoftModels,
 	// ...minimaxModels,
 	// ...moonshotModels,
-	// ...alibabaModels,
+	...alibabaModels,
 	// ...nousresearchModels,
 	// ...routewayModels,
 	// ...zaiModels,

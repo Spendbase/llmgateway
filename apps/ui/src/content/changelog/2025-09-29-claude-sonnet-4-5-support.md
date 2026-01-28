@@ -17,7 +17,10 @@ We're excited to announce support for **Claude Sonnet 4.5**, the latest balanced
 
 **Claude Sonnet 4.5**
 
-- **Model ID**: `claude-sonnet-4-5`
+```bash
+claude-sonnet-4-5
+```
+
 - **Provider**: Anthropic
 - **Context Window**: 200,000 tokens
 - **Input Price**: $3.00 per million tokens
@@ -44,7 +47,7 @@ const { text } = await generateText({
 ## API
 
 ```bash
-curl -X POST https://api.llmapi.ai/v1/chat/completions \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

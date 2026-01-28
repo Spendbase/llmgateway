@@ -209,7 +209,7 @@ export async function generateAndEmailInvoice(
 
 		await sendTransactionalEmail({
 			to: data.billingEmail,
-			subject: `Invoice ${escapedInvoiceNumber} - LLMGateway`,
+			subject: `Invoice ${escapedInvoiceNumber} - LLM API`,
 			attachments: [
 				{
 					filename: `invoice-${escapedInvoiceNumber}.pdf`,

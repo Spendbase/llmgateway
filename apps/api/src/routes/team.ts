@@ -169,6 +169,14 @@ team.openapi(addMember, async (c) => {
 		});
 	}
 
+	// Block team management for personal orgs (dev plan only)
+	if (userOrganization.organization?.isPersonal) {
+		throw new HTTPException(403, {
+			message:
+				"Team management is not available for personal organizations. Please create a regular organization to invite team members.",
+		});
+	}
+
 	if (userOrganization.role !== "owner" && userOrganization.role !== "admin") {
 		throw new HTTPException(403, {
 			message: "Only owners and admins can add members",
@@ -296,6 +304,14 @@ team.openapi(updateMember, async (c) => {
 	if (!userOrganization) {
 		throw new HTTPException(403, {
 			message: "You do not have access to this organization",
+		});
+	}
+
+	// Block team management for personal orgs (dev plan only)
+	if (userOrganization.organization?.isPersonal) {
+		throw new HTTPException(403, {
+			message:
+				"Team management is not available for personal organizations. Please create a regular organization to invite team members.",
 		});
 	}
 
@@ -430,6 +446,14 @@ team.openapi(removeMember, async (c) => {
 	if (!userOrganization) {
 		throw new HTTPException(403, {
 			message: "You do not have access to this organization",
+		});
+	}
+
+	// Block team management for personal orgs (dev plan only)
+	if (userOrganization.organization?.isPersonal) {
+		throw new HTTPException(403, {
+			message:
+				"Team management is not available for personal organizations. Please create a regular organization to invite team members.",
 		});
 	}
 

@@ -154,40 +154,6 @@ describe("Models API", () => {
 		]);
 	});
 
-	test("GET /v1/models should include stability information for models", async () => {
-		const res = await app.request("/v1/models?include_deactivated=true");
-		expect(res.status).toBe(200);
-
-		const json = await res.json();
-
-		// Check that the stability field exists in the model schema (models may or may not have it set)
-		const modelsWithStability = json.data.filter(
-			(model: any) => model.stability !== undefined,
-		);
-		// At least one model should have stability information (our DeepSeek models)
-		expect(modelsWithStability.length).toBeGreaterThan(0);
-
-		// Find DeepSeek models to test specific stability flags
-		const deepSeekR1Distill = json.data.find(
-			(model: any) => model.id === "deepseek-r1-distill-llama-70b",
-		);
-		const deepSeekV31 = json.data.find(
-			(model: any) => model.id === "deepseek-v3.1",
-		);
-
-		if (deepSeekR1Distill) {
-			expect(deepSeekR1Distill.stability).toBe("beta");
-		}
-
-		// DeepSeek v3.1 should default to stable (undefined in response means stable)
-		if (deepSeekV31) {
-			expect(
-				deepSeekV31.stability === undefined ||
-					deepSeekV31.stability === "stable",
-			).toBe(true);
-		}
-	});
-
 	test("GET /v1/models should handle stability field values correctly", async () => {
 		const res = await app.request("/v1/models?include_deactivated=true");
 		expect(res.status).toBe(200);

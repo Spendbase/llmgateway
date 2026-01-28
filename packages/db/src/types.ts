@@ -34,7 +34,16 @@ export const webSearchTool = z.object({
 	max_uses: z.number().optional(),
 });
 
-export const tool = z.union([functionTool, webSearchTool]);
+export const anthropicTextEditorTool = z.object({
+	type: z.literal("text_editor_20250429"),
+	name: z.string(),
+});
+
+export const tool = z.union([
+	functionTool,
+	webSearchTool,
+	anthropicTextEditorTool,
+]);
 
 export const toolChoice = z.union([
 	z.literal("none"),
@@ -78,11 +87,12 @@ export type Project = Omit<ProjectBase, "status" | "mode"> & {
 
 export type Organization = Omit<
 	OrganizationBase,
-	"status" | "plan" | "retentionLevel"
+	"status" | "plan" | "retentionLevel" | "devPlan"
 > & {
 	plan: "free" | "pro";
 	retentionLevel: "retain" | "none";
 	status: "active" | "inactive" | "deleted" | null;
+	devPlan: "none" | "lite" | "pro" | "max";
 };
 
 export type User = UserBase;
@@ -114,10 +124,18 @@ export type SerializedOrganization = Omit<
 	| "trialStartDate"
 	| "trialEndDate"
 	| "isTrialActive"
+	| "paymentFailureCount"
+	| "lastPaymentFailureAt"
+	| "devPlanBillingCycleStart"
+	| "devPlanStripeSubscriptionId"
+	| "devPlanCancelled"
+	| "devPlanExpiresAt"
 > & {
 	createdAt: string;
 	updatedAt: string;
 	planExpiresAt: string | null;
+	devPlanBillingCycleStart: string | null;
+	devPlanExpiresAt: string | null;
 };
 
 export type SerializedProject = Omit<Project, "createdAt" | "updatedAt"> & {
