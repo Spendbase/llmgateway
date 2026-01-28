@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 	title: "LLM API Chat",
 	description: "Chat with your favorite LLM models through LLM API.",
 	icons: {
-		icon: "/favicon/favicon.ico?v=2",
+		icon: "/favicon/favicon.svg?v=2",
 	},
 	openGraph: {
 		title: "LLM API Chat",
