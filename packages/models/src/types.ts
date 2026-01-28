@@ -134,10 +134,22 @@ export interface OpenAIWebSearchToolInput {
 	max_uses?: number;
 }
 
-// Compatible type for API requests - accepts both function and web_search tools
+// Anthropic native tool types
+/**
+ * Anthropic's native text editor tool for optimized code editing
+ * Uses string replacement instead of diffs for higher reliability
+ * @see https://docs.anthropic.com/en/docs/build-with-claude/tool-use#text-editor-tool
+ */
+export interface AnthropicTextEditorToolInput {
+	type: "text_editor_20250429";
+	name: string;
+}
+
+// Compatible type for API requests - accepts function, web_search, and native tools
 export type OpenAIToolInput =
 	| OpenAIFunctionToolInput
-	| OpenAIWebSearchToolInput;
+	| OpenAIWebSearchToolInput
+	| AnthropicTextEditorToolInput;
 
 export interface AnthropicTool {
 	name: string;
@@ -392,6 +404,33 @@ export function hasMaxTokens(
 	requestBody: ProviderRequestBody,
 ): requestBody is OpenAIRequestBody | AnthropicRequestBody {
 	return "max_tokens" in requestBody;
+}
+
+/**
+ * Type guard to check if a tool is an Anthropic native text editor tool
+ */
+export function isAnthropicNativeTextEditorTool(
+	tool: OpenAIToolInput,
+): tool is AnthropicTextEditorToolInput {
+	return tool.type === "text_editor_20250429";
+}
+
+/**
+ * Type guard to check if a tool is a function tool (generic OpenAI-style)
+ */
+export function isFunctionTool(
+	tool: OpenAIToolInput,
+): tool is OpenAIFunctionToolInput {
+	return tool.type === "function";
+}
+
+/**
+ * Type guard to check if a tool is a web search tool
+ */
+export function isWebSearchTool(
+	tool: OpenAIToolInput,
+): tool is OpenAIWebSearchToolInput {
+	return tool.type === "web_search";
 }
 
 // Web search types

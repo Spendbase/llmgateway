@@ -1,14 +1,6 @@
-import {
-	db,
-	provider,
-	model,
-	modelProviderMapping,
-	log,
-	eq,
-	and,
-	sql,
-	isNotNull,
-} from "@llmgateway/db";
+import { eq, and, sql, isNotNull } from "drizzle-orm";
+
+import { db, provider, model, modelProviderMapping, log } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
 import { providers, models } from "@llmgateway/models";
 
