@@ -13,7 +13,7 @@ image:
 
 We're excited to announce support for **Cerebras** as a new provider in LLM Gateway, offering **ultra-fast, high-throughput inference** with six powerful models.
 
-Cerebras is available via the LLM Gateway with the provider ID `cerebras`. Learn more about the Cerebras inference platform at [cerebras.ai](https://cerebras.ai?utm_source=llmgateway.io).
+Cerebras is available via the LLM Gateway with the provider ID `cerebras`. Learn more about the Cerebras inference platform at [cerebras.ai](https://cerebras.ai?utm_source=llmapi.ai).
 
 ## 🎯 New Cerebras Models
 
@@ -24,8 +24,8 @@ Cerebras is available via the LLM Gateway with the provider ID `cerebras`. Learn
 All Cerebras models are available via the OpenAI-compatible chat completions API:
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "cerebras/gpt-oss-120b",
@@ -35,6 +35,6 @@ curl -X POST https://api.llmgateway.io/v1/chat/completions \
 
 ---
 
-**[Try Cerebras models in the Playground](https://chat.llmgateway.io/?model=cerebras/gpt-oss-120b)** 🚀
+**[Try Cerebras models in the Playground](https://chat.llmapi.ai/?model=cerebras/gpt-oss-120b)** 🚀
 
 **[Get started now](/signup)** 🚀

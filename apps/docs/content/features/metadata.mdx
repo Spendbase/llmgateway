@@ -1,25 +1,25 @@
 ---
 title: Metadata
-description: Send additional context and metadata to LLM Gateway using custom headers.
+description: Send additional context and metadata to LLM API using custom headers.
 icon: Braces
 ---
 
 # Metadata
 
-LLM Gateway supports sending additional metadata with your requests using custom headers. This allows you to include information like user sessions, application versions, tenant IDs, or other contextual data that can be useful for analytics and monitoring.
+LLM API supports sending additional metadata with your requests using custom headers. This allows you to include information like user sessions, application versions, tenant IDs, or other contextual data that can be useful for analytics and monitoring.
 
 Later, you can filter by specific values to return, such as for a specific user or session. Additionally, in the future, you will be able to segment your analytics and monitoring based on this metadata. For example, you could show cost and latency breakdowns per user, application, country, feature, or any other dimension you want to track.
 
 ## Custom Headers
 
-You can include custom headers with the `X-LLMGateway-` prefix to send metadata alongside your LLM requests:
+You can include custom headers with the `X-LLMAPI-` prefix to send metadata alongside your LLM requests:
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
-  -H "X-LLMGateway-Country: US" \
-  -H "X-LLMGateway-User-ID: 9403f741-a524-4b18-b1b2-dbb71cdff2a4" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
+  -H "X-LLMAPI-Country: US" \
+  -H "X-LLMAPI-User-ID: 9403f741-a524-4b18-b1b2-dbb71cdff2a4" \
   -d '{
     "model": "gpt-4o",
     "messages": [
@@ -35,7 +35,7 @@ curl -X POST https://api.llmgateway.io/v1/chat/completions \
 
 ### Header Naming
 
-- Use the `X-LLMGateway-` prefix for all custom metadata
+- Use the `X-LLMAPI-` prefix for all custom metadata
 - Use descriptive, consistent naming conventions
 - Avoid special characters; use hyphens to separate words
 
@@ -56,13 +56,13 @@ curl -X POST https://api.llmgateway.io/v1/chat/completions \
 For a multi-tenant application, you might use metadata headers like this:
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
-  -H "X-LLMGateway-Tenant-ID: acme-corp" \
-  -H "X-LLMGateway-User-ID: user-12345" \
-  -H "X-LLMGateway-App-Version: 2.1.4" \
-  -H "X-LLMGateway-Feature: chat-assistant" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
+  -H "X-LLMAPI-Tenant-ID: acme-corp" \
+  -H "X-LLMAPI-User-ID: user-12345" \
+  -H "X-LLMAPI-App-Version: 2.1.4" \
+  -H "X-LLMAPI-Feature: chat-assistant" \
   -d '{
     "model": "gpt-4o",
     "messages": [

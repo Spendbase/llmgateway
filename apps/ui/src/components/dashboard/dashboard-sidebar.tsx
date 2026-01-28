@@ -194,7 +194,7 @@ function DashboardSidebarHeader({
 					prefetch={true}
 				>
 					<Logo className="h-8 w-8 rounded-full text-black dark:text-white" />
-					<span className="text-xl font-bold tracking-tight">LLM Gateway</span>
+					<span className="text-xl font-bold tracking-tight">LLM API</span>
 				</Link>
 			</div>
 			<OrganizationSwitcher
@@ -714,13 +714,13 @@ export function DashboardSidebar({
 				href:
 					process.env.NODE_ENV === "development"
 						? "http://localhost:3003"
-						: "https://chat.llmgateway.io",
+						: "https://chat.llmapi.ai",
 				label: "Chat",
 				icon: BotMessageSquare,
 				internal: false,
 			},
 			{
-				href: "https://docs.llmgateway.io",
+				href: "https://docs.llmapi.ai",
 				label: "Documentation",
 				icon: ExternalLink,
 				internal: false,

@@ -38,7 +38,7 @@ export function ReferralsClient({
 }: ReferralsClientProps) {
 	const { selectedOrganization } = useDashboardContext();
 	const [copied, setCopied] = useState(false);
-	const [origin, setOrigin] = useState("https://llmgateway.io");
+	const [origin, setOrigin] = useState("https://llmapi.ai");
 
 	useEffect(() => {
 		setOrigin(window.location.origin);

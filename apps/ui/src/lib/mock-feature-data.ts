@@ -60,7 +60,7 @@ export const mockLogs = [
 		id: "log-1",
 		createdAt: new Date(Date.now() - 1000 * 60 * 5),
 		content:
-			"LLM Gateway is a unified API for accessing multiple AI models. It provides intelligent routing, cost optimization, and comprehensive analytics.",
+			"LLM API is a unified API for accessing multiple AI models. It provides intelligent routing, cost optimization, and comprehensive analytics.",
 		unifiedFinishReason: "completed",
 		usedModel: "anthropic/claude-3-5-sonnet-20241022",
 		usedProvider: "anthropic",
@@ -82,7 +82,7 @@ export const mockLogs = [
 		id: "log-2",
 		createdAt: new Date(Date.now() - 1000 * 60 * 15),
 		content:
-			"You can integrate LLM Gateway using the OpenAI SDK. Just change the base URL and API key.",
+			"You can integrate LLM API using the OpenAI SDK. Just change the base URL and API key.",
 		unifiedFinishReason: "completed",
 		usedModel: "openai/gpt-4o",
 		usedProvider: "openai",

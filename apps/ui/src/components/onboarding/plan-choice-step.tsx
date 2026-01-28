@@ -34,8 +34,8 @@ export function PlanChoiceStep({
 				<div className="flex flex-col gap-2 text-center">
 					<h1 className="text-2xl font-bold">Choose Your Approach</h1>
 					<p className="text-muted-foreground">
-						Select how you&apos;d like to use LLM Gateway, or skip to continue
-						with the free plan
+						Select how you&apos;d like to use LLM API, or skip to continue with
+						the free plan
 					</p>
 				</div>
 
@@ -83,7 +83,7 @@ export function PlanChoiceStep({
 										<ArrowRight className="ml-2 h-4 w-4" />
 									</>
 								) : (
-									"Only available on llmgateway.io"
+									"Only available on llmapi.ai"
 								)}
 							</Button>
 						</CardContent>

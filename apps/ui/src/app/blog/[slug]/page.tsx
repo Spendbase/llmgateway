@@ -107,11 +107,11 @@ export async function generateMetadata({
 	}
 
 	return {
-		title: `${entry.title} - Blog - LLM Gateway`,
-		description: entry.summary || "LLM Gateway blog post",
+		title: `${entry.title} - Blog - LLM API`,
+		description: entry.summary || "LLM API blog post",
 		openGraph: {
-			title: `${entry.title} - Blog - LLM Gateway`,
-			description: entry.summary || "LLM Gateway blog post",
+			title: `${entry.title} - Blog - LLM API`,
+			description: entry.summary || "LLM API blog post",
 			type: "article",
 			images: entry.image
 				? [
@@ -126,8 +126,8 @@ export async function generateMetadata({
 		},
 		twitter: {
 			card: "summary_large_image",
-			title: `${entry.title} - Blog - LLM Gateway`,
-			description: entry.summary || "LLM Gateway blog post",
+			title: `${entry.title} - Blog - LLM API`,
+			description: entry.summary || "LLM API blog post",
 		},
 	};
 }

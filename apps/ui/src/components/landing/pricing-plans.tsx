@@ -160,7 +160,7 @@ export function PricingPlans() {
 	const handlePlanSelection = (planName: string) => {
 		switch (planName) {
 			case "Self-Host":
-				router.push("https://docs.llmgateway.io");
+				router.push("https://docs.llmapi.ai");
 				return;
 			case "Enterprise":
 				router.push("/enterprise");
@@ -275,7 +275,7 @@ export function PricingPlans() {
 					</h2>
 					<p className="text-xl text-muted-foreground max-w-3xl mx-auto">
 						Choose the plan that works best for your needs, with no hidden fees
-						or surprises. Start with a free 7-day trial on Pro plans.
+						or surprises.
 					</p>
 
 					<div className="flex items-center justify-center mt-8 space-x-4">
@@ -333,7 +333,7 @@ export function PricingPlans() {
 								{plan.popular && (
 									<div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
 										<Badge className="bg-primary hover:bg-primary">
-											Free 7-day trial
+											Most Popular
 										</Badge>
 									</div>
 								)}
@@ -438,7 +438,7 @@ export function PricingPlans() {
 						<br />
 						Need a custom solution?{" "}
 						<a
-							href="mailto:contact@llmgateway.io"
+							href="mailto:contact@llmapi.ai"
 							className="text-primary hover:underline"
 						>
 							Contact our sales team

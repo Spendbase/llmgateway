@@ -32,7 +32,7 @@ export async function generateMetadata({
 	const image = ["/docs-og", ...slug, "image.png"].join("/");
 
 	return {
-		metadataBase: new URL(process.env.DOCS_URL || "https://docs.llmgateway.io"),
+		metadataBase: new URL(process.env.DOCS_URL || "https://docs.llmapi.ai"),
 		title: page.data.title,
 		description: page.data.description,
 		openGraph: {
@@ -55,9 +55,10 @@ export default async function Page(props: {
 	}
 
 	const time = await getGithubLastEdit({
-		owner: "theopenco",
+		owner: "spendbase",
 		repo: "llmgateway",
 		path: `apps/docs/content/${page.path}`,
+		token: process.env.GITHUB_TOKEN,
 	});
 
 	const MDXContent = page.data.body;
@@ -73,8 +74,8 @@ export default async function Page(props: {
 		>
 			<div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
 				<ViewOptions
-					markdownUrl={`https://raw.githubusercontent.com/theopenco/llmgateway/refs/heads/main/apps/docs/content/${page.path}`}
-					githubUrl={`https://github.com/theopenco/llmgateway/blob/main/apps/docs/content/${page.path}`}
+					markdownUrl={`${page.url}.mdx`}
+					githubUrl={`https://github.com/Spendbase/llmgateway/blob/main/apps/docs/content/${page.path}`}
 				/>
 			</div>
 			<DocsTitle>{page.data.title}</DocsTitle>
@@ -92,7 +93,7 @@ export default async function Page(props: {
 					"use server";
 					posthog.capture("on_rate_docs", feedback);
 					return {
-						githubUrl: `https://github.com/theopenco/llmgateway/blob/main/apps/docs/content${url}.mdx`,
+						githubUrl: `https://github.com/Spendbase/llmgateway/blob/main/apps/docs/content${url}.mdx`,
 					};
 				}}
 			/>

@@ -30,14 +30,14 @@ const brandAssets: BrandAsset[] = [
 	},
 	{
 		name: "Full Logo (Black)",
-		description: "Logo with LLM Gateway text, black version",
+		description: "Logo with LLM API text, black version",
 		svgPath: "/brand/logo-with-name-black.svg",
 		preview: "logo-with-name",
 		variant: "black",
 	},
 	{
 		name: "Full Logo (White)",
-		description: "Logo with LLM Gateway text, white version",
+		description: "Logo with LLM API text, white version",
 		svgPath: "/brand/logo-with-name-white.svg",
 		preview: "logo-with-name",
 		variant: "white",
@@ -61,7 +61,7 @@ function LogoPreview({
 		<div className="flex items-center gap-3">
 			<Logo className="h-12 w-12" style={{ color }} />
 			<span className="text-2xl font-bold tracking-tight" style={{ color }}>
-				LLM Gateway
+				LLM API
 			</span>
 		</div>
 	);
@@ -109,8 +109,8 @@ export default function BrandPage() {
 						Brand Assets
 					</h1>
 					<p className="text-lg text-muted-foreground leading-relaxed">
-						Download official LLM Gateway logos and brand assets for your
-						projects, presentations, and integrations.
+						Download official LLM API logos and brand assets for your projects,
+						presentations, and integrations.
 					</p>
 				</div>
 
@@ -147,10 +147,10 @@ export default function BrandPage() {
 								<span className="text-primary font-bold">•</span>
 								For questions about brand usage, contact us at{" "}
 								<a
-									href="mailto:contact@llmgateway.io"
+									href="mailto:contact@llmapi.ai"
 									className="text-primary hover:underline"
 								>
-									contact@llmgateway.io
+									contact@llmapi.ai
 								</a>
 							</li>
 						</ul>

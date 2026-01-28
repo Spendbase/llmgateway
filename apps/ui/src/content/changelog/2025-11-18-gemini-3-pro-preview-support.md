@@ -17,7 +17,9 @@ We're excited to announce support for **Gemini 3 Pro Preview** from Google with 
 
 ### **Gemini 3 Pro Preview** - Next-Generation AI Model
 
-**Model ID**: `gemini-3-pro-preview`
+```bash
+gemini-3-pro-preview
+```
 
 **Launch offer**: Gemini 3 Pro Preview is available with a **20% discount**.  
 [View the model page](/models/gemini-3-pro-preview) to explore capabilities, providers, and details.
@@ -43,8 +45,8 @@ Gemini 3 Pro Preview comes with comprehensive capabilities:
 ### Using Google AI Studio
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "google-ai-studio/gemini-3-pro-preview",
@@ -55,8 +57,8 @@ curl -X POST https://api.llmgateway.io/v1/chat/completions \
 ### Using Google Vertex AI
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "google-vertex/gemini-3-pro-preview",
@@ -75,6 +77,6 @@ curl -X POST https://api.llmgateway.io/v1/chat/completions \
 
 ---
 
-**[Try in Playground](https://chat.llmgateway.io/?model=google-ai-studio/gemini-3-pro-preview)** 🚀
+**[Try in Playground](https://chat.llmapi.ai/?model=google-ai-studio/gemini-3-pro-preview)** 🚀
 
 **[Get started now](/signup)** 🚀

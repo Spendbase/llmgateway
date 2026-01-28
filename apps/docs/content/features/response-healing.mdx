@@ -8,7 +8,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 # Response Healing
 
-Response Healing is a plugin that automatically validates and repairs malformed JSON responses from AI models. When enabled, LLM Gateway ensures that API responses conform to your specified schemas even when the model's formatting is imperfect.
+Response Healing is a plugin that automatically validates and repairs malformed JSON responses from AI models. When enabled, LLM API ensures that API responses conform to your specified schemas even when the model's formatting is imperfect.
 
 ## Why Response Healing?
 
@@ -26,8 +26,8 @@ Response Healing automatically detects and fixes these issues, saving you from i
 To enable Response Healing, add `response-healing` to the `plugins` array in your request:
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4o",
@@ -44,7 +44,7 @@ curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
 
 ## How It Works
 
-When Response Healing is enabled, LLM Gateway applies a series of repair strategies to malformed JSON responses:
+When Response Healing is enabled, LLM API applies a series of repair strategies to malformed JSON responses:
 
 ### 1. Markdown Extraction
 
@@ -108,10 +108,10 @@ Becomes:
 Request a structured response with automatic healing:
 
 ```typescript
-const response = await fetch("https://api.llmgateway.io/v1/chat/completions", {
+const response = await fetch("https://internal.llmapi.ai/v1/chat/completions", {
 	method: "POST",
 	headers: {
-		Authorization: `Bearer ${process.env.LLM_GATEWAY_API_KEY}`,
+		Authorization: `Bearer ${process.env.LLM_API_KEY}`,
 		"Content-Type": "application/json",
 	},
 	body: JSON.stringify({
@@ -138,10 +138,10 @@ const data = JSON.parse(result.choices[0].message.content);
 For stricter validation, combine with `json_schema`:
 
 ```typescript
-const response = await fetch("https://api.llmgateway.io/v1/chat/completions", {
+const response = await fetch("https://internal.llmapi.ai/v1/chat/completions", {
 	method: "POST",
 	headers: {
-		Authorization: `Bearer ${process.env.LLM_GATEWAY_API_KEY}`,
+		Authorization: `Bearer ${process.env.LLM_API_KEY}`,
 		"Content-Type": "application/json",
 	},
 	body: JSON.stringify({
@@ -211,10 +211,10 @@ It may not be able to repair:
 Combine Response Healing with clear instructions for best results:
 
 ```typescript
-const response = await fetch("https://api.llmgateway.io/v1/chat/completions", {
+const response = await fetch("https://internal.llmapi.ai/v1/chat/completions", {
 	method: "POST",
 	headers: {
-		Authorization: `Bearer ${process.env.LLM_GATEWAY_API_KEY}`,
+		Authorization: `Bearer ${process.env.LLM_API_KEY}`,
 		"Content-Type": "application/json",
 	},
 	body: JSON.stringify({

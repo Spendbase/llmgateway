@@ -27,14 +27,14 @@ export const baseOptions: BaseLayoutProps = {
 						fill="currentColor"
 					/>
 				</svg>
-				LLM Gateway
+				LLM API
 			</>
 		),
 	},
 	links: [
 		{
 			text: "Dashboard",
-			url: "https://llmgateway.io/dashboard",
+			url: "https://llmapi.ai/dashboard",
 			active: "none",
 		},
 	],

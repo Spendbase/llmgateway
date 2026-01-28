@@ -130,7 +130,7 @@ export function CreateApiKeyDialog({
 						<DialogHeader>
 							<DialogTitle>Create API Key</DialogTitle>
 							<DialogDescription>
-								Create a new API key to access LLM Gateway.
+								Create a new API key to access LLM API.
 								<span className="block mt-1">
 									Project: {selectedProject.name}
 								</span>
@@ -169,8 +169,8 @@ export function CreateApiKeyDialog({
 								<div
 									className={`text-muted-foreground text-sm ${limitChecked ? "block" : "hidden"}`}
 								>
-									Usage includes both usage from LLM Gateway credits and usage
-									from your own provider keys when applicable.
+									Usage includes both usage from LLM API credits and usage from
+									your own provider keys when applicable.
 								</div>
 								<div
 									className={`relative ${limitChecked ? "block" : "hidden"}`}

@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { FaGoogle } from "react-icons/fa";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -164,6 +165,42 @@ export default function Login() {
 					<div className="relative flex justify-center text-xs uppercase">
 						<span className="bg-background px-2 text-muted-foreground">Or</span>
 					</div>
+				</div>
+				<div className="grid grid-cols-1 gap-3">
+					<Button
+						onClick={async () => {
+							setIsLoading(true);
+							try {
+								const res = await signIn.social({
+									provider: "google",
+									callbackURL: location.protocol + "//" + location.host,
+								});
+								if (res?.error) {
+									toast.error(
+										res.error.message || "Failed to sign in with Google",
+										{
+											style: {
+												backgroundColor: "var(--destructive)",
+												color: "var(--destructive-foreground)",
+											},
+										},
+									);
+								}
+							} finally {
+								setIsLoading(false);
+							}
+						}}
+						variant="outline"
+						className="w-full"
+						disabled={isLoading}
+					>
+						{isLoading ? (
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						) : (
+							<FaGoogle className="mr-2 h-4 w-4" />
+						)}
+						Sign in with Google
+					</Button>
 				</div>
 			</div>
 		</div>

@@ -11,7 +11,7 @@ image:
   height: 677
 ---
 
-We're thrilled to launch our comprehensive **Models Directory** and announce an exciting partnership with [CloudRift](https://www.cloudrift.ai?utm_source=llmgateway.io) to offer **Meta Llama 3.1 70B Instruct FP8 completely free**!
+We're thrilled to launch our comprehensive **Models Directory** and announce an exciting partnership with [CloudRift](https://www.cloudrift.ai?utm_source=llmapi.ai) to offer **Meta Llama 3.1 70B Instruct FP8 completely free**!
 
 ## 🔍 New Models Directory
 
@@ -37,11 +37,14 @@ We're thrilled to launch our comprehensive **Models Directory** and announce an 
 
 **Meta Llama 3.1 70B Instruct FP8 (Free)**
 
+```bash
+llama-3.1-70b-instruct-free
+```
+
 - **Provider**: CloudRift
 - **Cost**: $0.00 input/output tokens
 - **Context Window**: 16,380 tokens
 - **Capabilities**: Streaming
-- **Model ID**: `llama-3.1-70b-instruct-free`
 - **Family**: Meta Llama
 
 ## 🚀 Getting Started

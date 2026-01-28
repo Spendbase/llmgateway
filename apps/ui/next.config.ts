@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
 			},
 			{
 				source: "/docs",
-				destination: "https://docs.llmgateway.io",
+				destination: "https://docs.llmapi.ai",
 				permanent: true,
 			},
 			{
@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
 			},
 			{
 				source: "/github",
-				destination: "https://github.com/theopenco/llmgateway",
+				destination: "https://github.com/Spendbase/llmgateway",
 				permanent: true,
 			},
 			{

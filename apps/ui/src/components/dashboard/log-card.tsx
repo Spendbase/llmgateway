@@ -496,7 +496,7 @@ export function LogCard({ log }: { log: Partial<Log> }) {
 									</>
 								)}
 								<div className="text-muted-foreground col-span-2 border-t pt-2 mt-1 text-xs">
-									LLM Gateway Costs
+									LLM API Costs
 								</div>
 								<div className="text-muted-foreground">Data Storage</div>
 								<div>

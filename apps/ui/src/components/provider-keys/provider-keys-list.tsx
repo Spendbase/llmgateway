@@ -113,11 +113,6 @@ export function ProviderKeysList({
 		organizationKeys.map((key) => [key.provider, key]),
 	);
 
-	// Filter out LLM Gateway from the providers list
-	const availableProviders = providers.filter(
-		(provider) => provider.id !== "llmgateway",
-	);
-
 	const deleteKey = (id: string) => {
 		deleteMutation.mutate(
 			{ params: { path: { id } } },
@@ -168,7 +163,7 @@ export function ProviderKeysList({
 	return (
 		<div className="space-y-6">
 			<div className="space-y-2">
-				{availableProviders.map((provider) => {
+				{providers.map((provider) => {
 					const LogoComponent = getProviderIcon(provider.id);
 					const existingKey = existingKeysMap.get(provider.id);
 					const hasKey = !!existingKey;

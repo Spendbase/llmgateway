@@ -21,7 +21,7 @@ export function WelcomeStep() {
 		<Step>
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-2 text-center">
-					<h1 className="text-2xl font-bold">Welcome to LLM Gateway!</h1>
+					<h1 className="text-2xl font-bold">Welcome to LLM API!</h1>
 					<p className="text-muted-foreground">
 						Let's get you set up with everything you need to start using the
 						platform.
@@ -65,7 +65,7 @@ export function WelcomeStep() {
 								In this onboarding process, we'll help you:
 							</p>
 							<ul className="mt-2 list-inside list-disc text-sm">
-								<li>Create your first API key to access the LLM Gateway</li>
+								<li>Create your first API key to access the LLM API</li>
 								<li>
 									Choose between buying credits or bringing your own API keys
 								</li>

@@ -338,8 +338,8 @@ export default async function ModelPage({ params }: PageProps) {
 									All Providers for {modelDef.name}
 								</h2>
 								<p className="text-muted-foreground">
-									LLM Gateway routes requests to the best providers that are
-									able to handle your prompt size and parameters.
+									LLM API routes requests to the best providers that are able to
+									handle your prompt size and parameters.
 								</p>
 							</div>
 						</div>
@@ -381,10 +381,10 @@ export async function generateMetadata({
 		return {};
 	}
 
-	const title = `${model.name || model.id} – AI Model on LLM Gateway`;
+	const title = `${model.name || model.id} – AI Model on LLM API`;
 	const description =
 		model.description ||
-		`Details, pricing, and capabilities for ${model.name || model.id} on LLM Gateway.`;
+		`Details, pricing, and capabilities for ${model.name || model.id} on LLM API.`;
 
 	const primaryProvider = model.providers[0]?.providerId || "default";
 	const ogImageUrl = `/models/${encodeURIComponent(decodedName)}/${encodeURIComponent(primaryProvider)}/opengraph-image`;

@@ -309,8 +309,8 @@ export async function generateMetadata({
 	);
 	const providerName = providerInfo?.name || decodedProvider;
 
-	const title = `${model.name || model.id} on ${providerName} – LLM Gateway`;
-	const description = `Pricing and capabilities for ${model.name || model.id} via ${providerName} on LLM Gateway.`;
+	const title = `${model.name || model.id} on ${providerName} – LLM API`;
+	const description = `Pricing and capabilities for ${model.name || model.id} via ${providerName} on LLM API.`;
 
 	return {
 		title,

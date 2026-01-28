@@ -31,7 +31,7 @@ export function useUser(options?: UseUserOptions) {
 		{},
 		{
 			retry: 0,
-			staleTime: 5 * 60 * 1000, // 5 minutes
+			staleTime: 5 * 60 * 1000,
 			refetchOnWindowFocus: false,
 		},
 	);
@@ -60,8 +60,14 @@ export function useUser(options?: UseUserOptions) {
 
 		const { redirectTo, redirectWhen } = options;
 		const hasUser = !!data?.user;
+		const currentPath = pathname;
+		const isAuthPage = ["/login", "/signup"].includes(currentPath);
 
-		if (redirectWhen === "authenticated" && hasUser) {
+		if (isAuthPage && hasUser && !data.user.isAdmin) {
+			return;
+		}
+
+		if (redirectWhen === "authenticated" && hasUser && data.user.isAdmin) {
 			router.push(redirectTo);
 		} else if (
 			redirectWhen === "unauthenticated" &&
@@ -78,6 +84,7 @@ export function useUser(options?: UseUserOptions) {
 		options?.redirectTo,
 		options?.redirectWhen,
 		options,
+		pathname,
 	]);
 
 	return {

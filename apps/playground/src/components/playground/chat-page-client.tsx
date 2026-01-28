@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 
 // Removed API key manager for playground; we rely on server-set cookie
-import { getStoredGithubMcpToken } from "@/components/connectors/github-connector";
+import { ModelSelector } from "@/components/model-selector";
 import { AuthDialog } from "@/components/playground/auth-dialog";
 import { ChatHeader } from "@/components/playground/chat-header";
 import { ChatSidebar } from "@/components/playground/chat-sidebar";
@@ -26,14 +26,16 @@ import { parseImageFile } from "@/lib/image-utils";
 import { mapModels } from "@/lib/mapmodels";
 import { getErrorMessage } from "@/lib/utils";
 
-import { ModelSelector } from "@llmgateway/shared/components";
-
+import type {
+	ApiModel,
+	ApiModelProviderMapping,
+	ApiProvider,
+} from "@/lib/fetch-models";
 import type { ComboboxModel, Organization, Project } from "@/lib/types";
-import type { ModelDefinition, ProviderDefinition } from "@llmgateway/models";
 
 interface ChatPageClientProps {
-	models: ModelDefinition[];
-	providers: ProviderDefinition[];
+	models: ApiModel[];
+	providers: ApiProvider[];
 	organizations: Organization[];
 	selectedOrganization: Organization | null;
 	projects: Project[];
@@ -104,21 +106,6 @@ export default function ChatPageClient({
 	const panelIdCounterRef = useRef(1);
 	// Flag to indicate we should clear messages on next URL change (set by handleChatSelect)
 	const shouldClearMessagesRef = useRef(false);
-
-	const [githubToken, setGithubToken] = useState<string | null>(null);
-
-	useEffect(() => {
-		// initial read
-		setGithubToken(getStoredGithubMcpToken());
-		// react to changes from other tabs/components
-		const onStorage = (e: StorageEvent) => {
-			if (e.key === "github_mcp_token") {
-				setGithubToken(e.newValue);
-			}
-		};
-		window.addEventListener("storage", onStorage);
-		return () => window.removeEventListener("storage", onStorage);
-	}, []);
 
 	const { messages, setMessages, sendMessage, status, stop, regenerate } =
 		useChat({
@@ -314,9 +301,11 @@ export default function ChatPageClient({
 			return false;
 		}
 		if (!providerId) {
-			return def.providers.some((p) => p.reasoning);
+			return def.mappings.some((p: ApiModelProviderMapping) => p.reasoning);
 		}
-		const mapping = def.providers.find((p) => p.providerId === providerId);
+		const mapping = def.mappings.find(
+			(p: ApiModelProviderMapping) => p.providerId === providerId,
+		);
 		return !!mapping?.reasoning;
 	}, [models, selectedModel]);
 
@@ -332,9 +321,11 @@ export default function ChatPageClient({
 			return false;
 		}
 		if (!providerId) {
-			return def.providers.some((p) => p.webSearch);
+			return def.mappings.some((p: ApiModelProviderMapping) => p.webSearch);
 		}
-		const mapping = def.providers.find((p) => p.providerId === providerId);
+		const mapping = def.mappings.find(
+			(p: ApiModelProviderMapping) => p.providerId === providerId,
+		);
 		return !!mapping?.webSearch;
 	}, [models, selectedModel]);
 
@@ -375,12 +366,10 @@ export default function ChatPageClient({
 				...options,
 				headers: {
 					...(options?.headers || {}),
-					...(githubToken ? { "x-github-token": githubToken } : {}),
 					...(noFallback ? { "x-no-fallback": "true" } : {}),
 				},
 				body: {
 					...(options?.body || {}),
-					...(githubToken ? { githubToken } : {}),
 					...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
 					...(imageConfig ? { image_config: imageConfig } : {}),
 					...(webSearchEnabled && supportsWebSearch
@@ -393,7 +382,6 @@ export default function ChatPageClient({
 		},
 		[
 			sendMessage,
-			githubToken,
 			reasoningEffort,
 			supportsImageGen,
 			imageAspectRatio,
@@ -779,7 +767,9 @@ export default function ChatPageClient({
 		if (!params.get("model")) {
 			params.set("model", selectedModel);
 		}
-		router.push(params.toString() ? `/?${params.toString()}` : "/");
+		const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+		router.push(newUrl);
+		router.refresh(); // Force server re-fetch
 	};
 
 	const handleOrganizationCreated = (org: Organization) => {
@@ -789,7 +779,9 @@ export default function ChatPageClient({
 		if (!params.get("model")) {
 			params.set("model", selectedModel);
 		}
-		router.push(params.toString() ? `/?${params.toString()}` : "/");
+		const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+		router.push(newUrl);
+		router.refresh(); // Force server re-fetch
 	};
 
 	const handleSelectProject = (project: Project | null) => {
@@ -802,7 +794,9 @@ export default function ChatPageClient({
 		if (!params.get("model")) {
 			params.set("model", selectedModel);
 		}
-		router.push(params.toString() ? `/?${params.toString()}` : "/");
+		const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+		router.push(newUrl);
+		router.refresh(); // Force server re-fetch
 	};
 
 	const handleProjectCreated = (project: Project) => {
@@ -812,7 +806,9 @@ export default function ChatPageClient({
 		if (!params.get("model")) {
 			params.set("model", selectedModel);
 		}
-		router.push(params.toString() ? `/?${params.toString()}` : "/");
+		const newUrl = params.toString() ? `/?${params.toString()}` : "/";
+		router.push(newUrl);
+		router.refresh(); // Force server re-fetch
 	};
 
 	return (
@@ -1012,7 +1008,6 @@ export default function ChatPageClient({
 												providers={providers}
 												availableModels={availableModels}
 												initialModel={selectedModel}
-												githubToken={githubToken}
 												syncInput={syncInput}
 												syncedText={syncedText}
 												setSyncedText={setSyncedText}
@@ -1035,11 +1030,10 @@ export default function ChatPageClient({
 
 interface ExtraChatPanelProps {
 	panelIndex: number;
-	models: ModelDefinition[];
-	providers: ProviderDefinition[];
+	models: ApiModel[];
+	providers: ApiProvider[];
 	availableModels: ComboboxModel[];
 	initialModel: string;
-	githubToken: string | null;
 	syncInput: boolean;
 	syncedText: string;
 	setSyncedText: (value: string) => void;
@@ -1055,7 +1049,6 @@ function ExtraChatPanel({
 	providers,
 	availableModels,
 	initialModel,
-	githubToken,
 	syncInput,
 	syncedText,
 	setSyncedText,
@@ -1118,9 +1111,11 @@ function ExtraChatPanel({
 			return false;
 		}
 		if (!providerId) {
-			return def.providers.some((p) => p.reasoning);
+			return def.mappings.some((p: ApiModelProviderMapping) => p.reasoning);
 		}
-		const mapping = def.providers.find((p) => p.providerId === providerId);
+		const mapping = def.mappings.find(
+			(p: ApiModelProviderMapping) => p.providerId === providerId,
+		);
 		return !!mapping?.reasoning;
 	}, [models, selectedModel]);
 
@@ -1136,9 +1131,11 @@ function ExtraChatPanel({
 			return false;
 		}
 		if (!providerId) {
-			return def.providers.some((p) => p.webSearch);
+			return def.mappings.some((p: ApiModelProviderMapping) => p.webSearch);
 		}
-		const mapping = def.providers.find((p) => p.providerId === providerId);
+		const mapping = def.mappings.find(
+			(p: ApiModelProviderMapping) => p.providerId === providerId,
+		);
 		return !!mapping?.webSearch;
 	}, [models, selectedModel]);
 
@@ -1178,12 +1175,10 @@ function ExtraChatPanel({
 				...options,
 				headers: {
 					...(options?.headers || {}),
-					...(githubToken ? { "x-github-token": githubToken } : {}),
 					...(noFallback ? { "x-no-fallback": "true" } : {}),
 				},
 				body: {
 					...(options?.body || {}),
-					...(githubToken ? { githubToken } : {}),
 					...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
 					...(imageConfig ? { image_config: imageConfig } : {}),
 					...(webSearchEnabled && supportsWebSearch
@@ -1196,7 +1191,6 @@ function ExtraChatPanel({
 		},
 		[
 			sendMessage,
-			githubToken,
 			reasoningEffort,
 			supportsImageGen,
 			imageAspectRatio,

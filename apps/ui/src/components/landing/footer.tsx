@@ -1,5 +1,4 @@
 "use client";
-import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { GithubIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -11,9 +10,6 @@ import { providers as providerDefinitions } from "@llmgateway/models";
 
 export default function Footer() {
 	const config = useAppConfig();
-	const filteredProviders = providerDefinitions.filter(
-		(p) => p.name !== "LLM Gateway",
-	);
 
 	return (
 		<footer className="border-t border-zinc-200 dark:border-zinc-800 py-12 bg-white dark:bg-black">
@@ -23,11 +19,11 @@ export default function Footer() {
 						<div className="flex items-center space-x-2">
 							<Logo className="h-8 w-8 rounded-full text-black dark:text-white" />
 							<span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
-								LLM Gateway
+								LLM API
 							</span>
 						</div>
 						<p className="text-zinc-600 dark:text-zinc-500 text-sm mt-2">
-							© {new Date().getFullYear()} LLM Gateway. All rights reserved.
+							© {new Date().getFullYear()} LLM API. All rights reserved.
 						</p>
 						<div className="flex items-center space-x-4 mt-4">
 							<a
@@ -48,7 +44,7 @@ export default function Footer() {
 							>
 								<XIcon className="h-5 w-5" />
 							</a>
-							<a
+							{/* <a
 								href={config.discordUrl}
 								target="_blank"
 								rel="noopener noreferrer"
@@ -56,7 +52,7 @@ export default function Footer() {
 								aria-label="Discord"
 							>
 								<DiscordLogoIcon className="h-5 w-5" />
-							</a>
+							</a> */}
 						</div>
 					</div>
 
@@ -191,7 +187,7 @@ export default function Footer() {
 								</li>
 								<li>
 									<a
-										href="mailto:contact@llmgateway.io"
+										href="mailto:contact@llmapi.ai"
 										target="_blank"
 										className="text-sm hover:text-black dark:hover:text-white"
 									>
@@ -234,7 +230,7 @@ export default function Footer() {
 										Twitter
 									</a>
 								</li>
-								<li>
+								{/* <li>
 									<a
 										href={config.discordUrl}
 										target="_blank"
@@ -243,7 +239,7 @@ export default function Footer() {
 									>
 										Discord
 									</a>
-								</li>
+								</li> */}
 							</ul>
 						</div>
 
@@ -278,7 +274,7 @@ export default function Footer() {
 								Providers
 							</h3>
 							<ul className="space-y-2">
-								{filteredProviders.map((provider) => (
+								{providerDefinitions.map((provider) => (
 									<li key={provider.id}>
 										<Link
 											href={`/providers/${provider.id}`}

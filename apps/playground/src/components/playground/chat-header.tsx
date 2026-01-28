@@ -4,11 +4,11 @@ import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Switch } from "@/components/ui/switch";
 
-import type { ModelDefinition, ProviderDefinition } from "@llmgateway/models";
+import type { ApiModel, ApiProvider } from "@/lib/fetch-models";
 
 interface ChatHeaderProps {
-	models: ModelDefinition[];
-	providers: ProviderDefinition[];
+	models: ApiModel[];
+	providers: ApiProvider[];
 	selectedModel: string;
 	setSelectedModel: (model: string) => void;
 	comparisonEnabled: boolean;
@@ -60,7 +60,7 @@ export const ChatHeader = ({
 					href={
 						process.env.NODE_ENV === "development"
 							? "http://localhost:3002/dashboard"
-							: "https://llmgateway.io/dashboard"
+							: "https://llmapi.ai/dashboard"
 					}
 					target="_blank"
 					rel="noopener noreferrer"

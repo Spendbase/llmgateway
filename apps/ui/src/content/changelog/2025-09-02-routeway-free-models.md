@@ -20,8 +20,8 @@ We're excited to expand our **auto-routing capabilities** with **5 new free mode
 **Example Usage**: Use auto-routing with the `free_models_only` flag to prioritize these cost-effective models:
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto",
@@ -43,35 +43,50 @@ All models are available with generous usage limits and zero per-token costs:
 
 ### DeepSeek R1T2 Chimera (Free)
 
-- **Model ID**: `deepseek-r1t2-chimera-free`
+```bash
+deepseek-r1t2-chimera-free
+```
+
 - **Cost**: $0.00 input/output tokens
 - **Context Window**: 128,000 tokens
 - **Capabilities**: Streaming, JSON output
 
 ### GLM-4.5 Air (Free)
 
-- **Model ID**: `glm-4.5-air-free`
+```bash
+glm-4.5-air-free
+```
+
 - **Cost**: $0.00 input/output tokens
 - **Context Window**: 128,000 tokens
 - **Capabilities**: Streaming, JSON output
 
 ### Kimi K2 (Free)
 
-- **Model ID**: `kimi-k2-free`
+```bash
+kimi-k2-free
+```
+
 - **Cost**: $0.00 input/output tokens
 - **Context Window**: 128,000 tokens
 - **Capabilities**: Streaming, JSON output
 
 ### GPT-OSS 20B (Free)
 
-- **Model ID**: `gpt-oss-20b-free`
+```bash
+gpt-oss-20b-free
+```
+
 - **Cost**: $0.00 input/output tokens
 - **Context Window**: 128,000 tokens
 - **Capabilities**: Streaming, JSON output
 
 ### GPT-4.1 (Free)
 
-- **Model ID**: `gpt-4.1-free`
+```bash
+gpt-4.1-free
+```
+
 - **Cost**: $0.00 input/output tokens
 - **Context Window**: 128,000 tokens
 - **Capabilities**: Streaming, JSON output
