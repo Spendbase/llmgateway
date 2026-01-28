@@ -22,7 +22,6 @@ import {
 	cdb as db,
 	getProviderMetricsForCombinations,
 	isCachingEnabled,
-	type InferSelectModel,
 	shortid,
 	type tables,
 } from "@llmgateway/db";
@@ -66,6 +65,7 @@ import { validateFreeModelUsage } from "./tools/validate-free-model-usage.js";
 
 import type { ImageObject } from "./tools/types.js";
 import type { ServerTypes } from "@/vars.js";
+import type { InferSelectModel } from "drizzle-orm";
 
 /**
  * Checks if a model is truly free (has free flag AND no per-request pricing)

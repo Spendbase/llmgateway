@@ -1,7 +1,7 @@
+import { alibabaModels } from "./models/alibaba.js";
 import { anthropicModels } from "./models/anthropic.js";
 import { googleModels } from "./models/google.js";
 import { openaiModels } from "./models/openai.js";
-import { alibabaModels } from "./models/alibaba.js";
 
 import type { providers } from "./providers.js";
 
