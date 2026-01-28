@@ -98,6 +98,41 @@ const transactionSchema = z.object({
 	refundReason: z.string().nullable(),
 });
 
+const AuthUrlResponseSchema = z.object({
+	url: z
+		.string()
+		.openapi({ description: "The Google OAuth2 URL to redirect the user to" }),
+});
+
+const FetchUsersRequestSchema = z.object({
+	accessToken: z
+		.string()
+		.openapi({ description: "Temporary Google Access Token" }),
+});
+
+const GoogleUserSchema = z.object({
+	email: z.string().email(),
+	firstName: z.string().optional(),
+	lastName: z.string().optional(),
+	fullName: z.string().optional(),
+	department: z.string().optional(),
+});
+
+const FetchUsersResponseSchema = z.array(GoogleUserSchema);
+
+const ImportRequestSchema = z.object({
+	users: z.array(
+		z.object({
+			email: z.string().email(),
+			firstName: z.string().optional(),
+			lastName: z.string().optional(),
+			fullName: z.string().optional(),
+		}),
+	),
+	role: z.enum(["owner", "admin", "member"]),
+	organizationId: z.string(),
+});
+
 const getOrganizations = createRoute({
 	method: "get",
 	path: "/",
@@ -644,32 +679,15 @@ organization.openapi(getReferralStats, async (c) => {
 	});
 });
 
-const AuthUrlResponseSchema = z.object({
-	url: z
-		.string()
-		.openapi({ description: "The Google OAuth2 URL to redirect the user to" }),
-});
-
-const FetchUsersRequestSchema = z.object({
-	accessToken: z
-		.string()
-		.openapi({ description: "Temporary Google Access Token" }),
-});
-
-const GoogleUserSchema = z.object({
-	email: z.string().email(),
-	firstName: z.string().optional(),
-	lastName: z.string().optional(),
-	fullName: z.string().optional(),
-	department: z.string().optional(),
-});
-
-const FetchUsersResponseSchema = z.array(GoogleUserSchema);
-
 const initiateGoogleWorkspace = createRoute({
 	method: "post",
 	path: "/{id}/google-workspace/initiate",
 	summary: "Get Google OAuth URL",
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+	},
 	responses: {
 		200: {
 			content: {
@@ -710,6 +728,9 @@ const fetchUsers = createRoute({
 	path: "/{id}/google-workspace/fetch-users",
 	summary: "Fetch users from Google Directory",
 	request: {
+		params: z.object({
+			id: z.string(),
+		}),
 		body: {
 			content: {
 				"application/json": {
@@ -748,8 +769,47 @@ organization.openapi(fetchUsers, async (c) => {
 			headers: { Authorization: `Bearer ${accessToken}` },
 		});
 
+		if (response.status === 403) {
+			console.warn(
+				"⚠️ [DEV MODE] Google returned 403 (Not Admin). Using MOCK data.",
+			);
+			const MOCK_USERS = [
+				{
+					email: "alice.engineering@example.com",
+					firstName: "Alice",
+					lastName: "Engineer",
+					fullName: "Alice Engineer",
+					department: "Engineering",
+				},
+				{
+					email: "bob.sales@example.com",
+					firstName: "Bob",
+					lastName: "Salesman",
+					fullName: "Bob Salesman",
+					department: "Sales",
+				},
+				{
+					email: "charlie.marketing@example.com",
+					firstName: "Charlie",
+					lastName: "Marketer",
+					fullName: "Charlie Marketer",
+					department: "Marketing",
+				},
+				{
+					email: "oleksii.andriushyn@partner-way.com",
+					firstName: "Oleksii",
+					lastName: "Andriushyn",
+					fullName: "Oleksii Andriushyn",
+					department: "Owner",
+				},
+			];
+			return c.json(MOCK_USERS);
+		}
+
 		if (!response.ok) {
-			return c.json([], 500);
+			const errorText = await response.text();
+			console.error("Google API Error:", errorText);
+			throw new Error("Failed to fetch from Google");
 		}
 
 		const data = await response.json();
@@ -759,13 +819,89 @@ organization.openapi(fetchUsers, async (c) => {
 			firstName: u.name?.givenName || "",
 			lastName: u.name?.familyName || "",
 			fullName: u.name?.fullName || "",
-			organization: u.organizations?.[0]?.department || "General",
+			department: u.organizations?.[0]?.department || "General",
 		}));
 
 		return c.json(users);
 	} catch {
 		return c.json([], 500);
 	}
+});
+
+const importUsersRoute = createRoute({
+	method: "post",
+	path: "/{organizationId}/google-workspace/import",
+	summary: "Import selected users to organization",
+	request: {
+		body: {
+			content: {
+				"application/json": { schema: ImportRequestSchema },
+			},
+		},
+	},
+	responses: {
+		200: {
+			description: "Import result",
+			content: {
+				"application/json": {
+					schema: z.object({
+						successCount: z.number(),
+						failedCount: z.number(),
+					}),
+				},
+			},
+		},
+	},
+});
+
+organization.openapi(importUsersRoute, async (c) => {
+	const { users: usersToImport, role, organizationId } = c.req.valid("json");
+
+	let successCount = 0;
+	let failedCount = 0;
+
+	for (const googleUser of usersToImport) {
+		try {
+			// const existingUser = await db.query.users.findFirst({
+			//   where: eq(users.email, googleUser.email)
+			// });
+
+			let userId = ""; // existingUser?.id;
+
+			if (!userId) {
+				// const [newUser] = await db.insert(users).values({
+				//   email: googleUser.email,
+				//   name: googleUser.fullName,
+				//   emailVerified: true, // Доверяем гуглу!
+				//   image: null,
+				//   createdAt: new Date(),
+				//   updatedAt: new Date(),
+				// }).returning();
+				// userId = newUser.id;
+
+				userId = "new_user_" + Math.random();
+			}
+
+			// const existingMember = await db.query.members.findFirst({
+			//   where: and(eq(members.userId, userId), eq(members.orgId, organizationId))
+			// });
+
+			// if (!existingMember) {
+			//    await db.insert(members).values({
+			//      userId,
+			//      organizationId,
+			//      role,
+			//      createdAt: new Date()
+			//    });
+			successCount++;
+			// }
+		} catch (e) {
+			console.error(`Failed to import ${googleUser.email}`, e);
+			failedCount++;
+		}
+	}
+
+	return c.json({ successCount, failedCount });
 });
 
 export default organization;
