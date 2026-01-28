@@ -78,17 +78,17 @@ export async function generateMetadata({
 	}
 
 	return {
-		title: `${entry.title} - LLM Gateway`,
-		description: entry.description || "LLM Gateway legal post",
+		title: `${entry.title} - LLM API`,
+		description: entry.description || "LLM API legal post",
 		openGraph: {
-			title: `${entry.title} - LLM Gateway`,
-			description: entry.description || "LLM Gateway legal post",
+			title: `${entry.title} - LLM API`,
+			description: entry.description || "LLM API legal post",
 			type: "website",
 		},
 		twitter: {
 			card: "summary_large_image",
-			title: `${entry.title} - LLM Gateway`,
-			description: entry.description || "LLM Gateway legal post",
+			title: `${entry.title} - LLM API`,
+			description: entry.description || "LLM API legal post",
 		},
 	};
 }

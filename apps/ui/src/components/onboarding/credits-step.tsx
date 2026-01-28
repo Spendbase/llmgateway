@@ -79,7 +79,7 @@ export function CreditsStep({
 			});
 
 			if (result.error) {
-				throw new Error(result.error.message);
+				throw new Error(result.error.message || "Payment failed");
 			}
 
 			await queryClient.invalidateQueries({
@@ -136,10 +136,10 @@ export function CreditsStep({
 									<Check className="h-6 w-6 text-green-600 dark:text-green-300" />
 								</div>
 								<div>
-									<h3 className="text-xl font-bold">Only on llmgateway.io</h3>
+									<h3 className="text-xl font-bold">Only on llmapi.ai</h3>
 									<p className="text-muted-foreground mt-1">
 										Credits are only available on{" "}
-										<a href="https://llmgateway.io/">llmgateway.io</a>.
+										<a href="https://llmapi.ai/">llmapi.ai</a>.
 									</p>
 								</div>
 							</div>
@@ -215,8 +215,8 @@ export function CreditsStep({
 									</p>
 								</div>
 								<p className="text-sm mt-4">
-									You&apos;re all set to start using LLM Gateway. You can always
-									add more credits later from the dashboard.
+									You&apos;re all set to start using LLM API. You can always add
+									more credits later from the dashboard.
 								</p>
 							</div>
 						)}

@@ -7,8 +7,7 @@ export const anthropicModels = [
 		description:
 			"Intelligent model with extended thinking for complex reasoning tasks.",
 		family: "anthropic",
-		releasedAt: new Date("2025-02-19"),
-		publishedAt: new Date("2025-02-19"),
+		releasedAt: new Date("2025-02-24"),
 		providers: [
 			{
 				test: "skip",
@@ -55,7 +54,6 @@ export const anthropicModels = [
 			"Fast, compact model for quick responses and efficient processing.",
 		family: "anthropic",
 		releasedAt: new Date("2024-10-22"),
-		publishedAt: new Date("2024-10-22"),
 		providers: [
 			{
 				providerId: "anthropic",
@@ -82,7 +80,6 @@ export const anthropicModels = [
 			"Dated version of Claude 3.7 Sonnet with reasoning capabilities.",
 		family: "anthropic",
 		releasedAt: new Date("2025-02-19"),
-		publishedAt: new Date("2025-02-19"),
 		providers: [
 			{
 				test: "skip",
@@ -110,7 +107,6 @@ export const anthropicModels = [
 		description: "Previous generation Sonnet model for balanced performance.",
 		family: "anthropic",
 		releasedAt: new Date("2024-10-22"),
-		publishedAt: new Date("2024-10-22"),
 		providers: [
 			{
 				test: "skip",
@@ -155,7 +151,6 @@ export const anthropicModels = [
 		description: "Legacy Claude model, deprecated in 2025.",
 		family: "anthropic",
 		releasedAt: new Date("2023-11-21"),
-		publishedAt: new Date("2023-11-21"),
 		providers: [
 			{
 				providerId: "anthropic",
@@ -179,7 +174,6 @@ export const anthropicModels = [
 		description: "Claude Sonnet 4 with enhanced reasoning and tool use.",
 		family: "anthropic",
 		releasedAt: new Date("2025-05-14"),
-		publishedAt: new Date("2025-05-14"),
 		providers: [
 			{
 				test: "skip",
@@ -224,7 +218,6 @@ export const anthropicModels = [
 			"Latest Claude Sonnet with improved reasoning and extended thinking.",
 		family: "anthropic",
 		releasedAt: new Date("2025-09-29"),
-		publishedAt: new Date("2025-09-29"),
 		providers: [
 			{
 				test: "skip",
@@ -241,6 +234,7 @@ export const anthropicModels = [
 				streaming: true,
 				vision: false,
 				tools: true,
+				jsonOutputSchema: true,
 			},
 			{
 				test: "skip",
@@ -253,12 +247,13 @@ export const anthropicModels = [
 				requestPrice: 0,
 				discount: 0.3,
 				contextSize: 200000,
-				maxOutput: 8192,
+				maxOutput: 64000,
 				reasoning: true,
 				reasoningOutput: "omit",
 				streaming: true,
 				vision: false,
 				tools: true,
+				jsonOutputSchema: true,
 			},
 		],
 	},
@@ -269,7 +264,6 @@ export const anthropicModels = [
 			"Latest Claude Sonnet with improved reasoning and extended thinking.",
 		family: "anthropic",
 		releasedAt: new Date("2025-09-29"),
-		publishedAt: new Date("2025-09-29"),
 		providers: [
 			{
 				test: "skip",
@@ -286,6 +280,7 @@ export const anthropicModels = [
 				streaming: true,
 				vision: false,
 				tools: true,
+				jsonOutputSchema: true,
 			},
 			{
 				test: "skip",
@@ -304,6 +299,7 @@ export const anthropicModels = [
 				streaming: true,
 				vision: false,
 				tools: true,
+				jsonOutputSchema: true,
 			},
 		],
 	},
@@ -313,8 +309,7 @@ export const anthropicModels = [
 		description:
 			"Fast, efficient model for high-volume, low-latency applications.",
 		family: "anthropic",
-		releasedAt: new Date("2025-09-29"),
-		publishedAt: new Date("2025-09-29"),
+		releasedAt: new Date("2025-10-15"),
 		providers: [
 			{
 				providerId: "anthropic",
@@ -329,6 +324,7 @@ export const anthropicModels = [
 				streaming: true,
 				vision: false,
 				tools: true,
+				jsonOutputSchema: true,
 			},
 		],
 	},
@@ -338,8 +334,7 @@ export const anthropicModels = [
 		description:
 			"Fast, efficient model for high-volume, low-latency applications.",
 		family: "anthropic",
-		releasedAt: new Date("2025-09-29"),
-		publishedAt: new Date("2025-09-29"),
+		releasedAt: new Date("2025-10-15"),
 		providers: [
 			{
 				providerId: "anthropic",
@@ -354,6 +349,7 @@ export const anthropicModels = [
 				streaming: true,
 				vision: false,
 				tools: true,
+				jsonOutputSchema: true,
 			},
 		],
 	},
@@ -363,8 +359,7 @@ export const anthropicModels = [
 		description:
 			"High-capability model for complex analysis and nuanced tasks.",
 		family: "anthropic",
-		releasedAt: new Date("2025-05-14"),
-		publishedAt: new Date("2025-05-14"),
+		releasedAt: new Date("2025-05-22"),
 		providers: [
 			{
 				test: "skip",
@@ -408,7 +403,6 @@ export const anthropicModels = [
 		description: "Updated Opus with vision support and 32K output.",
 		family: "anthropic",
 		releasedAt: new Date("2025-08-05"),
-		publishedAt: new Date("2025-08-05"),
 		providers: [
 			{
 				test: "skip",
@@ -425,6 +419,7 @@ export const anthropicModels = [
 				vision: true,
 				reasoning: true,
 				tools: true,
+				jsonOutputSchema: true,
 			},
 			{
 				test: "skip",
@@ -443,6 +438,7 @@ export const anthropicModels = [
 				reasoning: true,
 				reasoningOutput: "omit",
 				tools: true,
+				jsonOutputSchema: true,
 			},
 		],
 	},
@@ -452,7 +448,6 @@ export const anthropicModels = [
 		description: "Original Claude 3.5 Sonnet with vision capabilities.",
 		family: "anthropic",
 		releasedAt: new Date("2024-06-20"),
-		publishedAt: new Date("2024-06-20"),
 		providers: [
 			{
 				test: "skip",
@@ -478,7 +473,6 @@ export const anthropicModels = [
 			"Latest Claude 3.5 Sonnet with balanced speed and intelligence.",
 		family: "anthropic",
 		releasedAt: new Date("2024-06-20"),
-		publishedAt: new Date("2024-06-20"),
 		providers: [
 			{
 				test: "skip",
@@ -505,7 +499,6 @@ export const anthropicModels = [
 		description: "Fastest Claude model for instant responses at scale.",
 		family: "anthropic",
 		releasedAt: new Date("2024-10-22"),
-		publishedAt: new Date("2024-10-22"),
 		providers: [
 			{
 				providerId: "anthropic",
@@ -547,8 +540,7 @@ export const anthropicModels = [
 		name: "Claude 3 Opus",
 		description: "Most capable Claude 3 model for expert-level tasks.",
 		family: "anthropic",
-		releasedAt: new Date("2024-02-29"),
-		publishedAt: new Date("2024-02-29"),
+		releasedAt: new Date("2024-03-04"),
 		providers: [
 			{
 				test: "skip",
@@ -573,8 +565,7 @@ export const anthropicModels = [
 		description:
 			"Compact Claude 3 model with vision for fast, affordable inference.",
 		family: "anthropic",
-		releasedAt: new Date("2024-03-07"),
-		publishedAt: new Date("2024-03-07"),
+		releasedAt: new Date("2024-03-04"),
 		providers: [
 			{
 				providerId: "anthropic",
@@ -599,7 +590,6 @@ export const anthropicModels = [
 			"Claude Opus 4.5 is Anthropic’s advanced reasoning model built for complex coding, agentic workflows, and long-running tasks with improved multimodal performance, efficiency, and reliability.",
 		family: "anthropic",
 		releasedAt: new Date("2025-11-24"),
-		publishedAt: new Date("2025-11-24"),
 		providers: [
 			{
 				providerId: "anthropic",
@@ -615,6 +605,7 @@ export const anthropicModels = [
 				streaming: true,
 				vision: true,
 				tools: true,
+				jsonOutputSchema: true,
 				supportedParameters: ["temperature", "max_tokens", "top_p", "effort"],
 			},
 			{
@@ -634,6 +625,7 @@ export const anthropicModels = [
 				streaming: true,
 				vision: true,
 				tools: true,
+				jsonOutputSchema: true,
 			},
 			{
 				test: "skip",

@@ -20,7 +20,7 @@ export const Testimonials = async () => {
 						What developers are saying
 					</h2>
 					<p className="mt-4 text-lg leading-8 text-gray-600 dark:text-gray-300">
-						See what the community thinks about our LLM Gateway
+						See what the community thinks about our LLM API
 					</p>
 				</div>
 

@@ -21,7 +21,7 @@ docker run -d \
   -p 3002:3002 -p 3003:3003 -p 3005:3005 -p 3006:3006 -p 4001:4001 -p 4002:4002 \
   -v ~/llmgateway_data:/var/lib/postgresql/data \
   -e AUTH_SECRET=your-secret-key-here \
-  ghcr.io/theopenco/llmgateway-unified:latest
+  ghcr.io/Spendbase/llmgateway-unified:latest
 ```
 
 Prefer pinning the image to the latest release tag. You can also run it via Docker Compose.
@@ -29,7 +29,7 @@ Prefer pinning the image to the latest release tag. You can also run it via Dock
 ## Option 2: Split Services via Docker Compose
 
 ```bash
-git clone https://github.com/theopenco/llmgateway.git
+git clone https://github.com/Spendbase/llmgateway.git
 cd llmgateway
 cp .env.example .env
 # edit .env
@@ -44,4 +44,4 @@ docker compose -f infra/docker-compose.split.yml up -d
 - API: http://localhost:4002
 - Gateway: http://localhost:4001
 
-See the full guide: [`Self Host`](https://raw.githubusercontent.com/theopenco/llmgateway/refs/heads/main/apps/docs/content/self-host.mdx).
+See the full guide: [`Self Host`](https://raw.githubusercontent.com/Spendbase/llmgateway/refs/heads/main/apps/docs/content/self-host.mdx).

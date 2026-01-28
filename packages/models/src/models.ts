@@ -1,19 +1,7 @@
-import { alibabaModels } from "./models/alibaba.js";
 import { anthropicModels } from "./models/anthropic.js";
-import { deepseekModels } from "./models/deepseek.js";
 import { googleModels } from "./models/google.js";
-import { llmgatewayModels } from "./models/llmgateway.js";
-import { metaModels } from "./models/meta.js";
-import { microsoftModels } from "./models/microsoft.js";
-import { minimaxModels } from "./models/minimax.js";
-import { mistralModels } from "./models/mistral.js";
-import { moonshotModels } from "./models/moonshot.js";
-import { nousresearchModels } from "./models/nousresearch.js";
 import { openaiModels } from "./models/openai.js";
-import { perplexityModels } from "./models/perplexity.js";
-import { routewayModels } from "./models/routeway.js";
-import { xaiModels } from "./models/xai.js";
-import { zaiModels } from "./models/zai.js";
+import { alibabaModels } from "./models/alibaba.js";
 
 import type { providers } from "./providers.js";
 
@@ -233,27 +221,23 @@ export interface ModelDefinition {
 	 * Date when the model was released by the provider
 	 */
 	releasedAt?: Date;
-	/**
-	 * Date when the model was published on LLM Gateway
-	 */
-	publishedAt?: Date;
 }
 
 export const models = [
-	...llmgatewayModels,
+	// ...llmgatewayModels,
 	...openaiModels,
 	...anthropicModels,
 	...googleModels,
-	...perplexityModels,
-	...xaiModels,
-	...metaModels,
-	...deepseekModels,
-	...mistralModels,
-	...microsoftModels,
-	...minimaxModels,
-	...moonshotModels,
+	// ...perplexityModels,
+	// ...xaiModels,
+	// ...metaModels,
+	// ...deepseekModels,
+	// ...mistralModels,
+	// ...microsoftModels,
+	// ...minimaxModels,
+	// ...moonshotModels,
 	...alibabaModels,
-	...nousresearchModels,
-	...routewayModels,
-	...zaiModels,
+	// ...nousresearchModels,
+	// ...routewayModels,
+	// ...zaiModels,
 ] as const satisfies ModelDefinition[];

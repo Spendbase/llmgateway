@@ -492,7 +492,7 @@ export default async function ModelProviderOgImage({ params }: ImageProps) {
 									color: "#E5E7EB",
 								}}
 							>
-								LLM Gateway
+								LLM API
 							</span>
 						</div>
 						<span
@@ -501,7 +501,7 @@ export default async function ModelProviderOgImage({ params }: ImageProps) {
 								color: "#6B7280",
 							}}
 						>
-							llmgateway.io
+							llmapi.ai
 						</span>
 					</div>
 				</div>
@@ -527,7 +527,7 @@ export default async function ModelProviderOgImage({ params }: ImageProps) {
 							"system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
 					}}
 				>
-					LLM Gateway Model
+					LLM API Model
 				</div>
 			),
 			size,

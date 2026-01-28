@@ -1,8 +1,7 @@
 import { Activity, CircleDollarSign, Hash, Info, Server } from "lucide-react";
-import Link from "next/link";
 
+import SignInPrompt from "@/components/auth/sign-in-prompt";
 import { TokenTimeRangeToggle } from "@/components/token-time-range-toggle";
-import { Button } from "@/components/ui/button";
 import {
 	getAdminTokenMetrics,
 	type TokenWindow,
@@ -63,26 +62,6 @@ function MetricCard({
 						{icon}
 					</div>
 				) : null}
-			</div>
-		</div>
-	);
-}
-
-function SignInPrompt() {
-	return (
-		<div className="flex min-h-screen items-center justify-center px-4">
-			<div className="w-full max-w-md text-center">
-				<div className="mb-8">
-					<h1 className="text-3xl font-semibold tracking-tight">
-						Admin Dashboard
-					</h1>
-					<p className="mt-2 text-sm text-muted-foreground">
-						Sign in to access the admin dashboard
-					</p>
-				</div>
-				<Button asChild size="lg" className="w-full">
-					<Link href="/login">Sign In</Link>
-				</Button>
 			</div>
 		</div>
 	);

@@ -6,7 +6,6 @@ import { PricingEnterprise } from "@/components/enterprise/pricing";
 // import { SecurityEnterprise } from "@/components/enterprise/security";
 import Footer from "@/components/landing/footer";
 import { Hero } from "@/components/landing/hero";
-import { Testimonials } from "@/components/landing/testimonials";
 
 export default function EnterprisePage() {
 	return (
@@ -15,7 +14,6 @@ export default function EnterprisePage() {
 			<HeroEnterprise />
 			<FeaturesEnterprise />
 			{/* <SecurityEnterprise /> */}
-			<Testimonials />
 			<PricingEnterprise />
 			<OpenSourceEnterprise />
 			<ContactFormEnterprise />

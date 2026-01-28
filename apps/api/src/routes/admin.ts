@@ -2,7 +2,7 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
-import { and, db, eq, gte, lt, sql, tables } from "@llmgateway/db";
+import { and, db, desc, eq, gte, lt, sql, tables } from "@llmgateway/db";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -38,6 +38,39 @@ const adminTokenMetricsSchema = z.object({
 	mostUsedModel: z.string().nullable(),
 	mostUsedProvider: z.string().nullable(),
 	mostUsedModelRequestCount: z.number(),
+});
+
+const transactionObjectSchema = z.object({
+	id: z.string(),
+	organizationId: z.string(),
+	creditAmount: z.string(),
+	description: z.string(),
+});
+
+const depositRequestSchema = z.object({
+	organizationId: z.string().openapi({ example: "org_123456" }),
+	amount: z.number().positive().openapi({ example: 50.0 }),
+	description: z
+		.string()
+		.trim()
+		.min(1, "Description cannot be empty")
+		.openapi({ example: "Compensation for downtime" }),
+});
+
+const depositResponseSchema = z.object({
+	success: z.boolean(),
+	transaction: transactionObjectSchema,
+	newBalance: z.string().or(z.number()),
+});
+
+const organizationSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	billingEmail: z.string(),
+	credits: z.string(),
+	plan: z.enum(["free", "pro"]),
+	status: z.enum(["active", "inactive", "deleted"]).nullable(),
+	createdAt: z.date(),
 });
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -86,6 +119,52 @@ const getTokenMetrics = createRoute({
 				},
 			},
 			description: "Admin token usage metrics.",
+		},
+	},
+});
+
+const depositCredits = createRoute({
+	method: "post",
+	path: "/deposit-credits",
+	request: {
+		body: {
+			content: {
+				"application/json": {
+					schema: depositRequestSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: depositResponseSchema,
+				},
+			},
+			description: "Credits successfully deposited",
+		},
+		400: { description: "Validation error" },
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Organization not found" },
+		500: { description: "Internal Server Error" },
+	},
+});
+
+const getOrganizations = createRoute({
+	method: "get",
+	path: "/organizations",
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						organizations: z.array(organizationSchema).openapi({}),
+					}),
+				},
+			},
+			description: "List of all organizations",
 		},
 	},
 });
@@ -388,6 +467,105 @@ admin.openapi(getTokenMetrics, async (c) => {
 		mostUsedProvider,
 		mostUsedModelRequestCount,
 	});
+});
+
+admin.openapi(getOrganizations, async (c) => {
+	const user = c.get("user");
+
+	if (!user) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	const organizations = await db
+		.select()
+		.from(tables.organization)
+		.where(eq(tables.organization.status, "active"))
+		.orderBy(desc(tables.organization.createdAt));
+
+	return c.json({
+		organizations,
+	});
+});
+
+admin.openapi(depositCredits, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const { organizationId, amount, description } = c.req.valid("json");
+
+	try {
+		const targetOrg = await db.query.organization.findFirst({
+			where: {
+				id: organizationId,
+			},
+			columns: {
+				id: true,
+				credits: true,
+			},
+		});
+
+		if (!targetOrg) {
+			throw new HTTPException(404, { message: "Organization not found" });
+		}
+
+		const result = await db.transaction(async (tx) => {
+			const [newTx] = await tx
+				.insert(tables.transaction)
+				.values({
+					organizationId,
+					type: "credit_topup",
+					amount: "0",
+					creditAmount: String(amount),
+					status: "completed",
+					description: `Admin credit grant: ${description}`,
+					currency: "USD",
+					createdAt: new Date(),
+				})
+				.returning();
+
+			const [updatedOrg] = await tx
+				.update(tables.organization)
+				.set({
+					credits: sql`${tables.organization.credits} + ${amount}`,
+				})
+				.where(eq(tables.organization.id, organizationId))
+				.returning({ newBalance: tables.organization.credits });
+
+			return {
+				transaction: {
+					id: newTx.id,
+					organizationId: newTx.organizationId,
+					creditAmount: Number(newTx.creditAmount),
+					description: newTx.description,
+				},
+				newBalance: Number(updatedOrg.newBalance),
+			};
+		});
+
+		return c.json({
+			success: true,
+			...result,
+		});
+	} catch (err: any) {
+		if (err.message === "ORGANIZATION_NOT_FOUND") {
+			throw new HTTPException(404, { message: "Organization not found" });
+		}
+
+		throw new HTTPException(500, { message: "Internal Database Error" });
+	}
 });
 
 export default admin;

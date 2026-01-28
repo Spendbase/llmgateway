@@ -53,7 +53,7 @@ interface HeroCompareProps {
 }
 
 const defaultContent: HeroContent = {
-	heading: "Why Choose LLM Gateway Over OpenRouter?",
+	heading: "Why Choose LLM API Over OpenRouter?",
 	description:
 		"Compare our unified API gateway with advanced routing, analytics, and cost optimization against OpenRouter's basic proxy service.",
 	badges: [
@@ -69,7 +69,7 @@ const defaultContent: HeroContent = {
 		},
 		secondary: {
 			text: "View Documentation",
-			href: "https://docs.llmgateway.io",
+			href: "https://docs.llmapi.ai",
 			external: true,
 		},
 	},

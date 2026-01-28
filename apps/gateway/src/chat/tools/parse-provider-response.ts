@@ -340,6 +340,8 @@ export function parseProviderResponse(
 			promptTokens = json.usageMetadata?.promptTokenCount || null;
 			completionTokens = json.usageMetadata?.candidatesTokenCount || null;
 			reasoningTokens = json.usageMetadata?.thoughtsTokenCount || null;
+			// Extract cached tokens from Google's implicit caching
+			cachedTokens = json.usageMetadata?.cachedContentTokenCount || null;
 			// Don't use Google's totalTokenCount as it doesn't include reasoning tokens
 			totalTokens = null;
 
@@ -367,131 +369,7 @@ export function parseProviderResponse(
 			}
 			break;
 		}
-		case "mistral":
-		case "novita": {
-			content = json.choices?.[0]?.message?.content || null;
-			// Extract reasoning content - check both reasoning and reasoning_content fields
-			reasoningContent =
-				json.choices?.[0]?.message?.reasoning ||
-				json.choices?.[0]?.message?.reasoning_content ||
-				null;
-			finishReason = json.choices?.[0]?.finish_reason || null;
-			promptTokens = json.usage?.prompt_tokens || null;
-			completionTokens = json.usage?.completion_tokens || null;
-			reasoningTokens = json.usage?.reasoning_tokens || null;
-			cachedTokens = json.usage?.prompt_tokens_details?.cached_tokens || null;
-			totalTokens = json.usage?.total_tokens || null;
-
-			// Handle Mistral/Novita JSON output mode which wraps JSON in markdown code blocks
-			if (
-				content &&
-				typeof content === "string" &&
-				content.includes("```json")
-			) {
-				const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-				if (jsonMatch && jsonMatch[1]) {
-					// Extract and clean the JSON content
-					content = jsonMatch[1].trim();
-					// Ensure it's valid JSON by parsing and re-stringifying to normalize formatting
-					try {
-						const parsed = JSON.parse(content);
-						content = JSON.stringify(parsed);
-					} catch {}
-				}
-			}
-
-			// Map non-standard finish reasons to OpenAI-compatible values
-			if (finishReason === "end_turn") {
-				finishReason = "stop";
-			} else if (finishReason === "tool_use") {
-				finishReason = "tool_calls";
-			}
-
-			// Extract tool calls from Mistral/Novita format (same as OpenAI)
-			toolResults = json.choices?.[0]?.message?.tool_calls || null;
-			break;
-		}
-		case "alibaba": {
-			// Check if this is a DashScope multimodal generation response (image generation)
-			// Format: { output: { choices: [{ message: { content: [{ image: "url" }] } }] }, usage: {...} }
-			const alibabaChoices = json.output?.choices;
-			if (alibabaChoices && Array.isArray(alibabaChoices)) {
-				const messageContent = alibabaChoices[0]?.message?.content;
-				if (Array.isArray(messageContent)) {
-					// Extract images from content array
-					const imageItems = messageContent.filter((item: any) => item.image);
-					if (imageItems.length > 0) {
-						images = imageItems.map(
-							(item: any): ImageObject => ({
-								type: "image_url",
-								image_url: {
-									url: item.image,
-								},
-							}),
-						);
-						content = "Generated image";
-						finishReason = alibabaChoices[0]?.finish_reason || "stop";
-						// DashScope image generation uses different usage format
-						promptTokens = 0;
-						completionTokens = 0;
-						totalTokens = 0;
-					} else {
-						// Text content in DashScope format
-						content =
-							messageContent
-								.filter((item: any) => item.text)
-								.map((item: any) => item.text)
-								.join("") || null;
-						finishReason = alibabaChoices[0]?.finish_reason || null;
-					}
-				}
-			} else if (json.choices) {
-				// Alibaba chat completions use OpenAI format
-				toolResults = json.choices?.[0]?.message?.tool_calls || null;
-				content = json.choices?.[0]?.message?.content || null;
-				reasoningContent =
-					json.choices?.[0]?.message?.reasoning ||
-					json.choices?.[0]?.message?.reasoning_content ||
-					null;
-				finishReason = json.choices?.[0]?.finish_reason || null;
-				promptTokens = json.usage?.prompt_tokens || null;
-				completionTokens = json.usage?.completion_tokens || null;
-				reasoningTokens = json.usage?.reasoning_tokens || null;
-				cachedTokens = json.usage?.prompt_tokens_details?.cached_tokens || null;
-				totalTokens =
-					json.usage?.total_tokens ||
-					(promptTokens !== null && completionTokens !== null
-						? promptTokens + completionTokens + (reasoningTokens || 0)
-						: null);
-				if (json.choices?.[0]?.message?.images) {
-					images = json.choices[0].message.images;
-				}
-			}
-			break;
-		}
 		default: // OpenAI format
-			// Check if this is a Z.AI CogView image generation response
-			// Format: { created: number, data: [{ url: "..." }] }
-			if (usedProvider === "zai" && json.data && Array.isArray(json.data)) {
-				const imageData = json.data;
-				if (imageData.length > 0) {
-					images = imageData.map(
-						(item: any): ImageObject => ({
-							type: "image_url",
-							image_url: {
-								url: item.url,
-							},
-						}),
-					);
-					content = "Generated image";
-					finishReason = "stop";
-					// CogView image generation doesn't return token usage
-					promptTokens = 0;
-					completionTokens = 0;
-					totalTokens = 0;
-				}
-				break;
-			}
 			// Check if this is an OpenAI responses format (has output array instead of choices)
 			if (json.output && Array.isArray(json.output)) {
 				// OpenAI responses endpoint format
@@ -593,35 +471,6 @@ export function parseProviderResponse(
 					null;
 				finishReason = json.choices?.[0]?.finish_reason || null;
 
-				// ZAI-specific fix for incorrect finish_reason in tool response scenarios
-				// Only for models that were failing tests: glm-4.5-airx and glm-4.5-flash
-				if (
-					usedProvider === "zai" &&
-					finishReason === "tool_calls" &&
-					messages.length > 0
-				) {
-					const lastMessage = messages[messages.length - 1];
-					const modelName = json.model;
-
-					// Only apply to specific failing models and only when last message was a tool result
-					if (
-						(modelName === "glm-4.5-airx" || modelName === "glm-4.5-flash") &&
-						lastMessage?.role === "tool"
-					) {
-						// Check if the response actually contains new tool calls that should be prevented
-						const hasNewToolCalls =
-							json.choices?.[0]?.message?.tool_calls?.length > 0;
-						if (hasNewToolCalls) {
-							finishReason = "stop";
-							// Also update JSON to match
-							if (json.choices?.[0]) {
-								json.choices[0].finish_reason = "stop";
-								delete json.choices[0].message.tool_calls;
-							}
-						}
-					}
-				}
-
 				// Standard OpenAI-style token parsing
 				promptTokens = json.usage?.prompt_tokens || null;
 				completionTokens = json.usage?.completion_tokens || null;
@@ -663,25 +512,6 @@ export function parseProviderResponse(
 				}
 				if (hasSearchCitations) {
 					webSearchCount = 1; // Search models bill per request, not per citation
-				}
-
-				// For ZAI, extract web search info if present
-				// ZAI includes web_search content in the response
-				if (usedProvider === "zai") {
-					const webSearchResults =
-						json.choices?.[0]?.message?.web_search || null;
-					if (webSearchResults && Array.isArray(webSearchResults)) {
-						webSearchCount = webSearchResults.length;
-						for (const result of webSearchResults) {
-							annotations.push({
-								type: "url_citation",
-								url_citation: {
-									url: result.link || result.url || "",
-									title: result.title,
-								},
-							});
-						}
-					}
 				}
 			}
 			break;

@@ -5,7 +5,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import { useMemo } from "react";
 
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { AppConfigProvider } from "@/lib/config";
 
 import type { AppConfig } from "@/lib/config-server";
@@ -45,6 +46,7 @@ export function Providers({ children, config }: ProvidersProps) {
 						<ReactQueryDevtools buttonPosition="bottom-right" />
 					)}
 				</QueryClientProvider>
+				<SonnerToaster richColors position="bottom-right" />
 				<Toaster />
 			</ThemeProvider>
 		</AppConfigProvider>

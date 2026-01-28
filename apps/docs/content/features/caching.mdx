@@ -8,13 +8,13 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 # Caching
 
-LLM Gateway provides intelligent response caching that can significantly reduce your API costs and response latency. When caching is enabled, identical requests are served from cache instead of making redundant calls to LLM providers.
+LLM API provides intelligent response caching that can significantly reduce your API costs and response latency. When caching is enabled, identical requests are served from cache instead of making redundant calls to LLM providers.
 
 ## How It Works
 
 When you make an API request:
 
-1. LLM Gateway generates a cache key based on the request parameters
+1. LLM API generates a cache key based on the request parameters
 2. If a matching cached response exists, it's returned immediately
 3. If no cache exists, the request is forwarded to the provider
 4. The response is cached for future identical requests
@@ -40,8 +40,8 @@ Caching can dramatically reduce costs for applications with repetitive requests:
 
 <Callout type="warning">
 	Caching requires [Data Retention](/features/data-retention) to be enabled with
-	"Retain All Data" level. This allows LLM Gateway to store and retrieve
-	response payloads.
+	"Retain All Data" level. This allows LLM API to store and retrieve response
+	payloads.
 </Callout>
 
 To use caching:

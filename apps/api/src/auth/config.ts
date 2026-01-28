@@ -16,7 +16,7 @@ const cookieDomain = process.env.COOKIE_DOMAIN || "localhost";
 const uiUrl = process.env.UI_URL || "http://localhost:3002";
 const originUrls =
 	process.env.ORIGIN_URLS ||
-	"http://localhost:3002,http://localhost:3003,http://localhost:4002,http://localhost:3006";
+	"http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:4002,http://localhost:3006";
 const isHosted = process.env.HOSTED === "true";
 
 export const redisClient = new Redis({
@@ -330,133 +330,6 @@ export async function checkRateLimit(
 	}
 }
 
-async function createBrevoContact(
-	email: string,
-	name?: string,
-	attributes?: Record<string, string | number | boolean>,
-): Promise<void> {
-	const brevoApiKey = process.env.BREVO_API_KEY;
-
-	if (!brevoApiKey) {
-		logger.debug("BREVO_API_KEY not configured, skipping contact creation");
-		return;
-	}
-
-	try {
-		const contactAttributes: Record<string, string | number | boolean> = {
-			...(attributes || {}),
-		};
-
-		if (name) {
-			const firstName = name.split(" ")[0];
-			const lastName = name.split(" ")[1];
-			if (firstName) {
-				contactAttributes.FIRSTNAME = firstName;
-			}
-			if (lastName) {
-				contactAttributes.LASTNAME = lastName;
-			}
-		}
-
-		logger.debug("Attempting to create/update Brevo contact", {
-			email,
-			attributes: contactAttributes,
-		});
-
-		const response = await fetch("https://api.brevo.com/v3/contacts", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"api-key": brevoApiKey,
-			},
-			body: JSON.stringify({
-				email,
-				updateEnabled: true,
-				...(process.env.BREVO_LIST_IDS && {
-					listIds: process.env.BREVO_LIST_IDS.split(",").map(Number),
-				}),
-				...(Object.keys(contactAttributes).length > 0 && {
-					attributes: contactAttributes,
-				}),
-			}),
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
-		}
-
-		logger.info("Successfully created/updated Brevo contact", { email });
-	} catch (error) {
-		logger.error("Failed to create Brevo contact", {
-			...(error instanceof Error ? { err: error } : { error }),
-			email,
-			name,
-			attributes,
-		});
-	}
-}
-
-export async function updateBrevoContactAttributes(
-	email: string,
-	attributes: Record<string, string | number | boolean>,
-): Promise<void> {
-	const brevoApiKey = process.env.BREVO_API_KEY;
-
-	if (!brevoApiKey) {
-		logger.debug("BREVO_API_KEY not configured, skipping contact update");
-		return;
-	}
-
-	try {
-		logger.debug("Attempting to update Brevo contact attributes", {
-			email,
-			attributes,
-		});
-
-		const response = await fetch(
-			`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`,
-			{
-				method: "PUT",
-				headers: {
-					"Content-Type": "application/json",
-					"api-key": brevoApiKey,
-				},
-				body: JSON.stringify({
-					attributes,
-				}),
-			},
-		);
-
-		if (!response.ok) {
-			const errorText = await response.text();
-
-			if (response.status === 404) {
-				logger.warn("Brevo contact not found, skipping attribute update", {
-					email,
-					attributes,
-					status: response.status,
-					error: errorText,
-				});
-				return;
-			}
-
-			throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
-		}
-
-		logger.info("Successfully updated Brevo contact attributes", {
-			email,
-			attributes,
-		});
-	} catch (error) {
-		logger.error("Failed to update Brevo contact attributes", {
-			...(error instanceof Error ? { err: error } : { error }),
-			email,
-			attributes,
-		});
-	}
-}
-
 export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 	betterAuth({
 		advanced: {
@@ -515,30 +388,13 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					sendOnSignUp: true,
 					autoSignInAfterVerification: true,
 					// TODO this should be afterEmailVerification in better-auth v1.3
-					onEmailVerification: async (user: {
-						id: string;
-						email: string;
-						name?: string | null;
-					}) => {
-						// Fetch the user's onboarding status to include in Brevo
-						const dbUser = await db.query.user.findFirst({
-							where: {
-								id: {
-									eq: user.id,
-								},
-							},
-							columns: {
-								onboardingCompleted: true,
-							},
-						});
+					// onEmailVerification: async (user: {
+					// 	id: string;
+					// 	email: string;
+					// 	name?: string | null;
+					// }) => {
 
-						// Add verified email to Brevo CRM with onboarding status
-						await createBrevoContact(user.email, user.name || undefined, {
-							...(dbUser?.onboardingCompleted && {
-								ONBOARDING_COMPLETED: true,
-							}),
-						});
-					},
+					// },
 					sendVerificationEmail: async ({ user, token }) => {
 						const url = `${apiUrl}/auth/verify-email?token=${token}&callbackURL=${uiUrl}/dashboard?emailVerified=true`;
 
@@ -792,15 +648,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						}
 					}
 				});
-
-				// Check if this is a social login (user has emailVerified but no email verification sent)
-				// In this case, we should add them to Brevo
-				if (isHosted && newSession.user.emailVerified) {
-					await createBrevoContact(
-						newSession.user.email,
-						newSession.user.name || undefined,
-					);
-				}
 			}),
 		},
 	}),

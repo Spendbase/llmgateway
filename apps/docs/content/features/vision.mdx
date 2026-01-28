@@ -8,11 +8,11 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 # Vision Support
 
-LLMGateway supports vision-enabled models that can analyze and describe images. You can provide images via HTTPS URLs or inline base64-encoded data.
+LLM API supports vision-enabled models that can analyze and describe images. You can provide images via HTTPS URLs or inline base64-encoded data.
 
 ## Vision-Enabled Models
 
-You can find all vision-enabled models on our [models page with vision filter](https://llmgateway.io/models?filters=1&vision=true). These models can process both text and image content in the same request.
+You can find all vision-enabled models on our [models page with vision filter](https://llmapi.ai/models?filters=1&vision=true). These models can process both text and image content in the same request.
 
 ## Image Formats
 
@@ -21,8 +21,8 @@ You can find all vision-enabled models on our [models page with vision filter](h
 You can provide any publicly accessible HTTPS URL pointing to an image:
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4o",
@@ -51,8 +51,8 @@ curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
 You can also provide images as base64-encoded data URIs:
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4o",
@@ -88,8 +88,8 @@ When using vision models, the `content` field should be an array containing both
 You can include multiple images in a single request:
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4o",
@@ -127,8 +127,8 @@ curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
 </Callout>
 
 ```bash
-curl -X POST "https://api.llmgateway.io/v1/chat/completions" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST "https://internal.llmapi.ai/v1/chat/completions" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4o",

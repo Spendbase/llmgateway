@@ -6,9 +6,8 @@ import {
 	Server,
 	Users,
 } from "lucide-react";
-import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import SignInPrompt from "@/components/auth/sign-in-prompt";
 import { getAdminDashboardMetrics } from "@/lib/admin-metrics";
 import { cn } from "@/lib/utils";
 
@@ -71,26 +70,6 @@ function MetricCard({
 						{icon}
 					</div>
 				) : null}
-			</div>
-		</div>
-	);
-}
-
-function SignInPrompt() {
-	return (
-		<div className="flex min-h-screen items-center justify-center px-4">
-			<div className="w-full max-w-md text-center">
-				<div className="mb-8">
-					<h1 className="text-3xl font-semibold tracking-tight">
-						Admin Dashboard
-					</h1>
-					<p className="mt-2 text-sm text-muted-foreground">
-						Sign in to access the admin dashboard
-					</p>
-				</div>
-				<Button asChild size="lg" className="w-full">
-					<Link href="/login">Sign In</Link>
-				</Button>
 			</div>
 		</div>
 	);
@@ -186,7 +165,7 @@ export default async function Page() {
 					value={percentFormatter.format(
 						safeNumber(metrics.customerInfraReplacementRate),
 					)}
-					subtitle="Weighted metric combining % of LLM traffic routed through LLM Gateway and % of infra control-plane features replaced"
+					subtitle="Weighted metric combining % of LLM traffic routed through LLM API and % of infra control-plane features replaced"
 					icon={<Server className="h-4 w-4" />}
 					accent="purple"
 				/>

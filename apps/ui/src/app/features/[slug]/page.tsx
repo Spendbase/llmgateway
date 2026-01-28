@@ -181,8 +181,8 @@ export default async function FeaturePage({ params }: PageProps) {
 									Ready to get started?
 								</h2>
 								<p className="text-lg text-muted-foreground mb-8">
-									Join thousands of developers using LLM Gateway to power their
-									AI applications.
+									Join thousands of developers using LLM API to power their AI
+									applications.
 								</p>
 								<div className="flex flex-wrap justify-center gap-4">
 									<Link href="/signup">
@@ -223,7 +223,7 @@ export async function generateMetadata({
 		return {};
 	}
 
-	const title = `${feature.title} – LLM Gateway`;
+	const title = `${feature.title} – LLM API`;
 	const description = feature.description;
 
 	return {

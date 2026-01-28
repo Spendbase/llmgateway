@@ -386,7 +386,7 @@ describe("generateAndEmailInvoice", () => {
 		expect(sendTransactionalEmail).toHaveBeenCalledWith(
 			expect.objectContaining({
 				to: "billing@example.com",
-				subject: "Invoice INV-2025-001 - LLMGateway",
+				subject: "Invoice INV-2025-001 - LLM API",
 				attachments: expect.arrayContaining([
 					expect.objectContaining({
 						filename: "invoice-INV-2025-001.pdf",

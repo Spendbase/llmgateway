@@ -303,7 +303,7 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 							</div>
 							<div className="text-center">
 								<h3 className="text-lg font-semibold mb-2">
-									Welcome to LLM Gateway!
+									Welcome to LLM API!
 								</h3>
 								<p className="text-muted-foreground mb-4">
 									Get started by adding credits to your account or upgrading to
@@ -362,7 +362,7 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 							label="Organization Credits"
 							value={`$${
 								selectedOrganization
-									? Number(selectedOrganization.credits).toFixed(8)
+									? Number(selectedOrganization.credits).toFixed(2)
 									: "0.00"
 							}`}
 							subtitle="Available balance"

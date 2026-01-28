@@ -121,13 +121,13 @@ export function Comparison() {
 						Find the perfect fit
 					</h2>
 					<p className="text-muted-foreground">
-						Compare LLM Gateway and OpenRouter features side by side
+						Compare LLM API and OpenRouter features side by side
 					</p>
 				</div>
 
 				<div className="mb-8 bg-primary/5 dark:bg-primary/10 rounded-lg p-6 border border-primary/20">
 					<h3 className="font-bold text-lg mb-3 text-primary">
-						Why choose LLM Gateway?
+						Why choose LLM API?
 					</h3>
 					<div className="grid md:grid-cols-2 gap-4 text-sm">
 						<div className="flex items-start gap-2">
@@ -143,12 +143,12 @@ export function Comparison() {
 								optimization
 							</span>
 						</div>
-						<div className="flex items-start gap-2">
+						{/* <div className="flex items-start gap-2">
 							<Check className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
 							<span className="text-foreground">
 								<strong>Can be self hosted</strong> for complete control
 							</span>
-						</div>
+						</div> */}
 						<div className="flex items-start gap-2">
 							<Check className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
 							<span className="text-foreground">
@@ -164,7 +164,7 @@ export function Comparison() {
 						<div className="text-center">
 							<div className="border-2 border-primary rounded-lg p-4 bg-background shadow-sm h-full">
 								<h3 className="font-bold text-lg mb-1 text-foreground">
-									LLM Gateway
+									LLM API
 								</h3>
 								<p className="text-sm text-muted-foreground mb-2">
 									OPEN & LOWER FEES
@@ -225,10 +225,10 @@ export function Comparison() {
 				<div className="text-center mt-8">
 					<div className="flex flex-col sm:flex-row gap-4 justify-center">
 						<Button size="lg" className="bg-primary hover:bg-primary/90">
-							<AuthLink href="/signup">Start Free with LLM Gateway</AuthLink>
+							<AuthLink href="/signup">Start Free with LLM API</AuthLink>
 						</Button>
 						<Button size="lg" variant="outline">
-							<Link href="/#pricing">View Pricing Details</Link>
+							<Link href={"/pricing" as any}>View Pricing Details</Link>
 						</Button>
 					</div>
 					<p className="text-sm text-muted-foreground mt-3">

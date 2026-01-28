@@ -2,6 +2,7 @@
 
 import {
 	Check,
+	Code,
 	Copy,
 	Eye,
 	Gift,
@@ -25,6 +26,10 @@ import {
 	FileJson2,
 	List,
 	Grid,
+	Bot,
+	Brain,
+	Sparkles,
+	PenTool,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -62,22 +67,28 @@ import {
 import { useAppConfig } from "@/lib/config";
 import { cn, formatContextSize } from "@/lib/utils";
 
-import { models, providers } from "@llmgateway/models";
 import { getProviderIcon } from "@llmgateway/shared/components";
 
 import { ModelCard } from "./model-card";
 
 import type {
-	ModelDefinition,
-	ProviderModelMapping,
-	StabilityLevel,
-} from "@llmgateway/models";
+	ApiModel,
+	ApiModelProviderMapping,
+	ApiProvider,
+} from "@/lib/fetch-models";
+import type { StabilityLevel } from "@llmgateway/models";
 
-interface ModelWithProviders extends ModelDefinition {
+interface ModelWithProviders extends ApiModel {
 	providerDetails: Array<{
-		provider: ProviderModelMapping;
-		providerInfo: (typeof providers)[number];
+		provider: ApiModelProviderMapping;
+		providerInfo: ApiProvider;
 	}>;
+}
+
+interface AllModelsProps {
+	children: React.ReactNode;
+	models: ApiModel[];
+	providers: ApiProvider[];
 }
 
 type SortField =
@@ -90,7 +101,7 @@ type SortField =
 	| "requestPrice";
 type SortDirection = "asc" | "desc";
 
-export function AllModels({ children }: { children: React.ReactNode }) {
+export function AllModels({ children, models, providers }: AllModelsProps) {
 	const config = useAppConfig();
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -125,6 +136,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 		(searchParams.get("sortDir") as SortDirection) === "desc" ? "desc" : "asc",
 	);
 	const [filters, setFilters] = useState({
+		category: searchParams.get("category") || "all",
 		capabilities: {
 			streaming: searchParams.get("streaming") === "true",
 			vision: searchParams.get("vision") === "true",
@@ -172,11 +184,11 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 	const totalProviderCount = providers.length;
 
 	const modelsWithProviders: ModelWithProviders[] = useMemo(() => {
-		const baseModels = (models as readonly ModelDefinition[]).map((model) => ({
+		const baseModels = models.map((model) => ({
 			...model,
-			providerDetails: model.providers.map((provider) => ({
-				provider,
-				providerInfo: providers.find((p) => p.id === provider.providerId)!,
+			providerDetails: model.mappings.map((mapping) => ({
+				provider: mapping,
+				providerInfo: providers.find((p) => p.id === mapping.providerId)!,
 			})),
 		}));
 
@@ -220,6 +232,84 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 
 				if (!(containsAllTokens || containsPhrase)) {
 					return false;
+				}
+			}
+
+			// Category filter
+			if (filters.category && filters.category !== "all") {
+				switch (filters.category) {
+					case "code": {
+						// Code generation: needs tools, JSON output, streaming
+						if (model.free) {
+							return false;
+						}
+						if (
+							model.stability === "unstable" ||
+							model.stability === "experimental"
+						) {
+							return false;
+						}
+						const hasCodeCapabilities = model.providerDetails.some(
+							(p) =>
+								(p.provider.jsonOutput || p.provider.jsonOutputSchema) &&
+								p.provider.tools &&
+								p.provider.streaming,
+						);
+						if (!hasCodeCapabilities) {
+							return false;
+						}
+						break;
+					}
+					case "chat": {
+						// Chat & Assistants: general chat models with streaming
+						const hasStreaming = model.providerDetails.some(
+							(p) => p.provider.streaming,
+						);
+						if (!hasStreaming) {
+							return false;
+						}
+						break;
+					}
+					case "reasoning": {
+						// Reasoning & Analysis: models with reasoning capability
+						const hasReasoning = model.providerDetails.some(
+							(p) => p.provider.reasoning,
+						);
+						if (!hasReasoning) {
+							return false;
+						}
+						break;
+					}
+					case "creative": {
+						// Creative & Writing: exclude image generation models
+						if (model.output?.includes("image")) {
+							return false;
+						}
+						const hasCreativeStreaming = model.providerDetails.some(
+							(p) => p.provider.streaming,
+						);
+						if (!hasCreativeStreaming) {
+							return false;
+						}
+						break;
+					}
+					case "image": {
+						// Image Generation
+						if (!model.output?.includes("image")) {
+							return false;
+						}
+						break;
+					}
+					case "multimodal": {
+						// Multimodal: vision capability
+						const hasVision = model.providerDetails.some(
+							(p) => p.provider.vision,
+						);
+						if (!hasVision) {
+							return false;
+						}
+						break;
+					}
 				}
 			}
 
@@ -272,8 +362,15 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 			) {
 				return false;
 			}
-			if (filters.capabilities.free && !model.free) {
-				return false;
+			if (filters.capabilities.free) {
+				// A model is only considered free if it has the free flag AND no provider has a per-request cost
+				const hasRequestPrice = model.providerDetails.some(
+					(p) =>
+						p.provider.requestPrice && parseFloat(p.provider.requestPrice) > 0,
+				);
+				if (!model.free || hasRequestPrice) {
+					return false;
+				}
 			}
 			if (
 				filters.capabilities.discounted &&
@@ -295,10 +392,13 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 			// Price filters
 			const hasInputPrice = (min: string, max: string) => {
 				return model.providerDetails.some((p) => {
-					if (p.provider.inputPrice === undefined) {
+					if (
+						p.provider.inputPrice === null ||
+						p.provider.inputPrice === undefined
+					) {
 						return !min && !max;
 					}
-					const price = p.provider.inputPrice * 1e6; // Convert to per million tokens
+					const price = parseFloat(p.provider.inputPrice) * 1e6; // Convert to per million tokens
 					const minPrice = min ? parseFloat(min) : 0;
 					const maxPrice = max ? parseFloat(max) : Infinity;
 					return price >= minPrice && price <= maxPrice;
@@ -307,10 +407,13 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 
 			const hasOutputPrice = (min: string, max: string) => {
 				return model.providerDetails.some((p) => {
-					if (p.provider.outputPrice === undefined) {
+					if (
+						p.provider.outputPrice === null ||
+						p.provider.outputPrice === undefined
+					) {
 						return !min && !max;
 					}
-					const price = p.provider.outputPrice * 1e6; // Convert to per million tokens
+					const price = parseFloat(p.provider.outputPrice) * 1e6; // Convert to per million tokens
 					const minPrice = min ? parseFloat(min) : 0;
 					const maxPrice = max ? parseFloat(max) : Infinity;
 					return price >= minPrice && price <= maxPrice;
@@ -319,7 +422,10 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 
 			const hasContextSize = (min: string, max: string) => {
 				return model.providerDetails.some((p) => {
-					if (p.provider.contextSize === undefined) {
+					if (
+						p.provider.contextSize === null ||
+						p.provider.contextSize === undefined
+					) {
 						return !min && !max;
 					}
 					const size = p.provider.contextSize;
@@ -351,12 +457,12 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 			return true;
 		});
 
-		// Apply sorting - default to publishedAt descending (newest first)
+		// Apply sorting - default to createdAt descending (newest first)
 		return [...filteredModels].sort((a, b) => {
-			// Default sorting by publishedAt when no sort field selected
+			// Default sorting by createdAt when no sort field selected
 			if (!sortField) {
-				const aDate = a.publishedAt?.getTime() ?? 0;
-				const bDate = b.publishedAt?.getTime() ?? 0;
+				const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+				const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
 				return bDate - aDate; // Descending (newest first)
 			}
 
@@ -385,10 +491,12 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 					// Get the min input price among all providers for this model
 					const aInputPrices = a.providerDetails
 						.map((p) => p.provider.inputPrice)
-						.filter((p) => p !== undefined);
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					const bInputPrices = b.providerDetails
 						.map((p) => p.provider.inputPrice)
-						.filter((p) => p !== undefined);
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					aValue =
 						aInputPrices.length > 0 ? Math.min(...aInputPrices) : Infinity;
 					bValue =
@@ -399,10 +507,12 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 					// Get the min output price among all providers for this model
 					const aOutputPrices = a.providerDetails
 						.map((p) => p.provider.outputPrice)
-						.filter((p) => p !== undefined);
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					const bOutputPrices = b.providerDetails
 						.map((p) => p.provider.outputPrice)
-						.filter((p) => p !== undefined);
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					aValue =
 						aOutputPrices.length > 0 ? Math.min(...aOutputPrices) : Infinity;
 					bValue =
@@ -413,10 +523,12 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 					// Get the min cached input price among all providers for this model
 					const aCachedInputPrices = a.providerDetails
 						.map((p) => p.provider.cachedInputPrice)
-						.filter((p) => p !== undefined);
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					const bCachedInputPrices = b.providerDetails
 						.map((p) => p.provider.cachedInputPrice)
-						.filter((p) => p !== undefined);
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					aValue =
 						aCachedInputPrices.length > 0
 							? Math.min(...aCachedInputPrices)
@@ -431,10 +543,12 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 					// Get the min request price among all providers for this model
 					const aRequestPrices = a.providerDetails
 						.map((p) => p.provider.requestPrice)
-						.filter((p) => p !== undefined);
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					const bRequestPrices = b.providerDetails
 						.map((p) => p.provider.requestPrice)
-						.filter((p) => p !== undefined);
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					aValue =
 						aRequestPrices.length > 0 ? Math.min(...aRequestPrices) : Infinity;
 					bValue =
@@ -453,7 +567,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 			}
 			return 0;
 		});
-	}, [searchQuery, filters, sortField, sortDirection]);
+	}, [searchQuery, filters, sortField, sortDirection, models, providers]);
 
 	// Calculate unique filtered providers
 	const filteredProviderCount = useMemo(() => {
@@ -488,7 +602,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 		);
 	};
 
-	const getStabilityBadgeProps = (stability?: StabilityLevel) => {
+	const getStabilityBadgeProps = (stability?: StabilityLevel | null) => {
 		switch (stability) {
 			case "beta":
 				return {
@@ -513,14 +627,23 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 		}
 	};
 
-	const shouldShowStabilityWarning = (stability?: StabilityLevel) => {
-		return stability && ["unstable", "experimental"].includes(stability);
+	const shouldShowStabilityWarning = (
+		stability?: StabilityLevel | null,
+	): boolean => {
+		return (
+			stability !== null &&
+			stability !== undefined &&
+			["unstable", "experimental"].includes(stability)
+		);
 	};
 
-	const hasProviderStabilityWarning = (provider: ProviderModelMapping) => {
+	const hasProviderStabilityWarning = (
+		provider: ApiModelProviderMapping,
+	): boolean => {
 		const providerStability = provider.stability;
 		return (
-			providerStability &&
+			providerStability !== null &&
+			providerStability !== undefined &&
 			["unstable", "experimental"].includes(providerStability)
 		);
 	};
@@ -535,13 +658,18 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 		}
 	};
 
-	const formatPrice = (price: number | undefined, discount?: number) => {
-		if (price === undefined) {
+	const formatPrice = (
+		price: string | null | undefined,
+		discount?: string | null,
+	) => {
+		if (price === null || price === undefined) {
 			return "—";
 		}
-		const originalPrice = (price * 1e6).toFixed(2);
-		if (discount) {
-			const discountedPrice = (price * 1e6 * (1 - discount)).toFixed(2);
+		const priceNum = parseFloat(price);
+		const discountNum = discount ? parseFloat(discount) : 0;
+		const originalPrice = (priceNum * 1e6).toFixed(2);
+		if (discountNum > 0) {
+			const discountedPrice = (priceNum * 1e6 * (1 - discountNum)).toFixed(2);
 			return (
 				<div className="flex flex-col justify-items-center">
 					<div className="flex items-center gap-1">
@@ -558,7 +686,10 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 		return `$${originalPrice}`;
 	};
 
-	const getCapabilityIcons = (provider: ProviderModelMapping, model?: any) => {
+	const getCapabilityIcons = (
+		provider: ApiModelProviderMapping,
+		model?: ApiModel,
+	) => {
 		const capabilities = [];
 		if (provider.streaming) {
 			capabilities.push({
@@ -622,6 +753,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 	const clearFilters = () => {
 		setSearchQuery("");
 		setFilters({
+			category: "all",
 			capabilities: {
 				streaming: false,
 				vision: false,
@@ -644,6 +776,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 
 		updateUrlWithFilters({
 			q: undefined,
+			category: undefined,
 			streaming: undefined,
 			vision: undefined,
 			tools: undefined,
@@ -668,6 +801,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 
 	const hasActiveFilters =
 		searchQuery ||
+		(filters.category && filters.category !== "all") ||
 		Object.values(filters.capabilities).some(Boolean) ||
 		(filters.selectedProvider && filters.selectedProvider !== "all") ||
 		filters.inputPrice.min ||
@@ -683,7 +817,70 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 			className={`transition-all duration-200 ${showFilters ? "opacity-100" : "opacity-0 hidden"}`}
 		>
 			<CardContent className="pt-6">
-				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+					{/* Categories */}
+					<div className="space-y-3">
+						<h3 className="font-medium text-sm">Use Case</h3>
+						<Select
+							value={filters.category}
+							onValueChange={(value) => {
+								setFilters((prev) => ({ ...prev, category: value }));
+								updateUrlWithFilters({
+									category: value !== "all" ? value : undefined,
+								});
+							}}
+						>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="All Use Cases" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">
+									<div className="flex items-center gap-2">
+										<List className="h-4 w-4 text-muted-foreground" />
+										All Use Cases
+									</div>
+								</SelectItem>
+								<SelectItem value="code">
+									<div className="flex items-center gap-2">
+										<Code className="h-4 w-4 text-indigo-500" />
+										Code Generation
+									</div>
+								</SelectItem>
+								<SelectItem value="chat">
+									<div className="flex items-center gap-2">
+										<Bot className="h-4 w-4 text-blue-500" />
+										Chat & Assistants
+									</div>
+								</SelectItem>
+								<SelectItem value="reasoning">
+									<div className="flex items-center gap-2">
+										<Brain className="h-4 w-4 text-orange-500" />
+										Reasoning & Analysis
+									</div>
+								</SelectItem>
+								<SelectItem value="creative">
+									<div className="flex items-center gap-2">
+										<PenTool className="h-4 w-4 text-purple-500" />
+										Creative & Writing
+									</div>
+								</SelectItem>
+								<SelectItem value="image">
+									<div className="flex items-center gap-2">
+										<ImagePlus className="h-4 w-4 text-pink-500" />
+										Image Generation
+									</div>
+								</SelectItem>
+								<SelectItem value="multimodal">
+									<div className="flex items-center gap-2">
+										<Sparkles className="h-4 w-4 text-amber-500" />
+										Multimodal (Vision)
+									</div>
+								</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+
+					{/* Capabilities */}
 					<div className="space-y-3">
 						<h3 className="font-medium text-sm">Capabilities</h3>
 						<div className="space-y-2">
@@ -1035,15 +1232,20 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 											{shouldShowStabilityWarning(model.stability) && (
 												<AlertTriangle className="h-4 w-4 text-orange-500" />
 											)}
-											{model.free && (
-												<Badge
-													variant="secondary"
-													className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200"
-												>
-													<Gift className="h-3 w-3 mr-1" />
-													Free
-												</Badge>
-											)}
+											{model.free &&
+												!model.providerDetails.some(
+													(p) =>
+														p.provider.requestPrice &&
+														parseFloat(p.provider.requestPrice) > 0,
+												) && (
+													<Badge
+														variant="secondary"
+														className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200"
+													>
+														<Gift className="h-3 w-3 mr-1" />
+														Free
+													</Badge>
+												)}
 										</div>
 										<div className="text-xs text-muted-foreground">
 											Family:{" "}
@@ -1115,7 +1317,9 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 												<Badge
 													variant="secondary"
 													className="text-xs"
-													style={{ borderColor: providerInfo?.color }}
+													style={{
+														borderColor: providerInfo?.color ?? undefined,
+													}}
 												>
 													{providerInfo?.name || provider.providerId}
 												</Badge>
@@ -1232,18 +1436,19 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="text-sm font-mono"
 											>
-												{provider.requestPrice !== undefined &&
-												provider.requestPrice > 0 ? (
+												{provider.requestPrice !== null &&
+												provider.requestPrice !== undefined &&
+												parseFloat(provider.requestPrice) > 0 ? (
 													provider.discount ? (
 														<div className="flex flex-col justify-center items-center">
 															<span className="line-through text-muted-foreground text-xs">
-																${provider.requestPrice.toFixed(3)}
+																${parseFloat(provider.requestPrice).toFixed(3)}
 															</span>
 															<span className="text-green-600 font-semibold">
 																$
 																{(
-																	provider.requestPrice *
-																	(1 - provider.discount)
+																	parseFloat(provider.requestPrice) *
+																	(1 - parseFloat(provider.discount))
 																).toFixed(3)}
 															</span>
 															<span className="text-muted-foreground text-xs">
@@ -1252,7 +1457,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 														</div>
 													) : (
 														<>
-															${provider.requestPrice.toFixed(3)}
+															${parseFloat(provider.requestPrice).toFixed(3)}
 															<span className="text-muted-foreground text-xs ml-1">
 																/req
 															</span>
@@ -1273,11 +1478,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="text-sm font-mono"
 											>
-												{provider.webSearch && provider.webSearchPrice
-													? `$${(provider.webSearchPrice * 1000).toFixed(2)}/1K`
-													: provider.webSearch
-														? "Free"
-														: "—"}
+												{provider.webSearch ? "Supported" : "—"}
 											</div>
 										))}
 									</div>
@@ -1349,7 +1550,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 										asChild
 									>
 										<a
-											href={`${config.playgroundUrl}?model=${encodeURIComponent(`${model.providers[0]?.providerId}/${model.id}`)}`}
+											href={`${config.playgroundUrl}?model=${encodeURIComponent(`${model.providerDetails[0]?.provider.providerId}/${model.id}`)}`}
 											target="_blank"
 											rel="noopener noreferrer"
 										>
@@ -1405,7 +1606,7 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 
 								<div className="flex items-center gap-2">
 									<Link
-										href="https://docs.llmgateway.io/v1_models"
+										href="https://docs.llmapi.ai/v1_models"
 										target="_blank"
 										rel="noopener noreferrer"
 									>

@@ -5,7 +5,8 @@ import { streamSSE } from "hono/streaming";
 
 import { validateSource } from "@/chat/tools/validate-source.js";
 import { reportKeyError, reportKeySuccess } from "@/lib/api-key-health.js";
-import { calculateCosts } from "@/lib/costs.js";
+import { isCodingModel } from "@/lib/coding-models.js";
+import { calculateCosts, shouldBillCancelledRequests } from "@/lib/costs.js";
 import { throwIamException, validateModelAccess } from "@/lib/iam.js";
 import { calculateDataStorageCost, insertLog } from "@/lib/logs.js";
 
@@ -60,11 +61,22 @@ import { convertAwsEventStreamToSSE } from "./tools/parse-aws-eventstream.js";
 import { parseProviderResponse } from "./tools/parse-provider-response.js";
 import { transformResponseToOpenai } from "./tools/transform-response-to-openai.js";
 import { transformStreamingToOpenai } from "./tools/transform-streaming-to-openai.js";
-import { type ChatMessage, DEFAULT_TOKENIZER_MODEL } from "./tools/types.js";
+import { DEFAULT_TOKENIZER_MODEL } from "./tools/types.js";
 import { validateFreeModelUsage } from "./tools/validate-free-model-usage.js";
 
 import type { ImageObject } from "./tools/types.js";
 import type { ServerTypes } from "@/vars.js";
+
+/**
+ * Checks if a model is truly free (has free flag AND no per-request pricing)
+ */
+function isModelTrulyFree(modelInfo: ModelDefinition): boolean {
+	if (!modelInfo.free) {
+		return false;
+	}
+	// Check if any provider has a per-request cost
+	return !modelInfo.providers.some((p) => p.requestPrice && p.requestPrice > 0);
+}
 
 /**
  * Estimates tokens from content length using simple division
@@ -117,6 +129,28 @@ async function convertImagesToBase64(
 			}
 		}),
 	);
+}
+
+/**
+ * Checks if any messages contain images (image_url or image type content)
+ * Used to filter providers that don't support vision
+ */
+function messagesContainImages(messages: BaseMessage[]): boolean {
+	for (const message of messages) {
+		if (Array.isArray(message.content)) {
+			for (const part of message.content) {
+				if (
+					typeof part === "object" &&
+					part !== null &&
+					"type" in part &&
+					(part.type === "image_url" || part.type === "image")
+				) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
 }
 
 export const chat = new OpenAPIHono<ServerTypes>();
@@ -512,8 +546,6 @@ chat.openapi(completions, async (c) => {
 		stream,
 		tools,
 		tool_choice,
-		free_models_only,
-		no_reasoning,
 		sensitive_word_check,
 		image_config,
 		effort,
@@ -567,6 +599,9 @@ chat.openapi(completions, async (c) => {
 
 	// Extract reasoning_effort as mutable variable for auto-routing modification
 	let reasoning_effort = validationResult.data.reasoning_effort;
+
+	// Check if messages contain images for vision capability filtering
+	const hasImages = messagesContainImages(messages as BaseMessage[]);
 
 	// Extract web_search tool from tools array if present
 	// The web_search tool is a special tool that enables native web search for providers that support it
@@ -627,24 +662,15 @@ chat.openapi(completions, async (c) => {
 
 	let requestedModel: Model = modelInput as Model;
 	let requestedProvider: Provider | undefined;
-	let customProviderName: string | undefined;
 
 	// check if there is an exact model match
-	if (modelInput === "auto" || modelInput === "custom") {
-		requestedProvider = "llmgateway";
-		requestedModel = modelInput as Model;
-	} else if (modelInput.includes("/")) {
+	if (modelInput.includes("/")) {
 		const split = modelInput.split("/");
 		const providerCandidate = split[0];
 
 		// Check if the provider exists
 		const knownProvider = providers.find((p) => p.id === providerCandidate);
-		if (!knownProvider) {
-			// This might be a custom provider name - we'll validate against the database later
-			// For now, assume it's a potential custom provider
-			customProviderName = providerCandidate;
-			requestedProvider = "custom";
-		} else {
+		if (knownProvider) {
 			requestedProvider = providerCandidate as Provider;
 		}
 		// Handle model names with multiple slashes (e.g. together.ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo)
@@ -652,42 +678,37 @@ chat.openapi(completions, async (c) => {
 
 		// For custom providers, we don't need to validate the model name
 		// since they can use any OpenAI-compatible model name
-		if (requestedProvider === "custom") {
-			requestedModel = modelName as Model;
-		} else {
-			// First try to find by base model name
-			let modelDef = models.find((m) => m.id === modelName);
+		let modelDef = models.find((m) => m.id === modelName);
 
-			if (!modelDef) {
-				modelDef = models.find((m) =>
-					m.providers.some(
-						(p) =>
-							p.modelName === modelName && p.providerId === requestedProvider,
-					),
-				);
-			}
-
-			if (!modelDef) {
-				throw new HTTPException(400, {
-					message: `Requested model ${modelName} not supported`,
-				});
-			}
-
-			if (!modelDef.providers.some((p) => p.providerId === requestedProvider)) {
-				throw new HTTPException(400, {
-					message: `Provider ${requestedProvider} does not support model ${modelName}`,
-				});
-			}
-
-			// Use the provider-specific model name if available
-			const providerMapping = modelDef.providers.find(
-				(p) => p.providerId === requestedProvider,
+		if (!modelDef) {
+			modelDef = models.find((m) =>
+				m.providers.some(
+					(p) =>
+						p.modelName === modelName && p.providerId === requestedProvider,
+				),
 			);
-			if (providerMapping) {
-				requestedModel = providerMapping.modelName as Model;
-			} else {
-				requestedModel = modelName as Model;
-			}
+		}
+
+		if (!modelDef) {
+			throw new HTTPException(400, {
+				message: `Requested model ${modelName} not supported`,
+			});
+		}
+
+		if (!modelDef.providers.some((p) => p.providerId === requestedProvider)) {
+			throw new HTTPException(400, {
+				message: `Provider ${requestedProvider} does not support model ${modelName}`,
+			});
+		}
+
+		// Use the provider-specific model name if available
+		const providerMapping = modelDef.providers.find(
+			(p) => p.providerId === requestedProvider,
+		);
+		if (providerMapping) {
+			requestedModel = providerMapping.modelName as Model;
+		} else {
+			requestedModel = modelName as Model;
 		}
 	} else if (models.find((m) => m.id === modelInput)) {
 		requestedModel = modelInput as Model;
@@ -708,11 +729,7 @@ chat.openapi(completions, async (c) => {
 		});
 	}
 
-	if (
-		requestedProvider &&
-		requestedProvider !== "custom" &&
-		!providers.find((p) => p.id === requestedProvider)
-	) {
+	if (requestedProvider && !providers.find((p) => p.id === requestedProvider)) {
 		throw new HTTPException(400, {
 			message: `Requested provider ${requestedProvider} not supported`,
 		});
@@ -720,51 +737,31 @@ chat.openapi(completions, async (c) => {
 
 	let modelInfo;
 
-	if (requestedProvider === "custom") {
-		// For custom providers, we create a mock model info that treats it as an OpenAI model
-		modelInfo = {
-			model: requestedModel,
-			providers: [
-				{
-					providerId: "custom" as const,
-					modelName: requestedModel,
-					inputPrice: 0,
-					outputPrice: 0,
-					contextSize: 8192,
-					maxOutput: 4096,
-					streaming: true,
-					vision: false,
-					jsonOutput: true,
-				},
-			],
-		};
-	} else {
-		// First try to find by model ID
-		modelInfo = models.find((m) => m.id === requestedModel);
+	// First try to find by model ID
+	modelInfo = models.find((m) => m.id === requestedModel);
 
-		// If not found, search by provider model name
-		// If a specific provider is requested, match both modelName and providerId
-		if (!modelInfo) {
-			if (requestedProvider) {
-				modelInfo = models.find((m) =>
-					m.providers.find(
-						(p) =>
-							p.modelName === requestedModel &&
-							p.providerId === requestedProvider,
-					),
-				);
-			} else {
-				modelInfo = models.find((m) =>
-					m.providers.find((p) => p.modelName === requestedModel),
-				);
-			}
+	// If not found, search by provider model name
+	// If a specific provider is requested, match both modelName and providerId
+	if (!modelInfo) {
+		if (requestedProvider) {
+			modelInfo = models.find((m) =>
+				m.providers.find(
+					(p) =>
+						p.modelName === requestedModel &&
+						p.providerId === requestedProvider,
+				),
+			);
+		} else {
+			modelInfo = models.find((m) =>
+				m.providers.find((p) => p.modelName === requestedModel),
+			);
 		}
+	}
 
-		if (!modelInfo) {
-			throw new HTTPException(400, {
-				message: `Unsupported model: ${requestedModel}`,
-			});
-		}
+	if (!modelInfo) {
+		throw new HTTPException(400, {
+			message: `Unsupported model: ${requestedModel}`,
+		});
 	}
 
 	// Filter out deactivated provider mappings
@@ -790,18 +787,107 @@ chat.openapi(completions, async (c) => {
 		providers: activeProviders,
 	};
 
-	if (
-		response_format?.type === "json_object" ||
-		response_format?.type === "json_schema"
-	) {
-		// Filter providers by requestedProvider if specified
-		const providersToCheck = requestedProvider
-			? modelInfo.providers.filter(
-					(p) => (p as ProviderModelMapping).providerId === requestedProvider,
-				)
-			: modelInfo.providers;
+	// === Early API key and organization validation for coding model restriction ===
+	// We need to fetch these early to check coding model restrictions before capability checks
+	const auth = c.req.header("Authorization");
+	const xApiKey = c.req.header("x-api-key");
 
-		// Check if the provider(s) support JSON output
+	let token: string | undefined;
+
+	if (auth) {
+		const split = auth.split("Bearer ");
+		if (split.length === 2 && split[1]) {
+			token = split[1];
+		}
+	}
+
+	if (!token && xApiKey) {
+		token = xApiKey;
+	}
+
+	if (!token) {
+		throw new HTTPException(401, {
+			message:
+				"Unauthorized: No API key provided. Expected 'Authorization: Bearer your-api-token' header or 'x-api-key: your-api-token' header",
+		});
+	}
+
+	const apiKey = await db.query.apiKey.findFirst({
+		where: {
+			token: {
+				eq: token,
+			},
+		},
+	});
+
+	if (!apiKey || apiKey.status !== "active") {
+		throw new HTTPException(401, {
+			message:
+				"Unauthorized: Invalid LLM API API token. Please make sure the token is not deleted or disabled. Go to the LLM API 'API Keys' page to generate a new token.",
+		});
+	}
+
+	if (apiKey.usageLimit && Number(apiKey.usage) >= Number(apiKey.usageLimit)) {
+		throw new HTTPException(401, {
+			message: "Unauthorized: LLM API API key reached its usage limit.",
+		});
+	}
+
+	// Get the project to determine mode for routing decisions
+	const project = await db.query.project.findFirst({
+		where: {
+			id: {
+				eq: apiKey.projectId,
+			},
+		},
+	});
+
+	if (!project) {
+		throw new HTTPException(500, {
+			message: "Could not find project",
+		});
+	}
+
+	// Check if project is deleted (archived)
+	if (project.status === "deleted") {
+		throw new HTTPException(410, {
+			message: "Project has been archived and is no longer accessible",
+		});
+	}
+
+	// Fetch organization for coding model restriction check
+	const organization = await db.query.organization.findFirst({
+		where: {
+			id: {
+				eq: project.organizationId,
+			},
+		},
+	});
+
+	// Validate coding model restriction for dev plan personal orgs
+	// This check must happen BEFORE capability checks to give the right error message
+	if (
+		organization?.isPersonal &&
+		organization.devPlan !== "none" &&
+		!organization.devPlanAllowAllModels
+	) {
+		const modelDef = models.find((m) => m.id === requestedModel);
+		if (modelDef && !isCodingModel(modelDef)) {
+			throw new HTTPException(403, {
+				message: `Model ${requestedModel} is not available for coding plans. Coding plans only include models optimized for coding tasks with prompt caching, tool calling, JSON output, and streaming support. You can enable access to all models in your dashboard settings at code.llmgateway.io/dashboard, though this may significantly increase costs due to lack of prompt caching.`,
+			});
+		}
+	}
+
+	// Filter providers by requestedProvider if specified
+	const providersToCheck = requestedProvider
+		? modelInfo.providers.filter(
+				(p) => (p as ProviderModelMapping).providerId === requestedProvider,
+			)
+		: modelInfo.providers;
+
+	if (response_format?.type === "json_object") {
+		// Check if the provider(s) support JSON output mode
 		const supportsJsonOutput = providersToCheck.some(
 			(provider) => (provider as ProviderModelMapping).jsonOutput === true,
 		);
@@ -811,32 +897,26 @@ chat.openapi(completions, async (c) => {
 				message: `Model ${requestedModel} does not support JSON output mode`,
 			});
 		}
+	}
 
-		// Additional validation for json_schema type
-		if (response_format?.type === "json_schema") {
-			// For non-auto/custom models, check if the provider supports json_schema
-			if (requestedModel !== "auto" && requestedModel !== "custom") {
-				const supportsJsonSchema = providersToCheck.some(
-					(provider) =>
-						(provider as ProviderModelMapping).jsonOutputSchema === true,
-				);
+	// Additional validation for json_schema type
+	if (response_format?.type === "json_schema") {
+		// For non-auto/custom models, check if the provider supports json_schema
+		const supportsJsonSchema = providersToCheck.some(
+			(provider) =>
+				(provider as ProviderModelMapping).jsonOutputSchema === true,
+		);
 
-				if (!supportsJsonSchema) {
-					throw new HTTPException(400, {
-						message: `Model ${requestedModel} does not support JSON schema output mode. Use response_format type 'json_object' instead.`,
-					});
-				}
-			}
+		if (!supportsJsonSchema) {
+			throw new HTTPException(400, {
+				message: `Model ${requestedModel} does not support JSON schema output mode. Use response_format type 'json_object' instead.`,
+			});
 		}
 	}
 
 	// Check if reasoning_effort is specified but model doesn't support reasoning
 	// Skip this check for "auto" and "custom" models as they will be resolved dynamically
-	if (
-		reasoning_effort !== undefined &&
-		requestedModel !== "auto" &&
-		requestedModel !== "custom"
-	) {
+	if (reasoning_effort !== undefined) {
 		// Check if any provider for this model supports reasoning
 		const supportsReasoning = modelInfo.providers.some(
 			(provider) => (provider as ProviderModelMapping).reasoning === true,
@@ -864,11 +944,7 @@ chat.openapi(completions, async (c) => {
 
 	// Check if tools are specified but model doesn't support them
 	// Skip this check for "auto" and "custom" models as they will be resolved dynamically
-	if (
-		(tools !== undefined || tool_choice !== undefined) &&
-		requestedModel !== "auto" &&
-		requestedModel !== "custom"
-	) {
+	if (tools !== undefined || tool_choice !== undefined) {
 		// Filter providers by requestedProvider if specified
 		const providersToCheck = requestedProvider
 			? modelInfo.providers.filter(
@@ -907,7 +983,7 @@ chat.openapi(completions, async (c) => {
 		// If web_search tool is specifically requested, ensure the model supports it
 		if (webSearchTool && !supportsWebSearch) {
 			throw new HTTPException(400, {
-				message: `Model ${requestedModel} does not support native web search. Remove the web_search tool or use a model that supports it. See https://llmgateway.io/models?features=webSearch for supported models.`,
+				message: `Model ${requestedModel} does not support native web search. Remove the web_search tool or use a model that supports it. See https://llmapi.ai/models?features=webSearch for supported models.`,
 			});
 		}
 	}
@@ -915,81 +991,6 @@ chat.openapi(completions, async (c) => {
 	let usedProvider = requestedProvider;
 	let usedModel = requestedModel;
 	let routingMetadata: RoutingMetadata | undefined;
-
-	const auth = c.req.header("Authorization");
-	const xApiKey = c.req.header("x-api-key");
-
-	let token: string | undefined;
-
-	if (auth) {
-		const split = auth.split("Bearer ");
-		if (split.length === 2 && split[1]) {
-			token = split[1];
-		}
-	}
-
-	if (!token && xApiKey) {
-		token = xApiKey;
-	}
-
-	if (!token) {
-		throw new HTTPException(401, {
-			message:
-				"Unauthorized: No API key provided. Expected 'Authorization: Bearer your-api-token' header or 'x-api-key: your-api-token' header",
-		});
-	}
-
-	const apiKey = await db.query.apiKey.findFirst({
-		where: {
-			token: {
-				eq: token,
-			},
-		},
-	});
-
-	if (!apiKey || apiKey.status !== "active") {
-		throw new HTTPException(401, {
-			message:
-				"Unauthorized: Invalid LLMGateway API token. Please make sure the token is not deleted or disabled. Go to the LLMGateway 'API Keys' page to generate a new token.",
-		});
-	}
-
-	if (apiKey.usageLimit && Number(apiKey.usage) >= Number(apiKey.usageLimit)) {
-		throw new HTTPException(401, {
-			message: "Unauthorized: LLMGateway API key reached its usage limit.",
-		});
-	}
-
-	// Get the project to determine mode for routing decisions
-	const project = await db.query.project.findFirst({
-		where: {
-			id: {
-				eq: apiKey.projectId,
-			},
-		},
-	});
-
-	if (!project) {
-		throw new HTTPException(500, {
-			message: "Could not find project",
-		});
-	}
-
-	// Check if project is deleted (archived)
-	if (project.status === "deleted") {
-		throw new HTTPException(410, {
-			message: "Project has been archived and is no longer accessible",
-		});
-	}
-
-	// Determine image size limit based on organization plan
-	const organization = await db.query.organization.findFirst({
-		where: {
-			id: {
-				eq: project.organizationId,
-			},
-		},
-	});
 
 	// Extract retention level for data storage cost calculation
 	const retentionLevel = organization?.retentionLevel ?? "none";
@@ -1012,310 +1013,10 @@ chat.openapi(completions, async (c) => {
 		throwIamException(iamValidation.reason!);
 	}
 
-	// Validate the custom provider against the database if one was requested
-	if (requestedProvider === "custom" && customProviderName) {
-		const customProviderKey = await db.query.providerKey.findFirst({
-			where: {
-				status: {
-					eq: "active",
-				},
-				organizationId: {
-					eq: project.organizationId,
-				},
-				provider: {
-					eq: "custom",
-				},
-				name: {
-					eq: customProviderName,
-				},
-			},
-		});
-		if (!customProviderKey) {
-			throw new HTTPException(400, {
-				message: `Provider '${customProviderName}' not found.`,
-			});
-		}
-	}
-
-	// Apply routing logic after apiKey and project are available
-	if (
-		(usedProvider === "llmgateway" && usedModel === "auto") ||
-		usedModel === "auto"
-	) {
-		// Estimate the context size needed based on the request
-		let requiredContextSize = 0;
-
-		// Estimate prompt tokens from messages
-		if (messages && messages.length > 0) {
-			try {
-				const chatMessages: ChatMessage[] = messages.map((m) => ({
-					role: m.role as "user" | "assistant" | "system" | undefined,
-					content:
-						typeof m.content === "string"
-							? m.content
-							: JSON.stringify(m.content),
-					name: m.name,
-				}));
-				requiredContextSize = encodeChat(
-					chatMessages,
-					DEFAULT_TOKENIZER_MODEL,
-				).length;
-			} catch {
-				// Fallback to simple estimation if encoding fails
-				const messageTokens = messages.reduce(
-					(acc, m) => acc + (m.content?.length || 0),
-					0,
-				);
-				requiredContextSize = Math.max(1, Math.round(messageTokens / 4));
-			}
-		}
-
-		// Add tool definitions to context estimation
-		if (tools && tools.length > 0) {
-			try {
-				const toolsString = JSON.stringify(tools);
-				const toolTokens = Math.round(toolsString.length / 4);
-				requiredContextSize += toolTokens;
-			} catch {
-				// Fallback estimation for tools
-				requiredContextSize += tools.length * 100; // Rough estimate per tool
-			}
-		}
-
-		// Add max_tokens if specified
-		if (max_tokens) {
-			requiredContextSize += max_tokens;
-		} else {
-			// Add a default buffer for completion tokens if not specified
-			requiredContextSize += 4096;
-		}
-
-		// Get available providers based on project mode
-		let availableProviders: string[] = [];
-
-		if (project.mode === "api-keys") {
-			const providerKeys = await db.query.providerKey.findMany({
-				where: {
-					status: { eq: "active" },
-					organizationId: { eq: project.organizationId },
-				},
-			});
-			availableProviders = providerKeys.map((key) => key.provider);
-		} else if (project.mode === "credits" || project.mode === "hybrid") {
-			const providerKeys = await db.query.providerKey.findMany({
-				where: {
-					status: { eq: "active" },
-					organizationId: { eq: project.organizationId },
-				},
-			});
-			const databaseProviders = providerKeys.map((key) => key.provider);
-
-			// Check which providers have environment tokens available
-			const envProviders: string[] = [];
-			const supportedProviders = providers
-				.filter((p) => p.id !== "llmgateway")
-				.map((p) => p.id);
-			for (const provider of supportedProviders) {
-				if (hasProviderEnvironmentToken(provider as Provider)) {
-					envProviders.push(provider);
-				}
-			}
-
-			if (project.mode === "credits") {
-				availableProviders = envProviders;
-			} else {
-				availableProviders = [
-					...new Set([...databaseProviders, ...envProviders]),
-				];
-			}
-		}
-
-		// Find the cheapest model that meets our context size requirements
-		// Only consider hardcoded models for auto selection
-		let allowedAutoModels = ["gpt-oss-120b", "gpt-5-nano", "gpt-4.1-nano"];
-
-		// If free_models_only is true, expand to include free models
-		if (free_models_only) {
-			allowedAutoModels = [...allowedAutoModels, "llama-3.3-70b-instruct-free"];
-		}
-
-		let selectedModel: ModelDefinition | undefined;
-		let selectedProviders: any[] = [];
-		let lowestPrice = Number.MAX_VALUE;
-
-		for (const modelDef of models) {
-			if (modelDef.id === "auto" || modelDef.id === "custom") {
-				continue;
-			}
-
-			// Only consider allowed models for auto selection
-			if (!allowedAutoModels.includes(modelDef.id)) {
-				continue;
-			}
-
-			// Check if any of the model's providers are available
-			const availableModelProviders = modelDef.providers.filter((provider) =>
-				availableProviders.includes(provider.providerId),
-			);
-
-			// Filter by context size requirement, reasoning capability, and deprecation status
-			const suitableProviders = availableModelProviders.filter((provider) => {
-				// Skip deprecated provider mappings
-				if (
-					(provider as ProviderModelMapping).deprecatedAt &&
-					new Date() > (provider as ProviderModelMapping).deprecatedAt!
-				) {
-					return false;
-				}
-
-				// Use the provider's context size, defaulting to a reasonable value if not specified
-				const modelContextSize = provider.contextSize ?? 8192;
-				const contextSizeMet = modelContextSize >= requiredContextSize;
-
-				// If no_reasoning is true, exclude reasoning models
-				if (
-					no_reasoning &&
-					(provider as ProviderModelMapping).reasoning === true
-				) {
-					return false;
-				}
-
-				// Check reasoning capability if reasoning_effort is specified
-				if (
-					reasoning_effort !== undefined &&
-					(provider as ProviderModelMapping).reasoning !== true
-				) {
-					return false;
-				}
-
-				// Check tool capability if tools or tool_choice is specified
-				if (
-					(tools !== undefined || tool_choice !== undefined) &&
-					(provider as ProviderModelMapping).tools !== true
-				) {
-					return false;
-				}
-
-				// Check web search capability if web search tool is requested
-				if (
-					webSearchTool &&
-					(provider as ProviderModelMapping).webSearch !== true
-				) {
-					return false;
-				}
-
-				return contextSizeMet;
-			});
-
-			if (suitableProviders.length > 0) {
-				// Find the cheapest among the suitable providers for this model
-				for (const provider of suitableProviders) {
-					const totalPrice =
-						((provider.inputPrice || 0) + (provider.outputPrice || 0)) / 2;
-
-					// If free_models_only is true, only consider free models (totalPrice === 0)
-					if (free_models_only && totalPrice > 0) {
-						continue;
-					}
-
-					if (totalPrice < lowestPrice) {
-						lowestPrice = totalPrice;
-						selectedModel = modelDef;
-						selectedProviders = suitableProviders;
-					}
-				}
-			}
-		}
-
-		// If we found a suitable model, use the cheapest provider from it
-		if (selectedModel && selectedProviders.length > 0) {
-			// If free_models_only is true, filter to only free providers
-			const finalProviders = free_models_only
-				? selectedProviders.filter((provider) => {
-						const totalPrice =
-							((provider.inputPrice || 0) + (provider.outputPrice || 0)) / 2;
-						return totalPrice === 0;
-					})
-				: selectedProviders;
-
-			if (finalProviders.length > 0) {
-				// Fetch uptime/latency metrics from last 5 minutes for provider selection
-				const metricsCombinations = finalProviders.map((p) => ({
-					modelId: selectedModel.id,
-					providerId: p.providerId,
-				}));
-				const metricsMap = await getProviderMetricsForCombinations(
-					metricsCombinations,
-					5,
-				);
-
-				const cheapestResult = getCheapestFromAvailableProviders(
-					finalProviders,
-					selectedModel,
-					{ metricsMap, isStreaming: stream },
-				);
-
-				if (cheapestResult) {
-					usedProvider = cheapestResult.provider.providerId;
-					usedModel = cheapestResult.provider.modelName;
-					routingMetadata = {
-						...cheapestResult.metadata,
-						...(noFallback ? { noFallback: true } : {}),
-					};
-				} else {
-					// Fallback to first available provider if price comparison fails
-					usedProvider = finalProviders[0].providerId;
-					usedModel = finalProviders[0].modelName;
-				}
-			} else if (free_models_only) {
-				// If no free models are available, return error
-				throw new HTTPException(400, {
-					message:
-						"No free models are available for auto routing. Remove free_models_only parameter or use a specific model.",
-				});
-			} else if (no_reasoning) {
-				// If no non-reasoning models are available, return error
-				throw new HTTPException(400, {
-					message:
-						"No non-reasoning models are available for auto routing. Remove no_reasoning parameter or use a specific model.",
-				});
-			}
-		} else {
-			if (free_models_only) {
-				// If free_models_only is true but no suitable model found, return error
-				throw new HTTPException(400, {
-					message:
-						"No free models are available for auto routing. Remove free_models_only parameter or use a specific model.",
-				});
-			} else if (no_reasoning) {
-				// If no_reasoning is true but no suitable model found, return error
-				throw new HTTPException(400, {
-					message:
-						"No non-reasoning models are available for auto routing. Remove no_reasoning parameter or use a specific model.",
-				});
-			}
-			// Default fallback if no suitable model is found - use cheapest allowed model
-			usedModel = "gpt-5-nano";
-			usedProvider = "openai";
-		}
-	} else if (
-		(usedProvider === "llmgateway" && usedModel === "custom") ||
-		usedModel === "custom"
-	) {
-		usedProvider = "llmgateway";
-		usedModel = "custom";
-	}
-
 	// Check uptime for specifically requested providers (not llmgateway or custom)
 	// If uptime is below 80%, route to an alternative provider instead
 	// Skip this fallback if X-No-Fallback header is set
-	if (
-		!noFallback &&
-		usedProvider &&
-		requestedProvider &&
-		requestedProvider !== "llmgateway" &&
-		requestedProvider !== "custom"
-	) {
+	if (!noFallback && usedProvider && requestedProvider) {
 		// Find the base model ID for metrics lookup
 		// Since custom providers are excluded above, modelInfo always has 'id'
 		const baseModelId = (modelInfo as ModelDefinition).id;
@@ -1348,12 +1049,13 @@ chat.openapi(completions, async (c) => {
 					project.mode === "api-keys"
 						? providerKeys.map((key) => key.provider)
 						: providers
-								.filter((p) => p.id !== "llmgateway" && p.id !== usedProvider)
+								.filter((p) => p.id !== usedProvider)
 								.filter((p) => hasProviderEnvironmentToken(p.id as Provider))
 								.map((p) => p.id);
 
 				// Filter model providers to only those available (excluding the low-uptime one)
 				// If web search is requested, also filter to providers that support it
+				// If JSON output is requested, also filter to providers that support it
 				const availableModelProviders = modelInfo.providers.filter(
 					(provider) => {
 						if (!availableProviders.includes(provider.providerId)) {
@@ -1364,7 +1066,33 @@ chat.openapi(completions, async (c) => {
 						}
 						// If web search tool is requested, only include providers that support it
 						if (webSearchTool) {
-							return (provider as ProviderModelMapping).webSearch === true;
+							if ((provider as ProviderModelMapping).webSearch !== true) {
+								return false;
+							}
+						}
+						// If JSON output is requested, only include providers that support it
+						if (
+							response_format?.type === "json_object" ||
+							response_format?.type === "json_schema"
+						) {
+							if ((provider as ProviderModelMapping).jsonOutput !== true) {
+								return false;
+							}
+						}
+						// If JSON schema output is requested, only include providers that support it
+						if (response_format?.type === "json_schema") {
+							if (
+								(provider as ProviderModelMapping).jsonOutputSchema !== true
+							) {
+								return false;
+							}
+						}
+						// If images are present in messages, only include providers that support vision
+						if (
+							hasImages &&
+							(provider as ProviderModelMapping).vision !== true
+						) {
+							return false;
 						}
 						return true;
 					},
@@ -1469,19 +1197,40 @@ chat.openapi(completions, async (c) => {
 				project.mode === "api-keys"
 					? providerKeys.map((key) => key.provider)
 					: providers
-							.filter((p) => p.id !== "llmgateway")
 							.filter((p) => hasProviderEnvironmentToken(p.id as Provider))
 							.map((p) => p.id);
 
 			// Filter model providers to only those available
 			// If web search is requested, also filter to providers that support it
+			// If JSON output is requested, also filter to providers that support it
 			const availableModelProviders = modelInfo.providers.filter((provider) => {
 				if (!availableProviders.includes(provider.providerId)) {
 					return false;
 				}
 				// If web search tool is requested, only include providers that support it
 				if (webSearchTool) {
-					return (provider as ProviderModelMapping).webSearch === true;
+					if ((provider as ProviderModelMapping).webSearch !== true) {
+						return false;
+					}
+				}
+				// If JSON output is requested, only include providers that support it
+				if (
+					response_format?.type === "json_object" ||
+					response_format?.type === "json_schema"
+				) {
+					if ((provider as ProviderModelMapping).jsonOutput !== true) {
+						return false;
+					}
+				}
+				// If JSON schema output is requested, only include providers that support it
+				if (response_format?.type === "json_schema") {
+					if ((provider as ProviderModelMapping).jsonOutputSchema !== true) {
+						return false;
+					}
+				}
+				// If images are present in messages, only include providers that support vision
+				if (hasImages && (provider as ProviderModelMapping).vision !== true) {
+					return false;
 				}
 				return true;
 			});
@@ -1490,8 +1239,12 @@ chat.openapi(completions, async (c) => {
 				throw new HTTPException(400, {
 					message:
 						project.mode === "api-keys"
-							? `No provider key set for any of the providers that support model ${usedModel}. Please add the provider key in the settings or switch the project mode to credits or hybrid.`
-							: `No available provider could be found for model ${usedModel}`,
+							? hasImages
+								? `No provider with vision support is available for model ${usedModel}. The request contains images but none of the configured providers support vision.`
+								: `No provider key set for any of the providers that support model ${usedModel}. Please add the provider key in the settings or switch the project mode to credits or hybrid.`
+							: hasImages
+								? `No provider with vision support is available for model ${usedModel}. The request contains images but none of the available providers support vision.`
+								: `No available provider could be found for model ${usedModel}`,
 				});
 			}
 
@@ -1539,10 +1292,10 @@ chat.openapi(completions, async (c) => {
 	}
 
 	// Set routing metadata for direct provider selection (when routing was skipped)
-	if (!routingMetadata && usedProvider && usedProvider !== "llmgateway") {
+	if (!routingMetadata && usedProvider) {
 		// Determine the selection reason based on how the provider was selected
 		let selectionReason: string;
-		if (requestedProvider && requestedProvider !== "llmgateway") {
+		if (requestedProvider) {
 			selectionReason = "direct-provider-specified";
 		} else if (modelInfo.providers.length === 1) {
 			selectionReason = "single-provider-available";
@@ -1566,7 +1319,7 @@ chat.openapi(completions, async (c) => {
 			| { uptime: number; averageLatency: number; throughput: number }
 			| undefined;
 
-		if (baseModelId && usedProvider !== "custom") {
+		if (baseModelId) {
 			const directMetricsMap = await getProviderMetricsForCombinations(
 				[{ modelId: baseModelId, providerId: usedProvider }],
 				5,
@@ -1594,32 +1347,13 @@ chat.openapi(completions, async (c) => {
 
 	// Update baseModelName to match the final usedModel after routing
 	// Find the model definition that corresponds to the final usedModel
-	let finalModelInfo;
-	if (usedProvider === "custom") {
-		finalModelInfo = {
-			model: usedModel,
-			providers: [
-				{
-					providerId: "custom" as const,
-					modelName: usedModel,
-					inputPrice: 0,
-					outputPrice: 0,
-					contextSize: 8192,
-					maxOutput: 4096,
-					streaming: true,
-					vision: false,
-				},
-			],
-		};
-	} else {
-		finalModelInfo = models.find(
-			(m) =>
-				m.id === usedModel ||
-				m.providers.some(
-					(p) => p.modelName === usedModel && p.providerId === usedProvider,
-				),
-		);
-	}
+	const finalModelInfo = models.find(
+		(m) =>
+			m.id === usedModel ||
+			m.providers.some(
+				(p) => p.modelName === usedModel && p.providerId === usedProvider,
+			),
+	);
 
 	const baseModelName = finalModelInfo?.id || usedModel;
 
@@ -1637,12 +1371,7 @@ chat.openapi(completions, async (c) => {
 
 	// Auto-set reasoning_effort for auto-routing when model supports reasoning
 	// Skip when web_search tool is present since it's incompatible with "minimal" reasoning effort
-	if (
-		requestedModel === "auto" &&
-		reasoning_effort === undefined &&
-		finalModelInfo &&
-		!webSearchTool
-	) {
+	if (reasoning_effort === undefined && finalModelInfo && !webSearchTool) {
 		// Check if the selected model supports reasoning
 		const selectedModelSupportsReasoning = finalModelInfo.providers.some(
 			(provider) => (provider as ProviderModelMapping).reasoning === true,
@@ -1666,54 +1395,26 @@ chat.openapi(completions, async (c) => {
 	let usedToken: string | undefined;
 	let configIndex = 0; // Index for round-robin environment variables
 	let envVarName: string | undefined; // Environment variable name for health tracking
-
-	if (project.mode === "credits" && usedProvider === "custom") {
-		throw new HTTPException(400, {
-			message:
-				"Custom providers are not supported in credits mode. Please change your project settings to API keys or hybrid mode.",
-		});
-	}
+	let isOAuth2 = false; // Flag for OAuth2 authentication (vs API key)
 
 	if (project.mode === "api-keys") {
 		// Get the provider key from the database using cached helper function
-		if (usedProvider === "custom" && customProviderName) {
-			providerKey = await db.query.providerKey.findFirst({
-				where: {
-					status: {
-						eq: "active",
-					},
-					organizationId: {
-						eq: project.organizationId,
-					},
-					provider: {
-						eq: "custom",
-					},
-					name: {
-						eq: customProviderName,
-					},
+		providerKey = await db.query.providerKey.findFirst({
+			where: {
+				status: {
+					eq: "active",
 				},
-			});
-		} else {
-			providerKey = await db.query.providerKey.findFirst({
-				where: {
-					status: {
-						eq: "active",
-					},
-					organizationId: {
-						eq: project.organizationId,
-					},
-					provider: {
-						eq: usedProvider,
-					},
+				organizationId: {
+					eq: project.organizationId,
 				},
-			});
-		}
+				provider: {
+					eq: usedProvider,
+				},
+			},
+		});
 
 		if (!providerKey) {
-			const providerDisplayName =
-				usedProvider === "custom" && customProviderName
-					? customProviderName
-					: usedProvider;
+			const providerDisplayName = usedProvider;
 			throw new HTTPException(400, {
 				message: `No API key set for provider: ${providerDisplayName}. Please add a provider key in your settings or add credits and switch to credits or hybrid mode.`,
 			});
@@ -1736,53 +1437,49 @@ chat.openapi(completions, async (c) => {
 			});
 		}
 
-		if (
-			parseFloat(organization.credits || "0") <= 0 &&
-			!(modelInfo as ModelDefinition).free
-		) {
+		// Check both regular credits AND dev plan credits
+		const regularCredits = parseFloat(organization.credits || "0");
+		const devPlanCreditsRemaining =
+			organization.devPlan !== "none"
+				? parseFloat(organization.devPlanCreditsLimit || "0") -
+					parseFloat(organization.devPlanCreditsUsed || "0")
+				: 0;
+		const totalAvailableCredits = regularCredits + devPlanCreditsRemaining;
+
+		if (totalAvailableCredits <= 0 && !(modelInfo as ModelDefinition).free) {
+			if (organization.devPlan !== "none" && devPlanCreditsRemaining <= 0) {
+				const renewalDate = organization.devPlanExpiresAt
+					? new Date(organization.devPlanExpiresAt).toLocaleDateString()
+					: "your next billing date";
+				throw new HTTPException(402, {
+					message: `Dev Plan credit limit reached. Upgrade your plan or wait for renewal on ${renewalDate}.`,
+				});
+			}
 			throw new HTTPException(402, {
 				message: "Organization has insufficient credits",
 			});
 		}
 
-		const envResult = getProviderEnv(usedProvider);
+		const envResult = await getProviderEnv(usedProvider);
 		usedToken = envResult.token;
 		configIndex = envResult.configIndex;
 		envVarName = envResult.envVarName;
+		isOAuth2 = envResult.isOAuth2 ?? false;
 	} else if (project.mode === "hybrid") {
 		// First try to get the provider key from the database
-		if (usedProvider === "custom" && customProviderName) {
-			providerKey = await db.query.providerKey.findFirst({
-				where: {
-					status: {
-						eq: "active",
-					},
-					organizationId: {
-						eq: project.organizationId,
-					},
-					provider: {
-						eq: "custom",
-					},
-					name: {
-						eq: customProviderName,
-					},
+		providerKey = await db.query.providerKey.findFirst({
+			where: {
+				status: {
+					eq: "active",
 				},
-			});
-		} else {
-			providerKey = await db.query.providerKey.findFirst({
-				where: {
-					status: {
-						eq: "active",
-					},
-					organizationId: {
-						eq: project.organizationId,
-					},
-					provider: {
-						eq: usedProvider,
-					},
+				organizationId: {
+					eq: project.organizationId,
 				},
-			});
-		}
+				provider: {
+					eq: usedProvider,
+				},
+			},
+		});
 
 		if (providerKey) {
 			usedToken = providerKey.token;
@@ -1802,20 +1499,38 @@ chat.openapi(completions, async (c) => {
 				});
 			}
 
+			// Check both regular credits AND dev plan credits
+			const regularCredits = parseFloat(organization.credits || "0");
+			const devPlanCreditsRemaining =
+				organization.devPlan !== "none"
+					? parseFloat(organization.devPlanCreditsLimit || "0") -
+						parseFloat(organization.devPlanCreditsUsed || "0")
+					: 0;
+			const totalAvailableCredits = regularCredits + devPlanCreditsRemaining;
+
 			if (
-				parseFloat(organization.credits || "0") <= 0 &&
-				!(modelInfo as ModelDefinition).free
+				totalAvailableCredits <= 0 &&
+				!isModelTrulyFree(modelInfo as ModelDefinition)
 			) {
+				if (organization.devPlan !== "none" && devPlanCreditsRemaining <= 0) {
+					const renewalDate = organization.devPlanExpiresAt
+						? new Date(organization.devPlanExpiresAt).toLocaleDateString()
+						: "your next billing date";
+					throw new HTTPException(402, {
+						message: `No API key set for provider. Dev Plan credit limit reached. Upgrade your plan or wait for renewal on ${renewalDate}.`,
+					});
+				}
 				throw new HTTPException(402, {
 					message:
 						"No API key set for provider and organization has insufficient credits",
 				});
 			}
 
-			const envResult = getProviderEnv(usedProvider);
+			const envResult = await getProviderEnv(usedProvider);
 			usedToken = envResult.token;
 			configIndex = envResult.configIndex;
 			envVarName = envResult.envVarName;
+			isOAuth2 = envResult.isOAuth2 ?? false;
 		}
 	} else {
 		throw new HTTPException(400, {
@@ -1825,7 +1540,7 @@ chat.openapi(completions, async (c) => {
 
 	// Check email verification and rate limits for free models (only when using credits/environment tokens)
 	if (
-		(modelInfo as ModelDefinition).free &&
+		isModelTrulyFree(modelInfo as ModelDefinition) &&
 		(!providerKey || !providerKey.token)
 	) {
 		await validateFreeModelUsage(
@@ -1839,7 +1554,15 @@ chat.openapi(completions, async (c) => {
 	// Check if organization has credits for data retention costs
 	// Data storage is billed at $0.01 per 1M tokens, so we need credits when retention is enabled
 	if (organization && organization.retentionLevel === "retain") {
-		if (parseFloat(organization.credits || "0") <= 0) {
+		const regularCredits = parseFloat(organization.credits || "0");
+		const devPlanCreditsRemaining =
+			organization.devPlan !== "none"
+				? parseFloat(organization.devPlanCreditsLimit || "0") -
+					parseFloat(organization.devPlanCreditsUsed || "0")
+				: 0;
+		const totalAvailableCredits = regularCredits + devPlanCreditsRemaining;
+
+		if (totalAvailableCredits <= 0) {
 			throw new HTTPException(402, {
 				message:
 					"Organization has insufficient credits for data retention. Data retention requires credits for storage costs ($0.01 per 1M tokens). Please add credits or disable data retention in organization settings.",
@@ -1884,14 +1607,9 @@ chat.openapi(completions, async (c) => {
 			providerKey?.options || undefined,
 			configIndex,
 			isImageGeneration,
+			isOAuth2,
 		);
 	} catch (error) {
-		if (usedProvider === "llmgateway" && usedModel !== "custom") {
-			throw new HTTPException(400, {
-				message: `Invalid model: ${usedModel} for provider: ${usedProvider}`,
-			});
-		}
-
 		throw new HTTPException(500, {
 			message: `Could not use provider: ${usedProvider}. ${error instanceof Error ? error.message : ""}`,
 		});
@@ -2424,6 +2142,7 @@ chat.openapi(completions, async (c) => {
 			try {
 				const headers = getProviderHeaders(usedProvider, usedToken, {
 					webSearchEnabled: !!webSearchTool,
+					isOAuth2,
 				});
 				headers["Content-Type"] = "application/json";
 
@@ -2433,6 +2152,17 @@ chat.openapi(completions, async (c) => {
 					headers["anthropic-beta"] = currentBeta
 						? `${currentBeta},effort-2025-11-24`
 						: "effort-2025-11-24";
+				}
+
+				// Add structured outputs beta header for Anthropic if json_schema response_format is specified
+				if (
+					usedProvider === "anthropic" &&
+					response_format?.type === "json_schema"
+				) {
+					const currentBeta = headers["anthropic-beta"];
+					headers["anthropic-beta"] = currentBeta
+						? `${currentBeta},structured-outputs-2025-11-13`
+						: "structured-outputs-2025-11-13";
 				}
 
 				res = await fetch(url, {
@@ -2449,6 +2179,42 @@ chat.openapi(completions, async (c) => {
 					// Log the canceled request
 					// Extract plugin IDs for logging (canceled request)
 					const canceledPluginIds = plugins?.map((p) => p.id) || [];
+
+					// Calculate costs for cancelled request if billing is enabled
+					const billCancelled = shouldBillCancelledRequests();
+					let cancelledCosts: ReturnType<typeof calculateCosts> | null = null;
+					let estimatedPromptTokens: number | null = null;
+
+					if (billCancelled) {
+						// Estimate prompt tokens from messages
+						const tokenEstimation = estimateTokens(
+							usedProvider,
+							messages,
+							null,
+							null,
+							null,
+						);
+						estimatedPromptTokens = tokenEstimation.calculatedPromptTokens;
+
+						// Calculate costs based on prompt tokens only (no completion yet)
+						// If web search tool was enabled, count it as 1 search for billing
+						cancelledCosts = calculateCosts(
+							usedModel,
+							usedProvider,
+							estimatedPromptTokens,
+							0, // No completion tokens yet
+							null, // No cached tokens
+							{
+								prompt: messages.map((m) => m.content).join("\n"),
+								completion: "",
+							},
+							null, // No reasoning tokens
+							0, // No output images
+							undefined,
+							inputImageCount,
+							webSearchTool ? 1 : null, // Bill for web search if it was enabled
+						);
+					}
 
 					const baseLogEntry = createLogEntry(
 						requestId,
@@ -2494,20 +2260,36 @@ chat.openapi(completions, async (c) => {
 						content: null,
 						reasoningContent: null,
 						finishReason: "canceled",
-						promptTokens: null,
-						completionTokens: null,
-						totalTokens: null,
+						promptTokens: billCancelled
+							? estimatedPromptTokens?.toString()
+							: null,
+						completionTokens: billCancelled ? "0" : null,
+						totalTokens: billCancelled
+							? estimatedPromptTokens?.toString()
+							: null,
 						reasoningTokens: null,
 						cachedTokens: null,
 						hasError: false,
 						streamed: true,
 						canceled: true,
 						errorDetails: null,
-						cachedInputCost: null,
-						requestCost: null,
-						webSearchCost: null,
-						discount: null,
-						dataStorageCost: "0",
+						inputCost: cancelledCosts?.inputCost ?? null,
+						outputCost: cancelledCosts?.outputCost ?? null,
+						cachedInputCost: cancelledCosts?.cachedInputCost ?? null,
+						requestCost: cancelledCosts?.requestCost ?? null,
+						webSearchCost: cancelledCosts?.webSearchCost ?? null,
+						cost: cancelledCosts?.totalCost ?? null,
+						estimatedCost: cancelledCosts?.estimatedCost ?? false,
+						discount: cancelledCosts?.discount ?? null,
+						dataStorageCost: billCancelled
+							? calculateDataStorageCost(
+									estimatedPromptTokens,
+									null,
+									0,
+									null,
+									retentionLevel,
+								)
+							: "0",
 						cached: false,
 						toolResults: null,
 					});
@@ -3845,23 +3627,43 @@ chat.openapi(completions, async (c) => {
 					}
 				}
 
-				const costs = calculateCosts(
-					usedModel,
-					usedProvider,
-					calculatedPromptTokens,
-					calculatedCompletionTokens,
-					cachedTokens,
-					{
-						prompt: messages.map((m) => m.content).join("\n"),
-						completion: fullContent,
-						toolResults: streamingToolCalls || undefined,
-					},
-					reasoningTokens,
-					outputImageCount,
-					image_config?.image_size,
-					inputImageCount,
-					webSearchCount,
-				);
+				// Check if we should bill cancelled requests
+				const billCancelledRequests = shouldBillCancelledRequests();
+
+				// Calculate costs - for cancelled requests, only bill if env var is enabled
+				const costs =
+					canceled && !billCancelledRequests
+						? {
+								inputCost: null,
+								outputCost: null,
+								cachedInputCost: null,
+								requestCost: null,
+								webSearchCost: null,
+								totalCost: null,
+								promptTokens: null,
+								completionTokens: null,
+								cachedTokens: null,
+								estimatedCost: false,
+								discount: undefined,
+								pricingTier: undefined,
+							}
+						: calculateCosts(
+								usedModel,
+								usedProvider,
+								calculatedPromptTokens,
+								calculatedCompletionTokens,
+								cachedTokens,
+								{
+									prompt: messages.map((m) => m.content).join("\n"),
+									completion: fullContent,
+									toolResults: streamingToolCalls || undefined,
+								},
+								reasoningTokens,
+								outputImageCount,
+								image_config?.image_size,
+								inputImageCount,
+								webSearchCount,
+							);
 
 				// Extract plugin IDs for logging (streaming - no healing applied)
 				const streamingPluginIds = plugins?.map((p) => p.id) || [];
@@ -3905,10 +3707,6 @@ chat.openapi(completions, async (c) => {
 					undefined, // No plugin results for streaming
 				);
 
-				if (!finishReason && !streamingError && usedProvider === "routeway") {
-					finishReason = "stop";
-				}
-
 				// Enhanced logging for Google models streaming to debug missing responses
 				if (
 					usedProvider === "google-ai-studio" ||
@@ -3930,6 +3728,10 @@ chat.openapi(completions, async (c) => {
 					});
 				}
 
+				// For cancelled requests, determine if we should include token counts for billing
+				const shouldIncludeTokensForBilling =
+					!canceled || (canceled && billCancelledRequests);
+
 				await insertLog({
 					...baseLogEntry,
 					duration,
@@ -3938,12 +3740,22 @@ chat.openapi(completions, async (c) => {
 					responseSize: fullContent.length,
 					content: fullContent,
 					reasoningContent: fullReasoningContent || null,
-					finishReason: finishReason,
-					promptTokens: calculatedPromptTokens?.toString() || null,
-					completionTokens: calculatedCompletionTokens?.toString() || null,
-					totalTokens: calculatedTotalTokens?.toString() || null,
-					reasoningTokens: calculatedReasoningTokens?.toString() || null,
-					cachedTokens: cachedTokens?.toString() || null,
+					finishReason: canceled ? "canceled" : finishReason,
+					promptTokens: shouldIncludeTokensForBilling
+						? calculatedPromptTokens?.toString() || null
+						: null,
+					completionTokens: shouldIncludeTokensForBilling
+						? calculatedCompletionTokens?.toString() || null
+						: null,
+					totalTokens: shouldIncludeTokensForBilling
+						? calculatedTotalTokens?.toString() || null
+						: null,
+					reasoningTokens: shouldIncludeTokensForBilling
+						? calculatedReasoningTokens?.toString() || null
+						: null,
+					cachedTokens: shouldIncludeTokensForBilling
+						? cachedTokens?.toString() || null
+						: null,
 					hasError: streamingError !== null,
 					errorDetails: streamingError
 						? {
@@ -3969,13 +3781,15 @@ chat.openapi(completions, async (c) => {
 					estimatedCost: costs.estimatedCost,
 					discount: costs.discount,
 					pricingTier: costs.pricingTier,
-					dataStorageCost: calculateDataStorageCost(
-						calculatedPromptTokens,
-						cachedTokens,
-						calculatedCompletionTokens,
-						calculatedReasoningTokens,
-						retentionLevel,
-					),
+					dataStorageCost: shouldIncludeTokensForBilling
+						? calculateDataStorageCost(
+								calculatedPromptTokens,
+								cachedTokens,
+								calculatedCompletionTokens,
+								calculatedReasoningTokens,
+								retentionLevel,
+							)
+						: "0",
 					cached: false,
 					tools,
 					toolResults: streamingToolCalls,
@@ -4046,6 +3860,7 @@ chat.openapi(completions, async (c) => {
 	try {
 		const headers = getProviderHeaders(usedProvider, usedToken, {
 			webSearchEnabled: !!webSearchTool,
+			isOAuth2,
 		});
 		headers["Content-Type"] = "application/json";
 
@@ -4055,6 +3870,17 @@ chat.openapi(completions, async (c) => {
 			headers["anthropic-beta"] = currentBeta
 				? `${currentBeta},effort-2025-11-24`
 				: "effort-2025-11-24";
+		}
+
+		// Add structured outputs beta header for Anthropic if json_schema response_format is specified
+		if (
+			usedProvider === "anthropic" &&
+			response_format?.type === "json_schema"
+		) {
+			const currentBeta = headers["anthropic-beta"];
+			headers["anthropic-beta"] = currentBeta
+				? `${currentBeta},structured-outputs-2025-11-13`
+				: "structured-outputs-2025-11-13";
 		}
 
 		res = await fetch(url, {
@@ -4190,6 +4016,42 @@ chat.openapi(completions, async (c) => {
 		// Extract plugin IDs for logging (canceled non-streaming)
 		const canceledNonStreamingPluginIds = plugins?.map((p) => p.id) || [];
 
+		// Calculate costs for cancelled request if billing is enabled
+		const billCancelled = shouldBillCancelledRequests();
+		let cancelledCosts: ReturnType<typeof calculateCosts> | null = null;
+		let estimatedPromptTokens: number | null = null;
+
+		if (billCancelled) {
+			// Estimate prompt tokens from messages
+			const tokenEstimation = estimateTokens(
+				usedProvider,
+				messages,
+				null,
+				null,
+				null,
+			);
+			estimatedPromptTokens = tokenEstimation.calculatedPromptTokens;
+
+			// Calculate costs based on prompt tokens only (no completion for non-streaming cancel)
+			// If web search tool was enabled, count it as 1 search for billing
+			cancelledCosts = calculateCosts(
+				usedModel,
+				usedProvider,
+				estimatedPromptTokens,
+				0, // No completion tokens
+				null, // No cached tokens
+				{
+					prompt: messages.map((m) => m.content).join("\n"),
+					completion: "",
+				},
+				null, // No reasoning tokens
+				0, // No output images
+				undefined,
+				inputImageCount,
+				webSearchTool ? 1 : null, // Bill for web search if it was enabled
+			);
+		}
+
 		const baseLogEntry = createLogEntry(
 			requestId,
 			project,
@@ -4234,21 +4096,32 @@ chat.openapi(completions, async (c) => {
 			content: null,
 			reasoningContent: null,
 			finishReason: "canceled",
-			promptTokens: null,
-			completionTokens: null,
-			totalTokens: null,
+			promptTokens: billCancelled ? estimatedPromptTokens?.toString() : null,
+			completionTokens: billCancelled ? "0" : null,
+			totalTokens: billCancelled ? estimatedPromptTokens?.toString() : null,
 			reasoningTokens: null,
 			cachedTokens: null,
 			hasError: false,
 			streamed: false,
 			canceled: true,
 			errorDetails: null,
-			cachedInputCost: null,
-			requestCost: null,
-			webSearchCost: null,
-			estimatedCost: false,
-			discount: null,
-			dataStorageCost: "0",
+			inputCost: cancelledCosts?.inputCost ?? null,
+			outputCost: cancelledCosts?.outputCost ?? null,
+			cachedInputCost: cancelledCosts?.cachedInputCost ?? null,
+			requestCost: cancelledCosts?.requestCost ?? null,
+			webSearchCost: cancelledCosts?.webSearchCost ?? null,
+			cost: cancelledCosts?.totalCost ?? null,
+			estimatedCost: cancelledCosts?.estimatedCost ?? false,
+			discount: cancelledCosts?.discount ?? null,
+			dataStorageCost: billCancelled
+				? calculateDataStorageCost(
+						estimatedPromptTokens,
+						null,
+						0,
+						null,
+						retentionLevel,
+					)
+				: "0",
 			cached: false,
 			toolResults: null,
 		});

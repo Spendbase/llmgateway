@@ -28,8 +28,17 @@ Create a file named `config.json` in the OpenCode configuration directory:
 
 **Location:**
 
-- **Windows**: `C:\Users\YourUsername\.config\opencode\config.json`
-- **macOS/Linux**: `~/.config/opencode/config.json`
+Windows:
+
+```
+C:\Users\YourUsername\.config\opencode\config.json
+```
+
+macOS/Linux:
+
+```
+~/.config/opencode/config.json
+```
 
 **File contents:**
 
@@ -40,7 +49,7 @@ Create a file named `config.json` in the OpenCode configuration directory:
       "npm": "@ai-sdk/openai-compatible",
       "name": "LLM Gateway",
       "options": {
-        "baseURL": "https://api.llmgateway.io/v1"
+        "baseURL": "https://internal.llmapi.ai/v1"
       },
       "models": {
         "gpt-5": {
@@ -65,8 +74,8 @@ Create a file named `config.json` in the OpenCode configuration directory:
 **Configuration explained:**
 
 - `npm`: The adapter package OpenCode uses to communicate with OpenAI-compatible APIs
-- `baseURL`: LLM Gateway's API endpoint
-- `models`: The models you want to use (you can add more from our [models page](https://llmgateway.io/models))
+- `baseURL`: LLM API's API endpoint
+- `models`: The models you want to use (you can add more from our [models page](https://llmapi.ai/models))
 - `model`: Your default model selection
 
 ### Step 2: Launch OpenCode and Connect Provider
@@ -125,7 +134,7 @@ Try asking OpenCode about your project or request help with coding tasks:
 
 ## Adding More Models
 
-You can add any model from the [models page](https://llmgateway.io/models) to your configuration. Simply add more entries to the `models` object in your `config.json`:
+You can add any model from the [models page](https://llmapi.ai/models) to your configuration. Simply add more entries to the `models` object in your `config.json`:
 
 ```json
 {
@@ -164,7 +173,7 @@ Make sure the provider ID in your `config.json` matches exactly: `"llmgateway"` 
 
 ### 404 Not Found errors
 
-Verify your `baseURL` is set to `https://api.llmgateway.io/v1` (note the `/v1` at the end).
+Verify your `baseURL` is set to `https://internal.llmapi.ai/v1` (note the `/v1` at the end).
 
 ### Models not showing up
 

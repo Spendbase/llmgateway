@@ -13,7 +13,7 @@ image:
 
 Update: Sherlock is Grok 4.1
 
-[Checkout Grok 4.1 here](https://llmgateway.io/models?q=grok+4.1&view=grid)
+[Checkout Grok 4.1 here](https://llmapi.ai/models?q=grok+4.1&view=grid)
 
 ---
 
@@ -23,7 +23,9 @@ We're excited to introduce two new **stealth models** from **Sherlock** - comple
 
 ### **Sherlock Dash Alpha** - Fast Reasoning Model
 
-**Model ID**: `sherlock/sherlock-dash-alpha`
+```bash
+sherlock/sherlock-dash-alpha
+```
 
 **Context Window**: 1,800,000 tokens (1.8M)
 
@@ -35,7 +37,9 @@ Lightning-fast responses with reasoning, vision, and tool calling capabilities
 
 ### **Sherlock Think Alpha** - Deep Reasoning Model
 
-**Model ID**: `sherlock/sherlock-think-alpha`
+```bash
+sherlock/sherlock-think-alpha
+```
 
 **Context Window**: 1,800,000 tokens (1.8M)
 
@@ -64,8 +68,8 @@ Both models come with comprehensive capabilities:
 Use these models just like any other model in our gateway:
 
 ```bash
-curl -X POST https://api.llmgateway.io/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "sherlock/sherlock-dash-alpha",
@@ -82,6 +86,6 @@ curl -X POST https://api.llmgateway.io/v1/chat/completions \
 
 ---
 
-**[Try in Playground](https://chat.llmgateway.io/?model=sherlock/sherlock-dash-alpha)** 🚀
+**[Try in Playground](https://chat.llmapi.ai/?model=sherlock/sherlock-dash-alpha)** 🚀
 
 **[Get started now](/signup)** 🚀
