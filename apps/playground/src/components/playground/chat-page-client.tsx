@@ -106,6 +106,8 @@ export default function ChatPageClient({
 	const panelIdCounterRef = useRef(1);
 	// Flag to indicate we should clear messages on next URL change (set by handleChatSelect)
 	const shouldClearMessagesRef = useRef(false);
+	// Track the last chat ID whose settings were synced to prevent overwriting local state
+	const lastSyncedChatIdRef = useRef<string | null>(null);
 
 	const { messages, setMessages, sendMessage, status, stop, regenerate } =
 		useChat({
@@ -417,14 +419,22 @@ export default function ChatPageClient({
 			return;
 		}
 
-		// Update the selected model when loading a chat
-		if (currentChatData.chat?.model) {
-			setSelectedModel(currentChatData.chat.model);
-		}
+		// Update the selected model when loading a chat - but only once per chat session
+		// to avoid overwriting user's manual selection during a conversation
+		if (
+			currentChatData.chat &&
+			currentChatData.chat.id !== lastSyncedChatIdRef.current
+		) {
+			lastSyncedChatIdRef.current = currentChatData.chat.id;
 
-		// Update the web search state when loading a chat
-		if (currentChatData.chat?.webSearch !== undefined) {
-			setWebSearchEnabled(currentChatData.chat.webSearch);
+			if (currentChatData.chat.model) {
+				setSelectedModel(currentChatData.chat.model);
+			}
+
+			// Update the web search state when loading a chat
+			if (currentChatData.chat.webSearch !== undefined) {
+				setWebSearchEnabled(currentChatData.chat.webSearch);
+			}
 		}
 
 		setMessages((prev) => {
