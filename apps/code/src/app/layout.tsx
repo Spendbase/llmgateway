@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 	description:
 		"Subscribe to LLM Gateway Dev Plans for AI-powered coding assistance. Access Claude, GPT-4, and other models.",
 	icons: {
-		icon: "/favicon/favicon.ico?v=2",
+		icon: "/favicon/favicon.svg?v=2",
 	},
 	openGraph: {
 		title: "LLM Gateway Code - Dev Plans for Developers",
