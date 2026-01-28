@@ -1015,7 +1015,12 @@ export async function prepareRequestBody(
 						tools: functionTools.map((tool) => ({
 							toolSpec: {
 								name: tool.function.name,
-								description: tool.function.description,
+								// AWS Bedrock requires description to be non-empty (length >= 1)
+								description:
+									tool.function.description &&
+									tool.function.description.trim().length > 0
+										? tool.function.description
+										: "No description provided",
 								inputSchema: {
 									json: tool.function.parameters,
 								},
