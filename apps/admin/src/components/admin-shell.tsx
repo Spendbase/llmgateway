@@ -74,7 +74,7 @@ export function AdminShell({ children }: AdminShellProps) {
 					<div className="flex h-12 items-center justify-between px-2">
 						<div className="flex items-center gap-2 px-1">
 							<div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
-								<Logo className="h-4 w-4" />
+								<Logo className="h-7 w-7" />
 							</div>
 							<div className="flex flex-col">
 								<span className="text-sm font-semibold leading-tight">
