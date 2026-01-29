@@ -164,26 +164,29 @@ const completionsRequestSchema = z.object({
 			role: z.string().openapi({
 				example: "user",
 			}),
-			content: z.union([
-				z.string().openapi({
-					example: "Hello!",
-				}),
-				z.array(
-					z.union([
-						z.object({
-							type: z.literal("text"),
-							text: z.string(),
-						}),
-						z.object({
-							type: z.literal("image_url"),
-							image_url: z.object({
-								url: z.string(),
-								detail: z.enum(["low", "high", "auto"]).optional(),
+			content: z
+				.union([
+					z.string().openapi({
+						example: "Hello!",
+					}),
+					z.array(
+						z.union([
+							z.object({
+								type: z.literal("text"),
+								text: z.string(),
 							}),
-						}),
-					]),
-				),
-			]),
+							z.object({
+								type: z.literal("image_url"),
+								image_url: z.object({
+									url: z.string(),
+									detail: z.enum(["low", "high", "auto"]).optional(),
+								}),
+							}),
+						]),
+					),
+					z.null(),
+				])
+				.transform((val) => (val === null ? "" : val)),
 			name: z.string().optional(),
 			tool_call_id: z.string().optional(),
 			tool_calls: z
