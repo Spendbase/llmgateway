@@ -29,6 +29,7 @@ export interface ApiModelProviderMapping {
 	streaming: boolean;
 	vision: boolean | null;
 	reasoning: boolean | null;
+	reasoningLevels: ("minimal" | "low" | "medium" | "high")[] | null;
 	reasoningOutput: string | null;
 	tools: boolean | null;
 	jsonOutput: boolean | null;
