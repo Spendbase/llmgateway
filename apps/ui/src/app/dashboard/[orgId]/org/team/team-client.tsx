@@ -68,9 +68,10 @@ export function TeamClient() {
 	const updateMemberMutation = useUpdateTeamMember(organizationId);
 	const removeMemberMutation = useRemoveTeamMember(organizationId);
 
-	const { connect, isLoading: isGoogleModalOpen } = useGoogleWorkspace({
-		organizationId,
-	});
+	const { initiateGoogleWorkspace, isLoading: isGoogleModalOpen } =
+		useGoogleWorkspace({
+			organizationId,
+		});
 
 	const [email, setEmail] = useState("");
 	const [role, setRole] = useState<"owner" | "admin" | "developer">(
@@ -154,24 +155,11 @@ export function TeamClient() {
 	};
 
 	const connectGoogleWorkspace = async () => {
-		try {
-			const token = await connect();
+		const token = await initiateGoogleWorkspace();
 
-			if (token) {
-				setGoogleAccessToken(token);
-				setIsGoogleImportOpen(true);
-
-				toast({
-					title: "Success",
-					description: "Google Workspace connected!",
-				});
-			}
-		} catch (error: any) {
-			toast({
-				title: "Failed to connect",
-				description: error.response || "Something went wrong",
-				variant: "destructive",
-			});
+		if (token) {
+			setGoogleAccessToken(token);
+			setIsGoogleImportOpen(true);
 		}
 	};
 
@@ -180,82 +168,84 @@ export function TeamClient() {
 			<div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
 				<div className="flex items-center justify-between">
 					<h2 className="text-3xl font-bold tracking-tight">Team</h2>
-					<Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-						<div className="flex items-center gap-4">
-							<Button
-								onClick={connectGoogleWorkspace}
-								disabled={isGoogleModalOpen}
-							>
-								<FaGoogle className="mr-2 h-4 w-4" />
-								Connect Google Workspace
-							</Button>
+					<div className="flex items-center gap-4">
+						<Button
+							onClick={connectGoogleWorkspace}
+							disabled={isGoogleModalOpen}
+						>
+							<FaGoogle className="mr-2 h-4 w-4" />
+							Connect Google Workspace
+						</Button>
+						<Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
 							<DialogTrigger asChild>
 								<Button disabled={isRestricted}>Add Member</Button>
 							</DialogTrigger>
-						</div>
-						<DialogContent>
-							<DialogHeader>
-								<DialogTitle>Add Team Member</DialogTitle>
-								<DialogDescription>
-									Add a new member to your organization by entering their email
-									address.
-								</DialogDescription>
-							</DialogHeader>
-							<div className="space-y-4 py-4">
-								<div className="space-y-2">
-									<Label htmlFor="email">Email</Label>
-									<Input
-										id="email"
-										type="email"
-										placeholder="user@example.com"
-										value={email}
-										onChange={(e) => setEmail(e.target.value)}
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="role">Role</Label>
-									<Select
-										value={role}
-										onValueChange={(value) =>
-											setRole(value as "owner" | "admin" | "developer")
-										}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Select a role" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="developer">Developer</SelectItem>
-											<SelectItem value="admin">Admin</SelectItem>
-											<SelectItem value="owner">Owner</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
+							<DialogContent>
+								<DialogHeader>
+									<DialogTitle>Add Team Member</DialogTitle>
+									<DialogDescription>
+										Add a new member to your organization by entering their
+										email address.
+									</DialogDescription>
+								</DialogHeader>
+								<div className="space-y-4 py-4">
+									<div className="space-y-2">
+										<Label htmlFor="email">Email</Label>
+										<Input
+											id="email"
+											type="email"
+											placeholder="user@example.com"
+											value={email}
+											onChange={(e) => setEmail(e.target.value)}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="role">Role</Label>
+										<Select
+											value={role}
+											onValueChange={(value) =>
+												setRole(value as "owner" | "admin" | "developer")
+											}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Select a role" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="developer">Developer</SelectItem>
+												<SelectItem value="admin">Admin</SelectItem>
+												<SelectItem value="owner">Owner</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
 
-								<Alert>
-									<AlertDescription>
-										3 seats are included; any additional members will incur a
-										cost of{" "}
-										<span className="inline font-semibold">$10/seat/month</span>
-										The charge will be prorated based on your billing cycle.
-									</AlertDescription>
-								</Alert>
-							</div>
-							<DialogFooter>
-								<Button
-									variant="outline"
-									onClick={() => setIsAddDialogOpen(false)}
-								>
-									Cancel
-								</Button>
-								<Button
-									onClick={handleAddMember}
-									disabled={addMemberMutation.isPending}
-								>
-									{addMemberMutation.isPending ? "Adding..." : "Add Member"}
-								</Button>
-							</DialogFooter>
-						</DialogContent>
-					</Dialog>
+									<Alert>
+										<AlertDescription>
+											3 seats are included; any additional members will incur a
+											cost of{" "}
+											<span className="inline font-semibold">
+												$10/seat/month
+											</span>
+											The charge will be prorated based on your billing cycle.
+										</AlertDescription>
+									</Alert>
+								</div>
+								<DialogFooter>
+									<Button
+										variant="outline"
+										onClick={() => setIsAddDialogOpen(false)}
+									>
+										Cancel
+									</Button>
+									<Button
+										onClick={handleAddMember}
+										disabled={addMemberMutation.isPending}
+									>
+										{addMemberMutation.isPending ? "Adding..." : "Add Member"}
+									</Button>
+								</DialogFooter>
+							</DialogContent>
+						</Dialog>
+					</div>
 				</div>
 
 				{isRestricted && (
@@ -398,8 +388,9 @@ export function TeamClient() {
 				organizationId={organizationId}
 				existingEmails={existingEmails}
 				onSuccess={() => {
-					queryClient.invalidateQueries({ queryKey: ["team", organizationId] });
-					setIsGoogleImportOpen(false);
+					queryClient.invalidateQueries({
+						queryKey: ["/team/{organizationId}/members", organizationId],
+					});
 				}}
 			/>
 		</div>

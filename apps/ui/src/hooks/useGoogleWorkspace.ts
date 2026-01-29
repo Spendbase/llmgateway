@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { useApi } from "@/lib/fetch-client";
+
+import type { GoogleUser, RoledGoogleUser } from "@/types/google-workspace";
 
 interface GoogleWorkspaceParams {
 	organizationId: string;
@@ -21,21 +22,20 @@ export function useGoogleWorkspace({ organizationId }: GoogleWorkspaceParams) {
 		"/orgs/{id}/google-workspace/fetch-users",
 	);
 
-	const connect = async () => {
+	const importUsersMutation = api.useMutation(
+		"post",
+		"/orgs/{id}/google-workspace/import",
+	);
+
+	const initiateGoogleWorkspace = async () => {
 		setIsLoading(true);
 		try {
 			const initData = await initiateMutation.mutateAsync({
 				params: { path: { id: organizationId } },
 			});
 
-			if (!initData.url) {
-				throw new Error("No URL returned");
-			}
-
 			return await openPopupAndWaitForToken(initData.url);
 		} catch (error: any) {
-			console.error(error);
-			toast.error(error.message || "Something went wrong");
 			return error;
 		} finally {
 			setIsLoading(false);
@@ -43,21 +43,27 @@ export function useGoogleWorkspace({ organizationId }: GoogleWorkspaceParams) {
 	};
 
 	const fetchGoogleWorkspaceUsers = async (token: string) => {
-		const users = await fetchUsersMutation.mutateAsync({
+		return await fetchUsersMutation.mutateAsync({
 			params: { path: { id: organizationId } },
 			body: { accessToken: token },
 		});
+	};
 
-		toast.success("Users fetched successfully!");
-
-		return users;
+	const importGoogleWorkspaceUsers = async (
+		users: GoogleUser[],
+		role: RoledGoogleUser,
+	) => {
+		return await importUsersMutation.mutateAsync({
+			params: { path: { id: organizationId } },
+			body: { users, role },
+		});
 	};
 
 	return {
-		connect,
-		isLoading,
-		error: initiateMutation.error || fetchUsersMutation.error,
+		initiateGoogleWorkspace,
 		fetchGoogleWorkspaceUsers,
+		importGoogleWorkspaceUsers,
+		isLoading,
 	};
 }
 
