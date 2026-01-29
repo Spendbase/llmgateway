@@ -2881,7 +2881,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/orgs/{organizationId}/google-workspace/import": {
+    "/orgs/{id}/google-workspace/import": {
         parameters: {
             query?: never;
             header?: never;
@@ -2895,7 +2895,9 @@ export interface paths {
             parameters: {
                 query?: never;
                 header?: never;
-                path?: never;
+                path: {
+                    id: string;
+                };
                 cookie?: never;
             };
             requestBody?: {
@@ -2909,8 +2911,7 @@ export interface paths {
                             fullName?: string;
                         }[];
                         /** @enum {string} */
-                        role: "owner" | "admin" | "member";
-                        organizationId: string;
+                        role: "developer" | "admin";
                     };
                 };
             };

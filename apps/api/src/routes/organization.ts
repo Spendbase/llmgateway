@@ -129,8 +129,7 @@ const ImportRequestSchema = z.object({
 			fullName: z.string().optional(),
 		}),
 	),
-	role: z.enum(["owner", "admin", "member"]),
-	organizationId: z.string(),
+	role: z.enum(["developer", "admin"]),
 });
 
 const getOrganizations = createRoute({
@@ -770,9 +769,6 @@ organization.openapi(fetchUsers, async (c) => {
 		});
 
 		if (response.status === 403) {
-			console.warn(
-				"⚠️ [DEV MODE] Google returned 403 (Not Admin). Using MOCK data.",
-			);
 			const MOCK_USERS = [
 				{
 					email: "alice.engineering@example.com",
@@ -807,9 +803,10 @@ organization.openapi(fetchUsers, async (c) => {
 		}
 
 		if (!response.ok) {
-			const errorText = await response.text();
-			console.error("Google API Error:", errorText);
-			throw new Error("Failed to fetch from Google");
+			const errorResponse = await response.json();
+			const errorMessage =
+				errorResponse.error?.message || "Unknown Google Error";
+			return c.json({ message: errorMessage }, 400);
 		}
 
 		const data = await response.json();
@@ -824,15 +821,18 @@ organization.openapi(fetchUsers, async (c) => {
 
 		return c.json(users);
 	} catch {
-		return c.json([], 500);
+		return c.json({ message: "Failed to fetch users from Google" }, 400);
 	}
 });
 
 const importUsersRoute = createRoute({
 	method: "post",
-	path: "/{organizationId}/google-workspace/import",
+	path: "/{id}/google-workspace/import",
 	summary: "Import selected users to organization",
 	request: {
+		params: z.object({
+			id: z.string(),
+		}),
 		body: {
 			content: {
 				"application/json": { schema: ImportRequestSchema },
@@ -855,7 +855,7 @@ const importUsersRoute = createRoute({
 });
 
 organization.openapi(importUsersRoute, async (c) => {
-	const { users: usersToImport, role, organizationId } = c.req.valid("json");
+	const { users: usersToImport /* role, id */ } = c.req.valid("json");
 
 	let successCount = 0;
 	let failedCount = 0;
@@ -879,7 +879,7 @@ organization.openapi(importUsersRoute, async (c) => {
 				// }).returning();
 				// userId = newUser.id;
 
-				userId = "new_user_" + Math.random();
+				userId = "new_user_" + googleUser.email + Math.random();
 			}
 
 			// const existingMember = await db.query.members.findFirst({
@@ -895,8 +895,7 @@ organization.openapi(importUsersRoute, async (c) => {
 			//    });
 			successCount++;
 			// }
-		} catch (e) {
-			console.error(`Failed to import ${googleUser.email}`, e);
+		} catch {
 			failedCount++;
 		}
 	}

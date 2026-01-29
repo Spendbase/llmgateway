@@ -30,7 +30,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/lib/components/table";
-import { useApi } from "@/lib/fetch-client";
+
+import type { RoledGoogleUser } from "@/types/google-workspace";
 
 interface GoogleUser {
 	email: string;
@@ -57,18 +58,17 @@ const GoogleImportDialog = ({
 	existingEmails = [],
 	onSuccess,
 }: Props) => {
-	const api = useApi();
-
 	const [step, setStep] = useState<
 		"LOADING" | "SELECT" | "IMPORTING" | "RESULT"
 	>("LOADING");
 
 	const [discoveredUsers, setDiscoveredUsers] = useState<GoogleUser[]>([]);
 	const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
-	const [role, setRole] = useState("member");
+	const [role, setRole] = useState<RoledGoogleUser>("developer");
 	const [importStats, setImportStats] = useState({ success: 0, failed: 0 });
 
-	const { fetchGoogleWorkspaceUsers } = useGoogleWorkspace({ organizationId });
+	const { fetchGoogleWorkspaceUsers, importGoogleWorkspaceUsers } =
+		useGoogleWorkspace({ organizationId });
 
 	useEffect(() => {
 		if (isOpen && accessToken) {
@@ -82,6 +82,11 @@ const GoogleImportDialog = ({
 			const googleUsers: GoogleUser[] =
 				await fetchGoogleWorkspaceUsers(accessToken);
 
+			if (!googleUsers.length) {
+				onClose();
+				return;
+			}
+
 			setDiscoveredUsers(googleUsers);
 
 			const newUsers = googleUsers
@@ -90,10 +95,8 @@ const GoogleImportDialog = ({
 
 			setSelectedEmails(new Set(newUsers));
 			setStep("SELECT");
-		} catch (error: any) {
-			toast.error("Failed to load users from Google", {
-				description: error.response
-			});
+			toast.success("Users fetched successfully!");
+		} catch {
 			onClose();
 		}
 	};
@@ -126,18 +129,14 @@ const GoogleImportDialog = ({
 		);
 
 		try {
-			const res = await api.post(`/google-workspace/import`, {
-				users: usersToImport,
-				role: role,
-				organizationId: organizationId,
-			});
+			const response = await importGoogleWorkspaceUsers(usersToImport, role);
 
-			const result = res.data || res;
 			setImportStats({
-				success: result.successCount,
-				failed: result.failedCount,
+				success: response.successCount,
+				failed: response.failedCount,
 			});
 			setStep("RESULT");
+			setRole("developer");
 			onSuccess();
 		} catch (error: any) {
 			toast.error("Import failed", {
@@ -145,6 +144,10 @@ const GoogleImportDialog = ({
 			});
 			setStep("SELECT");
 		}
+	};
+
+	const handleRoleSelect = (role: RoledGoogleUser) => {
+		setRole(role);
 	};
 
 	const availableUsersCount = discoveredUsers.filter(
@@ -180,14 +183,13 @@ const GoogleImportDialog = ({
 								<div className="flex items-center space-x-4">
 									<div className="flex items-center space-x-2">
 										<span className="text-sm font-medium">Role:</span>
-										<Select value={role} onValueChange={setRole}>
+										<Select value={role} onValueChange={handleRoleSelect}>
 											<SelectTrigger className="w-[130px]">
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent>
-												<SelectItem value="member">Member</SelectItem>
+												<SelectItem value="developer">Developer</SelectItem>
 												<SelectItem value="admin">Admin</SelectItem>
-												<SelectItem value="owner">Owner</SelectItem>
 											</SelectContent>
 										</Select>
 									</div>
@@ -204,6 +206,7 @@ const GoogleImportDialog = ({
 											<TableRow>
 												<TableHead className="w-[50px]">
 													<Checkbox
+														className="cursor-pointer"
 														checked={isAllSelected}
 														onCheckedChange={toggleAll}
 														disabled={availableUsersCount === 0}
@@ -212,7 +215,7 @@ const GoogleImportDialog = ({
 												<TableHead>User</TableHead>
 												<TableHead>Email</TableHead>
 												<TableHead>Department</TableHead>
-												<TableHead className="text-right">Status</TableHead>
+												<TableHead>Status</TableHead>
 											</TableRow>
 										</TableHeader>
 										<TableBody>
@@ -225,6 +228,7 @@ const GoogleImportDialog = ({
 													>
 														<TableCell>
 															<Checkbox
+																className="cursor-pointer"
 																checked={selectedEmails.has(user.email)}
 																onCheckedChange={() => toggleUser(user.email)}
 																disabled={isExisting}
@@ -250,7 +254,7 @@ const GoogleImportDialog = ({
 																</span>
 															)}
 														</TableCell>
-														<TableCell className="text-right">
+														<TableCell>
 															{isExisting ? (
 																<span className="flex items-center justify-end text-xs text-yellow-600 font-medium">
 																	<UserCheck className="w-3 h-3 mr-1" />
