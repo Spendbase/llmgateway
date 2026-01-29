@@ -186,10 +186,30 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 	const modelsWithProviders: ModelWithProviders[] = useMemo(() => {
 		const baseModels = models.map((model) => ({
 			...model,
-			providerDetails: model.mappings.map((mapping) => ({
-				provider: mapping,
-				providerInfo: providers.find((p) => p.id === mapping.providerId)!,
-			})),
+			providerDetails: model.mappings
+				.map((mapping) => {
+					const providerInfo = providers.find(
+						(p) => p.id === mapping.providerId,
+					);
+					if (!providerInfo) {
+						console.warn(
+							`Provider not found for mapping: ${mapping.providerId} in model ${model.id}`,
+						);
+						return null;
+					}
+					return {
+						provider: mapping,
+						providerInfo,
+					};
+				})
+				.filter(
+					(
+						detail,
+					): detail is {
+						provider: ApiModelProviderMapping;
+						providerInfo: ApiProvider;
+					} => detail !== null,
+				),
 		}));
 
 		const filteredModels = baseModels.filter((model) => {
