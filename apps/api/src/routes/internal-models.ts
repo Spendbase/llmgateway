@@ -2,6 +2,10 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { z } from "zod";
 
 import { db } from "@llmgateway/db";
+import {
+	models as modelsPackage,
+	type ProviderModelMapping as PackageProviderModelMapping,
+} from "@llmgateway/models";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -39,6 +43,10 @@ const modelProviderMappingSchema = z.object({
 	vision: z.boolean().nullable(),
 	reasoning: z.boolean().nullable(),
 	reasoningOutput: z.string().nullable(),
+	reasoningLevels: z
+		.array(z.enum(["minimal", "low", "medium", "high"]))
+		.nullable()
+		.optional(),
 	tools: z.boolean().nullable(),
 	jsonOutput: z.boolean().nullable(),
 	jsonOutputSchema: z.boolean().nullable(),
@@ -107,11 +115,27 @@ internalModels.openapi(getModelsRoute, async (c) => {
 		},
 	});
 
-	// Transform to match expected schema (rename modelProviderMappings to mappings)
-	const transformedModels = models.map((model) => ({
-		...model,
-		mappings: model.modelProviderMappings,
-	}));
+	// Enrich with data from models package (e.g., reasoningLevels)
+	const transformedModels = models.map((model) => {
+		const packageModel = modelsPackage.find((m) => m.id === model.id);
+
+		return {
+			...model,
+			mappings: model.modelProviderMappings.map((mapping) => {
+				// Find corresponding package mapping to get reasoningLevels
+				const packageMapping = packageModel?.providers.find(
+					(p) =>
+						(p as PackageProviderModelMapping).providerId ===
+						mapping.providerId,
+				) as PackageProviderModelMapping | undefined;
+
+				return {
+					...mapping,
+					reasoningLevels: packageMapping?.reasoningLevels || null,
+				};
+			}),
+		};
+	});
 
 	return c.json({ models: transformedModels });
 });

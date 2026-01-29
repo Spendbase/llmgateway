@@ -955,6 +955,30 @@ chat.openapi(completions, async (c) => {
 				message: `Model ${requestedModel} does not support reasoning. Remove the reasoning_effort parameter or use a reasoning-capable model.`,
 			});
 		}
+
+		// Check if the specific reasoning_effort level is supported by the model
+		// Filter providers by requestedProvider if specified
+		const providersToCheck = requestedProvider
+			? modelInfo.providers.filter(
+					(p) => (p as ProviderModelMapping).providerId === requestedProvider,
+				)
+			: modelInfo.providers;
+
+		// Find a provider that has reasoning enabled
+		const reasoningProvider = providersToCheck.find(
+			(p) => (p as ProviderModelMapping).reasoning === true,
+		) as ProviderModelMapping | undefined;
+
+		// Check if this provider has specific reasoningLevels restrictions
+		if (reasoningProvider?.reasoningLevels) {
+			const supportedLevels = reasoningProvider.reasoningLevels;
+
+			if (!supportedLevels.includes(reasoning_effort)) {
+				throw new HTTPException(400, {
+					message: `Model ${requestedModel} does not support reasoning_effort level "${reasoning_effort}". Supported levels: ${supportedLevels.join(", ")}.`,
+				});
+			}
+		}
 	}
 
 	// Check if tools are specified but model doesn't support them

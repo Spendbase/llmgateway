@@ -45,6 +45,10 @@ const modelSchema = z.object({
 			tools: z.boolean(),
 			parallelToolCalls: z.boolean(),
 			reasoning: z.boolean(),
+			reasoningLevels: z
+				.array(z.enum(["minimal", "low", "medium", "high"]))
+				.nullable()
+				.optional(),
 			stability: z
 				.enum(["stable", "beta", "unstable", "experimental"])
 				.optional(),
@@ -211,6 +215,7 @@ modelsApi.openapi(listModels, async (c) => {
 						tools: provider.tools || false,
 						parallelToolCalls: provider.parallelToolCalls || false,
 						reasoning: provider.reasoning || false,
+						reasoningLevels: provider.reasoningLevels || null,
 						stability: provider.stability || model.stability,
 					};
 				}),
