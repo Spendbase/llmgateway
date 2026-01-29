@@ -903,8 +903,39 @@ export async function prepareRequestBody(
 				}
 			}
 
-			// Transform non-system messages to Bedrock format
-			requestBody.messages = bedrockNonSystemMessages.map((msg: any) => {
+			// AWS Bedrock Converse API requires grouping consecutive tool messages into a single user message
+			// Pre-process messages to group consecutive tool messages together
+			const groupedMessages: any[] = [];
+			let currentToolGroup: any[] = [];
+
+			for (const msg of bedrockNonSystemMessages) {
+				if (msg.role === "tool") {
+					// Accumulate tool messages
+					currentToolGroup.push(msg);
+				} else {
+					// If we have accumulated tool messages, flush them as a single grouped message
+					if (currentToolGroup.length > 0) {
+						groupedMessages.push({
+							role: "user",
+							_toolMessages: currentToolGroup,
+						});
+						currentToolGroup = [];
+					}
+					// Add the non-tool message
+					groupedMessages.push(msg);
+				}
+			}
+
+			// Don't forget to flush any remaining tool messages
+			if (currentToolGroup.length > 0) {
+				groupedMessages.push({
+					role: "user",
+					_toolMessages: currentToolGroup,
+				});
+			}
+
+			// Transform grouped messages to Bedrock format
+			requestBody.messages = groupedMessages.map((msg: any) => {
 				// Map OpenAI roles to Bedrock roles
 				const role =
 					msg.role === "user" || msg.role === "tool" ? "user" : "assistant";
@@ -914,18 +945,21 @@ export async function prepareRequestBody(
 					content: [],
 				};
 
-				// Handle tool results (from role: "tool")
-				if (msg.role === "tool") {
-					bedrockMessage.content.push({
-						toolResult: {
-							toolUseId: msg.tool_call_id,
-							content: [
-								{
-									text: msg.content || "",
-								},
-							],
-						},
-					});
+				// Handle grouped tool results
+				if (msg._toolMessages) {
+					// Multiple tool results in a single message
+					for (const toolMsg of msg._toolMessages) {
+						bedrockMessage.content.push({
+							toolResult: {
+								toolUseId: toolMsg.tool_call_id,
+								content: [
+									{
+										text: toolMsg.content || "",
+									},
+								],
+							},
+						});
+					}
 					return bedrockMessage;
 				}
 
