@@ -903,8 +903,89 @@ export async function prepareRequestBody(
 				}
 			}
 
-			// Transform non-system messages to Bedrock format
-			requestBody.messages = bedrockNonSystemMessages.map((msg: any) => {
+			// AWS Bedrock Converse API requires ALL tool results to be in a single user message
+			// immediately following the assistant message with tool calls
+			// Build a map of tool call IDs that need results
+			const pendingToolCalls = new Map<number, Set<string>>();
+
+			for (let i = 0; i < bedrockNonSystemMessages.length; i++) {
+				const msg = bedrockNonSystemMessages[i];
+				if (
+					msg.role === "assistant" &&
+					msg.tool_calls &&
+					msg.tool_calls.length > 0
+				) {
+					const toolCallIds = new Set(msg.tool_calls.map((tc: any) => tc.id));
+					pendingToolCalls.set(i, toolCallIds);
+				}
+			}
+
+			// Group tool messages that follow assistant tool call messages
+			const groupedMessages: any[] = [];
+			let i = 0;
+
+			while (i < bedrockNonSystemMessages.length) {
+				const msg = bedrockNonSystemMessages[i];
+
+				// Check if this is an assistant message with tool calls
+				if (msg.role === "assistant" && pendingToolCalls.has(i)) {
+					// Add the assistant message
+					groupedMessages.push(msg);
+
+					// Collect ALL tool results that follow this assistant message
+					const expectedToolIds = pendingToolCalls.get(i)!;
+					const collectedToolResults: any[] = [];
+					let j = i + 1;
+
+					// Scan forward to collect all tool result messages
+					while (j < bedrockNonSystemMessages.length) {
+						const nextMsg = bedrockNonSystemMessages[j];
+
+						// Stop if we hit a non-tool message
+						if (nextMsg.role !== "tool") {
+							break;
+						}
+
+						// Collect this tool result
+						collectedToolResults.push(nextMsg);
+						j++;
+					}
+
+					// Validate that we have all expected tool results
+					const providedToolIds = new Set(
+						collectedToolResults.map((tr) => tr.tool_call_id).filter(Boolean),
+					);
+
+					const missingToolIds = Array.from(expectedToolIds).filter(
+						(id) => !providedToolIds.has(id),
+					);
+
+					if (missingToolIds.length > 0) {
+						throw new Error(
+							`Missing tool results for AWS Bedrock. Expected tool results for IDs: ${missingToolIds.join(", ")}. ` +
+								`When an assistant makes tool calls, ALL corresponding tool results must be provided in the next messages.`,
+						);
+					}
+
+					// Group all collected tool results into a single user message
+					if (collectedToolResults.length > 0) {
+						groupedMessages.push({
+							role: "user",
+							_toolMessages: collectedToolResults,
+						});
+					}
+
+					// Skip past the tool messages we just processed
+					i = j;
+				} else {
+					// Regular message (user or assistant without tools)
+					groupedMessages.push(msg);
+					i++;
+				}
+			}
+
+			// Transform grouped messages to Bedrock format
+			requestBody.messages = groupedMessages.map((msg: any) => {
 				// Map OpenAI roles to Bedrock roles
 				const role =
 					msg.role === "user" || msg.role === "tool" ? "user" : "assistant";
@@ -914,18 +995,35 @@ export async function prepareRequestBody(
 					content: [],
 				};
 
-				// Handle tool results (from role: "tool")
-				if (msg.role === "tool") {
-					bedrockMessage.content.push({
-						toolResult: {
-							toolUseId: msg.tool_call_id,
-							content: [
-								{
-									text: msg.content || "",
-								},
-							],
-						},
-					});
+				// Handle grouped tool results
+				if (msg._toolMessages) {
+					// Multiple tool results in a single message
+					for (const toolMsg of msg._toolMessages) {
+						// Ensure content is properly formatted as string
+						let contentText: string;
+						if (typeof toolMsg.content === "string") {
+							contentText = toolMsg.content;
+						} else if (
+							toolMsg.content === null ||
+							toolMsg.content === undefined
+						) {
+							contentText = "";
+						} else {
+							// Handle non-string content (e.g., objects, arrays)
+							contentText = JSON.stringify(toolMsg.content);
+						}
+
+						bedrockMessage.content.push({
+							toolResult: {
+								toolUseId: toolMsg.tool_call_id,
+								content: [
+									{
+										text: contentText,
+									},
+								],
+							},
+						});
+					}
 					return bedrockMessage;
 				}
 
