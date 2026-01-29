@@ -2,9 +2,10 @@ import { Loader2, CheckCircle2, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useGoogleWorkspace } from "@/hooks/useGoogleWorkspace";
+import { Badge } from "@/lib/components/badge";
+import { Button } from "@/lib/components/button";
+import { Checkbox } from "@/lib/components/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -12,15 +13,15 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/lib/components/dialog";
+import { ScrollArea } from "@/lib/components/scroll-area";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select";
+} from "@/lib/components/select";
 import {
 	Table,
 	TableBody,
@@ -28,19 +29,21 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "@/components/ui/table";
+} from "@/lib/components/table";
 import { useApi } from "@/lib/fetch-client";
 
 interface GoogleUser {
 	email: string;
-	fullName: string;
+	firstName?: string;
+	lastName?: string;
+	fullName?: string;
 	department?: string;
 }
 
 interface Props {
 	isOpen: boolean;
 	onClose: () => void;
-	accessToken: string | null;
+	accessToken: string;
 	organizationId: string;
 	existingEmails: string[];
 	onSuccess: () => void;
@@ -49,7 +52,7 @@ interface Props {
 const GoogleImportDialog = ({
 	isOpen,
 	onClose,
-	accessToken,
+	accessToken = "",
 	organizationId,
 	existingEmails = [],
 	onSuccess,
@@ -65,6 +68,8 @@ const GoogleImportDialog = ({
 	const [role, setRole] = useState("member");
 	const [importStats, setImportStats] = useState({ success: 0, failed: 0 });
 
+	const { fetchGoogleWorkspaceUsers } = useGoogleWorkspace({ organizationId });
+
 	useEffect(() => {
 		if (isOpen && accessToken) {
 			loadUsers();
@@ -74,19 +79,21 @@ const GoogleImportDialog = ({
 	const loadUsers = async () => {
 		setStep("LOADING");
 		try {
-			const res = await api.post(`/google-workspace/users`, { accessToken });
-			const data = res.data || res;
+			const googleUsers: GoogleUser[] =
+				await fetchGoogleWorkspaceUsers(accessToken);
 
-			setDiscoveredUsers(data);
+			setDiscoveredUsers(googleUsers);
 
-			const newUsers = data
+			const newUsers = googleUsers
 				.filter((u: GoogleUser) => !existingEmails.includes(u.email))
 				.map((u: GoogleUser) => u.email);
 
 			setSelectedEmails(new Set(newUsers));
 			setStep("SELECT");
-		} catch (e) {
-			toast.error("Failed to load users from Google");
+		} catch (error: any) {
+			toast.error("Failed to load users from Google", {
+				description: error.response
+			});
 			onClose();
 		}
 	};
@@ -132,8 +139,10 @@ const GoogleImportDialog = ({
 			});
 			setStep("RESULT");
 			onSuccess();
-		} catch (e) {
-			toast.error("Import failed");
+		} catch (error: any) {
+			toast.error("Import failed", {
+				description: error.response || "Please try again later",
+			});
 			setStep("SELECT");
 		}
 	};

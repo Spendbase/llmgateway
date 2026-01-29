@@ -32,15 +32,7 @@ export function useGoogleWorkspace({ organizationId }: GoogleWorkspaceParams) {
 				throw new Error("No URL returned");
 			}
 
-			const token = await openPopupAndWaitForToken(initData.url);
-
-			const users = await fetchUsersMutation.mutateAsync({
-				params: { path: { id: organizationId } },
-				body: { accessToken: token },
-			});
-
-			toast.success("Users fetched successfully!");
-			return users;
+			return await openPopupAndWaitForToken(initData.url);
 		} catch (error: any) {
 			console.error(error);
 			toast.error(error.message || "Something went wrong");
@@ -50,10 +42,22 @@ export function useGoogleWorkspace({ organizationId }: GoogleWorkspaceParams) {
 		}
 	};
 
+	const fetchGoogleWorkspaceUsers = async (token: string) => {
+		const users = await fetchUsersMutation.mutateAsync({
+			params: { path: { id: organizationId } },
+			body: { accessToken: token },
+		});
+
+		toast.success("Users fetched successfully!");
+
+		return users;
+	};
+
 	return {
 		connect,
 		isLoading,
 		error: initiateMutation.error || fetchUsersMutation.error,
+		fetchGoogleWorkspaceUsers,
 	};
 }
 
