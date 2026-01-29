@@ -628,7 +628,12 @@ export const ChatUI = ({
 									onValueChange={(val) => {
 										if (val === "off") {
 											// Trigger Auto logic
-											onAutoReasoning?.();
+											if (onAutoReasoning) {
+												onAutoReasoning();
+											} else {
+												// Fallback: clear reasoning effort if callback not provided
+												setReasoningEffort("");
+											}
 										} else {
 											setReasoningEffort(
 												val as "minimal" | "low" | "medium" | "high",

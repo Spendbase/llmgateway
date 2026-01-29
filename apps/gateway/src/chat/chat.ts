@@ -1410,6 +1410,60 @@ chat.openapi(completions, async (c) => {
 		};
 	}
 
+	// Validate reasoning_effort against the SELECTED provider's capabilities
+	// This must happen after routing to ensure we check the actual provider that will receive the request
+	if (reasoning_effort !== undefined) {
+		// Get the selected provider's mapping
+		const selectedProviderMapping = modelInfo.providers.find(
+			(p) => (p as ProviderModelMapping).providerId === usedProvider,
+		) as ProviderModelMapping | undefined;
+
+		if (!selectedProviderMapping) {
+			throw new HTTPException(500, {
+				message: `Internal error: could not find provider mapping for ${usedProvider}`,
+			});
+		}
+
+		// Check if the selected provider supports reasoning at all
+		if (!selectedProviderMapping.reasoning) {
+			logger.error(
+				`Reasoning effort specified but selected provider does not support reasoning`,
+				{
+					requestedModel,
+					usedProvider,
+					reasoning_effort,
+					providerReasoning: selectedProviderMapping.reasoning,
+				},
+			);
+
+			throw new HTTPException(400, {
+				message: `Provider ${usedProvider} for model ${requestedModel} does not support reasoning. Remove the reasoning_effort parameter or use a different provider.`,
+			});
+		}
+
+		// Check if the selected provider has specific reasoningLevels restrictions
+		if (selectedProviderMapping.reasoningLevels) {
+			const supportedLevels = selectedProviderMapping.reasoningLevels;
+
+			if (!supportedLevels.includes(reasoning_effort)) {
+				logger.error(
+					`Reasoning effort level not supported by selected provider`,
+					{
+						requestedModel,
+						usedProvider,
+						reasoning_effort,
+						supportedLevels,
+					},
+				);
+
+				throw new HTTPException(400, {
+					message: `Provider ${usedProvider} for model ${requestedModel} does not support reasoning_effort level "${reasoning_effort}". Supported levels: ${supportedLevels.join(", ")}.`,
+				});
+			}
+		}
+		// If reasoningLevels is undefined/null, all levels are supported (no validation needed)
+	}
+
 	// Update baseModelName to match the final usedModel after routing
 	// Find the model definition that corresponds to the final usedModel
 	const finalModelInfo = models.find(
