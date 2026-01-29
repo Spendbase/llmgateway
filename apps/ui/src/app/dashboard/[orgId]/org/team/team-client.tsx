@@ -68,7 +68,7 @@ export function TeamClient() {
 	const updateMemberMutation = useUpdateTeamMember(organizationId);
 	const removeMemberMutation = useRemoveTeamMember(organizationId);
 
-	const { connect } = useGoogleWorkspace({
+	const { connect, isLoading: isGoogleModalOpen } = useGoogleWorkspace({
 		organizationId,
 	});
 
@@ -77,6 +77,8 @@ export function TeamClient() {
 		"developer",
 	);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+	const [isGoogleImportOpen, setIsGoogleImportOpen] = useState(false);
+	const [googleAccessToken, setGoogleAccessToken] = useState<string>("");
 
 	const existingEmails = data?.members?.map((m) => m.user.email) || [];
 
@@ -153,16 +155,22 @@ export function TeamClient() {
 
 	const connectGoogleWorkspace = async () => {
 		try {
-			await connect();
+			const token = await connect();
 
-			toast({
-				title: "Success",
-				description: "Google Workspace connected!",
-			});
+			if (token) {
+				setGoogleAccessToken(token);
+				setIsGoogleImportOpen(true);
+
+				toast({
+					title: "Success",
+					description: "Google Workspace connected!",
+				});
+			}
 		} catch (error: any) {
 			toast({
 				title: "Failed to connect",
 				description: error.response || "Something went wrong",
+				variant: "destructive",
 			});
 		}
 	};
@@ -174,7 +182,10 @@ export function TeamClient() {
 					<h2 className="text-3xl font-bold tracking-tight">Team</h2>
 					<Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
 						<div className="flex items-center gap-4">
-							<Button onClick={connectGoogleWorkspace}>
+							<Button
+								onClick={connectGoogleWorkspace}
+								disabled={isGoogleModalOpen}
+							>
 								<FaGoogle className="mr-2 h-4 w-4" />
 								Connect Google Workspace
 							</Button>
@@ -378,13 +389,17 @@ export function TeamClient() {
 			</div>
 
 			<GoogleImportDialog
-				isOpen={modalOpen}
-				onClose={() => setModalOpen(false)}
-				accessToken={token}
+				isOpen={isGoogleImportOpen}
+				onClose={() => {
+					setIsGoogleImportOpen(false);
+					setGoogleAccessToken("");
+				}}
+				accessToken={googleAccessToken}
 				organizationId={organizationId}
 				existingEmails={existingEmails}
 				onSuccess={() => {
-					queryClient.invalidateQueries(["team", orgId]);
+					queryClient.invalidateQueries({ queryKey: ["team", organizationId] });
+					setIsGoogleImportOpen(false);
 				}}
 			/>
 		</div>
