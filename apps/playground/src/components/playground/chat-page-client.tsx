@@ -331,6 +331,79 @@ export default function ChatPageClient({
 		return !!mapping?.webSearch;
 	}, [models, selectedModel]);
 
+	// Compute supported reasoning levels for the selected model/provider
+	const supportedReasoningLevels = useMemo(() => {
+		if (!selectedModel || !supportsReasoning) {
+			return null;
+		}
+		const [providerId, modelId] = selectedModel.includes("/")
+			? (selectedModel.split("/") as [string, string])
+			: ["", selectedModel];
+		const def = models.find((m) => m.id === modelId);
+		if (!def) {
+			return null;
+		}
+
+		// If provider is specified, use that mapping
+		if (providerId) {
+			const mapping = def.mappings.find(
+				(p: ApiModelProviderMapping) => p.providerId === providerId,
+			);
+			if (!mapping?.reasoning) {
+				return null;
+			}
+			// If reasoningLevels defined, use it; otherwise all levels supported
+			return (
+				(mapping.reasoningLevels as
+					| ("minimal" | "low" | "medium" | "high")[]
+					| null) ||
+				(["minimal", "low", "medium", "high"] as (
+					| "minimal"
+					| "low"
+					| "medium"
+					| "high"
+				)[])
+			);
+		}
+
+		// No provider specified - find first reasoning-capable mapping with levels
+		const mappingWithLevels = def.mappings.find(
+			(p: ApiModelProviderMapping) => p.reasoning && p.reasoningLevels,
+		);
+
+		if (mappingWithLevels?.reasoningLevels) {
+			return mappingWithLevels.reasoningLevels as (
+				| "minimal"
+				| "low"
+				| "medium"
+				| "high"
+			)[];
+		}
+
+		// Default: all levels
+		return ["minimal", "low", "medium", "high"] as (
+			| "minimal"
+			| "low"
+			| "medium"
+			| "high"
+		)[];
+	}, [selectedModel, models, supportsReasoning]);
+
+	// Helper to get auto reasoning level (prefer "medium", else first available)
+	const getAutoReasoningLevel = (
+		levels: ("minimal" | "low" | "medium" | "high")[] | null,
+	): "" | "minimal" | "low" | "medium" | "high" => {
+		if (!levels || levels.length === 0) {
+			return "";
+		}
+		// Prefer "medium" if available
+		if (levels.includes("medium")) {
+			return "medium";
+		}
+		// Otherwise use first supported level
+		return levels[0] as "minimal" | "low" | "medium" | "high";
+	};
+
 	const sendMessageWithHeaders = useCallback(
 		(message: any, options?: any) => {
 			// Check if model uses WIDTHxHEIGHT format (Alibaba or ZAI)
@@ -757,12 +830,24 @@ export default function ChatPageClient({
 		setText(value);
 	};
 
-	// Reset reasoning effort when switching to a non-reasoning model
+	// Reset reasoning effort when switching to a non-reasoning model or when current value is unsupported
 	useEffect(() => {
-		if (!supportsReasoning && reasoningEffort) {
-			setReasoningEffort("");
+		if (!supportsReasoning || !supportedReasoningLevels) {
+			if (reasoningEffort) {
+				setReasoningEffort("");
+			}
+			return;
 		}
-	}, [supportsReasoning, reasoningEffort]);
+
+		// If current selection is not in supported levels, reset to Auto
+		if (
+			reasoningEffort &&
+			!supportedReasoningLevels.includes(reasoningEffort)
+		) {
+			const autoLevel = getAutoReasoningLevel(supportedReasoningLevels);
+			setReasoningEffort(autoLevel);
+		}
+	}, [supportedReasoningLevels, supportsReasoning, reasoningEffort]);
 
 	const handleSelectOrganization = (org: Organization | null) => {
 		const params = new URLSearchParams(Array.from(searchParams.entries()));
@@ -960,6 +1045,13 @@ export default function ChatPageClient({
 											reasoningEffort={reasoningEffort}
 											setReasoningEffort={setReasoningEffort}
 											supportsReasoning={supportsReasoning}
+											supportedReasoningLevels={supportedReasoningLevels}
+											onAutoReasoning={() => {
+												const autoLevel = getAutoReasoningLevel(
+													supportedReasoningLevels,
+												);
+												setReasoningEffort(autoLevel);
+											}}
 											imageAspectRatio={imageAspectRatio}
 											setImageAspectRatio={setImageAspectRatio}
 											imageSize={imageSize}
@@ -991,6 +1083,13 @@ export default function ChatPageClient({
 										reasoningEffort={reasoningEffort}
 										setReasoningEffort={setReasoningEffort}
 										supportsReasoning={supportsReasoning}
+										supportedReasoningLevels={supportedReasoningLevels}
+										onAutoReasoning={() => {
+											const autoLevel = getAutoReasoningLevel(
+												supportedReasoningLevels,
+											);
+											setReasoningEffort(autoLevel);
+										}}
 										imageAspectRatio={imageAspectRatio}
 										setImageAspectRatio={setImageAspectRatio}
 										imageSize={imageSize}
@@ -1149,6 +1248,79 @@ function ExtraChatPanel({
 		return !!mapping?.webSearch;
 	}, [models, selectedModel]);
 
+	// Compute supported reasoning levels for the selected model/provider
+	const supportedReasoningLevels = useMemo(() => {
+		if (!selectedModel || !supportsReasoning) {
+			return null;
+		}
+		const [providerId, modelId] = selectedModel.includes("/")
+			? (selectedModel.split("/") as [string, string])
+			: ["", selectedModel];
+		const def = models.find((m) => m.id === modelId);
+		if (!def) {
+			return null;
+		}
+
+		// If provider is specified, use that mapping
+		if (providerId) {
+			const mapping = def.mappings.find(
+				(p: ApiModelProviderMapping) => p.providerId === providerId,
+			);
+			if (!mapping?.reasoning) {
+				return null;
+			}
+			// If reasoningLevels defined, use it; otherwise all levels supported
+			return (
+				(mapping.reasoningLevels as
+					| ("minimal" | "low" | "medium" | "high")[]
+					| null) ||
+				(["minimal", "low", "medium", "high"] as (
+					| "minimal"
+					| "low"
+					| "medium"
+					| "high"
+				)[])
+			);
+		}
+
+		// No provider specified - find first reasoning-capable mapping with levels
+		const mappingWithLevels = def.mappings.find(
+			(p: ApiModelProviderMapping) => p.reasoning && p.reasoningLevels,
+		);
+
+		if (mappingWithLevels?.reasoningLevels) {
+			return mappingWithLevels.reasoningLevels as (
+				| "minimal"
+				| "low"
+				| "medium"
+				| "high"
+			)[];
+		}
+
+		// Default: all levels
+		return ["minimal", "low", "medium", "high"] as (
+			| "minimal"
+			| "low"
+			| "medium"
+			| "high"
+		)[];
+	}, [selectedModel, models, supportsReasoning]);
+
+	// Helper to get auto reasoning level (prefer "medium", else first available)
+	const getAutoReasoningLevel = (
+		levels: ("minimal" | "low" | "medium" | "high")[] | null,
+	): "" | "minimal" | "low" | "medium" | "high" => {
+		if (!levels || levels.length === 0) {
+			return "";
+		}
+		// Prefer "medium" if available
+		if (levels.includes("medium")) {
+			return "medium";
+		}
+		// Otherwise use first supported level
+		return levels[0] as "minimal" | "low" | "medium" | "high";
+	};
+
 	const sendMessageWithHeaders = useCallback(
 		(message: any, options?: any) => {
 			// Check if model uses WIDTHxHEIGHT format (Alibaba or ZAI)
@@ -1293,6 +1465,11 @@ function ExtraChatPanel({
 					reasoningEffort={reasoningEffort}
 					setReasoningEffort={setReasoningEffort}
 					supportsReasoning={supportsReasoning}
+					supportedReasoningLevels={supportedReasoningLevels}
+					onAutoReasoning={() => {
+						const autoLevel = getAutoReasoningLevel(supportedReasoningLevels);
+						setReasoningEffort(autoLevel);
+					}}
 					imageAspectRatio={imageAspectRatio}
 					setImageAspectRatio={setImageAspectRatio}
 					imageSize={imageSize}

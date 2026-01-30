@@ -99,6 +99,12 @@ export interface ProviderModelMapping {
 	 */
 	reasoning?: boolean;
 	/**
+	 * Supported reasoning effort levels for this model/provider combination.
+	 * Only relevant when reasoning is true.
+	 * When undefined, all levels are allowed (default behavior).
+	 */
+	reasoningLevels?: ("minimal" | "low" | "medium" | "high")[];
+	/**
 	 * Whether this model supports the OpenAI responses API (defaults to true if reasoning is true)
 	 */
 	supportsResponsesApi?: boolean;
