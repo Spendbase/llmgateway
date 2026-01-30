@@ -1019,9 +1019,9 @@ chat.openapi(completions, async (c) => {
 				const allSupportedLevels = new Set<string>();
 				for (const provider of reasoningProviders) {
 					if (provider.reasoningLevels) {
-						provider.reasoningLevels.forEach((level) =>
-							allSupportedLevels.add(level),
-						);
+						for (const level of provider.reasoningLevels) {
+							allSupportedLevels.add(level);
+						}
 					}
 				}
 
