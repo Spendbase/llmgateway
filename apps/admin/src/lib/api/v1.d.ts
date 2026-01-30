@@ -3867,6 +3867,7 @@ export interface operations {
                                 vision: boolean | null;
                                 reasoning: boolean | null;
                                 reasoningOutput: string | null;
+                                reasoningLevels?: ("minimal" | "low" | "medium" | "high")[] | null;
                                 tools: boolean | null;
                                 jsonOutput: boolean | null;
                                 jsonOutputSchema: boolean | null;
