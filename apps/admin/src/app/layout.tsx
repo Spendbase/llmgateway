@@ -1,11 +1,14 @@
 import { Inter, Geist_Mono } from "next/font/google";
 
 import { AdminShell } from "@/components/admin-shell";
+import { UserProvider } from "@/components/auth/user-provider";
 import { getConfig } from "@/lib/config-server";
 import { Providers } from "@/lib/providers";
+import { fetchServerData } from "@/lib/server-api";
 
 import "./globals.css";
 
+import type { User } from "@/lib/types";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
@@ -35,14 +38,24 @@ export const metadata: Metadata = {
 	},
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({
+	children,
+}: {
+	children: ReactNode;
+}) {
 	const config = getConfig();
+
+	const initialUserData = await fetchServerData<
+		{ user: User } | undefined | null
+	>("GET", "/user/me");
 
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body className={`${inter.variable} ${geistMono.variable} antialiased`}>
 				<Providers config={config}>
-					<AdminShell>{children}</AdminShell>
+					<UserProvider initialUserData={initialUserData}>
+						<AdminShell>{children}</AdminShell>
+					</UserProvider>
 				</Providers>
 			</body>
 		</html>

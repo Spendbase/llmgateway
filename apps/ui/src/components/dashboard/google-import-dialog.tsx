@@ -256,7 +256,7 @@ const GoogleImportDialog = ({
 														</TableCell>
 														<TableCell>
 															{isExisting ? (
-																<span className="flex items-center justify-end text-xs text-yellow-600 font-medium">
+																<span className="flex items-center text-xs text-yellow-600 font-medium">
 																	<UserCheck className="w-3 h-3 mr-1" />
 																	Member
 																</span>
