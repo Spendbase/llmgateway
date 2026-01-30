@@ -29,7 +29,7 @@ export function EmailVerificationBanner() {
 					},
 					body: JSON.stringify({
 						email: user.email,
-						callbackURL: `${window.location.origin}/dashboard?emailVerified=true`,
+						callbackURL: `${window.location.origin}/?emailVerified=true`,
 					}),
 				},
 			);

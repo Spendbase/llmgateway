@@ -91,10 +91,10 @@ export function ApiKeysList({
 	const [creatorFilter, setCreatorFilter] = useState<CreatorFilter>("all");
 
 	const getIamRulesUrl = (keyId: string) =>
-		`/dashboard/${orgId}/${projectId}/api-keys/${keyId}/iam` as Route;
+		`/${orgId}/${projectId}/api-keys/${keyId}/iam` as Route;
 
 	const getStatisticsUrl = (keyId: string) =>
-		`/dashboard/${orgId}/${projectId}/usage?apiKeyId=${keyId}` as Route;
+		`/${orgId}/${projectId}/usage?apiKeyId=${keyId}` as Route;
 
 	// All hooks must be called before any conditional returns
 	const { data, isLoading, error } = api.useQuery(

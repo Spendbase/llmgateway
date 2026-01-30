@@ -22,10 +22,10 @@ const geistMono = Geist_Mono({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-	metadataBase: new URL("https://llmapi.ai"),
-	title: "LLM API",
+	metadataBase: new URL("https://app.llmapi.ai"),
+	title: "Dashboard | LLM API",
 	description:
-		"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface.",
+		"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface",
 	icons: {
 		icon: "/favicon/favicon.svg?v=2",
 	},
@@ -33,18 +33,18 @@ export const metadata: Metadata = {
 		canonical: "./",
 	},
 	openGraph: {
-		title: "LLM API",
+		title: "Dashboard | LLM API",
 		description:
-			"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface.",
+			"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface",
 		images: ["/opengraph.png?v=1"],
 		type: "website",
-		url: "https://llmapi.ai",
+		url: "https://app.llmapi.ai",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "LLM API",
+		title: "Dashboard | LLM API",
 		description:
-			"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface.",
+			"Route, manage, and analyze your LLM requests across multiple providers with a unified API interface",
 		images: ["/opengraph.png?v=1"],
 	},
 };

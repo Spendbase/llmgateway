@@ -11,7 +11,7 @@ export function AuthLink(props: AuthLinkProps) {
 	return (
 		<Link
 			{...props}
-			href={user && !isLoading ? "/dashboard" : "/signup"}
+			href={user && !isLoading ? "/" : "/signup"}
 			prefetch={true}
 		/>
 	);
