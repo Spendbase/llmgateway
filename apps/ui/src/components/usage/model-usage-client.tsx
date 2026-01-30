@@ -100,7 +100,7 @@ export function ModelUsageClient({
 							asChild
 						>
 							<Link
-								href={`/dashboard/${orgId}/${projectId}/model-usage?days=7${apiKeyId ? `&apiKeyId=${apiKeyId}` : ""}`}
+								href={`/${orgId}/${projectId}/model-usage?days=7${apiKeyId ? `&apiKeyId=${apiKeyId}` : ""}`}
 							>
 								7 Days
 							</Link>
@@ -111,7 +111,7 @@ export function ModelUsageClient({
 							asChild
 						>
 							<Link
-								href={`/dashboard/${orgId}/${projectId}/model-usage?days=30${apiKeyId ? `&apiKeyId=${apiKeyId}` : ""}`}
+								href={`/${orgId}/${projectId}/model-usage?days=30${apiKeyId ? `&apiKeyId=${apiKeyId}` : ""}`}
 							>
 								30 Days
 							</Link>

@@ -167,7 +167,7 @@ export function OrganizationRetentionSettings() {
 									<strong>💡 Tip:</strong> Storage costs are deducted from
 									credits in real-time. We recommend enabling auto top-up in{" "}
 									<Link
-										href={`/dashboard/${selectedOrganization?.id}/org/billing`}
+										href={`/${selectedOrganization?.id}/org/billing`}
 										className="underline font-semibold hover:no-underline"
 									>
 										billing settings

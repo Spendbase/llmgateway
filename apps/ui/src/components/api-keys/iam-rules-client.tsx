@@ -235,7 +235,7 @@ export function IamRulesClient({ apiKey }: IamRulesClientProps) {
 		return "secondary";
 	};
 
-	const backUrl = `/dashboard/${orgId}/${projectId}/api-keys`;
+	const backUrl = `/${orgId}/${projectId}/api-keys`;
 
 	return (
 		<div className="flex min-h-screen flex-col bg-background">

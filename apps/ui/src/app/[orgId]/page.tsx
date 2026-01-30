@@ -46,8 +46,8 @@ export default async function OrgPage({ params }: OrgPageProps) {
 					? lastUsedProjectId
 					: projects.projects[0].id;
 
-			// Redirect to the selected project
-			redirect(`/dashboard/${orgId}/${defaultProjectId}`);
+			// Redirect to the selected project (without /dashboard prefix)
+			redirect(`/${orgId}/${defaultProjectId}`);
 		}
 	}
 

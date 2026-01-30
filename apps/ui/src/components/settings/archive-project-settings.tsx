@@ -48,7 +48,7 @@ export function ArchiveProjectSettings({
 			});
 
 			// Redirect to organization dashboard
-			router.push(`/dashboard/${orgId}`);
+			router.push(`/${orgId}`);
 		},
 	});
 

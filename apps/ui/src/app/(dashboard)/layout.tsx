@@ -7,13 +7,11 @@ import type { ReactNode } from "react";
 // Force dynamic rendering since this layout uses cookies for authentication
 export const dynamic = "force-dynamic";
 
-interface DashboardLayoutProps {
+interface RootLayoutProps {
 	children: ReactNode;
 }
 
-export default async function DashboardLayout({
-	children,
-}: DashboardLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
 	const user = await getUser();
 
 	if (!user) {

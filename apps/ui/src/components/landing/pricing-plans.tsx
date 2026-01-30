@@ -173,7 +173,7 @@ export function PricingPlans() {
 		if (!user) {
 			router.push("/signup");
 		} else {
-			router.push("/dashboard");
+			router.push("/");
 		}
 	};
 

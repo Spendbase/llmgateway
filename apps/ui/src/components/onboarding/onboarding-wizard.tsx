@@ -77,7 +77,7 @@ export function OnboardingWizard() {
 				await completeOnboarding.mutateAsync({});
 				const queryKey = api.queryOptions("get", "/user/me").queryKey;
 				await queryClient.invalidateQueries({ queryKey });
-				router.push("/dashboard");
+				router.push("/");
 				return;
 			}
 			// If plan is selected, continue to next step
@@ -94,7 +94,7 @@ export function OnboardingWizard() {
 			await completeOnboarding.mutateAsync({});
 			const queryKey = api.queryOptions("get", "/user/me").queryKey;
 			await queryClient.invalidateQueries({ queryKey });
-			router.push("/dashboard");
+			router.push("/");
 			return;
 		}
 		setActiveStep(step);

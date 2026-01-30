@@ -88,11 +88,11 @@ export function useDashboardState({
 		return projects[0] || null;
 	}, [selectedProjectId, projects]);
 
-	// Navigation functions for the new route structure
+	// Navigation functions for the new route structure (without /dashboard prefix)
 	const handleOrganizationCreated = useCallback(
 		(org: Organization) => {
 			// Navigate to the new organization with first project
-			router.push(`/dashboard/${org.id}`);
+			router.push(`/${org.id}`);
 		},
 		[router],
 	);
@@ -100,7 +100,7 @@ export function useDashboardState({
 	const handleProjectCreated = useCallback(
 		(project: Project) => {
 			// Navigate to the new project
-			router.push(`/dashboard/${project.organizationId}/${project.id}`);
+			router.push(`/${project.organizationId}/${project.id}`);
 		},
 		[router],
 	);
@@ -109,7 +109,7 @@ export function useDashboardState({
 		(org: Organization | null) => {
 			if (org?.id) {
 				// Navigate to the new organization (will redirect to first project)
-				router.push(`/dashboard/${org.id}`);
+				router.push(`/${org.id}`);
 			}
 		},
 		[router],
@@ -119,17 +119,19 @@ export function useDashboardState({
 		(project: Project | null) => {
 			if (project?.id) {
 				// Extract the current page from pathname (e.g., 'api-keys', 'provider-keys', etc.)
-				const pathParts = pathname.split("/");
-				const currentPage = pathParts[4]; // /dashboard/[orgId]/[projectId]/[page]
+				// Normalized path: /[orgId]/[projectId]/[page]
+				const normalizedPath = pathname.replace(/^\/dashboard/, "");
+				const pathParts = normalizedPath.split("/").filter(Boolean);
+				const currentPage = pathParts[2]; // [orgId]/[projectId]/[page]
 
-				if (currentPage && pathParts.length > 4) {
+				if (currentPage && pathParts.length > 2) {
 					// Preserve the current page when changing projects
 					router.push(
-						`/dashboard/${project.organizationId}/${project.id}/${currentPage}`,
+						`/${project.organizationId}/${project.id}/${currentPage}`,
 					);
 				} else {
 					// Navigate to the new project dashboard
-					router.push(`/dashboard/${project.organizationId}/${project.id}`);
+					router.push(`/${project.organizationId}/${project.id}`);
 				}
 			}
 		},
