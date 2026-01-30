@@ -1237,7 +1237,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 					<TableBody>
 						{modelsWithProviders.map((model) => (
 							<TableRow
-								key={`${model.id}-${model.providerDetails[0].provider.providerId}`}
+								key={`${model.id}-${model.providerDetails[0]?.provider?.providerId}`}
 								className="cursor-pointer hover:bg-muted/50 transition-colors"
 								onClick={() =>
 									router.push(`/models/${encodeURIComponent(model.id)}`)
@@ -1570,7 +1570,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 										asChild
 									>
 										<a
-											href={`${config.playgroundUrl}?model=${encodeURIComponent(`${model.providerDetails[0]?.provider.providerId}/${model.id}`)}`}
+											href={`${config.playgroundUrl}?model=${encodeURIComponent(`${model.providerDetails[0]?.provider?.providerId}/${model.id}`)}`}
 											target="_blank"
 											rel="noopener noreferrer"
 										>
@@ -1591,7 +1591,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 		<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{modelsWithProviders.map((model) => (
 				<ModelCard
-					key={`${model.id}-${model.providerDetails[0].provider.providerId}`}
+					key={`${model.id}-${model.providerDetails[0]?.provider?.providerId}`}
 					shouldShowStabilityWarning={shouldShowStabilityWarning}
 					getCapabilityIcons={getCapabilityIcons}
 					model={model}
