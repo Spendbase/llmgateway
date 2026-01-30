@@ -30,10 +30,34 @@ jobs:
 
       - name: Set image tag
         id: set-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ "${{ github.event_name }}" == "push" ]]; then
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            echo "IMAGE_TAG=v0.0.0-${SHORT_SHA}" >> $GITHUB_OUTPUT
+            # Get current version from repository variable
+            CURRENT_VERSION="${{ vars.BUILD_VERSION }}"
+            if [[ -z "$CURRENT_VERSION" ]]; then
+              CURRENT_VERSION="0.0.0"
+            fi
+
+            # Increment patch version (e.g., 0.0.0 -> 0.0.1)
+            IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+            MAJOR="${VERSION_PARTS[0]}"
+            MINOR="${VERSION_PARTS[1]}"
+            PATCH="${VERSION_PARTS[2]}"
+            NEW_PATCH=$((PATCH + 1))
+            NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+            # Update the repository variable with new version
+            gh api \
+              --method PATCH \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "repos/${{ github.repository }}/actions/variables/BUILD_VERSION" \
+              -f "value=$NEW_VERSION" || echo "Failed to update BUILD_VERSION variable"
+
+            echo "IMAGE_TAG=v${NEW_VERSION}" >> $GITHUB_OUTPUT
+            echo "Build version: v${NEW_VERSION} (was: v${CURRENT_VERSION})"
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             SHORT_SHA=$(git rev-parse --short HEAD)
             echo "IMAGE_TAG=pr-${SHORT_SHA}" >> $GITHUB_OUTPUT
