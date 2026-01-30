@@ -7,7 +7,6 @@ on:
     branches:
       - main
       - hotfix
-      - feat/ci-semver
   pull_request:
     paths:
       - "**/package.json"
@@ -80,8 +79,7 @@ jobs:
       fail-fast: false
       max-parallel: 5
       matrix:
-        # app: [api, gateway, playground, ui, docs, worker, admin]
-        app: [docs]
+        app: [api, gateway, playground, ui, docs, worker, admin]
     permissions:
       contents: read
       packages: write
