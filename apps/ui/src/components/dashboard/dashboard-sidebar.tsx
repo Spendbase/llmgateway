@@ -695,8 +695,10 @@ export function DashboardSidebar({
 	// Update isActive function to work with new route structure
 	const isActive = (path: string) => {
 		if (path === "") {
-			// For dashboard home, check if we're at the base dashboard route
-			return pathname.match(/^\/dashboard\/[^\/]+\/[^\/]+$/) !== null;
+			// For dashboard home, check if we're at the base project route
+			// Supports both old /dashboard/orgId/projectId and new /orgId/projectId
+			const normalizedPath = pathname.replace(/^\/dashboard/, "");
+			return normalizedPath.match(/^\/[^\/]+\/[^\/]+$/) !== null;
 		}
 		// For other paths, check if pathname ends with the path
 		return pathname.endsWith(`/${path}`);

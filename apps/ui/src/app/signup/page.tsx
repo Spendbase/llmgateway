@@ -58,9 +58,9 @@ export default function Signup() {
 
 	const formSchema = createFormSchema(config.hosted);
 
-	// Redirect to dashboard if already authenticated
+	// Redirect to root if already authenticated
 	useUser({
-		redirectTo: "/dashboard",
+		redirectTo: "/",
 		redirectWhen: "authenticated",
 		checkOnboarding: true,
 	});
@@ -207,8 +207,7 @@ export default function Signup() {
 							try {
 								const res = await signIn.social({
 									provider: "google",
-									callbackURL:
-										location.protocol + "//" + location.host + "/dashboard",
+									callbackURL: location.protocol + "//" + location.host + "/",
 								});
 								if (res?.error) {
 									toast({
@@ -237,8 +236,7 @@ export default function Signup() {
 							try {
 								const res = await signIn.social({
 									provider: "github",
-									callbackURL:
-										location.protocol + "//" + location.host + "/dashboard",
+									callbackURL: location.protocol + "//" + location.host + "/",
 								});
 								if (res?.error) {
 									toast({

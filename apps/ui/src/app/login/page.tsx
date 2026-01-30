@@ -41,9 +41,9 @@ export default function Login() {
 	const [isLoading, setIsLoading] = useState(false);
 	const { signIn } = useAuth();
 
-	// Redirect to dashboard if already authenticated
+	// Redirect to root if already authenticated
 	useUser({
-		redirectTo: "/dashboard",
+		redirectTo: "/",
 		redirectWhen: "authenticated",
 		checkOnboarding: true,
 	});
@@ -86,7 +86,7 @@ export default function Login() {
 						email: values.email,
 					});
 					toast({ title: "Login successful" });
-					router.push("/dashboard");
+					router.push("/");
 				},
 				onError: (ctx) => {
 					toast({
@@ -120,7 +120,7 @@ export default function Login() {
 			}
 			posthog.capture("user_logged_in", { method: "passkey" });
 			toast({ title: "Login successful" });
-			router.push("/dashboard");
+			router.push("/");
 		} catch (error: unknown) {
 			toast({
 				title: (error as Error)?.message || "Failed to sign in with passkey",
@@ -207,8 +207,7 @@ export default function Login() {
 							try {
 								const res = await signIn.social({
 									provider: "google",
-									callbackURL:
-										location.protocol + "//" + location.host + "/dashboard",
+									callbackURL: location.protocol + "//" + location.host + "/",
 								});
 								if (res?.error) {
 									toast({
@@ -237,8 +236,7 @@ export default function Login() {
 							try {
 								const res = await signIn.social({
 									provider: "github",
-									callbackURL:
-										location.protocol + "//" + location.host + "/dashboard",
+									callbackURL: location.protocol + "//" + location.host + "/",
 								});
 								if (res?.error) {
 									toast({

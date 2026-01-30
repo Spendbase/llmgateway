@@ -20,6 +20,23 @@ const nextConfig: NextConfig = {
 	},
 	async redirects() {
 		return [
+			// Dashboard structure redirects (old /dashboard/* to new root paths)
+			{
+				source: "/dashboard",
+				destination: "/",
+				permanent: true,
+			},
+			{
+				source: "/dashboard/:orgId",
+				destination: "/:orgId",
+				permanent: true,
+			},
+			{
+				source: "/dashboard/:orgId/:path*",
+				destination: "/:orgId/:path*",
+				permanent: true,
+			},
+			// Model redirects
 			{
 				source: "/models/sherlock-dash-alpha",
 				destination: "/models/grok-4-1-fast-non-reasoning",
@@ -30,6 +47,7 @@ const nextConfig: NextConfig = {
 				destination: "/models/grok-4-1-fast-reasoning",
 				permanent: true,
 			},
+			// External redirects
 			{
 				source: "/docs",
 				destination: "https://docs.llmapi.ai",
@@ -53,26 +71,6 @@ const nextConfig: NextConfig = {
 			{
 				source: "/x",
 				destination: "https://x.com/llmgateway",
-				permanent: true,
-			},
-			{
-				source: "/terms",
-				destination: "/legal/terms",
-				permanent: true,
-			},
-			{
-				source: "/terms-of-use",
-				destination: "/legal/terms",
-				permanent: true,
-			},
-			{
-				source: "/privacy",
-				destination: "/legal/privacy",
-				permanent: true,
-			},
-			{
-				source: "/privacy-policy",
-				destination: "/legal/privacy",
 				permanent: true,
 			},
 		];

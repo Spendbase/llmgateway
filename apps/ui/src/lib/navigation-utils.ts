@@ -49,6 +49,7 @@ export function preserveOrgAndProjectParams(
 
 /**
  * Build a dashboard URL with the new route structure
+ * Routes are now at root level (e.g., /orgId/projectId instead of /dashboard/orgId/projectId)
  */
 export function buildDashboardUrl(
 	orgId?: string | null,
@@ -56,36 +57,41 @@ export function buildDashboardUrl(
 	subPath?: string,
 ): Route {
 	if (!orgId || !projectId) {
-		// Fallback to base dashboard (will redirect to proper structure)
-		return "/dashboard";
+		// Fallback to root (will redirect to proper structure)
+		return "/";
 	}
 
-	const basePath = `/dashboard/${orgId}/${projectId}`;
+	const basePath = `/${orgId}/${projectId}`;
 	return subPath ? (`${basePath}/${subPath}` as Route) : (basePath as Route);
 }
 
 /**
  * Build an organization-scoped URL (without project ID)
+ * Routes are now at root level (e.g., /orgId instead of /dashboard/orgId)
  */
 export function buildOrgUrl(orgId?: string | null, subPath?: string): string {
 	if (!orgId) {
-		// Fallback to base dashboard (will redirect to proper structure)
-		return "/dashboard";
+		// Fallback to root (will redirect to proper structure)
+		return "/";
 	}
 
-	const basePath = `/dashboard/${orgId}`;
+	const basePath = `/${orgId}`;
 	return subPath ? `${basePath}/${subPath}` : basePath;
 }
 
 /**
  * Extract orgId and projectId from current pathname
+ * Updated to support both old /dashboard/ paths and new root-level paths
  */
 export function extractOrgAndProjectFromPath(pathname: string): {
 	orgId: string | null;
 	projectId: string | null;
 } {
+	// Remove /dashboard prefix if present (for backward compatibility)
+	const normalizedPath = pathname.replace(/^\/dashboard/, "");
+
 	// Org-only pages (all under /org/ path)
-	const orgOnlyMatch = pathname.match(/^\/dashboard\/([^\/]+)\/org\//);
+	const orgOnlyMatch = normalizedPath.match(/^\/([^\/]+)\/org\//);
 	if (orgOnlyMatch) {
 		return {
 			orgId: orgOnlyMatch[1],
@@ -93,8 +99,8 @@ export function extractOrgAndProjectFromPath(pathname: string): {
 		};
 	}
 
-	// Project pages
-	const projectMatch = pathname.match(/^\/dashboard\/([^\/]+)\/([^\/]+)/);
+	// Project pages (e.g., /orgId/projectId)
+	const projectMatch = normalizedPath.match(/^\/([^\/]+)\/([^\/]+)/);
 	if (projectMatch) {
 		return {
 			orgId: projectMatch[1],
@@ -102,8 +108,8 @@ export function extractOrgAndProjectFromPath(pathname: string): {
 		};
 	}
 
-	// Just org ID (e.g., /dashboard/org-123)
-	const orgMatch = pathname.match(/^\/dashboard\/([^\/]+)$/);
+	// Just org ID (e.g., /orgId)
+	const orgMatch = normalizedPath.match(/^\/([^\/]+)$/);
 	if (orgMatch) {
 		return {
 			orgId: orgMatch[1],

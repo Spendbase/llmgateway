@@ -31,7 +31,7 @@ import {
 const items = [
 	{
 		title: "Users",
-		url: "/dashboard",
+		url: "/",
 		icon: User2,
 	},
 	{
