@@ -59,8 +59,8 @@ export const ChatHeader = ({
 				<a
 					href={
 						process.env.NODE_ENV === "development"
-							? "http://localhost:3002/dashboard"
-							: "https://llmapi.ai/dashboard"
+							? "http://localhost:3002"
+							: "https://app.llmapi.ai"
 					}
 					target="_blank"
 					rel="noopener noreferrer"
