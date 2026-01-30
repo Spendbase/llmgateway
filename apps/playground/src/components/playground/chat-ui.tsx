@@ -88,6 +88,8 @@ interface ChatUIProps {
 		value: "" | "minimal" | "low" | "medium" | "high",
 	) => void;
 	supportsReasoning: boolean;
+	supportedReasoningLevels: ("minimal" | "low" | "medium" | "high")[] | null;
+	onAutoReasoning?: () => void;
 	imageAspectRatio:
 		| "auto"
 		| "1:1"
@@ -383,6 +385,8 @@ export const ChatUI = ({
 	reasoningEffort,
 	setReasoningEffort,
 	supportsReasoning,
+	supportedReasoningLevels,
+	onAutoReasoning,
 	imageAspectRatio,
 	setImageAspectRatio,
 	imageSize,
@@ -618,17 +622,24 @@ export const ChatUI = ({
 							)}
 						</PromptInputTools>
 						<div className="flex items-center gap-2">
-							{supportsReasoning && (
+							{supportsReasoning && supportedReasoningLevels && (
 								<Select
-									value={reasoningEffort ? reasoningEffort : "off"}
-									onValueChange={(val) =>
-										setReasoningEffort(
-											val === "off"
-												? ""
-												: ((val as "minimal" | "low" | "medium" | "high") ??
-														""),
-										)
-									}
+									value={reasoningEffort || "off"}
+									onValueChange={(val) => {
+										if (val === "off") {
+											// Trigger Auto logic
+											if (onAutoReasoning) {
+												onAutoReasoning();
+											} else {
+												// Fallback: clear reasoning effort if callback not provided
+												setReasoningEffort("");
+											}
+										} else {
+											setReasoningEffort(
+												val as "minimal" | "low" | "medium" | "high",
+											);
+										}
+									}}
 								>
 									<SelectTrigger size="sm" className="min-w-[120px]">
 										<Brain size={16} />
@@ -636,15 +647,21 @@ export const ChatUI = ({
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="off">Auto</SelectItem>
-										{selectedModel.includes("gpt-5") && (
+										{supportedReasoningLevels.includes("minimal") && (
 											<SelectItem value="minimal">Minimal</SelectItem>
 										)}
-										<SelectItem value="low">Low</SelectItem>
-										<SelectItem value="medium">Medium</SelectItem>
-										<SelectItem value="high">High</SelectItem>
+										{supportedReasoningLevels.includes("low") && (
+											<SelectItem value="low">Low</SelectItem>
+										)}
+										{supportedReasoningLevels.includes("medium") && (
+											<SelectItem value="medium">Medium</SelectItem>
+										)}
+										{supportedReasoningLevels.includes("high") && (
+											<SelectItem value="high">High</SelectItem>
+										)}
 									</SelectContent>
 								</Select>
-							)}
+							)}{" "}
 							{supportsImageGen && !usesPixelDimensions && (
 								<>
 									<Select

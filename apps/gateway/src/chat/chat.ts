@@ -153,6 +153,38 @@ function messagesContainImages(messages: BaseMessage[]): boolean {
 	return false;
 }
 
+/**
+ * Helper predicate to check if a provider supports the requested reasoning_effort
+ * Returns true when:
+ * - reasoning_effort is undefined (no restriction), OR
+ * - provider has reasoning === true AND either:
+ *   - reasoningLevels is null/undefined (unrestricted), OR
+ *   - reasoningLevels includes the requested reasoning_effort
+ */
+function supportsReasoningEffort(
+	provider: ProviderModelMapping,
+	reasoning_effort: "minimal" | "low" | "medium" | "high" | undefined,
+): boolean {
+	// If no reasoning_effort is requested, no filtering needed
+	if (reasoning_effort === undefined) {
+		return true;
+	}
+
+	// If provider doesn't support reasoning at all, it can't handle reasoning_effort
+	if (provider.reasoning !== true) {
+		return false;
+	}
+
+	// Provider supports reasoning - check if it supports the requested level
+	// If reasoningLevels is null/undefined, provider supports all levels (unrestricted)
+	if (!provider.reasoningLevels) {
+		return true;
+	}
+
+	// Provider has specific reasoningLevels - check if requested level is included
+	return provider.reasoningLevels.includes(reasoning_effort);
+}
+
 export const chat = new OpenAPIHono<ServerTypes>();
 
 const completionsRequestSchema = z.object({
@@ -955,6 +987,63 @@ chat.openapi(completions, async (c) => {
 				message: `Model ${requestedModel} does not support reasoning. Remove the reasoning_effort parameter or use a reasoning-capable model.`,
 			});
 		}
+
+		// Determine eligible providers to check based on whether a specific provider was requested
+		const providersToCheck = requestedProvider
+			? modelInfo.providers.filter(
+					(p) => (p as ProviderModelMapping).providerId === requestedProvider,
+				)
+			: modelInfo.providers;
+
+		// Collect all eligible providers that support reasoning
+		const reasoningProviders = providersToCheck.filter(
+			(p) => (p as ProviderModelMapping).reasoning === true,
+		) as ProviderModelMapping[];
+
+		// If a specific provider was requested but it doesn't support reasoning, throw error
+		if (requestedProvider && reasoningProviders.length === 0) {
+			throw new HTTPException(400, {
+				message: `Provider ${requestedProvider} does not support reasoning. Remove the reasoning_effort parameter or choose a reasoning-capable provider.`,
+			});
+		}
+
+		// Validate reasoning_effort against all eligible providers using union semantics
+		if (reasoningProviders.length > 0) {
+			// Check if any provider has no reasoningLevels restriction (allows all levels)
+			const hasUnrestrictedProvider = reasoningProviders.some(
+				(p) => !p.reasoningLevels,
+			);
+
+			if (!hasUnrestrictedProvider) {
+				// Collect union of all supported levels across eligible providers
+				const allSupportedLevels = new Set<string>();
+				for (const provider of reasoningProviders) {
+					if (provider.reasoningLevels) {
+						for (const level of provider.reasoningLevels) {
+							allSupportedLevels.add(level);
+						}
+					}
+				}
+
+				// Validate that the requested reasoning_effort is in the union set
+				if (!allSupportedLevels.has(reasoning_effort)) {
+					// Build detailed error message showing which providers were checked
+					const providerList = requestedProvider
+						? `provider ${requestedProvider}`
+						: `any of the eligible providers (${reasoningProviders.map((p) => p.providerId).join(", ")})`;
+
+					// Sort supported levels in fixed priority order: minimal, low, medium, high
+					const priorityOrder = ["minimal", "low", "medium", "high"];
+					const sortedLevels = priorityOrder.filter((level) =>
+						allSupportedLevels.has(level),
+					);
+
+					throw new HTTPException(400, {
+						message: `Reasoning effort level "${reasoning_effort}" is not supported by ${providerList} for model ${requestedModel}. Supported levels: ${sortedLevels.join(", ")}.`,
+					});
+				}
+			}
+		}
 	}
 
 	// Check if tools are specified but model doesn't support them
@@ -1135,6 +1224,15 @@ chat.openapi(completions, async (c) => {
 						) {
 							return false;
 						}
+						// If reasoning_effort is requested, only include providers that support it
+						if (
+							!supportsReasoningEffort(
+								provider as ProviderModelMapping,
+								reasoning_effort,
+							)
+						) {
+							return false;
+						}
 						return true;
 					},
 				);
@@ -1273,6 +1371,15 @@ chat.openapi(completions, async (c) => {
 				if (hasImages && (provider as ProviderModelMapping).vision !== true) {
 					return false;
 				}
+				// If reasoning_effort is requested, only include providers that support it
+				if (
+					!supportsReasoningEffort(
+						provider as ProviderModelMapping,
+						reasoning_effort,
+					)
+				) {
+					return false;
+				}
 				return true;
 			});
 
@@ -1386,6 +1493,60 @@ chat.openapi(completions, async (c) => {
 		};
 	}
 
+	// Validate reasoning_effort against the SELECTED provider's capabilities
+	// This must happen after routing to ensure we check the actual provider that will receive the request
+	if (reasoning_effort !== undefined) {
+		// Get the selected provider's mapping
+		const selectedProviderMapping = modelInfo.providers.find(
+			(p) => (p as ProviderModelMapping).providerId === usedProvider,
+		) as ProviderModelMapping | undefined;
+
+		if (!selectedProviderMapping) {
+			throw new HTTPException(500, {
+				message: `Internal error: could not find provider mapping for ${usedProvider}`,
+			});
+		}
+
+		// Check if the selected provider supports reasoning at all
+		if (!selectedProviderMapping.reasoning) {
+			logger.error(
+				`Reasoning effort specified but selected provider does not support reasoning`,
+				{
+					requestedModel,
+					usedProvider,
+					reasoning_effort,
+					providerReasoning: selectedProviderMapping.reasoning,
+				},
+			);
+
+			throw new HTTPException(400, {
+				message: `Provider ${usedProvider} for model ${requestedModel} does not support reasoning. Remove the reasoning_effort parameter or use a different provider.`,
+			});
+		}
+
+		// Check if the selected provider has specific reasoningLevels restrictions
+		if (selectedProviderMapping.reasoningLevels) {
+			const supportedLevels = selectedProviderMapping.reasoningLevels;
+
+			if (!supportedLevels.includes(reasoning_effort)) {
+				logger.error(
+					`Reasoning effort level not supported by selected provider`,
+					{
+						requestedModel,
+						usedProvider,
+						reasoning_effort,
+						supportedLevels,
+					},
+				);
+
+				throw new HTTPException(400, {
+					message: `Provider ${usedProvider} for model ${requestedModel} does not support reasoning_effort level "${reasoning_effort}". Supported levels: ${supportedLevels.join(", ")}.`,
+				});
+			}
+		}
+		// If reasoningLevels is undefined/null, all levels are supported (no validation needed)
+	}
+
 	// Update baseModelName to match the final usedModel after routing
 	// Find the model definition that corresponds to the final usedModel
 	const finalModelInfo = models.find(
@@ -1413,21 +1574,86 @@ chat.openapi(completions, async (c) => {
 	// Auto-set reasoning_effort for auto-routing when model supports reasoning
 	// Skip when web_search tool is present since it's incompatible with "minimal" reasoning effort
 	if (reasoning_effort === undefined && finalModelInfo && !webSearchTool) {
-		// Check if the selected model supports reasoning
-		const selectedModelSupportsReasoning = finalModelInfo.providers.some(
-			(provider) => (provider as ProviderModelMapping).reasoning === true,
-		);
+		// Get the selected provider's mapping to check for reasoningLevels restrictions
+		const selectedProviderMapping = finalModelInfo.providers.find(
+			(p) => (p as ProviderModelMapping).providerId === usedProvider,
+		) as ProviderModelMapping | undefined;
 
-		if (selectedModelSupportsReasoning) {
-			// Set reasoning_effort to "minimal" for gpt-5* models, "low" for others
+		// Check if the selected provider supports reasoning
+		if (selectedProviderMapping?.reasoning === true) {
+			// Determine the default reasoning_effort value based on model name
+			let defaultEffort: "minimal" | "low" | "medium" | "high";
 			if (baseModelName.startsWith("gpt-5")) {
-				reasoning_effort = "minimal";
+				defaultEffort = "minimal";
 			} else {
-				reasoning_effort = "low";
+				defaultEffort = "low";
+			}
+
+			// If the provider has reasoningLevels restrictions, validate the default
+			if (selectedProviderMapping.reasoningLevels) {
+				const supportedLevels = selectedProviderMapping.reasoningLevels;
+
+				// Handle empty reasoningLevels array
+				if (supportedLevels.length === 0) {
+					logger.warn(
+						`Provider ${usedProvider} has empty reasoningLevels array, skipping auto-default reasoning_effort`,
+						{
+							requestedModel,
+							usedProvider,
+						},
+					);
+					// Skip auto-default when reasoningLevels is empty
+				} else if (supportedLevels.includes(defaultEffort)) {
+					// Default effort is supported, use it
+					reasoning_effort = defaultEffort;
+				} else {
+					// Default effort not supported, pick the first level from fixed priority order
+					// Priority order: minimal, low, medium, high
+					const priorityOrder: ("minimal" | "low" | "medium" | "high")[] = [
+						"minimal",
+						"low",
+						"medium",
+						"high",
+					];
+
+					// Find the first priority level that is supported
+					let selectedEffort: "minimal" | "low" | "medium" | "high" | undefined;
+					for (const level of priorityOrder) {
+						if (supportedLevels.includes(level)) {
+							selectedEffort = level;
+							break;
+						}
+					}
+
+					if (selectedEffort) {
+						reasoning_effort = selectedEffort;
+						logger.info(
+							`Auto-default reasoning_effort "${defaultEffort}" not supported by provider ${usedProvider}, using "${reasoning_effort}" instead`,
+							{
+								requestedModel,
+								usedProvider,
+								supportedLevels,
+								selectedEffort: reasoning_effort,
+							},
+						);
+					} else {
+						// This should not happen if reasoningLevels contains valid enum values
+						logger.warn(
+							`Provider ${usedProvider} has no valid reasoning levels in priority order, skipping auto-default`,
+							{
+								requestedModel,
+								usedProvider,
+								supportedLevels,
+							},
+						);
+					}
+				}
+			} else {
+				// No reasoningLevels restriction, use the default
+				reasoning_effort = defaultEffort;
 			}
 		}
 	}
-
 	let url: string | undefined;
 
 	// Get the provider key for the selected provider based on project mode
