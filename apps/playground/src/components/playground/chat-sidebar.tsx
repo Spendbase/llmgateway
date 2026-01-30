@@ -368,7 +368,7 @@ export function ChatSidebar({
 	}
 
 	return (
-		<Sidebar className={className + " max-md:hidden"}>
+		<Sidebar className={className + " max-md:hidden overflow-hidden"}>
 			<SidebarHeader>
 				<div className="flex flex-col items-center gap-4 mb-4">
 					<Link
@@ -396,7 +396,7 @@ export function ChatSidebar({
 				</div>
 			</SidebarHeader>
 
-			<SidebarContent className="px-2 py-4">
+			<SidebarContent className="px-2 py-4 overflow-x-hidden">
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<OrganizationSwitcher
@@ -442,8 +442,8 @@ export function ChatSidebar({
 
 			<SidebarFooter className="border-t">
 				<CreditsDisplay organization={organization} isLoading={isOrgLoading} />
-				<div className="flex items-center justify-between p-4 pt-0">
-					<div className="flex items-center gap-3 flex-1">
+				<div className="flex items-center justify-between p-4 gap-3">
+					<div className="flex items-center gap-3 flex-1 min-w-0">
 						<Avatar className="border-border h-9 w-9 border">
 							<AvatarFallback className="bg-muted">
 								{user?.name?.slice(0, 2) || "AU"}
@@ -462,7 +462,7 @@ export function ChatSidebar({
 						variant="ghost"
 						size="sm"
 						onClick={logout}
-						className="p-2 h-auto ml-2"
+						className="p-2 h-auto ml-2 shrink-0"
 						title="Sign out"
 					>
 						<LogOutIcon className="h-4 w-4" />
