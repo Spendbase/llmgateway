@@ -153,6 +153,38 @@ function messagesContainImages(messages: BaseMessage[]): boolean {
 	return false;
 }
 
+/**
+ * Helper predicate to check if a provider supports the requested reasoning_effort
+ * Returns true when:
+ * - reasoning_effort is undefined (no restriction), OR
+ * - provider has reasoning === true AND either:
+ *   - reasoningLevels is null/undefined (unrestricted), OR
+ *   - reasoningLevels includes the requested reasoning_effort
+ */
+function supportsReasoningEffort(
+	provider: ProviderModelMapping,
+	reasoning_effort: "minimal" | "low" | "medium" | "high" | undefined,
+): boolean {
+	// If no reasoning_effort is requested, no filtering needed
+	if (reasoning_effort === undefined) {
+		return true;
+	}
+
+	// If provider doesn't support reasoning at all, it can't handle reasoning_effort
+	if (provider.reasoning !== true) {
+		return false;
+	}
+
+	// Provider supports reasoning - check if it supports the requested level
+	// If reasoningLevels is null/undefined, provider supports all levels (unrestricted)
+	if (!provider.reasoningLevels) {
+		return true;
+	}
+
+	// Provider has specific reasoningLevels - check if requested level is included
+	return provider.reasoningLevels.includes(reasoning_effort);
+}
+
 export const chat = new OpenAPIHono<ServerTypes>();
 
 const completionsRequestSchema = z.object({
@@ -1192,6 +1224,15 @@ chat.openapi(completions, async (c) => {
 						) {
 							return false;
 						}
+						// If reasoning_effort is requested, only include providers that support it
+						if (
+							!supportsReasoningEffort(
+								provider as ProviderModelMapping,
+								reasoning_effort,
+							)
+						) {
+							return false;
+						}
 						return true;
 					},
 				);
@@ -1328,6 +1369,15 @@ chat.openapi(completions, async (c) => {
 				}
 				// If images are present in messages, only include providers that support vision
 				if (hasImages && (provider as ProviderModelMapping).vision !== true) {
+					return false;
+				}
+				// If reasoning_effort is requested, only include providers that support it
+				if (
+					!supportsReasoningEffort(
+						provider as ProviderModelMapping,
+						reasoning_effort,
+					)
+				) {
 					return false;
 				}
 				return true;

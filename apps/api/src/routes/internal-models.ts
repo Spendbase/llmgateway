@@ -131,7 +131,7 @@ internalModels.openapi(getModelsRoute, async (c) => {
 
 				return {
 					...mapping,
-					reasoningLevels: packageMapping?.reasoningLevels || null,
+					reasoningLevels: packageMapping?.reasoningLevels ?? null,
 				};
 			}),
 		};
