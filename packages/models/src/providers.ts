@@ -288,21 +288,21 @@ export const providers = [
 	// 	website: "https://z.ai",
 	// 	announcement: null,
 	// },
-	// {
-	// 	id: "moonshot",
-	// 	name: "Moonshot AI",
-	// 	description: "Moonshot AI's OpenAI-compatible large language models",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_MOONSHOT_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#4B9EFF",
-	// 	website: "https://moonshot.ai",
-	// 	announcement: null,
-	// },
+	{
+		id: "moonshot",
+		name: "Moonshot AI",
+		description: "Moonshot AI's OpenAI-compatible large language models",
+		env: {
+			required: {
+				apiKey: "LLM_MOONSHOT_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#4B9EFF",
+		website: "https://moonshot.ai",
+		announcement: null,
+	},
 	// {
 	// 	id: "perplexity",
 	// 	name: "Perplexity",

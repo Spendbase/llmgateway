@@ -83,9 +83,9 @@ export function getProviderEndpoint(
 			// case "novita":
 			// 	url = "https://api.novita.ai/v3/openai";
 			// 	break;
-			// case "moonshot":
-			// 	url = "https://api.moonshot.ai";
-			// 	break;
+			case "moonshot":
+				url = "https://api.moonshot.ai";
+				break;
 			case "alibaba":
 				// Use different base URL for image generation vs chat completions
 				if (imageGenerations) {
