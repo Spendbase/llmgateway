@@ -69,10 +69,9 @@ export function TeamClient() {
 	const updateMemberMutation = useUpdateTeamMember(organizationId);
 	const removeMemberMutation = useRemoveTeamMember(organizationId);
 
-	const { initiateGoogleWorkspace, isLoading: isGoogleModalOpen } =
-		useGoogleWorkspace({
-			organizationId,
-		});
+	const { initiateGoogleWorkspace } = useGoogleWorkspace({
+		organizationId,
+	});
 
 	const [email, setEmail] = useState("");
 	const [role, setRole] = useState<"owner" | "admin" | "developer">(
@@ -175,12 +174,9 @@ export function TeamClient() {
 					<h2 className="text-3xl font-bold tracking-tight">Team</h2>
 					<div className="flex items-center gap-4">
 						{isWorkspaceBtnVisible && (
-							<Button
-								onClick={connectGoogleWorkspace}
-								disabled={isGoogleModalOpen}
-							>
+							<Button onClick={connectGoogleWorkspace}>
 								<FaGoogle className="mr-2 h-4 w-4" />
-								Connect Google Workspace
+								Sync Google Workspace
 							</Button>
 						)}
 						<Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
