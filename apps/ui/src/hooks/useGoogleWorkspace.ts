@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { useApi } from "@/lib/fetch-client";
 
-import type { GoogleUser, RoledGoogleUser } from "@/types/google-workspace";
+import type { GoogleUser, GoogleUserRole } from "@/types/google-workspace";
 
 interface GoogleWorkspaceParams {
 	organizationId: string;
@@ -51,7 +51,7 @@ export function useGoogleWorkspace({ organizationId }: GoogleWorkspaceParams) {
 
 	const importGoogleWorkspaceUsers = async (
 		users: GoogleUser[],
-		role: RoledGoogleUser,
+		role: GoogleUserRole,
 	) => {
 		return await importUsersMutation.mutateAsync({
 			params: { path: { id: organizationId } },

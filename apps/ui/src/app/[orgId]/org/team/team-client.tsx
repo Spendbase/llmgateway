@@ -15,6 +15,7 @@ import {
 	useUpdateTeamMember,
 	useRemoveTeamMember,
 } from "@/hooks/useTeam";
+import { useUser } from "@/hooks/useUser";
 import { Alert, AlertDescription } from "@/lib/components/alert";
 import { Button } from "@/lib/components/button";
 import {
@@ -80,8 +81,12 @@ export function TeamClient() {
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isGoogleImportOpen, setIsGoogleImportOpen] = useState(false);
 	const [googleAccessToken, setGoogleAccessToken] = useState<string>("");
+	const { user } = useUser();
 
 	const existingEmails = data?.members?.map((m) => m.user.email) || [];
+	const currentUser = data?.members?.find((m) => m.userId === user?.id);
+	const isWorkspaceBtnVisible =
+		currentUser?.role === "admin" || currentUser?.role === "owner";
 
 	const handleAddMember = async () => {
 		if (!email) {
@@ -169,13 +174,15 @@ export function TeamClient() {
 				<div className="flex items-center justify-between">
 					<h2 className="text-3xl font-bold tracking-tight">Team</h2>
 					<div className="flex items-center gap-4">
-						<Button
-							onClick={connectGoogleWorkspace}
-							disabled={isGoogleModalOpen}
-						>
-							<FaGoogle className="mr-2 h-4 w-4" />
-							Connect Google Workspace
-						</Button>
+						{isWorkspaceBtnVisible && (
+							<Button
+								onClick={connectGoogleWorkspace}
+								disabled={isGoogleModalOpen}
+							>
+								<FaGoogle className="mr-2 h-4 w-4" />
+								Connect Google Workspace
+							</Button>
+						)}
 						<Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
 							<DialogTrigger asChild>
 								<Button disabled={isRestricted}>Add Member</Button>
@@ -389,7 +396,11 @@ export function TeamClient() {
 				existingEmails={existingEmails}
 				onSuccess={() => {
 					queryClient.invalidateQueries({
-						queryKey: ["/team/{organizationId}/members", organizationId],
+						queryKey: [
+							"get",
+							"/team/{organizationId}/members",
+							{ params: { path: { organizationId } } },
+						],
 					});
 				}}
 			/>

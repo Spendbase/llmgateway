@@ -132,6 +132,13 @@ const ImportRequestSchema = z.object({
 	role: z.enum(["developer", "admin"]),
 });
 
+const ImportErrorsSchema = z.array(
+	z.object({
+		email: z.string().email(),
+		reason: z.string(),
+	}),
+);
+
 const getOrganizations = createRoute({
 	method: "get",
 	path: "/",
@@ -847,6 +854,7 @@ const importUsersRoute = createRoute({
 					schema: z.object({
 						successCount: z.number(),
 						failedCount: z.number(),
+						errors: ImportErrorsSchema,
 					}),
 				},
 			},
@@ -855,52 +863,114 @@ const importUsersRoute = createRoute({
 });
 
 organization.openapi(importUsersRoute, async (c) => {
-	const { users: usersToImport /* role, id */ } = c.req.valid("json");
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	const { id: organizationId } = c.req.valid("param");
+	const { role, users: usersToImport } = c.req.valid("json");
+
+	const requesterOrg = await db.query.userOrganization.findFirst({
+		where: {
+			userId: {
+				eq: authUser.id,
+			},
+			organizationId: {
+				eq: organizationId,
+			},
+		},
+		with: { organization: true },
+	});
+
+	if (!requesterOrg) {
+		throw new HTTPException(403, {
+			message: "You do not have access to this organization",
+		});
+	}
+
+	if (requesterOrg.organization?.isPersonal) {
+		throw new HTTPException(403, {
+			message: "Team management is not available for personal organizations.",
+		});
+	}
+
+	if (requesterOrg.role !== "owner" && requesterOrg.role !== "admin") {
+		throw new HTTPException(403, {
+			message: "Only owners and admins can add members",
+		});
+	}
 
 	let successCount = 0;
 	let failedCount = 0;
+	const errors: { email: string; reason: string }[] = [];
 
 	for (const googleUser of usersToImport) {
 		try {
-			// const existingUser = await db.query.users.findFirst({
-			//   where: eq(users.email, googleUser.email)
-			// });
+			let targetUser = await db.query.user.findFirst({
+				where: {
+					email: {
+						eq: googleUser.email,
+					},
+				},
+			});
 
-			let userId = ""; // existingUser?.id;
-
-			if (!userId) {
-				// const [newUser] = await db.insert(users).values({
-				//   email: googleUser.email,
-				//   name: googleUser.fullName,
-				//   emailVerified: true, // Доверяем гуглу!
-				//   image: null,
-				//   createdAt: new Date(),
-				//   updatedAt: new Date(),
-				// }).returning();
-				// userId = newUser.id;
-
-				userId = "new_user_" + googleUser.email + Math.random();
+			if (!targetUser) {
+				const [newUser] = await db
+					.insert(tables.user)
+					.values({
+						email: googleUser.email,
+						name:
+							googleUser.fullName ||
+							googleUser.firstName + (googleUser.lastName || "") ||
+							"Imported User",
+						emailVerified: true,
+						createdAt: new Date(),
+						updatedAt: new Date(),
+						onboardingCompleted: false,
+					})
+					.returning();
+				targetUser = newUser;
 			}
 
-			// const existingMember = await db.query.members.findFirst({
-			//   where: and(eq(members.userId, userId), eq(members.orgId, organizationId))
-			// });
+			const existingMember = await db.query.userOrganization.findFirst({
+				where: {
+					userId: {
+						eq: targetUser!.id,
+					},
+					organizationId: {
+						eq: organizationId,
+					},
+				},
+			});
 
-			// if (!existingMember) {
-			//    await db.insert(members).values({
-			//      userId,
-			//      organizationId,
-			//      role,
-			//      createdAt: new Date()
-			//    });
+			if (existingMember) {
+				failedCount++;
+				errors.push({ email: googleUser.email, reason: "Already a member" });
+				continue;
+			}
+
+			await db.insert(tables.userOrganization).values({
+				userId: targetUser!.id,
+				organizationId,
+				role: role,
+				createdAt: new Date(),
+			});
+
 			successCount++;
-			// }
 		} catch {
+			// console.error(`Failed to import ${googleUser.email}`, e);
 			failedCount++;
+			errors.push({ email: googleUser.email, reason: "Database error" });
 		}
 	}
 
-	return c.json({ successCount, failedCount });
+	return c.json({
+		successCount,
+		failedCount,
+		errors,
+	});
 });
 
 export default organization;
