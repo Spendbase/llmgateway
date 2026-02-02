@@ -135,6 +135,14 @@ const GoogleImportDialog = ({
 			selectedEmails.has(u.email),
 		);
 
+		if (usersToImport.length > 100) {
+			toast.error("Import failed", {
+				description: "Cannot import more than 100 users at a time",
+			});
+			setStep("SELECT");
+			return;
+		}
+
 		try {
 			const response = await importGoogleWorkspaceUsers(usersToImport, role);
 
