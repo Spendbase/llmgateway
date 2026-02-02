@@ -80,6 +80,27 @@ export function buildOrgUrl(orgId?: string | null, subPath?: string): string {
 }
 
 /**
+ * Build an organization URL with proper Route typing for router.push()
+ * Routes are now at root level (e.g., /orgId)
+ */
+export function buildOrganizationUrl(orgId: string): Route {
+	return `/${orgId}` as Route;
+}
+
+/**
+ * Build a project URL with proper Route typing for router.push()
+ * Routes are now at root level (e.g., /orgId/projectId)
+ */
+export function buildProjectUrl(
+	organizationId: string,
+	projectId: string,
+	subPath?: string,
+): Route {
+	const basePath = `/${organizationId}/${projectId}`;
+	return (subPath ? `${basePath}/${subPath}` : basePath) as Route;
+}
+
+/**
  * Extract orgId and projectId from current pathname
  * Updated to support both old /dashboard/ paths and new root-level paths
  */

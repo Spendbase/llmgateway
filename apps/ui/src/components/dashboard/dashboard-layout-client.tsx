@@ -1,7 +1,7 @@
-"use client";
-
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useCallback } from "react";
 
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { MobileHeader } from "@/components/dashboard/mobile-header";
@@ -9,6 +9,8 @@ import { TopBar } from "@/components/dashboard/top-bar";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { DashboardProvider } from "@/lib/dashboard-context";
 import { useDashboardState } from "@/lib/dashboard-state";
+import { useApi } from "@/lib/fetch-client";
+import { buildOrganizationUrl } from "@/lib/navigation-utils";
 
 interface DashboardLayoutClientProps {
 	children: ReactNode;
@@ -26,6 +28,21 @@ export function DashboardLayoutClient({
 	selectedProjectId,
 }: DashboardLayoutClientProps) {
 	const posthog = usePostHog();
+	const router = useRouter();
+	const api = useApi();
+	const queryClient = useQueryClient();
+
+	const handleOrganizationChange = useCallback(
+		(orgId: string) => {
+			// Trigger navigation
+			router.push(buildOrganizationUrl(orgId));
+
+			// Mark as stale and refetch active observers immediately
+			const orgsQueryKey = api.queryOptions("get", "/orgs", {}).queryKey;
+			queryClient.invalidateQueries({ queryKey: orgsQueryKey });
+		},
+		[router, api, queryClient],
+	);
 
 	const {
 		organizations,
@@ -41,6 +58,7 @@ export function DashboardLayoutClient({
 		initialProjectsData,
 		selectedOrgId,
 		selectedProjectId,
+		onOrganizationChange: handleOrganizationChange,
 	});
 
 	useEffect(() => {
