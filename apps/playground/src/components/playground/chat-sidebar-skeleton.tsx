@@ -31,7 +31,7 @@ export const ChatSidebarSkeleton = ({
 	return (
 		<Sidebar className={className}>
 			<SidebarHeader>
-				<div className="flex flex-col items-center gap-4 mb-4">
+				<div className="flex flex-col items-center gap-4">
 					<Link
 						href="/"
 						className="flex self-start items-center gap-2 my-2"
