@@ -328,7 +328,7 @@ export function ChatSidebar({
 		return (
 			<Sidebar className={className}>
 				<SidebarHeader>
-					<div className="flex flex-col items-center gap-4 mb-4">
+					<div className="flex flex-col items-center gap-4">
 						<Link
 							href="/"
 							className="flex self-start items-center gap-2 my-2"
@@ -370,7 +370,7 @@ export function ChatSidebar({
 	return (
 		<Sidebar className={className + " max-md:hidden overflow-hidden"}>
 			<SidebarHeader>
-				<div className="flex flex-col items-center gap-4 mb-4">
+				<div className="flex flex-col items-center gap-4">
 					<Link
 						href="/"
 						className="flex self-start items-center gap-2 my-2"
@@ -396,7 +396,7 @@ export function ChatSidebar({
 				</div>
 			</SidebarHeader>
 
-			<SidebarContent className="px-2 py-4 overflow-x-hidden">
+			<SidebarContent className="px-2 overflow-x-hidden">
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<OrganizationSwitcher
