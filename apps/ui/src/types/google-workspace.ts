@@ -8,13 +8,14 @@ export interface GoogleUser {
 
 export type GoogleUserRole = "developer" | "admin";
 
-interface ImportError {
+export interface ImportError {
 	email: string;
 	reason: string;
 }
 
 export interface ImportResult {
 	successCount: number;
+	warningCount: number;
 	failedCount: number;
 	errors?: ImportError[];
 }

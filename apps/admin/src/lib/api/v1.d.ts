@@ -2924,6 +2924,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             successCount: number;
+                            warningCount: number;
                             failedCount: number;
                             errors: {
                                 /** Format: email */

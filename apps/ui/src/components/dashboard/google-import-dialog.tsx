@@ -32,15 +32,11 @@ import {
 	TableRow,
 } from "@/lib/components/table";
 
-import type { GoogleUserRole } from "@/types/google-workspace";
-
-interface GoogleUser {
-	email: string;
-	firstName?: string;
-	lastName?: string;
-	fullName?: string;
-	department?: string;
-}
+import type {
+	GoogleUser,
+	GoogleUserRole,
+	ImportError,
+} from "@/types/google-workspace";
 
 interface Props {
 	isOpen: boolean;
@@ -66,8 +62,14 @@ const GoogleImportDialog = ({
 	const [discoveredUsers, setDiscoveredUsers] = useState<GoogleUser[]>([]);
 	const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 	const [role, setRole] = useState<GoogleUserRole>("developer");
-	const [importStats, setImportStats] = useState({
+	const [importStats, setImportStats] = useState<{
+		success: number;
+		warning: number;
+		failed: number;
+		errors: ImportError[];
+	}>({
 		success: 0,
+		warning: 0,
 		failed: 0,
 		errors: [],
 	});
@@ -138,6 +140,7 @@ const GoogleImportDialog = ({
 
 			setImportStats({
 				success: response.successCount,
+				warning: response.warningCount,
 				failed: response.failedCount,
 				errors: response.errors,
 			});
@@ -306,7 +309,7 @@ const GoogleImportDialog = ({
 								</p>
 							</div>
 
-							<div className="grid grid-cols-2 gap-4 w-full">
+							<div className="grid grid-cols-3 gap-4 w-full">
 								<div className="flex flex-col items-center justify-center rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
 									<div className="flex items-center gap-2 mb-1">
 										<CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -317,8 +320,17 @@ const GoogleImportDialog = ({
 									<div className="text-3xl font-bold text-primary">
 										{importStats.success}
 									</div>
-									<div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
-										Added / Linked
+								</div>
+
+								<div className="flex flex-col items-center justify-center rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
+									<div className="flex items-center gap-2 mb-1">
+										<Info className="h-4 w-4" />
+										<span className="text-sm font-medium text-muted-foreground">
+											Skipped
+										</span>
+									</div>
+									<div className="text-3xl font-bold text-primary">
+										{importStats.warning}
 									</div>
 								</div>
 
@@ -334,9 +346,6 @@ const GoogleImportDialog = ({
 									>
 										{importStats.failed}
 									</div>
-									<div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
-										Skipped
-									</div>
 								</div>
 							</div>
 
@@ -345,14 +354,15 @@ const GoogleImportDialog = ({
 									<Info className="h-4 w-4" />
 									<AlertTitle>Info</AlertTitle>
 									<AlertDescription className="text-xs text-muted-foreground">
-										{importStats.success} users were processed. If an account
-										already existed, it was added to the organization.
-										Otherwise, a new account was created.
+										{importStats.success} user
+										{importStats.success > 1 ? "s were" : " was"} processed. If
+										an account already existed, it was added to the
+										organization. Otherwise, a new account was created.
 									</AlertDescription>
 								</Alert>
 							)}
 
-							{importStats.failed > 0 &&
+							{(importStats.failed > 0 || importStats.warning > 0) &&
 								importStats.errors &&
 								importStats.errors.length > 0 && (
 									<div className="space-y-3">

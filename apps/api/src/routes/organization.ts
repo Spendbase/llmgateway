@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { userHasOrganizationAccess } from "@/utils/authorization.js";
 
-import { db, eq, tables } from "@llmgateway/db";
+import { db, eq, tables, inArray, and } from "@llmgateway/db";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -853,6 +853,7 @@ const importUsersRoute = createRoute({
 				"application/json": {
 					schema: z.object({
 						successCount: z.number(),
+						warningCount: z.number(),
 						failedCount: z.number(),
 						errors: ImportErrorsSchema,
 					}),
@@ -903,71 +904,104 @@ organization.openapi(importUsersRoute, async (c) => {
 	}
 
 	let successCount = 0;
+	let warningCount = 0;
 	let failedCount = 0;
 	const errors: { email: string; reason: string }[] = [];
 
-	for (const googleUser of usersToImport) {
-		try {
-			let targetUser = await db.query.user.findFirst({
-				where: {
-					email: {
-						eq: googleUser.email,
-					},
-				},
+	if (usersToImport.length === 0) {
+		return c.json({
+			successCount: 0,
+			warningCount: 0,
+			failedCount: 0,
+			errors: [],
+		});
+	}
+
+	const emailsToImport = usersToImport.map((u) => u.email);
+
+	const existingUsers = await db
+		.select()
+		.from(tables.user)
+		.where(and(inArray(tables.user.email, emailsToImport)));
+
+	const userMap = new Map(existingUsers.map((u) => [u.email, u]));
+
+	const newUsersPayload = usersToImport
+		.filter((u) => !userMap.has(u.email))
+		.map((u) => ({
+			email: u.email,
+			name: u.fullName || u.firstName || "Imported User",
+			emailVerified: true,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+			onboardingCompleted: false,
+		}));
+
+	if (newUsersPayload.length > 0) {
+		const createdUsers = await db
+			.insert(tables.user)
+			.values(newUsersPayload)
+			.returning();
+
+		createdUsers.forEach((u) => userMap.set(u.email, u));
+	}
+
+	const allTargetUsers = usersToImport.map((u) => userMap.get(u.email)!);
+	const allTargetUserIds = allTargetUsers.map((u) => u.id);
+
+	const existingMemberships = await db
+		.select()
+		.from(tables.userOrganization)
+		.where(
+			and(
+				eq(tables.userOrganization.organizationId, organizationId),
+				inArray(tables.userOrganization.userId, allTargetUserIds),
+			),
+		);
+
+	const existingMemberIds = new Set(existingMemberships.map((m) => m.userId));
+
+	const toInsert = [];
+	const pendingUsersInfo: { email: string }[] = [];
+
+	for (const user of allTargetUsers) {
+		if (existingMemberIds.has(user.id)) {
+			warningCount++;
+			errors.push({
+				email: user.email,
+				reason: "Already a member",
 			});
-
-			if (!targetUser) {
-				const [newUser] = await db
-					.insert(tables.user)
-					.values({
-						email: googleUser.email,
-						name:
-							googleUser.fullName ||
-							googleUser.firstName + (googleUser.lastName || "") ||
-							"Imported User",
-						emailVerified: true,
-						createdAt: new Date(),
-						updatedAt: new Date(),
-						onboardingCompleted: false,
-					})
-					.returning();
-				targetUser = newUser;
-			}
-
-			const existingMember = await db.query.userOrganization.findFirst({
-				where: {
-					userId: {
-						eq: targetUser!.id,
-					},
-					organizationId: {
-						eq: organizationId,
-					},
-				},
-			});
-
-			if (existingMember) {
-				failedCount++;
-				errors.push({ email: googleUser.email, reason: "Already a member" });
-				continue;
-			}
-
-			await db.insert(tables.userOrganization).values({
-				userId: targetUser!.id,
+		} else {
+			toInsert.push({
+				userId: user.id,
 				organizationId,
-				role: role,
+				role,
 				createdAt: new Date(),
 			});
+			pendingUsersInfo.push({ email: user.email });
+		}
+	}
 
-			successCount++;
+	if (toInsert.length > 0) {
+		try {
+			await db.insert(tables.userOrganization).values(toInsert);
+			successCount += toInsert.length;
 		} catch {
-			// console.error(`Failed to import ${googleUser.email}`, e);
-			failedCount++;
-			errors.push({ email: googleUser.email, reason: "Database error" });
+			failedCount += toInsert.length;
+
+			pendingUsersInfo.forEach((info) => {
+				errors.push({
+					email: info.email,
+					reason:
+						"Critical Error: Failed to add to organization (Database Error)",
+				});
+			});
 		}
 	}
 
 	return c.json({
 		successCount,
+		warningCount,
 		failedCount,
 		errors,
 	});
