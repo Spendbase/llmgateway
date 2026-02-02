@@ -1,3 +1,4 @@
+"use client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";

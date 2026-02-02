@@ -52,10 +52,10 @@ export function useDashboardState({
 	// Derive selected organization from URL params or props or default to first
 	const selectedOrganization = useMemo(() => {
 		const activeOrgId = (params?.orgId as string) || selectedOrgId;
-		if (activeOrgId) {
-			return organizations.find((org) => org.id === activeOrgId) || null;
-		}
-		return organizations[0] || null;
+		const found = activeOrgId
+			? organizations.find((org) => org.id === activeOrgId)
+			: null;
+		return found || organizations[0] || null;
 	}, [params?.orgId, selectedOrgId, organizations]);
 
 	// Fetch projects for selected organization
