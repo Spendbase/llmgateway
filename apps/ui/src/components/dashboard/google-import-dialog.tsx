@@ -1,8 +1,9 @@
-import { Loader2, CheckCircle2, UserCheck } from "lucide-react";
+import { Loader2, CheckCircle2, UserCheck, Info, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useGoogleWorkspace } from "@/hooks/useGoogleWorkspace";
+import { Alert, AlertDescription, AlertTitle } from "@/lib/components/alert";
 import { Badge } from "@/lib/components/badge";
 import { Button } from "@/lib/components/button";
 import { Checkbox } from "@/lib/components/checkbox";
@@ -31,7 +32,7 @@ import {
 	TableRow,
 } from "@/lib/components/table";
 
-import type { RoledGoogleUser } from "@/types/google-workspace";
+import type { GoogleUserRole } from "@/types/google-workspace";
 
 interface GoogleUser {
 	email: string;
@@ -64,8 +65,12 @@ const GoogleImportDialog = ({
 
 	const [discoveredUsers, setDiscoveredUsers] = useState<GoogleUser[]>([]);
 	const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
-	const [role, setRole] = useState<RoledGoogleUser>("developer");
-	const [importStats, setImportStats] = useState({ success: 0, failed: 0 });
+	const [role, setRole] = useState<GoogleUserRole>("developer");
+	const [importStats, setImportStats] = useState({
+		success: 0,
+		failed: 0,
+		errors: [],
+	});
 
 	const { fetchGoogleWorkspaceUsers, importGoogleWorkspaceUsers } =
 		useGoogleWorkspace({ organizationId });
@@ -134,6 +139,7 @@ const GoogleImportDialog = ({
 			setImportStats({
 				success: response.successCount,
 				failed: response.failedCount,
+				errors: response.errors,
 			});
 			setStep("RESULT");
 			setRole("developer");
@@ -146,7 +152,7 @@ const GoogleImportDialog = ({
 		}
 	};
 
-	const handleRoleSelect = (role: RoledGoogleUser) => {
+	const handleRoleSelect = (role: GoogleUserRole) => {
 		setRole(role);
 	};
 
@@ -158,7 +164,7 @@ const GoogleImportDialog = ({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
-			<DialogContent className="sm:max-w-[800px] h-[600px] flex flex-col">
+			<DialogContent className="sm:max-w-[800px] h-[670px] flex flex-col">
 				<DialogHeader>
 					<DialogTitle>Import Team from Google Workspace</DialogTitle>
 					<DialogDescription>
@@ -289,37 +295,102 @@ const GoogleImportDialog = ({
 					)}
 
 					{step === "RESULT" && (
-						<div className="h-full flex flex-col items-center justify-center space-y-6">
-							<div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center text-green-600 animate-in zoom-in duration-300">
-								<CheckCircle2 className="h-8 w-8" />
-							</div>
-							<div className="text-center space-y-2">
+						<div className="flex flex-col gap-6 py-2">
+							<div className="flex flex-col items-center justify-center space-y-2 text-center">
+								<div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 animate-in zoom-in duration-300 mb-2">
+									<CheckCircle2 className="h-6 w-6" />
+								</div>
 								<h2 className="text-2xl font-bold">Import Complete</h2>
 								<p className="text-muted-foreground">
 									Your team has been updated successfully.
 								</p>
 							</div>
 
-							<div className="grid grid-cols-2 gap-4 w-full max-w-sm mt-4">
-								<div className="bg-muted p-4 rounded-lg text-center">
-									<div className="text-2xl font-bold text-primary">
+							<div className="grid grid-cols-2 gap-4 w-full">
+								<div className="flex flex-col items-center justify-center rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
+									<div className="flex items-center gap-2 mb-1">
+										<CheckCircle2 className="h-4 w-4 text-green-500" />
+										<span className="text-sm font-medium text-muted-foreground">
+											Successful
+										</span>
+									</div>
+									<div className="text-3xl font-bold text-primary">
 										{importStats.success}
 									</div>
-									<div className="text-xs text-muted-foreground uppercase tracking-wider">
-										Added
+									<div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+										Added / Linked
 									</div>
 								</div>
-								<div className="bg-muted p-4 rounded-lg text-center">
+
+								<div className="flex flex-col items-center justify-center rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
+									<div className="flex items-center gap-2 mb-1">
+										<XCircle className="h-4 w-4 text-red-500" />
+										<span className="text-sm font-medium text-muted-foreground">
+											Failed
+										</span>
+									</div>
 									<div
-										className={`text-2xl font-bold ${importStats.failed > 0 ? "text-red-500" : "text-muted-foreground"}`}
+										className={`text-3xl font-bold ${importStats.failed > 0 ? "text-red-500" : "text-muted-foreground"}`}
 									>
 										{importStats.failed}
 									</div>
-									<div className="text-xs text-muted-foreground uppercase tracking-wider">
-										Failed
+									<div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+										Skipped
 									</div>
 								</div>
 							</div>
+
+							{importStats.success > 0 && (
+								<Alert variant="default" className="bg-muted/50 border-muted">
+									<Info className="h-4 w-4" />
+									<AlertTitle>Info</AlertTitle>
+									<AlertDescription className="text-xs text-muted-foreground">
+										{importStats.success} users were processed. If an account
+										already existed, it was added to the organization.
+										Otherwise, a new account was created.
+									</AlertDescription>
+								</Alert>
+							)}
+
+							{importStats.failed > 0 &&
+								importStats.errors &&
+								importStats.errors.length > 0 && (
+									<div className="space-y-3">
+										<h4 className="text-sm font-medium leading-none flex items-center gap-2 text-destructive">
+											<XCircle className="h-4 w-4" />
+											Failed Details ({importStats.errors.length})
+										</h4>
+										<div className="rounded-md border bg-background">
+											<div className="h-[150px] w-full rounded-md border bg-background overflow-y-auto p-4">
+												<div className="space-y-4">
+													{importStats.errors.map(
+														(error: any, index: number) => (
+															<div
+																key={index}
+																className="flex flex-col gap-1 border-b pb-3 last:border-0 last:pb-0"
+															>
+																<div className="flex items-center justify-between">
+																	<span
+																		className="text-sm font-medium truncate max-w-[350px]"
+																		title={error.email}
+																	>
+																		{error.email}
+																	</span>
+																</div>
+																<p className="text-xs text-muted-foreground">
+																	Reason:{" "}
+																	<span className="text-foreground font-medium">
+																		{error.reason}
+																	</span>
+																</p>
+															</div>
+														),
+													)}
+												</div>
+											</div>
+										</div>
+									</div>
+								)}
 						</div>
 					)}
 				</div>

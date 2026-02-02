@@ -2925,6 +2925,11 @@ export interface paths {
                         "application/json": {
                             successCount: number;
                             failedCount: number;
+                            errors: {
+                                /** Format: email */
+                                email: string;
+                                reason: string;
+                            }[];
                         };
                     };
                 };

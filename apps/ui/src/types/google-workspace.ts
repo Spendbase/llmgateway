@@ -6,4 +6,15 @@ export interface GoogleUser {
 	department?: string;
 }
 
-export type RoledGoogleUser = "developer" | "admin";
+export type GoogleUserRole = "developer" | "admin";
+
+interface ImportError {
+	email: string;
+	reason: string;
+}
+
+export interface ImportResult {
+	successCount: number;
+	failedCount: number;
+	errors?: ImportError[];
+}
