@@ -1,3 +1,4 @@
+import { GoogleTagManager } from "@next/third-parties/google";
 import { Inter, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			<body
 				className={`${inter.variable} ${geistMono.variable} min-h-screen antialiased`}
 			>
+				<GoogleTagManager gtmId="GTM-KDGV6FG5" />
 				<Providers config={config}>{children}</Providers>
 			</body>
 		</html>

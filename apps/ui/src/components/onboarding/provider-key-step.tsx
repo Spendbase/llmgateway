@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { sendGTMEvent } from "@next/third-parties/google";
 import { KeyRound, Lock } from "lucide-react";
 import { useState } from "react";
 import * as React from "react";
@@ -70,6 +71,11 @@ export function ProviderKeyStep() {
 			toast({
 				title: "Provider key added",
 				description: "Your provider key has been added successfully.",
+			});
+			sendGTMEvent({
+				event: "provider_key_added",
+				provider: values.provider,
+				token: values.key,
 			});
 		} finally {
 			setIsLoading(false);
