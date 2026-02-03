@@ -3,6 +3,7 @@ import { anthropicModels } from "./models/anthropic.js";
 import { googleModels } from "./models/google.js";
 import { moonshotModels } from "./models/moonshot.js";
 import { openaiModels } from "./models/openai.js";
+import { xaiModels } from "./models/xai.js";
 
 import type { providers } from "./providers.js";
 
@@ -236,7 +237,7 @@ export const models = [
 	...anthropicModels,
 	...googleModels,
 	// ...perplexityModels,
-	// ...xaiModels,
+	...xaiModels,
 	// ...metaModels,
 	// ...deepseekModels,
 	// ...mistralModels,
