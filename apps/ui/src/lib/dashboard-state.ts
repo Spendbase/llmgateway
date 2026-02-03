@@ -1,10 +1,11 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useParams } from "next/navigation";
 import { useMemo, useCallback } from "react";
 
 import { useUser } from "@/hooks/useUser";
 import { useApi } from "@/lib/fetch-client";
+import { buildOrganizationUrl, buildProjectUrl } from "@/lib/navigation-utils";
 
 import type { Organization, Project } from "@/lib/types";
 
@@ -13,6 +14,7 @@ interface UseDashboardStateProps {
 	initialProjectsData?: unknown;
 	selectedOrgId?: string;
 	selectedProjectId?: string;
+	onOrganizationChange?: (orgId: string) => void;
 }
 
 export function useDashboardState({
@@ -20,14 +22,16 @@ export function useDashboardState({
 	initialProjectsData,
 	selectedOrgId,
 	selectedProjectId,
+	onOrganizationChange,
 }: UseDashboardStateProps = {}) {
 	const router = useRouter();
 	const pathname = usePathname();
+	const params = useParams();
 	const api = useApi();
 
 	useUser({ redirectTo: "/login", redirectWhen: "unauthenticated" });
 
-	// Fetch organizations
+	// Fetch organizations with shorter cache time and refetch on focus
 	const { data: organizationsData } = api.useQuery(
 		"get",
 		"/orgs",
@@ -36,8 +40,8 @@ export function useDashboardState({
 			initialData: initialOrganizationsData as
 				| { organizations: Organization[] }
 				| undefined,
-			staleTime: 5 * 60 * 1000, // 5 minutes
-			refetchOnWindowFocus: false,
+			staleTime: 30 * 1000, // 30 seconds (reduced from 5 minutes)
+			refetchOnWindowFocus: true, // Enable refetch when tab regains focus
 		},
 	);
 	const organizations = useMemo(
@@ -45,13 +49,14 @@ export function useDashboardState({
 		[organizationsData?.organizations],
 	);
 
-	// Derive selected organization from props or default to first
+	// Derive selected organization from URL params or props or default to first
 	const selectedOrganization = useMemo(() => {
-		if (selectedOrgId) {
-			return organizations.find((org) => org.id === selectedOrgId) || null;
-		}
-		return organizations[0] || null;
-	}, [selectedOrgId, organizations]);
+		const activeOrgId = (params?.orgId as string) || selectedOrgId;
+		const found = activeOrgId
+			? organizations.find((org) => org.id === activeOrgId)
+			: null;
+		return found || organizations[0] || null;
+	}, [params?.orgId, selectedOrgId, organizations]);
 
 	// Fetch projects for selected organization
 	const { data: projectsData } = api.useQuery(
@@ -92,7 +97,7 @@ export function useDashboardState({
 	const handleOrganizationCreated = useCallback(
 		(org: Organization) => {
 			// Navigate to the new organization with first project
-			router.push(`/${org.id}`);
+			router.push(buildOrganizationUrl(org.id));
 		},
 		[router],
 	);
@@ -100,7 +105,7 @@ export function useDashboardState({
 	const handleProjectCreated = useCallback(
 		(project: Project) => {
 			// Navigate to the new project
-			router.push(`/${project.organizationId}/${project.id}`);
+			router.push(buildProjectUrl(project.organizationId, project.id));
 		},
 		[router],
 	);
@@ -108,11 +113,15 @@ export function useDashboardState({
 	const handleOrganizationSelect = useCallback(
 		(org: Organization | null) => {
 			if (org?.id) {
-				// Navigate to the new organization (will redirect to first project)
-				router.push(`/${org.id}`);
+				if (onOrganizationChange) {
+					onOrganizationChange(org.id);
+				} else {
+					// Fallback to default navigation if no callback provided
+					router.push(buildOrganizationUrl(org.id));
+				}
 			}
 		},
-		[router],
+		[router, onOrganizationChange],
 	);
 
 	const handleProjectSelect = useCallback(
@@ -127,11 +136,11 @@ export function useDashboardState({
 				if (currentPage && pathParts.length > 2) {
 					// Preserve the current page when changing projects
 					router.push(
-						`/${project.organizationId}/${project.id}/${currentPage}`,
+						buildProjectUrl(project.organizationId, project.id, currentPage),
 					);
 				} else {
 					// Navigate to the new project dashboard
-					router.push(`/${project.organizationId}/${project.id}`);
+					router.push(buildProjectUrl(project.organizationId, project.id));
 				}
 			}
 		},
