@@ -4,12 +4,7 @@ import { CreditCard } from "lucide-react";
 
 import { TopUpCreditsDialog } from "./top-up-credits-dialog";
 
-interface Organization {
-	id: string;
-	name: string;
-	credits: string;
-	plan: "free" | "pro";
-}
+import type { Organization } from "@/lib/types";
 
 interface CreditsDisplayProps {
 	organization: Organization | null;
@@ -46,7 +41,7 @@ export function CreditsDisplay({
 
 	return (
 		<div className="px-2 py-1.5">
-			<TopUpCreditsDialog>
+			<TopUpCreditsDialog organization={organization}>
 				<button className="w-full flex items-center justify-between p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors text-left">
 					<div className="flex items-center gap-2">
 						<CreditCard

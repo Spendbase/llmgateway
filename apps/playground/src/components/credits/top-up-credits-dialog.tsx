@@ -22,15 +22,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useOrganization } from "@/hooks/useOrganization";
 import { useApi } from "@/lib/fetch-client";
 import { useStripe } from "@/lib/stripe";
 
+import type { Organization } from "@/lib/types";
 import type React from "react";
 
 export function TopUpCreditsButton() {
 	return (
-		<TopUpCreditsDialog>
+		<TopUpCreditsDialog organization={null}>
 			<Button className="flex items-center">
 				<Plus className="mr-2 h-4 w-4" />
 				Top Up Credits
@@ -41,9 +41,13 @@ export function TopUpCreditsButton() {
 
 interface TopUpCreditsDialogProps {
 	children: React.ReactNode;
+	organization: Organization | null;
 }
 
-export function TopUpCreditsDialog({ children }: TopUpCreditsDialogProps) {
+export function TopUpCreditsDialog({
+	children,
+	organization,
+}: TopUpCreditsDialogProps) {
 	const [open, setOpen] = useState(false);
 	const [step, setStep] = useState<
 		"amount" | "payment" | "select-payment" | "confirm-payment" | "success"
@@ -104,6 +108,7 @@ export function TopUpCreditsDialog({ children }: TopUpCreditsDialogProps) {
 					<AmountStep
 						amount={amount}
 						setAmount={setAmount}
+						organization={organization}
 						onNext={() => {
 							if (paymentMethodsLoading) {
 								return; // Don't proceed if still loading
@@ -131,6 +136,7 @@ export function TopUpCreditsDialog({ children }: TopUpCreditsDialogProps) {
 					<ConfirmPaymentStep
 						amount={amount}
 						paymentMethodId={selectedPaymentMethod!}
+						organization={organization}
 						onSuccess={handlePaymentSuccess}
 						onBack={() => setStep("select-payment")}
 						onCancel={handleClose}
@@ -165,14 +171,15 @@ function AmountStep({
 	setAmount,
 	onNext,
 	onCancel,
+	organization,
 }: {
 	amount: number;
 	setAmount: (amount: number) => void;
 	onNext: () => void;
 	onCancel: () => void;
+	organization: Organization | null;
 }) {
 	const presetAmounts = [10, 25, 50, 100];
-	const { organization } = useOrganization();
 	const api = useApi();
 	const { data: feeData, isLoading: feeDataLoading } = api.useQuery(
 		"post",
@@ -558,6 +565,7 @@ function ConfirmPaymentStep({
 	onCancel,
 	loading,
 	setLoading,
+	organization,
 }: {
 	amount: number;
 	paymentMethodId: string;
@@ -566,8 +574,8 @@ function ConfirmPaymentStep({
 	onCancel: () => void;
 	loading: boolean;
 	setLoading: (loading: boolean) => void;
+	organization: Organization | null;
 }) {
-	const { organization } = useOrganization();
 	const api = useApi();
 	const { mutateAsync: topUpMutation } = api.useMutation(
 		"post",

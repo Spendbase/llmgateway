@@ -46,7 +46,6 @@ import {
 	useUpdateChat,
 	type Chat,
 } from "@/hooks/useChats";
-import { useOrganization } from "@/hooks/useOrganization";
 import { useUser } from "@/hooks/useUser";
 import { clearLastUsedProjectCookiesAction } from "@/lib/actions/project";
 import { useAuth } from "@/lib/auth-client";
@@ -99,7 +98,6 @@ export function ChatSidebar({
 	const posthog = usePostHog();
 	const { user, isLoading: isUserLoading } = useUser();
 	const { signOut } = useAuth();
-	const { organization, isLoading: isOrgLoading } = useOrganization();
 
 	// Use real chat data from API
 	const { data: chatsData, isLoading: isChatsLoading } = useChats();
@@ -318,7 +316,6 @@ export function ChatSidebar({
 
 	const isAuthenticated = !!user;
 
-	// Loading auth state → show lightweight skeleton to avoid hydration issues
 	if (isUserLoading) {
 		return <ChatSidebarSkeleton organization={null} isOrgLoading={true} />;
 	}
@@ -358,11 +355,11 @@ export function ChatSidebar({
 		);
 	}
 
-	if (isChatsLoading || isOrgLoading) {
+	if (isChatsLoading) {
 		return (
 			<ChatSidebarSkeleton
 				organization={selectedOrganization}
-				isOrgLoading={isOrgLoading}
+				isOrgLoading={false}
 			/>
 		);
 	}
@@ -441,7 +438,7 @@ export function ChatSidebar({
 			</SidebarContent>
 
 			<SidebarFooter className="border-t">
-				<CreditsDisplay organization={organization} isLoading={isOrgLoading} />
+				<CreditsDisplay organization={selectedOrganization} />
 				<div className="flex items-center justify-between p-4 gap-3">
 					<div className="flex items-center gap-3 flex-1 min-w-0">
 						<Avatar className="border-border h-9 w-9 border">
