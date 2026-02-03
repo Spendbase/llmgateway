@@ -148,21 +148,21 @@ export const providers = [
 	// 	website: "https://cerebras.ai",
 	// 	announcement: null,
 	// },
-	// {
-	// 	id: "xai",
-	// 	name: "xAI",
-	// 	description: "xAI's Grok large language models",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_X_AI_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#000000",
-	// 	website: "https://x.ai",
-	// 	announcement: null,
-	// },
+	{
+		id: "xai",
+		name: "xAI",
+		description: "xAI's Grok large language models",
+		env: {
+			required: {
+				apiKey: "LLM_X_AI_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#000000",
+		website: "https://x.ai",
+		announcement: null,
+	},
 	// {
 	// 	id: "deepseek",
 	// 	name: "DeepSeek",
