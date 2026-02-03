@@ -438,7 +438,7 @@ export function ChatSidebar({
 			</SidebarContent>
 
 			<SidebarFooter className="border-t">
-				<CreditsDisplay organization={selectedOrganization} isLoading={false} />
+				<CreditsDisplay organization={selectedOrganization} />
 				<div className="flex items-center justify-between p-4 gap-3">
 					<div className="flex items-center gap-3 flex-1 min-w-0">
 						<Avatar className="border-border h-9 w-9 border">
