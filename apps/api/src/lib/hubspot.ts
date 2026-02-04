@@ -1,3 +1,16 @@
+/**
+ * Submit form data to HubSpot using configured portal and form GUID.
+ *
+ * @param data - Object containing submission fields and context.
+ * @param data.email - Contact email to submit (required).
+ * @param data.firstname - Contact first name.
+ * @param data.lastname - Contact last name.
+ * @param data.referral - Source value sent to the HubSpot field `where_did_you_find_us`.
+ * @param data.hutk - HubSpot user token to include in the submission context.
+ * @param data.pageUri - Page URI to include in the submission context.
+ * @param data.pageName - Page name to include in the submission context.
+ * @returns The parsed HubSpot error response if the API returns a non-OK status, the caught error if the request fails, or `undefined` when the submission succeeds.
+ */
 export async function submitToHubSpot(data: {
 	email: string;
 	firstname?: string;

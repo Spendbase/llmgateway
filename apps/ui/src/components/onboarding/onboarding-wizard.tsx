@@ -46,6 +46,13 @@ const getSteps = (flowType: FlowType) => [
 	},
 ];
 
+/**
+ * Interactive onboarding wizard that guides users through welcome, referral, API key entry, plan selection, and a final flow-specific step (credits or provider key).
+ *
+ * The component manages step state, the chosen onboarding flow, referral metadata, payment status, analytics events, HubSpot form submissions, and finalizes onboarding by calling the API and navigating to the dashboard.
+ *
+ * @returns The onboarding wizard React element.
+ */
 export function OnboardingWizard() {
 	const [activeStep, setActiveStep] = useState(0);
 	const [flowType, setFlowType] = useState<FlowType>(null);

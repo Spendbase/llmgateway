@@ -51,6 +51,12 @@ export const metadata: Metadata = {
 	},
 };
 
+/**
+ * Application root layout that renders the document HTML and body, applies global fonts and providers, and injects analytics scripts from runtime configuration.
+ *
+ * @param children - The page or app content to render inside the root providers
+ * @returns The root HTML element for the application containing the body, global providers, and injected analytics scripts
+ */
 export default function RootLayout({ children }: { children: ReactNode }) {
 	const config = getConfig();
 

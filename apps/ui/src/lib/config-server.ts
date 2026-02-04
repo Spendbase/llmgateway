@@ -17,6 +17,13 @@ export interface AppConfig {
 	hubspotFormGuid?: string;
 }
 
+/**
+ * Build an AppConfig object by reading environment variables and applying sensible defaults.
+ *
+ * Populates URLs, feature flags, and optional analytics/third-party IDs from environment variables; where an env var is not set a local default is used (e.g. local host URLs and default external links).
+ *
+ * @returns The constructed AppConfig with properties like `hosted`, `appUrl`, `apiUrl`, `apiBackendUrl`, social/docs/playground/admin URLs, and optional keys `posthogKey`, `posthogHost`, `crispId`, `gtmId`, `hubspotPortalId`, and `hubspotFormGuid`.
+ */
 export function getConfig(): AppConfig {
 	const apiUrl = process.env.API_URL || "http://localhost:4002";
 	return {

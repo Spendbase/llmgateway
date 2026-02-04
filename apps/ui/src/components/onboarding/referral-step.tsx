@@ -18,6 +18,18 @@ interface ReferralStepProps {
 	onComplete?: (source: string, details?: string) => void;
 }
 
+/**
+ * Render a referral source selection step and handle continue or skip actions.
+ *
+ * Renders UI to choose a referral source (including an "Other" option that reveals a details input),
+ * and exposes actions to skip or continue. When continued with a selection, the component sends a GTM
+ * event with `event: "referral_source_selected"`, `source_type`, and `source_details` (only for "other"),
+ * then calls `onComplete` with the chosen source and optional details. When skipped, it calls `onComplete` with an empty string.
+ *
+ * @param onComplete - Optional callback invoked when the step is completed or skipped. Called as `onComplete(source, details?)`
+ *   where `source` is the selected source value (or `""` when skipped) and `details` is provided only when `source` is `"other"`.
+ * @returns The rendered referral selection step as JSX.
+ */
 export function ReferralStep({ onComplete }: ReferralStepProps) {
 	const [selectedSource, setSelectedSource] = useState<string>("");
 	const [otherDetails, setOtherDetails] = useState<string>("");

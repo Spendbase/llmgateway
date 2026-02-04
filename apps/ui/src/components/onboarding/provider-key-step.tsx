@@ -40,6 +40,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+/**
+ * Render the "Provider Keys" setup step that lets users add API keys for LLM providers.
+ *
+ * Submits a provider key for the current organization, shows a success toast on completion,
+ * and emits a GTM event named `provider_key_added` with the selected provider.
+ *
+ * @returns A React element containing the provider keys step UI.
+ */
 export function ProviderKeyStep() {
 	const config = useAppConfig();
 	const [isLoading, setIsLoading] = useState(false);

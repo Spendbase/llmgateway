@@ -16,6 +16,14 @@ import { getMDXComponents } from "@/mdx-components";
 
 import type { Metadata } from "next";
 
+/**
+ * Builds SEO and social-sharing metadata for a docs page using the resolved route `slug`.
+ *
+ * If the page for the given slug is not found, this function triggers a notFound response.
+ *
+ * @param params - Promise resolving to route parameters; expected to contain an optional `slug` array identifying the page path.
+ * @returns A `Metadata` object containing `metadataBase`, `title`, `description`, Open Graph images set to `["/opengraph.png?v=1"]`, and a Twitter card (`summary_large_image`) with its image path derived from the slug.
+ */
 export async function generateMetadata({
 	params,
 }: {
