@@ -75,7 +75,6 @@ export function ProviderKeyStep() {
 			sendGTMEvent({
 				event: "provider_key_added",
 				provider: values.provider,
-				token: values.key,
 			});
 		} finally {
 			setIsLoading(false);

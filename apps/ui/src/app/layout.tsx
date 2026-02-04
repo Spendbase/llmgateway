@@ -1,5 +1,6 @@
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Inter, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 
 import { Providers } from "@/components/providers";
 import { getConfig } from "@/lib/config-server";
@@ -58,8 +59,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			<body
 				className={`${inter.variable} ${geistMono.variable} min-h-screen antialiased`}
 			>
-				<GoogleTagManager gtmId="GTM-KDGV6FG5" />
+				<GoogleTagManager gtmId={config.gtmId!} />
 				<Providers config={config}>{children}</Providers>
+				<Script
+					id="hs-script-loader"
+					strategy="afterInteractive"
+					src={`//js.hs-scripts.com/${config.hubspotPortalId}.js`}
+				/>
 			</body>
 		</html>
 	);
