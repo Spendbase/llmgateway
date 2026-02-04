@@ -1,8 +1,10 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
 import { apiAuth as auth } from "@/auth/config.js";
+import { submitToHubSpot } from "@/lib/hubspot.js";
 
 import { db, eq, tables } from "@llmgateway/db";
 
@@ -475,5 +477,100 @@ user.openapi(completeOnboarding, async (c) => {
 			isAdmin,
 		},
 		message: "Onboarding completed successfully",
+	});
+});
+
+const submitHubSpotSchema = z.object({
+	referral: z.string(),
+	pageUri: z.string(),
+	pageName: z.string(),
+});
+
+const submitHubSpotForm = createRoute({
+	method: "post",
+	path: "/me/submit-hubspot-form",
+	request: {
+		body: {
+			content: {
+				"application/json": {
+					schema: submitHubSpotSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						message: z.string(),
+					}),
+				},
+			},
+			description: "HubSpot form submitted successfully.",
+		},
+		401: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						message: z.string(),
+					}),
+				},
+			},
+			description: "Unauthorized.",
+		},
+		404: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						message: z.string(),
+					}),
+				},
+			},
+			description: "User not found.",
+		},
+	},
+});
+
+user.openapi(submitHubSpotForm, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	const userRecord = await db.query.user.findFirst({
+		where: {
+			id: authUser.id,
+		},
+	});
+
+	if (!userRecord) {
+		throw new HTTPException(404, {
+			message: "User not found",
+		});
+	}
+
+	const hutk = getCookie(c, "hubspotutk");
+	const payload = c.req.valid("json");
+
+	const nameParts = (userRecord.name || "").trim().split(/\s+/);
+	const firstname = nameParts[0] || "";
+	const lastname = nameParts.slice(1).join(" ");
+
+	await submitToHubSpot({
+		email: userRecord.email,
+		firstname,
+		lastname,
+		referral: payload.referral,
+		hutk,
+		pageUri: payload.pageUri,
+		pageName: payload.pageName,
+	});
+
+	return c.json({
+		message: "HubSpot form submitted successfully.",
 	});
 });
