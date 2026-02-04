@@ -18,6 +18,7 @@ import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { CreditsDisplay } from "@/components/credits/credits-display";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -340,12 +341,13 @@ export function ChatSidebar({
 							<p className="text-muted-foreground mb-3">
 								Please sign in to view organizations, projects, and chats.
 							</p>
-							<div className="flex items-center justify-end gap-2">
-								<Button size="sm" asChild>
-									<Link href="/login">Sign in</Link>
+							<div className="flex flex-col gap-2">
+								<GoogleSignInButton />
+								<Button size="sm" variant="outline" className="w-full" asChild>
+									<Link href="/login">Email Login</Link>
 								</Button>
-								<Button size="sm" variant="outline" asChild>
-									<Link href="/signup">Create account</Link>
+								<Button size="sm" variant="outline" className="w-full" asChild>
+									<Link href="/signup">Sign up</Link>
 								</Button>
 							</div>
 						</div>
