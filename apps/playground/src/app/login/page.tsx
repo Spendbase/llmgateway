@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v3";
 
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -31,10 +32,15 @@ const formSchema = z.object({
 		.min(8, { message: "Password must be at least 8 characters" }),
 });
 
+// Open-redirect prevention:
+// 1. Must start with a slash (relative path).
+// 2. Must NOT start with double slash (protocol-relative).
+// 3. Reject invalid input, fallback to root.
 function getSafeRedirectUrl(url: string | null): string {
 	if (!url) {
 		return "/";
 	}
+	// Prevent open redirects to other domains (e.g. //google.com)
 	if (url.startsWith("/") && !url.startsWith("//")) {
 		return url;
 	}
@@ -48,6 +54,7 @@ export default function Login() {
 	const posthog = usePostHog();
 	const [isLoading, setIsLoading] = useState(false);
 	const { signIn } = useAuth();
+	// Ensure we only redirect to legitimate paths within our app
 	const returnUrl = getSafeRedirectUrl(searchParams.get("returnUrl"));
 
 	useUser({
@@ -218,19 +225,22 @@ export default function Login() {
 						<span className="bg-background px-2 text-muted-foreground">Or</span>
 					</div>
 				</div>
-				<Button
-					onClick={handlePasskeySignIn}
-					variant="outline"
-					className="w-full"
-					disabled={isLoading}
-				>
-					{isLoading ? (
-						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-					) : (
-						<KeySquare className="mr-2 h-4 w-4" />
-					)}
-					Sign in with passkey
-				</Button>
+				<div className="grid grid-cols-1 gap-3">
+					<GoogleSignInButton returnUrl={returnUrl || undefined} />
+					<Button
+						onClick={handlePasskeySignIn}
+						variant="outline"
+						className="w-full"
+						disabled={isLoading}
+					>
+						{isLoading ? (
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						) : (
+							<KeySquare className="mr-2 h-4 w-4" />
+						)}
+						Sign in with passkey
+					</Button>
+				</div>
 				<p className="px-8 text-center text-sm text-muted-foreground">
 					<Link
 						href="/signup"
