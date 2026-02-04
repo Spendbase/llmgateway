@@ -6,6 +6,7 @@ import { usePostHog } from "posthog-js/react";
 import * as React from "react";
 import { useState } from "react";
 
+import { useHubSpot } from "@/hooks/useHubSpot";
 import { Card, CardContent } from "@/lib/components/card";
 import { Stepper } from "@/lib/components/stepper";
 import { useApi } from "@/lib/fetch-client";
@@ -61,6 +62,7 @@ export function OnboardingWizard() {
 		"post",
 		"/user/me/complete-onboarding",
 	);
+	const { submitHubSpotForm } = useHubSpot();
 
 	const STEPS = getSteps(flowType);
 
@@ -74,6 +76,12 @@ export function OnboardingWizard() {
 					referralSource: referralSource || "not_provided",
 					referralDetails: referralDetails || undefined,
 				});
+				submitHubSpotForm(
+					location.origin + "/signup",
+					"Signup",
+					referralSource || "not_provided",
+				);
+
 				await completeOnboarding.mutateAsync({});
 				const queryKey = api.queryOptions("get", "/user/me").queryKey;
 				await queryClient.invalidateQueries({ queryKey });
@@ -90,7 +98,11 @@ export function OnboardingWizard() {
 				referralSource: referralSource || "not_provided",
 				referralDetails: referralDetails || undefined,
 			});
-
+			submitHubSpotForm(
+				location.origin + "/signup",
+				"Signup",
+				referralSource || "not_provided",
+			);
 			await completeOnboarding.mutateAsync({});
 			const queryKey = api.queryOptions("get", "/user/me").queryKey;
 			await queryClient.invalidateQueries({ queryKey });
