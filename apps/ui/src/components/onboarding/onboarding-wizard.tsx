@@ -1,4 +1,5 @@
 "use client";
+import { sendGTMEvent } from "@next/third-parties/google";
 import { Elements } from "@stripe/react-stripe-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -76,6 +77,11 @@ export function OnboardingWizard() {
 					referralSource: referralSource || "not_provided",
 					referralDetails: referralDetails || undefined,
 				});
+				sendGTMEvent({
+					event: "referral_source_selected",
+					source_type: referralSource || "not_provided",
+					source_details: referralDetails || undefined,
+				});
 				submitHubSpotForm(
 					location.origin + "/signup",
 					"Signup",
@@ -97,6 +103,11 @@ export function OnboardingWizard() {
 				flowType,
 				referralSource: referralSource || "not_provided",
 				referralDetails: referralDetails || undefined,
+			});
+			sendGTMEvent({
+				event: "referral_source_selected",
+				source_type: referralSource || "not_provided",
+				source_details: referralDetails,
 			});
 			submitHubSpotForm(
 				location.origin + "/signup",
