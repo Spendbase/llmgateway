@@ -34,7 +34,7 @@ export function getConfig(): AppConfig {
 		posthogKey: process.env.POSTHOG_KEY,
 		posthogHost: process.env.POSTHOG_HOST,
 		crispId: process.env.CRISP_ID,
-		gtmId: process.env.GOOGLE_TAG_MANAGER_ID,
+		gtmId: process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID,
 		hubspotPortalId: process.env.HUBSPOT_PORTAL_ID,
 		hubspotFormGuid: process.env.HUBSPOT_FORM_GUID,
 	};
