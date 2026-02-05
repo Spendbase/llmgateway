@@ -13,6 +13,7 @@ export const userSignups = new Counter({
 	name: "user_signups_total",
 	help: "Total number of user signups",
 	registers: [register],
+	labelNames: ["method"],
 });
 
 export const llmUsageTotal = new Counter({
