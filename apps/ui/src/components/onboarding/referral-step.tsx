@@ -1,6 +1,5 @@
 "use client";
 
-import { sendGTMEvent } from "@next/third-parties/google";
 import { useState } from "react";
 
 import { Button } from "@/lib/components/button";
@@ -37,11 +36,6 @@ export function ReferralStep({ onComplete }: ReferralStepProps) {
 	const handleContinue = () => {
 		if (selectedSource) {
 			const details = selectedSource === "other" ? otherDetails : undefined;
-			sendGTMEvent({
-				event: "referral_source_selected",
-				source_type: selectedSource,
-				source_details: details,
-			});
 			onComplete?.(selectedSource, details);
 		}
 	};
