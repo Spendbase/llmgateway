@@ -1,0 +1,24 @@
+prometheus.scrape "my_local_hono" {
+  scrape_interval = "5s" 
+  scrape_timeout  = "3s"
+
+  targets = [
+    { "__address__" = "127.0.0.1:4002" },
+  ]
+  
+  metrics_path = "/api/metrics" 
+
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
+
+    basic_auth {
+      username = "2958166"
+      
+      password = "" 
+    }
+  }
+}
