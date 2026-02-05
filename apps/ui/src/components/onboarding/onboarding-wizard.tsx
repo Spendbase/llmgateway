@@ -7,14 +7,13 @@ import { useState } from "react";
 
 import { Card, CardContent } from "@/lib/components/card";
 import { Stepper } from "@/lib/components/stepper";
+import { toast } from "@/lib/components/use-toast";
 import { useApi } from "@/lib/fetch-client";
 
 import { ApiKeyStep } from "./api-key-step";
 import { PlanChoiceStep } from "./plan-choice-step";
 import { ReferralStep } from "./referral-step";
 import { WelcomeStep } from "./welcome-step";
-
-type FlowType = "credits" | "byok" | null;
 
 const getSteps = () => [
 	{
@@ -32,13 +31,12 @@ const getSteps = () => [
 	},
 	{
 		id: "plan-choice",
-		title: "Choose Plan",
+		title: "Buy credits",
 	},
 ];
 
 export function OnboardingWizard() {
 	const [activeStep, setActiveStep] = useState(0);
-	const [hasSelectedPlan, setHasSelectedPlan] = useState(false);
 	const [referralSource, setReferralSource] = useState<string>("");
 	const [referralDetails, setReferralDetails] = useState<string>("");
 	const router = useRouter();
@@ -53,35 +51,18 @@ export function OnboardingWizard() {
 	const STEPS = getSteps();
 
 	const handleStepChange = async (step: number) => {
-		// Special handling for plan choice step (now at index 3)
+		// Special handling for completion/skip on step 4
 		if (activeStep === 3) {
-			if (!hasSelectedPlan) {
-				// Skip to dashboard if no plan selected
-				posthog.capture("onboarding_skipped", {
-					skippedAt: "plan_choice",
-					referralSource: referralSource || "not_provided",
-					referralDetails: referralDetails || undefined,
-				});
-				await completeOnboarding.mutateAsync({});
-				const queryKey = api.queryOptions("get", "/user/me").queryKey;
-				await queryClient.invalidateQueries({ queryKey });
-				router.push("/");
-				return;
-			}
-			// If plan is selected (via buttons), they are handled by handleSelect*
+			// If moving from step 4, it means we are skipping or completing
 		}
 
 		setActiveStep(step);
 	};
 
-	const handleOnboardingComplete = async (
-		type: FlowType,
-		selected: boolean,
-	) => {
+	const handleOnboardingComplete = async () => {
 		posthog.capture("onboarding_completed", {
 			completedSteps: STEPS.map((step) => step.id),
-			flowType: type,
-			hasSelectedPlan: selected,
+			flowType: "credits",
 			referralSource: referralSource || "not_provided",
 			referralDetails: referralDetails || undefined,
 		});
@@ -92,14 +73,24 @@ export function OnboardingWizard() {
 		router.push("/");
 	};
 
-	const handleSelectCredits = () => {
-		setHasSelectedPlan(true);
-		void handleOnboardingComplete("credits", true);
+	const handleBuyCredits = () => {
+		void handleOnboardingComplete().catch(() => {
+			toast({
+				title: "Error",
+				description: "Failed to complete onboarding",
+				variant: "destructive",
+			});
+		});
 	};
 
-	const handleSelectBYOK = () => {
-		setHasSelectedPlan(true);
-		void handleOnboardingComplete("byok", true);
+	const handleSkip = () => {
+		void handleOnboardingComplete().catch(() => {
+			toast({
+				title: "Error",
+				description: "Failed to complete onboarding",
+				variant: "destructive",
+			});
+		});
 	};
 
 	const handleReferralComplete = (source: string, details?: string) => {
@@ -113,13 +104,7 @@ export function OnboardingWizard() {
 	// Special handling for PlanChoiceStep to pass callbacks
 	const renderCurrentStep = () => {
 		if (activeStep === 3) {
-			return (
-				<PlanChoiceStep
-					onSelectCredits={handleSelectCredits}
-					onSelectBYOK={handleSelectBYOK}
-					hasSelectedPlan={hasSelectedPlan}
-				/>
-			);
+			return <PlanChoiceStep onSelectCredits={handleBuyCredits} />;
 		}
 
 		// For other steps
@@ -142,11 +127,11 @@ export function OnboardingWizard() {
 	const getStepperSteps = () => {
 		return STEPS.map((step, index) => ({
 			...step,
-			// Make plan choice step show Skip when no selection
-			...(index === 3 &&
-				!hasSelectedPlan && {
-					customNextText: "Skip",
-				}),
+			// Step 4 (index 3) is optional, show Skip if not interacting
+			...(index === 3 && {
+				customNextText: "Skip",
+				onNext: handleSkip,
+			}),
 		}));
 	};
 
