@@ -1,5 +1,6 @@
 "use client";
 
+import { sendGTMEvent } from "@next/third-parties/google";
 import { useState } from "react";
 
 import { Button } from "@/lib/components/button";
@@ -22,17 +23,25 @@ export function ReferralStep({ onComplete }: ReferralStepProps) {
 	const [otherDetails, setOtherDetails] = useState<string>("");
 
 	const referralSources = [
-		{ value: "twitter", label: "X (Formerly Twitter)" },
+		{ value: "advertisement", label: "Advertisement" },
+		{
+			value: "community",
+			label: "Community perks (Founderpass, JoinSecret, etc)",
+		},
+		{ value: "referral", label: "Referred by a friend" },
 		{ value: "email", label: "Email" },
 		{ value: "reddit", label: "Reddit" },
-		{ value: "producthunt", label: "ProductHunt" },
-		{ value: "devntell", label: "DevNTell podcast" },
 		{ value: "other", label: "Other (Specify)" },
 	];
 
 	const handleContinue = () => {
 		if (selectedSource) {
 			const details = selectedSource === "other" ? otherDetails : undefined;
+			sendGTMEvent({
+				event: "referral_source_selected",
+				source_type: selectedSource,
+				source_details: details,
+			});
 			onComplete?.(selectedSource, details);
 		}
 	};

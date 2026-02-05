@@ -12,6 +12,9 @@ export interface AppConfig {
 	posthogKey?: string;
 	posthogHost?: string;
 	crispId?: string;
+	gtmId?: string;
+	hubspotPortalId?: string;
+	hubspotFormGuid?: string;
 }
 
 export function getConfig(): AppConfig {
@@ -32,5 +35,8 @@ export function getConfig(): AppConfig {
 		posthogKey: process.env.POSTHOG_KEY,
 		posthogHost: process.env.POSTHOG_HOST,
 		crispId: process.env.CRISP_ID,
+		gtmId: process.env.GOOGLE_TAG_MANAGER_ID,
+		hubspotPortalId: process.env.HUBSPOT_PORTAL_ID,
+		hubspotFormGuid: process.env.HUBSPOT_FORM_GUID,
 	};
 }
