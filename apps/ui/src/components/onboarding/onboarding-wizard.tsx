@@ -5,6 +5,7 @@ import { usePostHog } from "posthog-js/react";
 import * as React from "react";
 import { useState } from "react";
 
+import { useHubSpot } from "@/hooks/useHubSpot";
 import { Card, CardContent } from "@/lib/components/card";
 import { Stepper } from "@/lib/components/stepper";
 import { toast } from "@/lib/components/use-toast";
@@ -51,11 +52,6 @@ export function OnboardingWizard() {
 	const STEPS = getSteps();
 
 	const handleStepChange = async (step: number) => {
-		// Special handling for completion/skip on step 4
-		if (activeStep === 3) {
-			// If moving from step 4, it means we are skipping or completing
-		}
-
 		setActiveStep(step);
 	};
 
