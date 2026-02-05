@@ -17,12 +17,14 @@ import { HealthChecker } from "@llmgateway/shared";
 
 import { redisClient } from "./auth/config.js";
 import { authHandler } from "./auth/handler.js";
+import { grafanaMiddleWare } from "./middleware/grafana.js";
 import { tracingMiddleware } from "./middleware/tracing.js";
 import { beacon } from "./routes/beacon.js";
 import { googleWorkspace } from "./routes/google-workspace.js";
 import { routes } from "./routes/index.js";
 import { internalModels } from "./routes/internal-models.js";
 import { referral } from "./routes/referral.js";
+import { register } from "./services/metrics.service.js";
 import { stripeRoutes } from "./stripe.js";
 
 import type { ServerTypes } from "./vars.js";
@@ -52,6 +54,8 @@ const requestLifecycleMiddleware = createRequestLifecycleMiddleware({
 app.use("*", tracingMiddleware);
 app.use("*", requestLifecycleMiddleware);
 app.use("*", honoRequestLogger);
+
+app.use("*", grafanaMiddleWare);
 
 app.use(
 	"*",
@@ -177,6 +181,16 @@ app.openapi(root, async (c) => {
 	const { response, statusCode } = healthChecker.createHealthResponse(health);
 
 	return c.json(response, statusCode as 200 | 503);
+});
+
+app.get("/api/metrics", async (c) => {
+	try {
+		c.header("Content-Type", register.contentType);
+		return c.body(await register.metrics());
+	} catch (err) {
+		logger.error("Metrics export failed", err as Error);
+		return c.text("Metrics error", 500);
+	}
 });
 
 app.route("/stripe", stripeRoutes);
