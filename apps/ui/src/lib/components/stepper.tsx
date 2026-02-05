@@ -13,6 +13,7 @@ export interface StepperProps {
 		description?: string;
 		optional?: boolean;
 		customNextText?: string;
+		onNext?: () => void;
 	}[];
 	activeStep: number;
 	onStepChange: (step: number) => void;
@@ -150,8 +151,17 @@ export function Stepper({
 						</Button>
 					)}
 					<Button
-						onClick={() => onStepChange(activeStep + 1)}
-						disabled={nextButtonDisabled ?? activeStep === steps.length - 1}
+						onClick={() => {
+							if (currentStep?.onNext) {
+								currentStep.onNext();
+							} else {
+								onStepChange(activeStep + 1);
+							}
+						}}
+						disabled={
+							nextButtonDisabled ??
+							(activeStep === steps.length - 1 && !currentStep?.onNext)
+						}
 					>
 						{currentStep?.customNextText ||
 							(activeStep === steps.length - 1 ? "Finish" : "Next")}
