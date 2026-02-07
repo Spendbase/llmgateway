@@ -1,33 +1,30 @@
-import { Registry, Counter } from "prom-client";
+import { metrics } from "@opentelemetry/api";
 
-const register = new Registry();
+const meter = metrics.getMeter("llm-gateway");
 
-export const httpRequestsTotal = new Counter({
-	name: "http_requests_total",
-	help: "Total number of HTTP requests",
-	labelNames: ["method", "path", "status"],
-	registers: [register],
+export const signupCounter = meter.createCounter("user_signups_total", {
+	description: "Number of new user signups",
 });
 
-export const userSignups = new Counter({
-	name: "user_signups_total",
-	help: "Total number of user signups",
-	registers: [register],
-	labelNames: ["method"],
+export const activationCounter = meter.createCounter("user_activations_total", {
+	description: "Number of users who made their first successful API call",
 });
 
-export const llmUsageTotal = new Counter({
-	name: "llm_api_calls_total",
-	help: "Total LLM API calls",
-	labelNames: ["model", "org_id", "status"],
-	registers: [register],
+// 2. USAGE / MODEL / ERROR / DAU: Универсальный счетчик запросов
+// Он закроет сразу 4 пункта из твоего списка!
+export const modelUsageCounter = meter.createCounter("llm_requests_total", {
+	description: "Total number of LLM API requests",
 });
 
-export const creditsConsumed = new Counter({
-	name: "credits_consumed_total",
-	help: "Total credits spent in USD",
-	labelNames: ["org_id"],
-	registers: [register],
+// 3. CREDIT CONSUMPTION: Деньги
+// Counter умеет работать с дробями (например, $0.002)
+export const costCounter = meter.createCounter("credits_consumed_total", {
+	description: "Total spend in USD",
+	unit: "USD",
 });
 
-export { register };
+// 4. TEAM SIZE: Размер команды
+// UpDownCounter умеет идти в минус (если юзера удалили)
+export const teamSizeGauge = meter.createUpDownCounter("org_team_size", {
+	description: "Number of users in an organization",
+});

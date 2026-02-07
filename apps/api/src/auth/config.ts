@@ -5,7 +5,7 @@ import { createAuthMiddleware } from "better-auth/api";
 import { passkey } from "better-auth/plugins/passkey";
 import { Redis } from "ioredis";
 
-import { userSignups } from "@/services/metrics.service.js";
+import { signupCounter } from "@/services/metrics.service.js";
 import { validateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
@@ -650,7 +650,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					}
 				});
 
-				userSignups.inc({ method: "new_onboarding" });
+				signupCounter.add(1, { method: "new_onboarding" });
 			}),
 		},
 	}),
