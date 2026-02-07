@@ -2,9 +2,8 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
-import { teamSizeGauge } from "@/services/metrics.service.js";
-
 import { db, eq, tables } from "@llmgateway/db";
+import { teamSizeGauge } from "@llmgateway/instrumentation";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -99,7 +98,10 @@ team.openapi(getMembers, async (c) => {
 		},
 	});
 
-	teamSizeGauge.add(members.length, { organizationId });
+	teamSizeGauge.add(members.length, {
+		org_id: organizationId,
+		method: "team_members",
+	});
 
 	return c.json({
 		members: members.map((m) => ({
@@ -232,6 +234,11 @@ team.openapi(addMember, async (c) => {
 			role,
 		})
 		.returning();
+
+	teamSizeGauge.add(1, {
+		org_id: organizationId,
+		method: "team_members",
+	});
 
 	return c.json({
 		message: "Member added successfully",
@@ -512,6 +519,11 @@ team.openapi(removeMember, async (c) => {
 	await db
 		.delete(tables.userOrganization)
 		.where(eq(tables.userOrganization.id, memberId));
+
+	teamSizeGauge.add(-1, {
+		org_id: organizationId,
+		method: "team_members",
+	});
 
 	return c.json({
 		message: "Member removed successfully",

@@ -5,11 +5,11 @@ import { createAuthMiddleware } from "better-auth/api";
 import { passkey } from "better-auth/plugins/passkey";
 import { Redis } from "ioredis";
 
-import { signupCounter } from "@/services/metrics.service.js";
 import { validateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
 import { db, eq, tables, shortid } from "@llmgateway/db";
+import { signupCounter } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
 
 const apiUrl = process.env.API_URL || "http://localhost:4002";
