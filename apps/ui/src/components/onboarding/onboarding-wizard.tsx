@@ -1,4 +1,5 @@
 "use client";
+import { sendGTMEvent } from "@next/third-parties/google";
 import { Elements } from "@stripe/react-stripe-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -15,13 +16,10 @@ import { useStripe } from "@/lib/stripe";
 import { ApiKeyStep } from "./api-key-step";
 import { CreditsStep } from "./credits-step";
 import { PlanChoiceStep } from "./plan-choice-step";
-import { ProviderKeyStep } from "./provider-key-step";
 import { ReferralStep } from "./referral-step";
 import { WelcomeStep } from "./welcome-step";
 
-type FlowType = "credits" | "byok" | null;
-
-const getSteps = (flowType: FlowType) => [
+const getSteps = () => [
 	{
 		id: "welcome",
 		title: "Welcome",
@@ -37,18 +35,17 @@ const getSteps = (flowType: FlowType) => [
 	},
 	{
 		id: "plan-choice",
-		title: "Choose Plan",
+		title: "Buy Credits",
 	},
 	{
-		id: flowType === "credits" ? "credits" : "provider-key",
-		title: flowType === "credits" ? "Credits" : "Provider Key",
+		id: "credits",
+		title: "Credits",
 		optional: true,
 	},
 ];
 
 export function OnboardingWizard() {
 	const [activeStep, setActiveStep] = useState(0);
-	const [flowType, setFlowType] = useState<FlowType>(null);
 	const [hasSelectedPlan, setHasSelectedPlan] = useState(false);
 	const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
 	const [referralSource, setReferralSource] = useState<string>("");
@@ -58,13 +55,13 @@ export function OnboardingWizard() {
 	const { stripe, isLoading: stripeLoading } = useStripe();
 	const queryClient = useQueryClient();
 	const api = useApi();
+	const { submitHubSpotForm } = useHubSpot();
 	const completeOnboarding = api.useMutation(
 		"post",
 		"/user/me/complete-onboarding",
 	);
-	const { submitHubSpotForm } = useHubSpot();
 
-	const STEPS = getSteps(flowType);
+	const STEPS = getSteps();
 
 	const handleStepChange = async (step: number) => {
 		// Special handling for plan choice step (now at index 3)
@@ -75,6 +72,11 @@ export function OnboardingWizard() {
 					skippedAt: "plan_choice",
 					referralSource: referralSource || "not_provided",
 					referralDetails: referralDetails || undefined,
+				});
+				sendGTMEvent({
+					event: "referral_source_selected",
+					source_type: referralSource || "not_provided",
+					source_details: referralDetails || undefined,
 				});
 				submitHubSpotForm(
 					location.origin + "/signup",
@@ -94,9 +96,14 @@ export function OnboardingWizard() {
 		if (step >= STEPS.length) {
 			posthog.capture("onboarding_completed", {
 				completedSteps: STEPS.map((step) => step.id),
-				flowType,
+				flowType: "credits",
 				referralSource: referralSource || "not_provided",
 				referralDetails: referralDetails || undefined,
+			});
+			sendGTMEvent({
+				event: "referral_source_selected",
+				source_type: referralSource || "not_provided",
+				source_details: referralDetails,
 			});
 			submitHubSpotForm(
 				location.origin + "/signup",
@@ -113,13 +120,6 @@ export function OnboardingWizard() {
 	};
 
 	const handleSelectCredits = () => {
-		setFlowType("credits");
-		setHasSelectedPlan(true);
-		setActiveStep(4);
-	};
-
-	const handleSelectBYOK = () => {
-		setFlowType("byok");
 		setHasSelectedPlan(true);
 		setActiveStep(4);
 	};
@@ -138,14 +138,13 @@ export function OnboardingWizard() {
 			return (
 				<PlanChoiceStep
 					onSelectCredits={handleSelectCredits}
-					onSelectBYOK={handleSelectBYOK}
 					hasSelectedPlan={hasSelectedPlan}
 				/>
 			);
 		}
 
 		// For credits step, wrap with Stripe Elements
-		if (activeStep === 4 && flowType === "credits") {
+		if (activeStep === 4) {
 			return stripeLoading ? (
 				<div className="p-6 text-center">Loading payment form...</div>
 			) : (
@@ -153,11 +152,6 @@ export function OnboardingWizard() {
 					<CreditsStep onPaymentSuccess={() => setIsPaymentSuccessful(true)} />
 				</Elements>
 			);
-		}
-
-		// For BYOK step
-		if (activeStep === 4 && flowType === "byok") {
-			return <ProviderKeyStep />;
 		}
 
 		// For other steps
@@ -187,7 +181,6 @@ export function OnboardingWizard() {
 				}),
 			// Remove optional status from credits step when payment is successful
 			...(index === 4 &&
-				flowType === "credits" &&
 				isPaymentSuccessful && {
 					optional: false,
 				}),
@@ -203,9 +196,7 @@ export function OnboardingWizard() {
 						activeStep={activeStep}
 						onStepChange={handleStepChange}
 						className="mb-6"
-						nextButtonDisabled={
-							activeStep === 4 && flowType === "credits" && !isPaymentSuccessful
-						}
+						nextButtonDisabled={activeStep === 4 && !isPaymentSuccessful}
 					>
 						{renderCurrentStep()}
 					</Stepper>
