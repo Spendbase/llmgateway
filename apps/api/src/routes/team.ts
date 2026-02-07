@@ -2,6 +2,8 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
+import { teamSizeGauge } from "@/services/metrics.service.js";
+
 import { db, eq, tables } from "@llmgateway/db";
 
 import type { ServerTypes } from "@/vars.js";
@@ -96,6 +98,8 @@ team.openapi(getMembers, async (c) => {
 			},
 		},
 	});
+
+	teamSizeGauge.add(members.length, { organizationId });
 
 	return c.json({
 		members: members.map((m) => ({
