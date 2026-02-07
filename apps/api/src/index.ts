@@ -12,7 +12,7 @@ import {
 	createHonoRequestLogger,
 	createRequestLifecycleMiddleware,
 } from "@llmgateway/instrumentation";
-import "@llmgateway/instrumentation/grafana";
+import { initTelemetry } from "@llmgateway/instrumentation/grafana";
 import { logger } from "@llmgateway/logger";
 import { HealthChecker } from "@llmgateway/shared";
 
@@ -72,6 +72,8 @@ app.use(
 		credentials: true,
 	}),
 );
+
+initTelemetry("llm-api");
 
 app.use("*", grafanaMiddleware);
 

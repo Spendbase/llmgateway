@@ -2,12 +2,8 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 
-import {
-	activationCounter,
-	modelUsageCounter,
-} from "@/services/metrics.service.js";
-
 import { db } from "@llmgateway/db";
+import { activationCounter } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
 
 import type { ServerTypes } from "@/vars.js";
@@ -94,18 +90,12 @@ chat.openapi(completionRoute, async (c) => {
 			});
 
 			if (keyRecord?.project?.organization) {
-				const organization = keyRecord.project.organization;
-
-				modelUsageCounter.add(1, {
-					model: model,
-					org_id: organization.id,
-					environment: process.env.NODE_ENV || "development",
-				});
+				const orgId = keyRecord.project.organization.id;
 
 				const previousLog = await db.query.log.findFirst({
 					where: {
 						organizationId: {
-							eq: organization.id,
+							eq: orgId,
 						},
 					},
 					columns: { id: true },
@@ -113,8 +103,9 @@ chat.openapi(completionRoute, async (c) => {
 
 				if (!previousLog) {
 					activationCounter.add(1, {
-						org_id: organization.id,
-						method: "api_key",
+						org_id: orgId,
+						method: "activation_success",
+						environment: process.env.NODE_ENV || "development",
 					});
 				}
 			}

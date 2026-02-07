@@ -117,3 +117,5 @@ export {
 
 // Re-export hono logger
 export { createHonoRequestLogger } from "./logger.js";
+
+export * from "./grafana/grafana.service.js";

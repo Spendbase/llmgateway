@@ -1,36 +1,33 @@
-import { metrics } from "@opentelemetry/api";
 import { createMiddleware } from "hono/factory";
 
-const meter = metrics.getMeter("api-gateway");
-
-const httpCounter = meter.createCounter("http_requests_total", {
-	description: "Total number of HTTP requests",
-});
-
-const latencyHistogram = meter.createHistogram("http_request_duration_ms", {
-	description: "Duration of HTTP requests in milliseconds",
-	unit: "ms",
-});
+import { db } from "@llmgateway/db";
+import { httpCounter } from "@llmgateway/instrumentation";
 
 export const grafanaMiddleware = createMiddleware(async (c, next) => {
-	const start = performance.now();
-
 	await next();
 
-	const duration = performance.now() - start;
 	const status = c.res.status;
+	const user = c.get("user");
 
-	const organizationId = c.get("organizationId") || "anonymous";
+	if (user) {
+		const userOrganization = await db.query.userOrganization.findFirst({
+			where: {
+				userId: {
+					eq: user.id,
+				},
+			},
+		});
 
-	httpCounter.add(1, {
-		method: c.req.method,
-		route: c.req.path,
-		status: String(status),
-		org_id: organizationId,
-	});
+		const organizationId = userOrganization?.id ?? "unknown";
 
-	latencyHistogram.record(duration, {
-		route: c.req.path,
-		status: String(status),
-	});
+		httpCounter.add(1, {
+			method: c.req.method,
+			route: c.req.path,
+			status: String(status),
+			org_id: organizationId,
+			user_id: user.id,
+			username: user.name,
+			email: user.email,
+		});
+	}
 });
