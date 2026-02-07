@@ -1,4 +1,5 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { trace } from "@opentelemetry/api";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
@@ -539,6 +540,11 @@ admin.openapi(getOrganizations, async (c) => {
 		throw new HTTPException(401, {
 			message: "Unauthorized",
 		});
+	}
+
+	const activeSpan = trace.getActiveSpan();
+	if (activeSpan) {
+		activeSpan.setAttribute("user_id", user.id);
 	}
 
 	const organizations = await db

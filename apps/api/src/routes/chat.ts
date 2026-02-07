@@ -2,6 +2,8 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 
+import { db } from "@llmgateway/db";
+import { activationCounter } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
 
 import type { ServerTypes } from "@/vars.js";
@@ -67,6 +69,47 @@ chat.openapi(completionRoute, async (c) => {
 				}),
 			},
 		);
+
+		if (response.ok) {
+			const keyRecord = await db.query.apiKey.findFirst({
+				where: {
+					token: {
+						eq: authToken,
+					},
+					status: {
+						eq: "active",
+					},
+				},
+				with: {
+					project: {
+						with: {
+							organization: true,
+						},
+					},
+				},
+			});
+
+			if (keyRecord?.project?.organization) {
+				const orgId = keyRecord.project.organization.id;
+
+				const previousLog = await db.query.log.findFirst({
+					where: {
+						organizationId: {
+							eq: orgId,
+						},
+					},
+					columns: { id: true },
+				});
+
+				if (!previousLog) {
+					activationCounter.add(1, {
+						org_id: orgId,
+						method: "activation_success",
+						environment: process.env.NODE_ENV || "development",
+					});
+				}
+			}
+		}
 
 		if (!response.ok) {
 			const errorText = await response.text();

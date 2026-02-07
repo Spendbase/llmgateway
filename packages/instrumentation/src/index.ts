@@ -12,6 +12,7 @@ import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 
 import { createLogger } from "@llmgateway/logger";
 
+import "./grafana.js";
 import { getSamplerConfig } from "./samplers/config.js";
 
 const logger = createLogger({ name: "instrumentation" });
@@ -116,3 +117,5 @@ export {
 
 // Re-export hono logger
 export { createHonoRequestLogger } from "./logger.js";
+
+export * from "./grafana/grafana.service.js";

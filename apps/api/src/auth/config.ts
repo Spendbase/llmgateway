@@ -9,6 +9,7 @@ import { validateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
 import { db, eq, tables, shortid } from "@llmgateway/db";
+import { signupCounter } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
 
 const apiUrl = process.env.API_URL || "http://localhost:4002";
@@ -648,6 +649,8 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						}
 					}
 				});
+
+				signupCounter.add(1, { method: "new_onboarding" });
 			}),
 		},
 	}),

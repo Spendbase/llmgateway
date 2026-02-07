@@ -12,7 +12,9 @@ import { db } from "@llmgateway/db";
 import {
 	createHonoRequestLogger,
 	createRequestLifecycleMiddleware,
+	httpCounter,
 } from "@llmgateway/instrumentation";
+import { initTelemetry } from "@llmgateway/instrumentation/grafana";
 import { logger } from "@llmgateway/logger";
 import { HealthChecker } from "@llmgateway/shared";
 
@@ -109,6 +111,12 @@ app.onError((error, c) => {
 		} else {
 			logger.warn("HTTP client error", { status, message: error.message });
 		}
+
+		httpCounter.add(1, {
+			method: c.req.method,
+			route: c.req.path,
+			status: String(status),
+		});
 
 		return c.json(
 			{
@@ -228,6 +236,8 @@ app.openapi(root, async (c) => {
 });
 
 const v1 = new OpenAPIHono<ServerTypes>();
+
+initTelemetry("llm-api-gateway");
 
 v1.route("/chat", chat);
 v1.route("/models", models);

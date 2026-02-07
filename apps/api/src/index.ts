@@ -12,11 +12,13 @@ import {
 	createHonoRequestLogger,
 	createRequestLifecycleMiddleware,
 } from "@llmgateway/instrumentation";
+import { initTelemetry } from "@llmgateway/instrumentation/grafana";
 import { logger } from "@llmgateway/logger";
 import { HealthChecker } from "@llmgateway/shared";
 
 import { redisClient } from "./auth/config.js";
 import { authHandler } from "./auth/handler.js";
+import { grafanaMiddleware } from "./middleware/grafana.js";
 import { tracingMiddleware } from "./middleware/tracing.js";
 import { beacon } from "./routes/beacon.js";
 import { googleWorkspace } from "./routes/google-workspace.js";
@@ -70,6 +72,10 @@ app.use(
 		credentials: true,
 	}),
 );
+
+initTelemetry("llm-api");
+
+app.use("*", grafanaMiddleware);
 
 app.onError((error, c) => {
 	if (error instanceof HTTPException) {
