@@ -18,7 +18,7 @@ export const grafanaMiddleware = createMiddleware(async (c, next) => {
 			},
 		});
 
-		const organizationId = userOrganization?.id ?? "unknown";
+		const organizationId = userOrganization?.organizationId ?? "unknown";
 
 		httpCounter.add(1, {
 			method: c.req.method,
@@ -26,8 +26,6 @@ export const grafanaMiddleware = createMiddleware(async (c, next) => {
 			status: String(status),
 			org_id: organizationId,
 			user_id: user.id,
-			username: user.name,
-			email: user.email,
 		});
 	}
 });

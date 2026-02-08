@@ -11,8 +11,8 @@ import { db } from "@llmgateway/db";
 import {
 	createHonoRequestLogger,
 	createRequestLifecycleMiddleware,
+	initTelemetry,
 } from "@llmgateway/instrumentation";
-import { initTelemetry } from "@llmgateway/instrumentation/grafana";
 import { logger } from "@llmgateway/logger";
 import { HealthChecker } from "@llmgateway/shared";
 
