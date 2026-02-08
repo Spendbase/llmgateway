@@ -5,7 +5,7 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 export * from "./grafana.service.js";
 
 export function initTelemetry(serviceName: string) {
-	if (!process.env.GRAFANA_INSTANCE_ID || !process.env.GRAFANA_API_TOKEN) {
+	if (!process.env.GRAFANA_INSTANCE_ID || !process.env.GRAFANA_API_TOKEN || !process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
 		return;
 	}
 
