@@ -13,8 +13,8 @@ import {
 	createHonoRequestLogger,
 	createRequestLifecycleMiddleware,
 	httpCounter,
+	initTelemetry,
 } from "@llmgateway/instrumentation";
-import { initTelemetry } from "@llmgateway/instrumentation/grafana";
 import { logger } from "@llmgateway/logger";
 import { HealthChecker } from "@llmgateway/shared";
 
