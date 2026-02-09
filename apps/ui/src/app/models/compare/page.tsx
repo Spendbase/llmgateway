@@ -1,4 +1,3 @@
-import Footer from "@/components/landing/footer";
 import { Navbar } from "@/components/landing/navbar";
 import { ModelComparison } from "@/components/models/model-comparison";
 
@@ -29,7 +28,6 @@ export default function ModelsComparePage() {
 					<ModelComparison />
 				</div>
 			</main>
-			<Footer />
 		</>
 	);
 }
