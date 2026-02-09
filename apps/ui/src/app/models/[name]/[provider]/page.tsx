@@ -12,7 +12,6 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import Footer from "@/components/landing/footer";
 import { Navbar } from "@/components/landing/navbar";
 import { CopyModelName } from "@/components/models/copy-model-name";
 import { ModelProviderCard } from "@/components/models/model-provider-card";
@@ -266,7 +265,6 @@ export default async function ModelProviderPage({ params }: PageProps) {
 					</div>
 				</div>
 			</div>
-			<Footer />
 		</>
 	);
 }
