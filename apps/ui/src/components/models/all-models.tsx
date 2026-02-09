@@ -35,7 +35,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 
-import Footer from "@/components/landing/footer";
 import { ModelCodeExampleDialog } from "@/components/models/model-code-example-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/lib/components/badge";
@@ -1802,7 +1801,6 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 					</TooltipProvider>
 				</div>
 			</main>
-			<Footer />
 		</div>
 	);
 }
