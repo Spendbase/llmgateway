@@ -71,43 +71,43 @@ chat.openapi(completionRoute, async (c) => {
 		);
 
 		if (response.ok) {
-			const keyRecord = await db.query.apiKey.findFirst({
-				where: {
-					token: {
-						eq: authToken,
-					},
-					status: {
-						eq: "active",
-					},
-				},
-				with: {
-					project: {
+			const analyticsPromise = (async () => {
+				try {
+					const keyRecord = await db.query.apiKey.findFirst({
+						where: {
+							token: { eq: authToken },
+							status: { eq: "active" },
+						},
 						with: {
-							organization: true,
+							project: {
+								with: { organization: true },
+							},
 						},
-					},
-				},
-			});
-
-			if (keyRecord?.project?.organization) {
-				const orgId = keyRecord.project.organization.id;
-
-				const previousLog = await db.query.log.findFirst({
-					where: {
-						organizationId: {
-							eq: orgId,
-						},
-					},
-					columns: { id: true },
-				});
-
-				if (!previousLog) {
-					activationCounter.add(1, {
-						org_id: orgId,
-						method: "activation_success",
-						environment: process.env.NODE_ENV || "development",
 					});
-				}
+
+					if (keyRecord?.project?.organization) {
+						const orgId = keyRecord.project.organization.id;
+
+						const previousLog = await db.query.log.findFirst({
+							where: { organizationId: { eq: orgId } },
+							columns: { id: true },
+						});
+
+						if (!previousLog) {
+							activationCounter.add(1, {
+								org_id: orgId,
+								method: "activation_success",
+								environment: process.env.NODE_ENV || "development",
+							});
+						}
+					}
+				} catch {}
+			})();
+
+			if (c.executionCtx) {
+				c.executionCtx.waitUntil(analyticsPromise);
+			} else {
+				analyticsPromise.catch();
 			}
 		}
 

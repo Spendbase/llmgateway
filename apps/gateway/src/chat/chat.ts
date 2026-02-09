@@ -2815,7 +2815,7 @@ chat.openapi(completions, async (c) => {
 				// Extract plugin IDs for logging (streaming error)
 				const streamingErrorPluginIds = plugins?.map((p) => p.id) || [];
 
-				sendCostUsage(costs?.totalCost || 0, organization?.id, requestedModel);
+				sendCostUsage(0, organization?.id, requestedModel);
 
 				sendCostUsage(0, organization?.id, requestedModel, "storage");
 
