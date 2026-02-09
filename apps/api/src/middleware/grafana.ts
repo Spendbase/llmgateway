@@ -1,6 +1,6 @@
+import { getCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 
-import { db } from "@llmgateway/db";
 import { httpCounter } from "@llmgateway/instrumentation";
 
 export const grafanaMiddleware = createMiddleware(async (c, next) => {
@@ -9,23 +9,28 @@ export const grafanaMiddleware = createMiddleware(async (c, next) => {
 	const status = c.res.status;
 	const user = c.get("user");
 
-	if (user) {
-		const userOrganization = await db.query.userOrganization.findFirst({
-			where: {
-				userId: {
-					eq: user.id,
-				},
-			},
-		});
+	let finalOrgId = "unknown";
 
-		const organizationId = userOrganization?.organizationId ?? "unknown";
+	const allCookies = getCookie(c);
+	const prefix = "llmgateway-last-used-project-";
 
-		httpCounter.add(1, {
-			method: c.req.method,
-			route: c.req.path,
-			status: String(status),
-			org_id: organizationId,
-			user_id: user.id,
-		});
+	const targetCookieName = Object.keys(allCookies).find((name) =>
+		name.startsWith(prefix),
+	);
+
+	if (targetCookieName) {
+		const orgIdFromCookie = targetCookieName.replace(prefix, "");
+
+		if (orgIdFromCookie) {
+			finalOrgId = orgIdFromCookie;
+		}
 	}
+
+	httpCounter.add(1, {
+		method: c.req.method,
+		route: c.req.routePath,
+		status: String(status),
+		org_id: finalOrgId,
+		user_id: user?.id || "anonymous",
+	});
 });
