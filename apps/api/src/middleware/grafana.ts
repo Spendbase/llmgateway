@@ -21,7 +21,7 @@ export const grafanaMiddleware = createMiddleware(async (c, next) => {
 	if (targetCookieName) {
 		const orgIdFromCookie = targetCookieName.replace(prefix, "");
 
-		if (orgIdFromCookie) {
+		if (orgIdFromCookie && /^[a-zA-Z0-9-]+$/.test(orgIdFromCookie)) {
 			finalOrgId = orgIdFromCookie;
 		}
 	}

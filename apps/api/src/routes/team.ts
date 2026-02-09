@@ -98,11 +98,6 @@ team.openapi(getMembers, async (c) => {
 		},
 	});
 
-	teamSizeGauge.add(members.length, {
-		org_id: organizationId,
-		method: "team_members",
-	});
-
 	return c.json({
 		members: members.map((m) => ({
 			id: m.id,
