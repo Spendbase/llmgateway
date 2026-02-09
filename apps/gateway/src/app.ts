@@ -12,7 +12,6 @@ import { db } from "@llmgateway/db";
 import {
 	createHonoRequestLogger,
 	createRequestLifecycleMiddleware,
-	httpCounter,
 	initTelemetry,
 } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
@@ -111,12 +110,6 @@ app.onError((error, c) => {
 		} else {
 			logger.warn("HTTP client error", { status, message: error.message });
 		}
-
-		httpCounter.add(1, {
-			method: c.req.method,
-			route: c.req.path,
-			status: String(status),
-		});
 
 		return c.json(
 			{
