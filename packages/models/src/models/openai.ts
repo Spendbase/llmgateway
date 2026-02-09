@@ -995,7 +995,7 @@ export const openaiModels = [
 				webSearch: true,
 				webSearchPrice: 0.01, // $10 per 1000 searches for reasoning models
 				reasoning: true,
-				reasoningLevels: ["minimal", "low", "medium", "high"],
+				reasoningLevels: ["low", "medium", "high"],
 				reasoningOutput: "omit",
 				supportsResponsesApi: true,
 				jsonOutputSchema: true,
