@@ -13,8 +13,8 @@ export interface FeeCalculationInput {
 	cardCountry?: string;
 }
 
-const STRIPE_FIXED_FEE = 0;
-const STRIPE_PERCENTAGE_FEE = 0;
+const STRIPE_FIXED_FEE = 0.3;
+const STRIPE_PERCENTAGE_FEE = 0.029;
 const INTERNATIONAL_FEE_PERCENTAGE = 0;
 const FREE_PLAN_FEE_PERCENTAGE = 0;
 const PRO_PLAN_FEE_PERCENTAGE = 0;
