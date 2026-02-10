@@ -253,7 +253,7 @@ async function processAutoTopUp(): Promise<void> {
 						amount: feeBreakdown.totalAmount.toString(),
 						currency: "USD",
 						status: "pending",
-						description: `Auto top-up for ${topUpAmount} USD (total: ${feeBreakdown.totalAmount} including fees)`,
+						description: `Auto top-up for ${topUpAmount} USD`,
 					})
 					.returning()
 					.then((rows) => rows[0]);
@@ -266,7 +266,7 @@ async function processAutoTopUp(): Promise<void> {
 					const paymentIntent = await stripe.paymentIntents.create({
 						amount: Math.round(feeBreakdown.totalAmount * 100),
 						currency: "usd",
-						description: `Auto top-up for ${topUpAmount} USD (total: ${feeBreakdown.totalAmount} including fees)`,
+						description: `Auto top-up for ${topUpAmount} USD`,
 						payment_method: defaultPaymentMethod.stripePaymentMethodId,
 						customer: org.stripeCustomerId!,
 						confirm: true,
@@ -286,7 +286,7 @@ async function processAutoTopUp(): Promise<void> {
 						.update(tables.transaction)
 						.set({
 							stripePaymentIntentId: paymentIntent.id,
-							description: `Auto top-up for ${topUpAmount} USD (total: ${feeBreakdown.totalAmount} including fees)`,
+							description: `Auto top-up for ${topUpAmount} USD`,
 						})
 						.where(eq(tables.transaction.id, pendingTransaction.id));
 
