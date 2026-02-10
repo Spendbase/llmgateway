@@ -23,7 +23,6 @@ import {
 import { Input } from "@/lib/components/input";
 import { Label } from "@/lib/components/label";
 import { useToast } from "@/lib/components/use-toast";
-import { useDashboardState } from "@/lib/dashboard-state";
 import { useApi } from "@/lib/fetch-client";
 import Spinner from "@/lib/icons/Spinner";
 import { useStripe } from "@/lib/stripe";
@@ -165,7 +164,7 @@ function AmountStep({
 	onCancel: () => void;
 }) {
 	const presetAmounts = [10, 25, 50, 100];
-	const { selectedOrganization } = useDashboardState();
+
 	const api = useApi();
 	const { data: feeData, isLoading: feeDataLoading } = api.useQuery(
 		"post",
@@ -243,47 +242,22 @@ function AmountStep({
 
 				{amount >= 5 && (
 					<div className="border rounded-lg p-4 bg-muted/50">
-						<p className="font-medium mb-2">Fee Breakdown</p>
+						<p className="font-medium mb-2">Total</p>
 						{feeDataLoading ? (
 							<div className="flex items-center justify-center py-4">
 								<Spinner className="h-5 w-5 animate-spin text-muted-foreground" />
 								<span className="ml-2 text-sm text-muted-foreground">
-									Calculating fees...
+									Calculating...
 								</span>
 							</div>
 						) : feeData ? (
 							<div className="space-y-1 text-sm">
-								<div className="flex justify-between">
-									<span>Credits</span>
-									<span>${feeData.baseAmount.toFixed(2)}</span>
-								</div>
-								<div className="flex justify-between">
-									<span>Stripe fees ($0.30 + 2.9%)</span>
-									<span>${feeData.stripeFee.toFixed(2)}</span>
-								</div>
-								{feeData.internationalFee > 0 && (
-									<div className="flex justify-between">
-										<span>International card fee (1.5%)</span>
-										<span>${feeData.internationalFee.toFixed(2)}</span>
-									</div>
-								)}
-								{feeData.planFee > 0 && (
-									<div className="flex justify-between">
-										<span>
-											Service fee (
-											{selectedOrganization?.plan === "pro" ? "2.5%" : "5%"} -{" "}
-											{selectedOrganization?.plan === "pro" ? "Pro" : "Free"}{" "}
-											plan)
-										</span>
-										<span>${feeData.planFee.toFixed(2)}</span>
-									</div>
-								)}
-								<div className="border-t pt-1 flex justify-between font-medium">
-									<span>Total</span>
+								<div className="flex justify-between font-medium text-lg">
+									<span>Total to pay</span>
 									<span>${feeData.totalAmount.toFixed(2)}</span>
 								</div>
 								{hasBonus && feeData.bonusAmount && (
-									<div className="flex justify-between text-green-600 font-semibold bg-green-50 dark:bg-green-950/50 -mx-2 px-2 py-1 rounded">
+									<div className="flex justify-between text-green-600 font-semibold bg-green-50 dark:bg-green-950/50 -mx-2 px-2 py-1 rounded mt-2">
 										<span>🎉 First-time bonus</span>
 										<span>+${feeData.bonusAmount.toFixed(2)}</span>
 									</div>
@@ -609,7 +583,7 @@ function ConfirmPaymentStep({
 	setLoading: (loading: boolean) => void;
 }) {
 	const { toast } = useToast();
-	const { selectedOrganization } = useDashboardState();
+
 	const api = useApi();
 	const { mutateAsync: topUpMutation } = api.useMutation(
 		"post",
@@ -694,33 +668,8 @@ function ConfirmPaymentStep({
 						</div>
 					) : feeData ? (
 						<div className="space-y-2 text-sm">
-							<div className="flex justify-between">
-								<span>Credits</span>
-								<span>${feeData.baseAmount.toFixed(2)}</span>
-							</div>
-							<div className="flex justify-between">
-								<span>Stripe fees ($0.30 + 2.9%)</span>
-								<span>${feeData.stripeFee.toFixed(2)}</span>
-							</div>
-							{feeData.internationalFee > 0 && (
-								<div className="flex justify-between">
-									<span>International card fee (1.5%)</span>
-									<span>${feeData.internationalFee.toFixed(2)}</span>
-								</div>
-							)}
-							{feeData.planFee > 0 && (
-								<div className="flex justify-between">
-									<span>
-										Service fee (
-										{selectedOrganization?.plan === "pro" ? "2.5%" : "5%"} -{" "}
-										{selectedOrganization?.plan === "pro" ? "Pro" : "Free"}{" "}
-										plan)
-									</span>
-									<span>${feeData.planFee.toFixed(2)}</span>
-								</div>
-							)}
 							<div className="border-t pt-2 flex justify-between font-medium">
-								<span>Total</span>
+								<span>Total to pay</span>
 								<span>${feeData.totalAmount.toFixed(2)}</span>
 							</div>
 							{hasBonus && feeData.bonusAmount && (
