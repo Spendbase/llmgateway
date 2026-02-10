@@ -113,6 +113,10 @@ export type LogInsertData = Omit<
 	"id" | "createdAt" | "updatedAt"
 >;
 
+export type LoggerParams = LogInsertData & {
+    userId?: string | null;
+};
+
 export type SerializedOrganization = Omit<
 	Organization,
 	| "createdAt"

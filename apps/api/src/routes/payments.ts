@@ -105,7 +105,7 @@ payments.openapi(createPaymentIntent, async (c) => {
 		},
 	});
 
-	costCounter.add(Math.round(feeBreakdown.totalAmount * 100), {
+	costCounter.add(feeBreakdown.totalAmount, {
 		organizationId: userOrganization.organization.id,
 		userId: user.id,
 		type: "create_payment_intent",
@@ -557,7 +557,7 @@ payments.openapi(topUpWithSavedMethod, async (c) => {
 		});
 	}
 
-	costCounter.add(Math.round(feeBreakdown.totalAmount * 100), {
+	costCounter.add(feeBreakdown.totalAmount, {
 		organizationId: userOrganization.organization.id,
 		userId: user.id,
 		type: "credit_topup",
@@ -702,12 +702,6 @@ payments.openapi(calculateFeesRoute, async (c) => {
 			}
 		}
 	}
-
-	costCounter.add(finalCreditAmount, {
-		organizationId: userOrganization.organization.id,
-		userId: user.id,
-		type: "calculate_fees",
-	});
 
 	return c.json({
 		...feeBreakdown,

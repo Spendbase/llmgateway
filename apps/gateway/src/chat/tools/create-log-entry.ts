@@ -94,5 +94,6 @@ export function createLogEntry(
 		upstreamResponse: debugMode ? upstreamResponse || null : null,
 		plugins: plugins && plugins.length > 0 ? plugins : null,
 		pluginResults: pluginResults || null,
+		userId: apiKey.createdBy,
 	} as const;
 }

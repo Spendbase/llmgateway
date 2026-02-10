@@ -70,40 +70,27 @@ chat.openapi(completionRoute, async (c) => {
 			},
 		);
 
-		if (response.ok) {
-			const analyticsPromise = (async () => {
-				try {
-					const keyRecord = await db.query.apiKey.findFirst({
-						where: {
-							token: { eq: authToken },
-							status: { eq: "active" },
-						},
-						with: {
-							project: true,
-						},
-					});
+		const keyRecord = await db.query.apiKey.findFirst({
+			where: {
+				token: { eq: authToken },
+				status: { eq: "active" },
+			},
+			with: {
+				project: true,
+			},
+		});
 
-					if (
-						keyRecord?.project?.organizationId &&
-						Number(keyRecord.usage) === 0
-					) {
-						const orgId = keyRecord.project.organizationId;
+		const isActivation = Number(keyRecord?.usage) === 0;
 
-						activationCounter.add(1, {
-							org_id: orgId,
-							userId: keyRecord.createdBy,
-							method: "activation_success",
-							environment: process.env.NODE_ENV || "development",
-						});
-					}
-				} catch {}
-			})();
+		if (keyRecord?.project?.organizationId && isActivation) {
+			const orgId = keyRecord.project.organizationId;
 
-			if (c.executionCtx) {
-				c.executionCtx.waitUntil(analyticsPromise);
-			} else {
-				analyticsPromise.catch();
-			}
+			activationCounter.add(1, {
+				org_id: orgId,
+				userId: keyRecord.createdBy,
+				method: "activation_success",
+				environment: process.env.NODE_ENV || "development",
+			});
 		}
 
 		if (!response.ok) {

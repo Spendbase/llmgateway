@@ -1,9 +1,16 @@
 import { publishToQueue, LOG_QUEUE } from "@llmgateway/cache";
-import { UnifiedFinishReason, type LogInsertData } from "@llmgateway/db";
+import {
+	type InferInsertModel,
+	type log,
+	UnifiedFinishReason,
+	type LoggerParams,
+} from "@llmgateway/db";
+import {
+	tokenCounter,
+	modelUsageCounter,
+	costCounter,
+} from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
-
-import type { InferInsertModel } from "@llmgateway/db";
-import type { log } from "@llmgateway/db";
 
 /**
  * Check if a finish reason is expected to map to UNKNOWN
@@ -148,7 +155,7 @@ export function calculateDataStorageCost(
 
 export type LogData = InferInsertModel<typeof log>;
 
-export async function insertLog(logData: LogInsertData): Promise<unknown> {
+export async function insertLog(logData: LoggerParams): Promise<unknown> {
 	if (logData.unifiedFinishReason === undefined) {
 		if (logData.canceled) {
 			logData.unifiedFinishReason = UnifiedFinishReason.CANCELED;
@@ -176,5 +183,49 @@ export async function insertLog(logData: LogInsertData): Promise<unknown> {
 		}
 	}
 	await publishToQueue(LOG_QUEUE, logData);
+
+	const model = logData.usedModel || logData.requestedModel || "unknown";
+
+	if (logData.promptTokens) {
+		tokenCounter.add(Number(logData.promptTokens), {
+			type: "prompt",
+			model,
+			orgId: logData.organizationId,
+			userId: logData.userId,
+		});
+	}
+
+	if (logData.completionTokens) {
+		tokenCounter.add(Number(logData.completionTokens), {
+			type: "completion",
+			model,
+			orgId: logData.organizationId,
+			userId: logData.userId,
+		});
+	}
+
+	if (logData.cachedTokens) {
+		tokenCounter.add(Number(logData.cachedTokens), {
+			type: "cached",
+			model,
+			orgId: logData.organizationId,
+			userId: logData.userId,
+		});
+	}
+
+	modelUsageCounter.add(1, {
+		model,
+		orgId: logData.organizationId,
+		userId: logData.userId,
+	});
+
+	if (logData.cost) {
+		costCounter.add(logData.cost, {
+			type: "model_usage",
+			model,
+			org_id: logData.organizationId,
+		});
+	}
+
 	return 1; // Return 1 to match test expectations
 }

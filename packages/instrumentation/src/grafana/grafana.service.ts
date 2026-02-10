@@ -25,5 +25,5 @@ export const teamSizeGauge = meter.createUpDownCounter("org_team_size", {
 });
 
 export const tokenCounter = meter.createCounter("llm_tokens_total", {
-    description: "Total number of tokens processed (prompt + completion)",
+	description: "Total number of tokens processed (prompt + completion)",
 });
