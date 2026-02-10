@@ -251,8 +251,16 @@ function AmountStep({
 								</span>
 							</div>
 						) : feeData ? (
-							<div className="space-y-1 text-sm">
-								<div className="flex justify-between font-medium text-lg">
+							<div className="space-y-2 text-sm">
+								<div className="flex justify-between text-muted-foreground">
+									<span>Credits</span>
+									<span>${feeData.baseAmount.toFixed(2)}</span>
+								</div>
+								<div className="flex justify-between text-muted-foreground">
+									<span>Payment processing (Stripe)</span>
+									<span>${feeData.stripeFee.toFixed(2)}</span>
+								</div>
+								<div className="border-t pt-2 flex justify-between font-medium text-lg">
 									<span>Total to pay</span>
 									<span>${feeData.totalAmount.toFixed(2)}</span>
 								</div>
@@ -668,6 +676,14 @@ function ConfirmPaymentStep({
 						</div>
 					) : feeData ? (
 						<div className="space-y-2 text-sm">
+							<div className="flex justify-between text-muted-foreground">
+								<span>Credits</span>
+								<span>${feeData.baseAmount.toFixed(2)}</span>
+							</div>
+							<div className="flex justify-between text-muted-foreground">
+								<span>Payment processing (Stripe)</span>
+								<span>${feeData.stripeFee.toFixed(2)}</span>
+							</div>
 							<div className="border-t pt-2 flex justify-between font-medium">
 								<span>Total to pay</span>
 								<span>${feeData.totalAmount.toFixed(2)}</span>
