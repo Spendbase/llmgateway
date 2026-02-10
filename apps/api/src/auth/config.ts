@@ -581,7 +581,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						});
 					}
 
-					const autoDepositAmount = process.env.AUTO_DEPOSIT_CREDITS || 50;
+					const autoDepositAmount = process.env.AUTO_DEPOSIT_CREDITS ?? 50;
 
 					// Create a default organization
 					const [organization] = await tx
