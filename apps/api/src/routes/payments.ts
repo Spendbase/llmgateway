@@ -93,7 +93,7 @@ payments.openapi(createPaymentIntent, async (c) => {
 	const paymentIntent = await stripe.paymentIntents.create({
 		amount: Math.round(feeBreakdown.totalAmount * 100),
 		currency: "usd",
-		description: `Credit purchase for ${amount} USD`,
+		description: `Credit purchase for ${feeBreakdown.totalAmount.toFixed(2)} USD`,
 		customer: stripeCustomerId,
 		metadata: {
 			organizationId,
@@ -530,7 +530,7 @@ payments.openapi(topUpWithSavedMethod, async (c) => {
 	const paymentIntent = await stripe.paymentIntents.create({
 		amount: Math.round(feeBreakdown.totalAmount * 100),
 		currency: "usd",
-		description: `Credit purchase for ${amount} USD`,
+		description: `Credit purchase for ${feeBreakdown.totalAmount.toFixed(2)} USD`,
 		payment_method: paymentMethod.stripePaymentMethodId,
 		customer: stripeCustomerId,
 		confirm: true,
