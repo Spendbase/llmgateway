@@ -84,23 +84,6 @@ export function ModelSelector({
 		priceRange: "all",
 	});
 
-	// Parse value as provider/model-id (preferred). Fallback to model id only.
-	const raw = value ?? "";
-	const [selectedProviderId, selectedModelId] = raw.includes("/")
-		? (raw.split("/") as [string, string])
-		: ["", raw];
-	const selectedModel = models.find((m) => m.id === selectedModelId);
-	const selectedProviderDef = providers.find(
-		(p) => p.id === selectedProviderId,
-	);
-	const selectedMapping = selectedModel?.providers.find(
-		(p) => p.providerId === selectedProviderId,
-	);
-	const selectedEntryKey =
-		selectedModel && selectedProviderId && selectedMapping
-			? `${selectedProviderId}-${selectedModel.id}-${selectedMapping.modelName}`
-			: "";
-
 	// Build entries of model per provider mapping
 	const allEntries = React.useMemo(() => {
 		const out: {
@@ -113,20 +96,67 @@ export function ModelSelector({
 			if (m.id === "custom") {
 				continue;
 			}
+
+			// Group mappings by providerId to avoid duplicates in the UI
+			// Some models might have multiple mappings for the same provider (e.g. different internal names)
+			const providerMappings = new Map<string, ProviderModelMapping>();
 			for (const mp of m.providers) {
 				const isDeactivated =
 					mp.deactivatedAt && new Date(mp.deactivatedAt) <= now;
-				if (!isDeactivated) {
-					out.push({
-						model: m,
-						mapping: mp,
-						provider: providers.find((p) => p.id === mp.providerId),
-					});
+				if (isDeactivated) {
+					continue;
 				}
+
+				const existing = providerMappings.get(mp.providerId);
+				const isDeprecated =
+					mp.deprecatedAt && new Date(mp.deprecatedAt) <= now;
+
+				if (!existing) {
+					providerMappings.set(mp.providerId, mp);
+				} else {
+					// Prefer non-deprecated mapping if multiple exist
+					const existingIsDeprecated =
+						existing.deprecatedAt && new Date(existing.deprecatedAt) <= now;
+					if (existingIsDeprecated && !isDeprecated) {
+						providerMappings.set(mp.providerId, mp);
+					}
+				}
+			}
+
+			for (const [providerId, mapping] of Array.from(providerMappings)) {
+				out.push({
+					model: m,
+					mapping: mapping,
+					provider: providers.find((p) => p.id === providerId),
+				});
 			}
 		}
 		return out;
 	}, [models, providers]);
+
+	// Parse value as provider/model-id (preferred). Fallback to model id only.
+	const raw = value ?? "";
+	const [selectedProviderId, selectedModelId] = raw.includes("/")
+		? (raw.split("/") as [string, string])
+		: ["", raw];
+
+	const selectedEntry = allEntries.find(
+		(e) =>
+			e.model.id === selectedModelId &&
+			(!selectedProviderId || e.mapping.providerId === selectedProviderId),
+	);
+
+	const selectedModel =
+		selectedEntry?.model ?? models.find((m) => m.id === selectedModelId);
+	const selectedMapping = selectedEntry?.mapping;
+	const selectedProviderDef =
+		selectedEntry?.provider ??
+		providers.find((p) => p.id === selectedProviderId);
+
+	const selectedEntryKey =
+		selectedModel && selectedMapping
+			? `${selectedMapping.providerId}-${selectedModel.id}-${selectedMapping.modelName}`
+			: "";
 
 	const availableProviders = React.useMemo(() => {
 		const ids = new Set(allEntries.map((e) => e.mapping.providerId));
