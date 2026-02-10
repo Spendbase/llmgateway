@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ensureStripeCustomer } from "@/stripe.js";
 
 import { db, eq, tables } from "@llmgateway/db";
+import { costCounter } from "@llmgateway/instrumentation";
 import { calculateFees } from "@llmgateway/shared";
 
 import type { ServerTypes } from "@/vars.js";
@@ -102,6 +103,12 @@ payments.openapi(createPaymentIntent, async (c) => {
 			userEmail: user.email,
 			userId: user.id,
 		},
+	});
+
+	costCounter.add(Math.round(feeBreakdown.totalAmount * 100), {
+		organizationId: userOrganization.organization.id,
+		userId: user.id,
+		type: "create_payment_intent",
 	});
 
 	return c.json({
@@ -550,6 +557,12 @@ payments.openapi(topUpWithSavedMethod, async (c) => {
 		});
 	}
 
+	costCounter.add(Math.round(feeBreakdown.totalAmount * 100), {
+		organizationId: userOrganization.organization.id,
+		userId: user.id,
+		type: "credit_topup",
+	});
+
 	return c.json({
 		success: true,
 	});
@@ -689,6 +702,12 @@ payments.openapi(calculateFeesRoute, async (c) => {
 			}
 		}
 	}
+
+	costCounter.add(finalCreditAmount, {
+		organizationId: userOrganization.organization.id,
+		userId: user.id,
+		type: "calculate_fees",
+	});
 
 	return c.json({
 		...feeBreakdown,

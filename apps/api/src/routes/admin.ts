@@ -14,6 +14,7 @@ import {
 	tables,
 	inArray,
 } from "@llmgateway/db";
+import { costCounter } from "@llmgateway/instrumentation";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -622,6 +623,12 @@ admin.openapi(depositCredits, async (c) => {
 				},
 				newBalance: Number(updatedOrg.newBalance),
 			};
+		});
+
+		costCounter.add(result.transaction.creditAmount, {
+			organizationId,
+			userId: authUser.id,
+			type: "deposit_credits",
 		});
 
 		return c.json({

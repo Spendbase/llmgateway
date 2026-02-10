@@ -79,27 +79,22 @@ chat.openapi(completionRoute, async (c) => {
 							status: { eq: "active" },
 						},
 						with: {
-							project: {
-								with: { organization: true },
-							},
+							project: true,
 						},
 					});
 
-					if (keyRecord?.project?.organization) {
-						const orgId = keyRecord.project.organization.id;
+					if (
+						keyRecord?.project?.organizationId &&
+						Number(keyRecord.usage) === 0
+					) {
+						const orgId = keyRecord.project.organizationId;
 
-						const previousLog = await db.query.log.findFirst({
-							where: { organizationId: { eq: orgId } },
-							columns: { id: true },
+						activationCounter.add(1, {
+							org_id: orgId,
+							userId: keyRecord.createdBy,
+							method: "activation_success",
+							environment: process.env.NODE_ENV || "development",
 						});
-
-						if (!previousLog) {
-							activationCounter.add(1, {
-								org_id: orgId,
-								method: "activation_success",
-								environment: process.env.NODE_ENV || "development",
-							});
-						}
 					}
 				} catch {}
 			})();

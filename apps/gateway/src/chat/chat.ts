@@ -7,7 +7,6 @@ import { validateSource } from "@/chat/tools/validate-source.js";
 import { reportKeyError, reportKeySuccess } from "@/lib/api-key-health.js";
 import { isCodingModel } from "@/lib/coding-models.js";
 import { calculateCosts, shouldBillCancelledRequests } from "@/lib/costs.js";
-import { sendCostUsage, sendModelUsage } from "@/lib/grafana-helpers.js";
 import { throwIamException, validateModelAccess } from "@/lib/iam.js";
 import { calculateDataStorageCost, insertLog } from "@/lib/logs.js";
 
@@ -911,6 +910,11 @@ chat.openapi(completions, async (c) => {
 			},
 		},
 	});
+
+	if (organization) {
+		c.set("organizationId", organization.id);
+		c.set("userId", apiKey.createdBy);
+	}
 
 	// Validate coding model restriction for dev plan personal orgs
 	// This check must happen BEFORE capability checks to give the right error message
@@ -2029,25 +2033,6 @@ chat.openapi(completions, async (c) => {
 					inputImageCount,
 				);
 
-				sendModelUsage(organization?.id, requestedModel);
-				sendCostUsage(costs?.totalCost || 0, organization?.id, requestedModel);
-
-				const storageCostStr = calculateDataStorageCost(
-					promptTokens,
-					cachedTokens,
-					completionTokens,
-					reasoningTokens,
-					retentionLevel,
-				);
-				const storageCost = parseFloat(storageCostStr);
-
-				sendCostUsage(
-					storageCost || 0,
-					organization?.id,
-					requestedModel,
-					"storage",
-				);
-
 				await insertLog({
 					...baseLogEntry,
 					duration: 0, // No processing time for cached response
@@ -2211,30 +2196,6 @@ chat.openapi(completions, async (c) => {
 					cached: true,
 					toolResults: cachedResponse.choices?.[0]?.message?.tool_calls || null,
 				});
-
-				sendModelUsage(organization?.id, requestedModel);
-				sendCostUsage(
-					cachedCosts?.totalCost || 0,
-					organization?.id,
-					requestedModel,
-				);
-
-				const storageCostStr = calculateDataStorageCost(
-					cachedResponse.usage?.prompt_tokens,
-					cachedResponse.usage?.prompt_tokens_details?.cached_tokens,
-					cachedResponse.usage?.completion_tokens,
-					cachedResponse.usage?.reasoning_tokens,
-					retentionLevel,
-				);
-
-				const storageCost = parseFloat(storageCostStr);
-
-				sendCostUsage(
-					storageCost || 0,
-					organization?.id,
-					requestedModel,
-					"storage",
-				);
 
 				return c.json(cachedResponse);
 			}
@@ -2527,29 +2488,6 @@ chat.openapi(completions, async (c) => {
 						);
 					}
 
-					sendModelUsage(organization?.id, requestedModel);
-					sendCostUsage(
-						cancelledCosts?.totalCost || 0,
-						organization?.id,
-						requestedModel,
-					);
-
-					const storageCostStr = calculateDataStorageCost(
-						estimatedPromptTokens,
-						null,
-						0,
-						null,
-						retentionLevel,
-					);
-					const storageCost = parseFloat(storageCostStr);
-
-					sendCostUsage(
-						storageCost || 0,
-						organization?.id,
-						requestedModel,
-						"storage",
-					);
-
 					const baseLogEntry = createLogEntry(
 						requestId,
 						project,
@@ -2814,10 +2752,6 @@ chat.openapi(completions, async (c) => {
 				// Log the error in the database
 				// Extract plugin IDs for logging (streaming error)
 				const streamingErrorPluginIds = plugins?.map((p) => p.id) || [];
-
-				sendCostUsage(0, organization?.id, requestedModel);
-
-				sendCostUsage(0, organization?.id, requestedModel, "storage");
 
 				const baseLogEntry = createLogEntry(
 					requestId,
@@ -4070,25 +4004,6 @@ chat.openapi(completions, async (c) => {
 				const shouldIncludeTokensForBilling =
 					!canceled || (canceled && billCancelledRequests);
 
-				sendModelUsage(organization?.id, requestedModel);
-				sendCostUsage(costs.totalCost || 0, organization?.id, requestedModel);
-
-				const storageCostStr = calculateDataStorageCost(
-					calculatedPromptTokens,
-					cachedTokens,
-					calculatedCompletionTokens,
-					calculatedReasoningTokens,
-					retentionLevel,
-				);
-				const storageCost = parseFloat(storageCostStr);
-
-				sendCostUsage(
-					storageCost || 0,
-					organization?.id,
-					requestedModel,
-					"storage",
-				);
-
 				await insertLog({
 					...baseLogEntry,
 					duration,
@@ -4408,30 +4323,6 @@ chat.openapi(completions, async (c) => {
 				webSearchTool ? 1 : null, // Bill for web search if it was enabled
 			);
 		}
-
-		sendModelUsage(organization?.id, requestedModel);
-		sendCostUsage(
-			cancelledCosts?.totalCost || 0,
-			organization?.id,
-			requestedModel,
-		);
-
-		const storageCostStr = calculateDataStorageCost(
-			estimatedPromptTokens,
-			null,
-			0,
-			null,
-			retentionLevel,
-		);
-
-		const storageCost = parseFloat(storageCostStr);
-
-		sendCostUsage(
-			storageCost || 0,
-			organization?.id,
-			requestedModel,
-			"storage",
-		);
 
 		const baseLogEntry = createLogEntry(
 			requestId,
@@ -4835,21 +4726,6 @@ chat.openapi(completions, async (c) => {
 		showUpgradeMessage,
 		annotations,
 	);
-
-	sendModelUsage(organization?.id, requestedModel);
-	sendCostUsage(costs?.totalCost || 0, organization?.id, requestedModel);
-
-	const storageCostStr = calculateDataStorageCost(
-		calculatedPromptTokens,
-		cachedTokens,
-		calculatedCompletionTokens,
-		calculatedReasoningTokens,
-		retentionLevel,
-	);
-
-	const storageCost = parseFloat(storageCostStr);
-
-	sendCostUsage(storageCost || 0, organization?.id, requestedModel, "storage");
 
 	// Extract plugin IDs for logging
 	const pluginIds = plugins?.map((p) => p.id) || [];

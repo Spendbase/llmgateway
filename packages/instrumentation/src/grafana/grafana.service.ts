@@ -2,10 +2,6 @@ import { metrics, ValueType } from "@opentelemetry/api";
 
 const meter = metrics.getMeter("llm-api");
 
-export const httpCounter = meter.createCounter("http_requests_total", {
-	description: "Total number of HTTP requests",
-});
-
 export const signupCounter = meter.createCounter("user_signups_total", {
 	description: "Number of new user signups",
 });
@@ -26,4 +22,8 @@ export const costCounter = meter.createCounter("credits_consumed_total", {
 
 export const teamSizeGauge = meter.createUpDownCounter("org_team_size", {
 	description: "Number of users in an organization",
+});
+
+export const tokenCounter = meter.createCounter("llm_tokens_total", {
+    description: "Total number of tokens processed (prompt + completion)",
 });
