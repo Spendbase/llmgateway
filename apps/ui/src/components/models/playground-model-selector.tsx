@@ -27,6 +27,8 @@ import { cn } from "@/lib/utils";
 
 import { getProviderIcon } from "@llmgateway/shared/components";
 
+import { getUniqueModelEntries } from "./model-helpers";
+
 import type {
 	ModelDefinition,
 	ProviderDefinition,
@@ -86,52 +88,7 @@ export function ModelSelector({
 
 	// Build entries of model per provider mapping
 	const allEntries = React.useMemo(() => {
-		const out: {
-			model: ModelDefinition;
-			mapping: ProviderModelMapping;
-			provider?: ProviderDefinition;
-		}[] = [];
-		const now = new Date();
-		for (const m of models) {
-			if (m.id === "custom") {
-				continue;
-			}
-
-			// Group mappings by providerId to avoid duplicates in the UI
-			// Some models might have multiple mappings for the same provider (e.g. different internal names)
-			const providerMappings = new Map<string, ProviderModelMapping>();
-			for (const mp of m.providers) {
-				const isDeactivated =
-					mp.deactivatedAt && new Date(mp.deactivatedAt) <= now;
-				if (isDeactivated) {
-					continue;
-				}
-
-				const existing = providerMappings.get(mp.providerId);
-				const isDeprecated =
-					mp.deprecatedAt && new Date(mp.deprecatedAt) <= now;
-
-				if (!existing) {
-					providerMappings.set(mp.providerId, mp);
-				} else {
-					// Prefer non-deprecated mapping if multiple exist
-					const existingIsDeprecated =
-						existing.deprecatedAt && new Date(existing.deprecatedAt) <= now;
-					if (existingIsDeprecated && !isDeprecated) {
-						providerMappings.set(mp.providerId, mp);
-					}
-				}
-			}
-
-			for (const [providerId, mapping] of Array.from(providerMappings)) {
-				out.push({
-					model: m,
-					mapping: mapping,
-					provider: providers.find((p) => p.id === providerId),
-				});
-			}
-		}
-		return out;
+		return getUniqueModelEntries(models, providers, new Date());
 	}, [models, providers]);
 
 	// Parse value as provider/model-id (preferred). Fallback to model id only.
