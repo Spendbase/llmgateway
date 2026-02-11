@@ -1,8 +1,5 @@
 import { publishToQueue, LOG_QUEUE } from "@llmgateway/cache";
-import {
-	UnifiedFinishReason,
-	type LoggerParams,
-} from "@llmgateway/db";
+import { UnifiedFinishReason, type LoggerParams } from "@llmgateway/db";
 import {
 	tokenCounter,
 	modelUsageCounter,
