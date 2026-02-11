@@ -652,18 +652,15 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						}
 					}
 
-					await tx
-						.insert(tables.transaction)
-						.values({
-							organizationId: organization.id,
-							type: "credit_topup",
-							amount: "0",
-							creditAmount: String(autoDepositAmount),
-							status: "completed",
-							description: "Welcome credits for new registration",
-							currency: "USD",
-							createdAt: new Date(),
-						});
+					await tx.insert(tables.transaction).values({
+						organizationId: organization.id,
+						type: "credit_topup",
+						amount: "0",
+						creditAmount: String(autoDepositAmount),
+						status: "completed",
+						description: "Welcome credits for new registration",
+						currency: "USD",
+					});
 				});
 
 				signupCounter.add(1, { method: "new_onboarding" });
