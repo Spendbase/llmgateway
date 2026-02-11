@@ -628,7 +628,7 @@ admin.openapi(depositCredits, async (c) => {
 		revenueCounter.add(result.transaction.creditAmount, {
 			org_id: organizationId,
 			user_id: authUser.id,
-			type: "credit_topup",
+			type: "admin_grant",
 		});
 
 		return c.json({
