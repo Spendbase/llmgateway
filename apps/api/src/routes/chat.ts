@@ -71,43 +71,26 @@ chat.openapi(completionRoute, async (c) => {
 		);
 
 		if (response.ok) {
-			const analyticsPromise = (async () => {
-				try {
-					const keyRecord = await db.query.apiKey.findFirst({
-						where: {
-							token: { eq: authToken },
-							status: { eq: "active" },
-						},
-						with: {
-							project: {
-								with: { organization: true },
-							},
-						},
-					});
+			const keyRecord = await db.query.apiKey.findFirst({
+				where: {
+					token: { eq: authToken },
+					status: { eq: "active" },
+				},
+				with: {
+					project: true,
+				},
+			});
 
-					if (keyRecord?.project?.organization) {
-						const orgId = keyRecord.project.organization.id;
+			const isActivation = Number(keyRecord?.usage) === 0;
 
-						const previousLog = await db.query.log.findFirst({
-							where: { organizationId: { eq: orgId } },
-							columns: { id: true },
-						});
+			if (keyRecord?.project?.organizationId && isActivation) {
+				const orgId = keyRecord.project.organizationId;
 
-						if (!previousLog) {
-							activationCounter.add(1, {
-								org_id: orgId,
-								method: "activation_success",
-								environment: process.env.NODE_ENV || "development",
-							});
-						}
-					}
-				} catch {}
-			})();
-
-			if (c.executionCtx) {
-				c.executionCtx.waitUntil(analyticsPromise);
-			} else {
-				analyticsPromise.catch();
+				activationCounter.add(1, {
+					org_id: orgId,
+					user_id: keyRecord.createdBy,
+					method: "activation_success",
+				});
 			}
 		}
 

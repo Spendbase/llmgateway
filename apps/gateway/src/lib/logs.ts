@@ -1,9 +1,11 @@
 import { publishToQueue, LOG_QUEUE } from "@llmgateway/cache";
-import { UnifiedFinishReason, type LogInsertData } from "@llmgateway/db";
+import { UnifiedFinishReason, type LoggerParams } from "@llmgateway/db";
+import {
+	tokenCounter,
+	modelUsageCounter,
+	expensesCounter,
+} from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
-
-import type { InferInsertModel } from "@llmgateway/db";
-import type { log } from "@llmgateway/db";
 
 /**
  * Check if a finish reason is expected to map to UNKNOWN
@@ -146,9 +148,7 @@ export function calculateDataStorageCost(
  * This function is extracted to prepare for future implementation using a message queue.
  */
 
-export type LogData = InferInsertModel<typeof log>;
-
-export async function insertLog(logData: LogInsertData): Promise<unknown> {
+export async function insertLog(logData: LoggerParams): Promise<unknown> {
 	if (logData.unifiedFinishReason === undefined) {
 		if (logData.canceled) {
 			logData.unifiedFinishReason = UnifiedFinishReason.CANCELED;
@@ -176,5 +176,76 @@ export async function insertLog(logData: LogInsertData): Promise<unknown> {
 		}
 	}
 	await publishToQueue(LOG_QUEUE, logData);
+
+	const model = logData.usedModel || logData.requestedModel || "unknown";
+	const isError = logData.hasError;
+	const status = isError ? "error" : "success";
+	const details = logData.errorDetails as {
+		statusCode?: number;
+		statusText?: string;
+	} | null;
+
+	const statusCode = details?.statusCode
+		? String(details.statusCode)
+		: isError
+			? "500"
+			: "200";
+
+	const errorType = details?.statusText || (isError ? "unknown_error" : "none");
+
+	if (logData.promptTokens) {
+		tokenCounter.add(Number(logData.promptTokens), {
+			type: "prompt",
+			model,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
+		});
+	}
+
+	if (logData.completionTokens) {
+		tokenCounter.add(Number(logData.completionTokens), {
+			type: "completion",
+			model,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
+		});
+	}
+
+	if (logData.cachedTokens) {
+		tokenCounter.add(Number(logData.cachedTokens), {
+			type: "cached",
+			model,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
+		});
+	}
+
+	modelUsageCounter.add(1, {
+		model,
+		org_id: logData.organizationId,
+		user_id: logData.userId,
+		status,
+		status_code: statusCode,
+		error_type: errorType,
+	});
+
+	if (logData.cost) {
+		expensesCounter.add(logData.cost, {
+			type: "model_usage",
+			model,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
+		});
+	}
+
+	if (logData.dataStorageCost) {
+		expensesCounter.add(Number(logData.dataStorageCost), {
+			type: "storage_usage",
+			model,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
+		});
+	}
+
 	return 1; // Return 1 to match test expectations
 }

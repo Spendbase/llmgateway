@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ensureStripeCustomer } from "@/stripe.js";
 
 import { db, eq, tables } from "@llmgateway/db";
+import { revenueCounter } from "@llmgateway/instrumentation";
 import { calculateFees } from "@llmgateway/shared";
 
 import type { ServerTypes } from "@/vars.js";
@@ -103,6 +104,14 @@ payments.openapi(createPaymentIntent, async (c) => {
 			userId: user.id,
 		},
 	});
+
+	if (paymentIntent.status === "succeeded") {
+		revenueCounter.add(feeBreakdown.totalAmount, {
+			org_id: userOrganization.organization.id,
+			user_id: user.id,
+			type: "create_payment_intent",
+		});
+	}
 
 	return c.json({
 		clientSecret: paymentIntent.client_secret || "",
@@ -549,6 +558,12 @@ payments.openapi(topUpWithSavedMethod, async (c) => {
 			message: `Payment failed: ${paymentIntent.status}`,
 		});
 	}
+
+	revenueCounter.add(feeBreakdown.totalAmount, {
+		org_id: userOrganization.organization.id,
+		user_id: user.id,
+		type: "credit_topup",
+	});
 
 	return c.json({
 		success: true,
