@@ -14,8 +14,8 @@ export const modelUsageCounter = meter.createCounter("llm_requests_total", {
 	description: "Total number of LLM API requests",
 });
 
-export const costCounter = meter.createCounter("credits_consumed_total", {
-	description: "Total spend in USD",
+export const revenueCounter = meter.createCounter("credits_purchased_total", {
+	description: "Total revenue (credits bought) in USD",
 	unit: "USD",
 	valueType: ValueType.DOUBLE,
 });
@@ -26,4 +26,10 @@ export const teamSizeGauge = meter.createUpDownCounter("org_team_size", {
 
 export const tokenCounter = meter.createCounter("llm_tokens_total", {
 	description: "Total number of tokens processed (prompt + completion)",
+});
+
+export const expensesCounter = meter.createCounter("credits_usage_cost_total", {
+	description: "Total cost of provided services in USD",
+	unit: "USD",
+	valueType: ValueType.DOUBLE,
 });

@@ -3,7 +3,7 @@ import { UnifiedFinishReason, type LoggerParams } from "@llmgateway/db";
 import {
 	tokenCounter,
 	modelUsageCounter,
-	costCounter,
+	expensesCounter,
 } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
 
@@ -178,6 +178,20 @@ export async function insertLog(logData: LoggerParams): Promise<unknown> {
 	await publishToQueue(LOG_QUEUE, logData);
 
 	const model = logData.usedModel || logData.requestedModel || "unknown";
+	const isError = logData.hasError;
+	const status = isError ? "error" : "success";
+	const details = logData.errorDetails as {
+		statusCode?: number;
+		statusText?: string;
+	} | null;
+
+	const statusCode = details?.statusCode
+		? String(details.statusCode)
+		: isError
+			? "500"
+			: "200";
+
+	const errorType = details?.statusText || (isError ? "unknown_error" : "none");
 
 	if (logData.promptTokens) {
 		tokenCounter.add(Number(logData.promptTokens), {
@@ -210,10 +224,13 @@ export async function insertLog(logData: LoggerParams): Promise<unknown> {
 		model,
 		org_id: logData.organizationId,
 		user_id: logData.userId,
+		status,
+		status_code: statusCode,
+		error_type: errorType,
 	});
 
 	if (logData.cost) {
-		costCounter.add(logData.cost, {
+		expensesCounter.add(logData.cost, {
 			type: "model_usage",
 			model,
 			org_id: logData.organizationId,
@@ -222,7 +239,7 @@ export async function insertLog(logData: LoggerParams): Promise<unknown> {
 	}
 
 	if (logData.dataStorageCost) {
-		costCounter.add(Number(logData.dataStorageCost), {
+		expensesCounter.add(Number(logData.dataStorageCost), {
 			type: "storage_usage",
 			model,
 			org_id: logData.organizationId,

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { ensureStripeCustomer } from "@/stripe.js";
 
 import { db, eq, tables } from "@llmgateway/db";
-import { costCounter } from "@llmgateway/instrumentation";
+import { revenueCounter } from "@llmgateway/instrumentation";
 import { calculateFees } from "@llmgateway/shared";
 
 import type { ServerTypes } from "@/vars.js";
@@ -106,7 +106,7 @@ payments.openapi(createPaymentIntent, async (c) => {
 	});
 
 	if (paymentIntent.status === "succeeded") {
-		costCounter.add(feeBreakdown.totalAmount, {
+		revenueCounter.add(feeBreakdown.totalAmount, {
 			org_id: userOrganization.organization.id,
 			user_id: user.id,
 			type: "create_payment_intent",
@@ -559,7 +559,7 @@ payments.openapi(topUpWithSavedMethod, async (c) => {
 		});
 	}
 
-	costCounter.add(feeBreakdown.totalAmount, {
+	revenueCounter.add(feeBreakdown.totalAmount, {
 		org_id: userOrganization.organization.id,
 		user_id: user.id,
 		type: "credit_topup",
