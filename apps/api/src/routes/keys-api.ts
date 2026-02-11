@@ -219,7 +219,7 @@ keysApi.openapi(create, async (c) => {
 	});
 
 	// Check plan limits
-	const maxApiKeys = project.organization.plan === "pro" ? 20 : 5;
+	const maxApiKeys = project.organization.plan === "pro" ? 200 : 5;
 
 	if (existingApiKeys.length >= maxApiKeys) {
 		const planName = project.organization.plan === "pro" ? "Pro" : "Free";
@@ -400,7 +400,7 @@ keysApi.openapi(list, async (c) => {
 
 		if (project?.organization) {
 			plan = project.organization.plan as "free" | "pro";
-			maxKeys = plan === "pro" ? 20 : 5;
+			maxKeys = plan === "pro" ? 200 : 5;
 			currentCount = apiKeys.filter((key) => key.status !== "deleted").length;
 		}
 	}
