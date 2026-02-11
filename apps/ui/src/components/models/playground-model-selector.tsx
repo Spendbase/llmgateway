@@ -27,6 +27,8 @@ import { cn } from "@/lib/utils";
 
 import { getProviderIcon } from "@llmgateway/shared/components";
 
+import { getUniqueModelEntries } from "./model-helpers";
+
 import type {
 	ModelDefinition,
 	ProviderDefinition,
@@ -84,49 +86,34 @@ export function ModelSelector({
 		priceRange: "all",
 	});
 
+	// Build entries of model per provider mapping
+	const allEntries = React.useMemo(() => {
+		return getUniqueModelEntries(models, providers, new Date());
+	}, [models, providers]);
+
 	// Parse value as provider/model-id (preferred). Fallback to model id only.
 	const raw = value ?? "";
 	const [selectedProviderId, selectedModelId] = raw.includes("/")
 		? (raw.split("/") as [string, string])
 		: ["", raw];
-	const selectedModel = models.find((m) => m.id === selectedModelId);
-	const selectedProviderDef = providers.find(
-		(p) => p.id === selectedProviderId,
-	);
-	const selectedMapping = selectedModel?.providers.find(
-		(p) => p.providerId === selectedProviderId,
-	);
-	const selectedEntryKey =
-		selectedModel && selectedProviderId && selectedMapping
-			? `${selectedProviderId}-${selectedModel.id}-${selectedMapping.modelName}`
-			: "";
 
-	// Build entries of model per provider mapping
-	const allEntries = React.useMemo(() => {
-		const out: {
-			model: ModelDefinition;
-			mapping: ProviderModelMapping;
-			provider?: ProviderDefinition;
-		}[] = [];
-		const now = new Date();
-		for (const m of models) {
-			if (m.id === "custom") {
-				continue;
-			}
-			for (const mp of m.providers) {
-				const isDeactivated =
-					mp.deactivatedAt && new Date(mp.deactivatedAt) <= now;
-				if (!isDeactivated) {
-					out.push({
-						model: m,
-						mapping: mp,
-						provider: providers.find((p) => p.id === mp.providerId),
-					});
-				}
-			}
-		}
-		return out;
-	}, [models, providers]);
+	const selectedEntry = allEntries.find(
+		(e) =>
+			e.model.id === selectedModelId &&
+			(!selectedProviderId || e.mapping.providerId === selectedProviderId),
+	);
+
+	const selectedModel =
+		selectedEntry?.model ?? models.find((m) => m.id === selectedModelId);
+	const selectedMapping = selectedEntry?.mapping;
+	const selectedProviderDef =
+		selectedEntry?.provider ??
+		providers.find((p) => p.id === selectedProviderId);
+
+	const selectedEntryKey =
+		selectedModel && selectedMapping
+			? `${selectedMapping.providerId}-${selectedModel.id}-${selectedMapping.modelName}`
+			: "";
 
 	const availableProviders = React.useMemo(() => {
 		const ids = new Set(allEntries.map((e) => e.mapping.providerId));
