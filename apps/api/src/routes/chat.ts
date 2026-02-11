@@ -88,9 +88,8 @@ chat.openapi(completionRoute, async (c) => {
 
 				activationCounter.add(1, {
 					org_id: orgId,
-					userId: keyRecord.createdBy,
+					user_id: keyRecord.createdBy,
 					method: "activation_success",
-					environment: process.env.NODE_ENV || "development",
 				});
 			}
 		}

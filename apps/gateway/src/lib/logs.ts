@@ -1,7 +1,5 @@
 import { publishToQueue, LOG_QUEUE } from "@llmgateway/cache";
 import {
-	type InferInsertModel,
-	type log,
 	UnifiedFinishReason,
 	type LoggerParams,
 } from "@llmgateway/db";
@@ -152,8 +150,6 @@ export function calculateDataStorageCost(
  * Insert a log entry into the database.
  * This function is extracted to prepare for future implementation using a message queue.
  */
-
-export type LogData = InferInsertModel<typeof log>;
 
 export async function insertLog(logData: LoggerParams): Promise<unknown> {
 	if (logData.unifiedFinishReason === undefined) {
