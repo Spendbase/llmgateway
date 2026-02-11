@@ -1,7 +1,6 @@
 "use client";
 
 import {
-	ArrowUpRight,
 	CreditCard,
 	Zap,
 	Key,
@@ -24,7 +23,6 @@ import { ErrorsReliabilityCard } from "@/components/dashboard/errors-reliability
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { Overview } from "@/components/dashboard/overview";
 import { RecentActivityCard } from "@/components/dashboard/recent-activity-card";
-import { UpgradeToProDialog } from "@/components/shared/upgrade-to-pro-dialog";
 import { useDashboardNavigation } from "@/hooks/useDashboardNavigation";
 import { Button } from "@/lib/components/button";
 import {
@@ -306,8 +304,7 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 									Welcome to LLM API!
 								</h3>
 								<p className="text-muted-foreground mb-4">
-									Get started by adding credits to your account or upgrading to
-									Pro.
+									Get started by adding credits to your account.
 								</p>
 								<div className="flex justify-center gap-2">
 									{selectedOrganization && selectedProject && (
@@ -340,12 +337,6 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 												</Button>
 											</CreateApiKeyDialog>
 											<TopUpCreditsButton />
-											<UpgradeToProDialog>
-												<Button variant="outline">
-													<ArrowUpRight className="mr-2 h-4 w-4" />
-													Upgrade to Pro
-												</Button>
-											</UpgradeToProDialog>
 										</>
 									)}
 								</div>
