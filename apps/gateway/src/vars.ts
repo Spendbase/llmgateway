@@ -4,7 +4,5 @@ export interface ServerTypes extends Env {
 	Variables: {
 		traceId?: string;
 		spanId?: string;
-		organizationId?: string;
-		userId?: string;
 	};
 }

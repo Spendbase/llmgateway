@@ -190,8 +190,8 @@ export async function insertLog(logData: LoggerParams): Promise<unknown> {
 		tokenCounter.add(Number(logData.promptTokens), {
 			type: "prompt",
 			model,
-			orgId: logData.organizationId,
-			userId: logData.userId,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
 		});
 	}
 
@@ -199,8 +199,8 @@ export async function insertLog(logData: LoggerParams): Promise<unknown> {
 		tokenCounter.add(Number(logData.completionTokens), {
 			type: "completion",
 			model,
-			orgId: logData.organizationId,
-			userId: logData.userId,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
 		});
 	}
 
@@ -208,15 +208,15 @@ export async function insertLog(logData: LoggerParams): Promise<unknown> {
 		tokenCounter.add(Number(logData.cachedTokens), {
 			type: "cached",
 			model,
-			orgId: logData.organizationId,
-			userId: logData.userId,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
 		});
 	}
 
 	modelUsageCounter.add(1, {
 		model,
-		orgId: logData.organizationId,
-		userId: logData.userId,
+		org_id: logData.organizationId,
+		user_id: logData.userId,
 	});
 
 	if (logData.cost) {
@@ -224,6 +224,16 @@ export async function insertLog(logData: LoggerParams): Promise<unknown> {
 			type: "model_usage",
 			model,
 			org_id: logData.organizationId,
+			user_id: logData.userId,
+		});
+	}
+
+	if (logData.dataStorageCost) {
+		costCounter.add(Number(logData.dataStorageCost), {
+			type: "storage_usage",
+			model,
+			org_id: logData.organizationId,
+			user_id: logData.userId,
 		});
 	}
 

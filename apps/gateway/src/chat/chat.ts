@@ -911,11 +911,6 @@ chat.openapi(completions, async (c) => {
 		},
 	});
 
-	if (organization) {
-		c.set("organizationId", organization.id);
-		c.set("userId", apiKey.createdBy);
-	}
-
 	// Validate coding model restriction for dev plan personal orgs
 	// This check must happen BEFORE capability checks to give the right error message
 	if (

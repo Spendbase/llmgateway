@@ -70,27 +70,29 @@ chat.openapi(completionRoute, async (c) => {
 			},
 		);
 
-		const keyRecord = await db.query.apiKey.findFirst({
-			where: {
-				token: { eq: authToken },
-				status: { eq: "active" },
-			},
-			with: {
-				project: true,
-			},
-		});
-
-		const isActivation = Number(keyRecord?.usage) === 0;
-
-		if (keyRecord?.project?.organizationId && isActivation) {
-			const orgId = keyRecord.project.organizationId;
-
-			activationCounter.add(1, {
-				org_id: orgId,
-				userId: keyRecord.createdBy,
-				method: "activation_success",
-				environment: process.env.NODE_ENV || "development",
+		if (response.ok) {
+			const keyRecord = await db.query.apiKey.findFirst({
+				where: {
+					token: { eq: authToken },
+					status: { eq: "active" },
+				},
+				with: {
+					project: true,
+				},
 			});
+
+			const isActivation = Number(keyRecord?.usage) === 0;
+
+			if (keyRecord?.project?.organizationId && isActivation) {
+				const orgId = keyRecord.project.organizationId;
+
+				activationCounter.add(1, {
+					org_id: orgId,
+					userId: keyRecord.createdBy,
+					method: "activation_success",
+					environment: process.env.NODE_ENV || "development",
+				});
+			}
 		}
 
 		if (!response.ok) {

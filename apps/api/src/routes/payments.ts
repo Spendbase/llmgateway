@@ -105,11 +105,13 @@ payments.openapi(createPaymentIntent, async (c) => {
 		},
 	});
 
-	costCounter.add(feeBreakdown.totalAmount, {
-		organizationId: userOrganization.organization.id,
-		userId: user.id,
-		type: "create_payment_intent",
-	});
+	if (paymentIntent.status === "succeeded") {
+		costCounter.add(feeBreakdown.totalAmount, {
+			org_id: userOrganization.organization.id,
+			user_id: user.id,
+			type: "create_payment_intent",
+		});
+	}
 
 	return c.json({
 		clientSecret: paymentIntent.client_secret || "",
@@ -558,8 +560,8 @@ payments.openapi(topUpWithSavedMethod, async (c) => {
 	}
 
 	costCounter.add(feeBreakdown.totalAmount, {
-		organizationId: userOrganization.organization.id,
-		userId: user.id,
+		org_id: userOrganization.organization.id,
+		user_id: user.id,
 		type: "credit_topup",
 	});
 

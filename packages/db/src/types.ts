@@ -114,7 +114,7 @@ export type LogInsertData = Omit<
 >;
 
 export type LoggerParams = LogInsertData & {
-    userId?: string | null;
+    userId?: string;
 };
 
 export type SerializedOrganization = Omit<

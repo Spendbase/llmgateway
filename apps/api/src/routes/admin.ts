@@ -626,8 +626,8 @@ admin.openapi(depositCredits, async (c) => {
 		});
 
 		costCounter.add(result.transaction.creditAmount, {
-			organizationId,
-			userId: authUser.id,
+			org_id: organizationId,
+			user_id: authUser.id,
 			type: "credit_topup",
 		});
 

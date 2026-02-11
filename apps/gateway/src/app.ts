@@ -20,7 +20,6 @@ import { HealthChecker } from "@llmgateway/shared";
 import { anthropic } from "./anthropic/anthropic.js";
 import { audio } from "./audio/index.js";
 import { chat } from "./chat/chat.js";
-import { grafanaMiddleware } from "./middleware/grafana.js";
 import { tracingMiddleware } from "./middleware/tracing.js";
 import { models } from "./models/route.js";
 import { responses } from "./responses/responses.js";
@@ -232,8 +231,6 @@ app.openapi(root, async (c) => {
 const v1 = new OpenAPIHono<ServerTypes>();
 
 initTelemetry("llm-api-gateway");
-
-v1.use("/chat/completions", grafanaMiddleware);
 
 v1.route("/chat", chat);
 v1.route("/models", models);
