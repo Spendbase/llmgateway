@@ -14,6 +14,7 @@ import {
 	tables,
 	inArray,
 } from "@llmgateway/db";
+import { revenueCounter } from "@llmgateway/instrumentation";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -622,6 +623,12 @@ admin.openapi(depositCredits, async (c) => {
 				},
 				newBalance: Number(updatedOrg.newBalance),
 			};
+		});
+
+		revenueCounter.add(result.transaction.creditAmount, {
+			org_id: organizationId,
+			user_id: authUser.id,
+			type: "admin_grant",
 		});
 
 		return c.json({
