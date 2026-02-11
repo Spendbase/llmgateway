@@ -1,0 +1,2 @@
+src/grafana/grafana.ts(1,36): error TS2307: Cannot find module '@opentelemetry/exporter-metrics-otlp-proto' or its corresponding type declarations.
+src/grafana/grafana.ts(2,47): error TS2307: Cannot find module '@opentelemetry/sdk-metrics' or its corresponding type declarations.
