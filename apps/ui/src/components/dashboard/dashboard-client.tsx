@@ -11,6 +11,7 @@ import {
 	BarChart3,
 	ChartColumnBig,
 	TrendingDown,
+	CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -63,6 +64,9 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 	const metric = (metricParam === "requests" ? "requests" : "costs") as
 		| "costs"
 		| "requests";
+
+	const emailVerifiedParam = searchParams.get("emailVerified");
+	const showEmailVerifiedBanner = emailVerifiedParam === "true";
 
 	// If no days param exists, add it to the URL immediately
 	useEffect(() => {
@@ -231,11 +235,11 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 	return (
 		<div className="flex flex-col">
 			<div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-				<div className="flex flex-col md:flex-row items-center justify-between space-y-2">
-					<div>
+				<div className="flex flex-col md:flex-row items-start justify-between gap-3 md:space-y-2">
+					<div className="space-y-2">
 						<h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
 						{selectedProject && (
-							<p className="text-sm text-muted-foreground mt-1">
+							<p className="text-sm text-muted-foreground">
 								Project: {selectedProject.name}
 								{selectedOrganization && (
 									<span className="ml-2">
@@ -243,6 +247,19 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 									</span>
 								)}
 							</p>
+						)}
+						{showEmailVerifiedBanner && (
+							<div className="mt-1 flex items-start gap-2 rounded-lg border border-green-500/40 bg-green-500/5 px-3 py-2 text-sm">
+								<CheckCircle className="mt-0.5 h-4 w-4 text-green-600 flex-shrink-0" />
+								<div className="text-left">
+									<p className="font-medium text-green-700">
+										Email verified successfully
+									</p>
+									<p className="text-xs text-muted-foreground">
+										You&apos;re all set – your account is now fully activated.
+									</p>
+								</div>
+							</div>
 						)}
 					</div>
 					<div className="flex items-center space-x-2">

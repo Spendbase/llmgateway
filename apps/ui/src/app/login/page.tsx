@@ -12,7 +12,7 @@ import { FaGoogle } from "react-icons/fa";
 import { z } from "zod";
 
 import { useUser } from "@/hooks/useUser";
-import { useAuth } from "@/lib/auth-client";
+import { useAuth, useAuthClient } from "@/lib/auth-client";
 import { Button } from "@/lib/components/button";
 import {
 	Form,
@@ -40,6 +40,11 @@ export default function Login() {
 	const posthog = usePostHog();
 	const [isLoading, setIsLoading] = useState(false);
 	const { signIn } = useAuth();
+	const authClient = useAuthClient();
+	const [verificationEmail, setVerificationEmail] = useState<string | null>(
+		null,
+	);
+	const [cooldown, setCooldown] = useState(0);
 
 	// Redirect to root if already authenticated
 	useUser({
@@ -61,6 +66,23 @@ export default function Login() {
 	});
 
 	useEffect(() => {
+		if (!cooldown) {
+			return;
+		}
+
+		const interval = setInterval(() => {
+			setCooldown((prev) => {
+				if (prev <= 1) {
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
+
+		return () => clearInterval(interval);
+	}, [cooldown]);
+
+	useEffect(() => {
 		if (window.PublicKeyCredential) {
 			void signIn.passkey({ autoFill: true });
 		}
@@ -77,6 +99,8 @@ export default function Login() {
 			{
 				onSuccess: (ctx) => {
 					queryClient.clear();
+					setVerificationEmail(null);
+					setCooldown(0);
 					posthog.identify(ctx.data.user.id, {
 						email: ctx.data.user.email,
 						name: ctx.data.user.name,
@@ -89,6 +113,14 @@ export default function Login() {
 					router.push("/");
 				},
 				onError: (ctx) => {
+					// If the backend requires email verification, surface a clear
+					// message and enable the resend flow.
+					if (
+						ctx?.error?.message &&
+						ctx.error.message.toLowerCase().includes("verify your email")
+					) {
+						setVerificationEmail(values.email);
+					}
 					toast({
 						title: ctx?.error?.message || "An unknown error occurred",
 						variant: "destructive",
@@ -105,6 +137,33 @@ export default function Login() {
 		}
 
 		setIsLoading(false);
+	}
+
+	async function handleResendVerification() {
+		if (!verificationEmail || cooldown > 0) {
+			return;
+		}
+
+		try {
+			await authClient.sendVerificationEmail({
+				email: verificationEmail,
+				callbackURL:
+					typeof window !== "undefined"
+						? `${window.location.origin}/?emailVerified=true`
+						: undefined,
+			});
+			toast({
+				title: "Verification email sent",
+				description: "Please check your inbox and spam folder.",
+			});
+			setCooldown(60);
+		} catch (error) {
+			toast({
+				title: "Failed to resend verification email",
+				description: (error as Error)?.message ?? undefined,
+				variant: "destructive",
+			});
+		}
 	}
 
 	async function handlePasskeySignIn() {
@@ -192,6 +251,23 @@ export default function Login() {
 						</Button>
 					</form>
 				</Form>
+				{verificationEmail && (
+					<div className="mt-4 space-y-1 text-sm text-muted-foreground">
+						<p className="font-medium text-foreground">
+							Please verify your email before signing in.
+						</p>
+						<button
+							type="button"
+							onClick={handleResendVerification}
+							disabled={cooldown > 0}
+							className="text-sm font-medium text-primary underline underline-offset-4 disabled:cursor-not-allowed disabled:text-muted-foreground"
+						>
+							{cooldown > 0
+								? `Resend verification email in ${cooldown} seconds`
+								: "Resend verification email"}
+						</button>
+					</div>
+				)}
 				<div className="relative">
 					<div className="absolute inset-0 flex items-center">
 						<span className="w-full border-t" />

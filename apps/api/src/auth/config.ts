@@ -361,6 +361,13 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 		],
 		emailAndPassword: {
 			enabled: true,
+			// In hosted (cloud) mode we require email verification before login.
+			// Users are not auto-signed in on initial sign-up; instead they are
+			// signed in after verifying their email via the verification link.
+			requireEmailVerification: isHosted,
+			sendVerificationOnSignIn: false,
+			// For self-hosted instances we keep the default autoSignIn behaviour.
+			autoSignIn: !isHosted,
 		},
 		baseURL: apiUrl || "http://localhost:4002",
 		secret: process.env.AUTH_SECRET || "your-secret-key",
@@ -397,7 +404,10 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 					// },
 					sendVerificationEmail: async ({ user, token }) => {
-						const url = `${apiUrl}/auth/verify-email?token=${token}&callbackURL=${uiUrl}/dashboard?emailVerified=true`;
+						const callbackUrl = `${uiUrl}/?emailVerified=true`;
+						const url = `${apiUrl}/auth/verify-email?token=${token}&callbackURL=${encodeURIComponent(
+							callbackUrl,
+						)}`;
 
 						const html = `
 <!DOCTYPE html>
@@ -405,27 +415,187 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Verify your email address</title>
+	<title>Verify your email</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-	<div style="background-color: #f8f9fa; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
-		<h1 style="color: #2563eb; margin-top: 0;">Welcome to LLMGateway!</h1>
-		<p style="font-size: 16px; margin-bottom: 20px;">
-			Please click the link below to verify your email address:
-		</p>
-		<div style="text-align: center; margin: 30px 0;">
-			<a href="${url}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Verify Email</a>
-		</div>
-		<p style="font-size: 14px; color: #666; margin-top: 30px;">
-			If you didn't create an account, you can safely ignore this email.
-		</p>
-		<p style="font-size: 14px; color: #666;">
-			Have feedback? Let us know by replying to this email – we might also have some free credits for you!
-		</p>
-	</div>
-	<div style="text-align: center; font-size: 12px; color: #999; margin-top: 20px;">
-		<p>LLMGateway - Your LLM API Gateway Platform</p>
-	</div>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #111827; background-color: #f3f4f6; margin: 0; padding: 0;">
+	<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f3f4f6; padding: 24px 0;">
+		<tr>
+			<td align="center">
+				<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(15,23,42,0.08);">
+					<tr>
+						<td style="padding: 32px 32px 16px 32px;" align="center">
+							<div style="display: inline-flex; align-items: center; gap: 8px;">
+								<svg
+									width="72"
+									height="72"
+									viewBox="0 0 72 72"
+									fill="none"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<rect width="72" height="72" rx="8" fill="#3F35FF" />
+									<path
+										d="M24.136 33.9485L12.0218 27.1098L24.136 20.2711L36.2501 27.1098L24.136 33.9485Z"
+										fill="white"
+									/>
+									<path
+										d="M23.907 19.3922C24.1323 19.3336 24.3742 19.3628 24.5822 19.4801L36.6971 26.3176C36.9826 26.4788 37.1585 26.7827 37.1585 27.1106C37.1582 27.4382 36.9824 27.7406 36.6971 27.9017L24.5822 34.7391C24.3048 34.8956 23.9666 34.8957 23.6893 34.7391L11.5743 27.9017C11.2892 27.7405 11.1132 27.4381 11.1129 27.1106C11.1129 26.7828 11.2889 26.4789 11.5743 26.3176L23.6893 19.4801L23.907 19.3922ZM13.8715 27.1086L24.1347 32.9034L34.3999 27.1086L24.1347 21.3139L13.8715 27.1086Z"
+										fill="black"
+									/>
+									<path
+										d="M12.0218 27.1098V44.1205L24.136 50.9591V42.7527V33.9485L12.0218 27.1098Z"
+										fill="black"
+									/>
+									<path
+										d="M23.2278 34.4786L12.9306 28.6659V43.5893L23.2278 49.4021V34.4786ZM25.0456 50.9581C25.0456 51.2813 24.8733 51.5822 24.5941 51.7451C24.3152 51.9077 23.9705 51.9097 23.6893 51.7511L11.5743 44.9117C11.2892 44.7504 11.113 44.4483 11.1129 44.1206V27.1098C11.1129 26.7866 11.2852 26.4877 11.5643 26.3248C11.8434 26.1622 12.188 26.16 12.4692 26.3188L24.5821 33.1563C24.8677 33.3175 25.0456 33.6214 25.0456 33.9493V50.9581Z"
+										fill="black"
+									/>
+									<path
+										d="M36.2501 27.1098V44.1205L24.1359 50.9591V42.7527V33.9485L36.2501 27.1098Z"
+										fill="white"
+									/>
+									<path
+										d="M35.8034 26.3188C36.0848 26.1599 36.4291 26.1619 36.7082 26.3248C36.9874 26.4878 37.1597 26.7866 37.1597 27.1098V44.1206C37.1596 44.4485 36.9818 44.7505 36.6962 44.9117L24.5833 51.7512C24.3022 51.9098 23.9574 51.9075 23.6784 51.7452C23.3993 51.5822 23.227 51.2814 23.227 50.9581V33.9493C23.227 33.6214 23.403 33.3175 23.6884 33.1563L35.8034 26.3188ZM25.0447 49.4001L35.3419 43.5893V28.6639L25.0447 34.4786V49.4001Z"
+										fill="black"
+									/>
+									<path
+										d="M48.3642 33.9485L36.25 27.1098L48.3642 20.2711L60.4784 27.1098L48.3642 33.9485Z"
+										fill="white"
+									/>
+									<path
+										d="M48.1352 19.3922C48.3605 19.3336 48.6025 19.3628 48.8104 19.4801L60.9253 26.3176C61.2109 26.4788 61.3868 26.7827 61.3868 27.1106C61.3864 27.4382 61.2107 27.7406 60.9253 27.9017L48.8104 34.7391C48.5331 34.8956 48.1948 34.8957 47.9175 34.7391L35.8026 27.9017C35.5175 27.7405 35.3415 27.4381 35.3412 27.1106C35.3412 26.7828 35.5171 26.4789 35.8026 26.3176L47.9175 19.4801L48.1352 19.3922ZM38.0997 27.1086L48.363 32.9034L58.6282 27.1086L48.363 21.3139L38.0997 27.1086Z"
+										fill="black"
+									/>
+									<path
+										d="M60.4784 27.1098V44.1205L48.3642 50.9591V42.7527V33.9485L60.4784 27.1098Z"
+										fill="white"
+									/>
+									<path
+										d="M60.0317 26.3188C60.3131 26.1599 60.6575 26.1619 60.9366 26.3248C61.2157 26.4878 61.388 26.7866 61.388 27.1098V44.1206C61.388 44.4485 61.2101 44.7505 60.9246 44.9117L48.8117 51.7512C48.5306 51.9098 48.1857 51.9075 47.9068 51.7452C47.6277 51.5822 47.4554 51.2814 47.4554 50.9581V33.9493C47.4554 33.6214 47.6313 33.3175 47.9168 33.1563L60.0317 26.3188ZM49.2731 49.4001L59.5703 43.5893V28.6639L49.2731 34.4786V49.4001Z"
+										fill="black"
+									/>
+									<path
+										d="M24.136 47.6218L12.0218 40.7832L24.136 33.9445L36.2501 40.7832L24.136 47.6218Z"
+										fill="white"
+									/>
+									<path
+										d="M23.907 33.0656C24.1323 33.0069 24.3742 33.0362 24.5822 33.1535L36.6971 39.991C36.9826 40.1522 37.1585 40.4561 37.1585 40.784C37.1582 41.1116 36.9824 41.4139 36.6971 41.575L24.5822 48.4125C24.3048 48.569 23.9666 48.5691 23.6893 48.4125L11.5743 41.575C11.2892 41.4139 11.1132 41.1115 11.1129 40.784C11.1129 40.4561 11.2889 40.1522 11.5743 39.991L23.6893 33.1535L23.907 33.0656ZM13.8715 40.782L24.1347 46.5768L34.3999 40.782L24.1347 34.9872L13.8715 40.782Z"
+										fill="black"
+									/>
+									<path
+										d="M12.0218 40.7831V57.7977L24.136 64.6363V56.4299V47.6218L12.0218 40.7831Z"
+										fill="black"
+									/>
+									<path
+										d="M23.2278 48.1519L12.9306 42.3392V57.2666L23.2278 63.0794V48.1519ZM25.0456 64.6354C25.0456 64.9585 24.8731 65.2575 24.5941 65.4205C24.3151 65.5833 23.9707 65.5871 23.6893 65.4284L11.5743 58.589C11.2892 58.4277 11.113 58.1256 11.1129 57.7979V40.7831C11.1129 40.4599 11.2852 40.1611 11.5643 39.9981C11.8434 39.8355 12.188 39.8333 12.4692 39.9921L24.5821 46.8296C24.8677 46.9908 25.0456 47.2947 25.0456 47.6226V64.6354Z"
+										fill="black"
+									/>
+									<path
+										d="M36.2501 40.7831V57.7977L24.1359 64.6363V56.4299V47.6218L36.2501 40.7831Z"
+										fill="white"
+									/>
+									<path
+										d="M35.8034 39.9921C36.0848 39.8332 36.4291 39.8352 36.7082 39.9981C36.9874 40.1611 37.1597 40.4599 37.1597 40.7831V57.7979C37.1596 58.1258 36.9817 58.4278 36.6962 58.589L24.5833 65.4285C24.3019 65.5873 23.9575 65.5833 23.6784 65.4205C23.3993 65.2575 23.227 64.9587 23.227 64.6354V47.6226C23.227 47.2948 23.403 46.9908 23.6884 46.8296L35.8034 39.9921ZM25.0447 63.0774L35.3419 57.2666V42.3372L25.0447 48.152V63.0774Z"
+										fill="black"
+									/>
+									<path
+										d="M48.3642 47.6218L36.25 40.7832L48.3642 33.9445L60.4784 40.7832L48.3642 47.6218Z"
+										fill="white"
+									/>
+									<path
+										d="M48.1352 33.0656C48.3605 33.0069 48.6024 33.0362 48.8104 33.1535L60.9253 39.991C61.2109 40.1522 61.3867 40.4561 61.3867 40.784C61.3864 41.1116 61.2106 41.4139 60.9253 41.575L48.8104 48.4125C48.533 48.569 48.1948 48.5691 47.9175 48.4125L35.8026 41.575C35.5174 41.4139 35.3414 41.1115 35.3411 40.784C35.3411 40.4561 35.5171 40.1522 35.8026 39.991L47.9175 33.1535L48.1352 33.0656ZM38.0997 40.782L48.3629 46.5768L58.6282 40.782L48.3629 34.9872L38.0997 40.782Z"
+										fill="black"
+									/>
+									<path
+										d="M36.25 40.7831V57.7977L48.3642 64.6363V56.4299V47.6218L36.25 40.7831Z"
+										fill="black"
+									/>
+									<path
+										d="M47.456 48.1519L37.1588 42.3392V57.2666L47.456 63.0794V48.1519ZM49.2738 64.6354C49.2738 64.9585 49.1013 65.2575 48.8223 65.4205C48.5433 65.5833 48.1989 65.5871 47.9175 65.4284L35.8025 58.589C35.5174 58.4277 35.3412 58.1256 35.3411 57.7979V40.7831C35.3411 40.4599 35.5134 40.1611 35.7925 39.9981C36.0716 39.8355 36.4162 39.8333 36.6974 39.9921L48.8103 46.8296C49.0959 46.9908 49.2738 47.2947 49.2738 47.6226V64.6354Z"
+										fill="black"
+									/>
+									<path
+										d="M60.4784 40.7831V57.7977L48.3642 64.6363V56.4299V47.6218L60.4784 40.7831Z"
+										fill="white"
+									/>
+									<path
+										d="M60.0317 39.9921C60.3131 39.8332 60.6575 39.8352 60.9366 39.9981C61.2157 40.1611 61.388 40.4599 61.388 40.7831V57.7979C61.3879 58.1258 61.2101 58.4278 60.9246 58.589L48.8117 65.4285C48.5303 65.5873 48.1859 65.5833 47.9068 65.4205C47.6277 65.2575 47.4554 64.9587 47.4554 64.6354V47.6226C47.4554 47.2948 47.6313 46.9908 47.9168 46.8296L60.0317 39.9921ZM49.2731 63.0774L59.5703 57.2666V42.3372L49.2731 48.152V63.0774Z"
+										fill="black"
+									/>
+									<path
+										d="M35.9375 40.0909C44.9748 40.0909 52.3011 32.7647 52.3011 23.7273C52.3011 14.6899 44.9748 7.36365 35.9375 7.36365C26.9001 7.36365 19.5738 14.6899 19.5738 23.7273C19.5738 32.7647 26.9001 40.0909 35.9375 40.0909Z"
+										fill="white"
+									/>
+									<path
+										d="M51.3922 23.7273C51.3922 15.192 44.4728 8.27251 35.9374 8.27251C27.4021 8.27251 20.4827 15.192 20.4827 23.7273C20.4827 32.2626 27.4021 39.182 35.9374 39.182C44.4728 39.182 51.3922 32.2626 51.3922 23.7273ZM53.2099 23.7273C53.2099 33.2667 45.4769 40.9998 35.9374 40.9998C26.398 40.9998 18.6649 33.2667 18.6649 23.7273C18.6649 14.1878 26.398 6.45477 35.9374 6.45477C45.4769 6.45477 53.2099 14.1878 53.2099 23.7273Z"
+										fill="black"
+									/>
+									<path d="M25.3011 23.1818H31.8465V29.7273H25.3011V23.1818Z" fill="black" />
+									<path d="M27.3465 25.2273H29.8011V29.7273H27.3465V25.2273Z" fill="white" />
+									<path d="M40.0284 23.1818H46.5738V29.7273H40.0284V23.1818Z" fill="black" />
+									<path d="M42.0738 25.2273H44.5284V29.7273H42.0738V25.2273Z" fill="white" />
+									<path d="M222.939 50.175V21.825H227.556V50.175H222.939Z" fill="black" />
+									<path
+										d="M199.982 50.175V21.825H210.107C212.078 21.825 213.806 22.149 215.291 22.797C216.776 23.418 217.937 24.3495 218.774 25.5915C219.611 26.8335 220.03 28.359 220.03 30.168C220.03 31.977 219.598 33.516 218.734 34.785C217.897 36.027 216.736 36.972 215.251 37.62C213.766 38.241 212.051 38.5515 210.107 38.5515H204.599V50.175H199.982ZM204.599 34.623H209.986C211.957 34.623 213.334 34.2315 214.117 33.4485C214.927 32.6385 215.332 31.545 215.332 30.168C215.332 28.818 214.927 27.738 214.117 26.928C213.334 26.118 211.957 25.713 209.986 25.713H204.599V34.623Z"
+										fill="black"
+									/>
+									<path
+										d="M171.526 50.175L181.894 21.825H186.997L197.365 50.175H192.505L190.156 43.452H178.694L176.305 50.175H171.526ZM180.031 39.7665H188.86L184.405 27.2115L180.031 39.7665Z"
+										fill="black"
+									/>
+									<path
+										d="M133.089 50.175V21.825H138.516L147.183 40.5765L155.688 21.825H161.155V50.175H156.538V30.0465L148.924 46.4085H145.32L137.706 30.0465V50.175H133.089Z"
+										fill="black"
+									/>
+									<path
+										d="M112.544 50.175V21.825H117.161V46.3275H129.716V50.175H112.544Z"
+										fill="black"
+									/>
+									<path
+										d="M92 50.175V21.825H96.617V46.3275H109.172V50.175H92Z"
+										fill="black"
+									/>
+								</svg>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 0 32px 32px 32px;">
+							<h1 style="margin: 16px 0 8px 0; font-size: 24px; line-height: 1.25; font-weight: 600; color:#111827; text-align:center;">
+								Verify your email address
+							</h1>
+							<p style="margin: 0 0 16px 0; font-size: 15px; color:#4b5563; text-align:center;">
+								Thanks for signing up! Please verify your email address to complete your registration and start using your account.
+							</p>
+							<div style="text-align: center; margin: 32px 0 24px 0;">
+								<a href="${url}" style="display: inline-block; padding: 12px 32px; border-radius: 999px; background-color: #4f46e5; color: #ffffff; font-size: 15px; font-weight: 500; text-decoration: none;">
+									Verify email
+								</a>
+							</div>
+							<p style="margin: 0 0 8px 0; font-size: 14px; color:#6b7280;">
+								If that button doesn't work, copy and paste this link into your browser:
+							</p>
+							<p style="margin: 0 0 16px 0; font-size: 13px; color:#4b5563; word-break: break-all;">
+								<a href="${url}" style="color:#4f46e5; text-decoration:none;">${url}</a>
+							</p>
+							<p style="margin: 0; font-size: 13px; color:#9ca3af;">
+								If you didn't create an account, you can safely ignore this email.
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 16px 32px 24px 32px; border-top: 1px solid #e5e7eb; text-align:center;">
+							<p style="margin: 0 0 4px 0; font-size: 12px; color:#9ca3af;">
+								This verification link will expire in 24 hours.
+							</p>
+							<p style="margin: 0; font-size: 12px; color:#9ca3af;">
+								LLM API – Unified API for your LLM providers
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
 </body>
 </html>
 						`.trim();
