@@ -1,3 +1,4 @@
+import { GoogleTagManager } from "@next/third-parties/google";
 import { Inter, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 	return (
 		<html lang="en" suppressHydrationWarning>
+			{config.gtmId && <GoogleTagManager gtmId={config.gtmId} />}
 			<body className={`${inter.variable} ${geistMono.variable} antialiased`}>
 				<Providers config={config}>{children}</Providers>
 			</body>
