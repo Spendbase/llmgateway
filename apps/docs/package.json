@@ -20,6 +20,7 @@
 		"start": "next start -H 0.0.0.0"
 	},
 	"dependencies": {
+		"@next/third-parties": "16.1.1",
 		"babel-plugin-react-compiler": "1.0.0",
 		"class-variance-authority": "^0.7.1",
 		"fumadocs-core": "16.0.11",
