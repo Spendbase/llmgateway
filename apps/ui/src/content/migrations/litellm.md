@@ -52,6 +52,7 @@ LLM Gateway supports two model ID formats:
 ```
 gpt-5.2
 claude-opus-4-5-20251101
+claude-opus-4-6
 gemini-3-flash-preview
 ```
 
@@ -60,6 +61,7 @@ gemini-3-flash-preview
 ```
 openai/gpt-5.2
 anthropic/claude-opus-4-5-20251101
+anthropic/claude-opus-4-6
 google-ai-studio/gemini-3-flash-preview
 ```
 
@@ -69,8 +71,10 @@ This means many LiteLLM model names work directly with LLM Gateway:
 | -------------------------------- | ----------------------------------------------------------------- |
 | gpt-5.2                          | gpt-5.2 or openai/gpt-5.2                                         |
 | claude-opus-4-5-20251101         | claude-opus-4-5-20251101 or anthropic/claude-opus-4-5-20251101    |
+| claude-opus-4-6                  | claude-opus-4-6 or anthropic/claude-opus-4-6                      |
 | gemini/gemini-3-flash-preview    | gemini-3-flash-preview or google-ai-studio/gemini-3-flash-preview |
 | bedrock/claude-opus-4-5-20251101 | claude-opus-4-5-20251101 or aws-bedrock/claude-opus-4-5-20251101  |
+| bedrock/claude-opus-4-6          | claude-opus-4-6 or aws-bedrock/claude-opus-4-6                    |
 
 For more details on routing behavior, see the [routing documentation](https://docs.llmgateway.io/features/routing).
 
