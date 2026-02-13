@@ -13,7 +13,7 @@ describe("API auth configuration", () => {
 			enabled: true,
 			requireEmailVerification: isHosted,
 			sendVerificationOnSignIn: false,
-			autoSignIn: !isHosted
+			autoSignIn: !isHosted,
 		});
 		expect(apiAuth.options.basePath).toBe("/auth");
 		expect(apiAuth.options.plugins).toBeDefined();
