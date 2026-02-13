@@ -5,6 +5,8 @@ import { createAuthMiddleware } from "better-auth/api";
 import { passkey } from "better-auth/plugins/passkey";
 import { Redis } from "ioredis";
 
+import { getResetPasswordEmail } from "@/emails/templates/reset-password.js";
+import { getVerifyEmail } from "@/emails/templates/verify-email.js";
 import { validateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
@@ -43,6 +45,84 @@ export interface RateLimitResult {
 	allowed: boolean;
 	resetTime: number;
 	remaining: number;
+}
+
+/**
+ * Check and record password reset attempt with strict rate limiting
+ * Limit: 3 requests per hour per email
+ */
+/**
+ * specific helper to mask email for logging privacy
+ * retains first char of local part + domain
+ */
+function maskEmail(email: string): string {
+	const parts = email.split("@");
+	if (parts.length < 2) {
+		return email;
+	}
+	const [local, ...domainParts] = parts;
+	const domain = domainParts.join("@");
+	if (local.length === 0) {
+		return `***@${domain}`;
+	}
+	return `${local[0]}***@${domain}`;
+}
+
+export async function checkResetPasswordRateLimit(
+	email: string,
+): Promise<RateLimitResult> {
+	// Normalize email to prevent bypasses
+	const normalizedEmail = email.toLowerCase().trim();
+	const key = `reset_password_limit:${normalizedEmail}`;
+	const now = Date.now();
+	const windowSizeMs = 60 * 60 * 1000; // 1 hour
+	const maxRequests = 3;
+
+	try {
+		// Redis transaction to check and update count with atomic expire
+		const pipeline = redisClient.pipeline();
+		// Simple Fixed Window approach:
+		pipeline.incr(key);
+		pipeline.expire(key, 60 * 60, "NX"); // Set expiry only if key has no expiry
+		pipeline.ttl(key);
+		const results = await pipeline.exec();
+
+		if (!results) {
+			throw new Error("Redis pipeline execution failed");
+		}
+
+		const count = (results[0][1] as number) || 1;
+		const ttl = (results[2][1] as number) || -1;
+
+		if (count > maxRequests) {
+			logger.warn("Password reset rate limit exceeded", {
+				email: maskEmail(normalizedEmail),
+				count,
+			});
+			return {
+				allowed: false,
+				resetTime: now + (ttl > 0 ? ttl * 1000 : windowSizeMs),
+				remaining: 0,
+			};
+		}
+
+		return {
+			allowed: true,
+			resetTime: now + windowSizeMs,
+			remaining: maxRequests - count,
+		};
+	} catch (error) {
+		logger.error(
+			"Password reset rate limit check failed",
+			error instanceof Error ? error : new Error(String(error)),
+		);
+		// Fail open to avoid DOSing legitimate users if Redis is down, but log heavily
+		return {
+			allowed: true,
+			resetTime: now + windowSizeMs,
+			remaining: 0,
+		};
+	}
 }
 
 /**
@@ -361,6 +441,35 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 		],
 		emailAndPassword: {
 			enabled: true,
+			requireEmailVerification: isHosted,
+			resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours
+			async sendResetPassword({ user, token }) {
+				const url = `${uiUrl}/reset-password?token=${encodeURIComponent(token)}`;
+				const html = getResetPasswordEmail({ url });
+
+				try {
+					await sendTransactionalEmail({
+						to: user.email,
+						subject: "Reset your password",
+						html,
+					});
+				} catch (err) {
+					const error = err instanceof Error ? err : new Error(String(err)); // Normalize error
+
+					logger.error("Failed to send reset password email", {
+						err: error,
+						email: maskEmail(user.email), // Log masked email for privacy
+					});
+
+					// Throw a user-friendly error but keep the original cause
+					throw new Error(
+						"Failed to send reset password email. Please try again.",
+						{
+							cause: error,
+						},
+					);
+				}
+			},
 		},
 		baseURL: apiUrl || "http://localhost:4002",
 		secret: process.env.AUTH_SECRET || "your-secret-key",
@@ -397,40 +506,14 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 					// },
 					sendVerificationEmail: async ({ user, token }) => {
-						const url = `${apiUrl}/auth/verify-email?token=${token}&callbackURL=${uiUrl}/dashboard?emailVerified=true`;
-
-						const html = `
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Verify your email address</title>
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-	<div style="background-color: #f8f9fa; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
-		<h1 style="color: #2563eb; margin-top: 0;">Welcome to LLMGateway!</h1>
-		<p style="font-size: 16px; margin-bottom: 20px;">
-			Please click the link below to verify your email address:
-		</p>
-		<div style="text-align: center; margin: 30px 0;">
-			<a href="${url}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Verify Email</a>
-		</div>
-		<p style="font-size: 14px; color: #666; margin-top: 30px;">
-			If you didn't create an account, you can safely ignore this email.
-		</p>
-		<p style="font-size: 14px; color: #666;">
-			Have feedback? Let us know by replying to this email – we might also have some free credits for you!
-		</p>
-	</div>
-	<div style="text-align: center; font-size: 12px; color: #999; margin-top: 20px;">
-		<p>LLMGateway - Your LLM API Gateway Platform</p>
-	</div>
-</body>
-</html>
-						`.trim();
-
 						try {
+							const callbackURL = `${uiUrl}/dashboard?emailVerified=true`;
+							const url = `${apiUrl}/auth/verify-email?token=${encodeURIComponent(
+								token,
+							)}&callbackURL=${encodeURIComponent(callbackURL)}`;
+
+							const html = getVerifyEmail({ url });
+
 							await sendTransactionalEmail({
 								to: user.email,
 								subject: "Verify your email address",
@@ -453,6 +536,35 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				},
 		hooks: {
 			before: createAuthMiddleware(async (ctx) => {
+				// Rate limit password reset requests
+				if (ctx.path.startsWith("/forget-password")) {
+					const body = ctx.body as { email?: string } | undefined;
+					if (body?.email) {
+						const rateLimit = await checkResetPasswordRateLimit(body.email);
+						if (!rateLimit.allowed) {
+							return new Response(
+								JSON.stringify({
+									error: "too_many_requests",
+									message:
+										"Too many password reset attempts. Please try again in 1 hour.",
+									retryAfter: Math.ceil(
+										(rateLimit.resetTime - Date.now()) / 1000,
+									),
+								}),
+								{
+									status: 429,
+									headers: {
+										"Content-Type": "application/json",
+										"Retry-After": Math.ceil(
+											(rateLimit.resetTime - Date.now()) / 1000,
+										).toString(),
+									},
+								},
+							);
+						}
+					}
+				}
+
 				// Check and record rate limit for ALL signup attempts
 				if (ctx.path.startsWith("/sign-up")) {
 					// Get IP address from various possible headers, prioritizing CF-Connecting-IP
