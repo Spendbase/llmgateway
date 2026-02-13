@@ -6,8 +6,15 @@ import { apiAuth, redisClient } from "./config.js";
 
 describe("API auth configuration", () => {
 	test("should inherit basic auth configuration", () => {
+		const isHosted = process.env.HOSTED === "true";
+
 		expect(apiAuth.options).toBeDefined();
-		expect(apiAuth.options.emailAndPassword).toEqual({ enabled: true });
+		expect(apiAuth.options.emailAndPassword).toEqual({
+			enabled: true,
+			requireEmailVerification: isHosted,
+			sendVerificationOnSignIn: false,
+			autoSignIn: !isHosted
+		});
 		expect(apiAuth.options.basePath).toBe("/auth");
 		expect(apiAuth.options.plugins).toBeDefined();
 		expect(Array.isArray(apiAuth.options.plugins)).toBe(true);
