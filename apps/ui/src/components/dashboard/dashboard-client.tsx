@@ -45,6 +45,7 @@ import { useApi } from "@/lib/fetch-client";
 import { cn } from "@/lib/utils";
 
 import type { ActivitT } from "@/types/activity";
+import type { Route } from "next";
 
 interface DashboardClientProps {
 	initialActivityData?: ActivitT;
@@ -76,6 +77,18 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 			router.replace(`${buildUrl()}?${params.toString()}`);
 		}
 	}, [daysParam, searchParams, router, buildUrl]);
+
+	useEffect(() => {
+		if (showEmailVerifiedBanner) {
+			const params = new URLSearchParams(searchParams.toString());
+			params.delete("emailVerified");
+
+			const queryString = params.toString();
+			router.replace(
+				`${buildUrl()}${queryString ? `?${queryString}` : ""}` as Route,
+			);
+		}
+	}, [showEmailVerifiedBanner, router, searchParams, buildUrl]);
 
 	const { selectedOrganization, selectedProject } = useDashboardNavigation();
 	const api = useApi();
