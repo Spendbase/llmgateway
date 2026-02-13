@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function RootPage({
 	searchParams,
 }: {
-	searchParams: { [key: string]: string | string[] | undefined };
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	// Fetch user data server-side
 	const initialUserData = await fetchServerData<
@@ -26,9 +26,7 @@ export default async function RootPage({
 	const params = await searchParams;
 
 	const emailVerifiedParam =
-		typeof params.emailVerified === "string"
-			? params.emailVerified
-			: undefined;
+		typeof params.emailVerified === "string" ? params.emailVerified : undefined;
 
 	const querySuffix = emailVerifiedParam
 		? `?emailVerified=${encodeURIComponent(emailVerifiedParam)}`
