@@ -34,6 +34,10 @@ const formSchema = z.object({
 	}),
 });
 
+const ERROR_CODES = {
+	EMAIL_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
+} as const;
+
 export default function Login() {
 	const queryClient = useQueryClient();
 	const router = useRouter();
@@ -115,12 +119,11 @@ export default function Login() {
 				onError: (ctx) => {
 					// If the backend requires email verification, surface a clear
 					// message and enable the resend flow.
-					if (
-						ctx?.error?.message &&
-						ctx.error.message.toLowerCase().includes("verify your email")
-					) {
+					const errorCode = ctx?.error?.code;
+					if (errorCode === ERROR_CODES.EMAIL_NOT_VERIFIED) {
 						setVerificationEmail(values.email);
 					}
+
 					toast({
 						title: ctx?.error?.message || "An unknown error occurred",
 						variant: "destructive",
