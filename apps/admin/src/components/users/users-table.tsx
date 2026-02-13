@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 
+import { BlockUserButton } from "./block-user-button";
+
 import type { AdminUser } from "@/lib/types";
 
 export function UsersTable({ users }: { users: AdminUser[] }) {
@@ -13,7 +15,9 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
 						<th className="p-4">Email</th>
 						<th className="p-4">Organizations & Roles</th>
 						<th className="p-4">Registration Date</th>
-						<th className="p-4">Status</th>
+						<th className="p-4">Email Status</th>
+						<th className="p-4">Account Status</th>
+						<th className="p-4">Actions</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -50,6 +54,16 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
 								) : (
 									<Badge variant="secondary">Unverified</Badge>
 								)}
+							</td>
+							<td className="p-4">
+								{user.status === "blocked" ? (
+									<Badge variant="destructive">Blocked</Badge>
+								) : (
+									<Badge className="bg-blue-600">Active</Badge>
+								)}
+							</td>
+							<td className="p-4">
+								<BlockUserButton user={user} />
 							</td>
 						</tr>
 					))}

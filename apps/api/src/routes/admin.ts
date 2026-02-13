@@ -181,6 +181,49 @@ const getOrganizations = createRoute({
 	},
 });
 
+const updateUserStatus = createRoute({
+	method: "patch",
+	path: "/users/:id/status",
+	request: {
+		params: z.object({
+			id: z.string().openapi({ example: "user_123456" }),
+		}),
+		body: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						status: z
+							.enum(["active", "blocked"])
+							.openapi({ example: "blocked" }),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						success: z.boolean(),
+						user: z.object({
+							id: z.string(),
+							status: z.enum(["active", "blocked"]),
+						}),
+						affectedOrganizations: z.number(),
+					}),
+				},
+			},
+			description: "User status updated successfully",
+		},
+		400: { description: "Validation error" },
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "User not found" },
+		500: { description: "Internal Server Error" },
+	},
+});
+
 const getUsers = createRoute({
 	method: "get",
 	path: "/users",
@@ -208,6 +251,7 @@ const getUsers = createRoute({
 									email: z.string(),
 									emailVerified: z.boolean(),
 									createdAt: z.date(),
+									status: z.enum(["active", "blocked"]),
 									organizations: z.array(
 										z.object({
 											organizationId: z.string(),
@@ -644,6 +688,103 @@ admin.openapi(depositCredits, async (c) => {
 	}
 });
 
+admin.openapi(updateUserStatus, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const { id: userId } = c.req.valid("param");
+	const { status } = c.req.valid("json");
+
+	try {
+		// Check if user exists
+		const targetUser = await db.query.user.findFirst({
+			where: {
+				id: userId,
+			},
+			columns: {
+				id: true,
+				status: true,
+			},
+		});
+
+		if (!targetUser) {
+			throw new HTTPException(404, { message: "User not found" });
+		}
+
+		// Update user status and affected organizations in a transaction
+		const result = await db.transaction(async (tx) => {
+			// Update user status
+			const [updatedUser] = await tx
+				.update(tables.user)
+				.set({
+					status,
+					updatedAt: new Date(),
+				})
+				.where(eq(tables.user.id, userId))
+				.returning({ id: tables.user.id, status: tables.user.status });
+
+			// Find all organizations where user is the owner (query once)
+			const ownedOrgs = await tx
+				.select({
+					organizationId: tables.userOrganization.organizationId,
+				})
+				.from(tables.userOrganization)
+				.where(
+					and(
+						eq(tables.userOrganization.userId, userId),
+						eq(tables.userOrganization.role, "owner"),
+					),
+				);
+
+			let affectedOrganizations = 0;
+
+			// Update organization status based on user status
+			if (ownedOrgs.length > 0) {
+				const orgIds = ownedOrgs.map((o) => o.organizationId);
+				const newOrgStatus = status === "blocked" ? "inactive" : "active";
+
+				await tx
+					.update(tables.organization)
+					.set({
+						status: newOrgStatus,
+						updatedAt: new Date(),
+					})
+					.where(inArray(tables.organization.id, orgIds));
+
+				affectedOrganizations = ownedOrgs.length;
+			}
+
+			return {
+				user: updatedUser,
+				affectedOrganizations,
+			};
+		});
+
+		return c.json({
+			success: true,
+			user: result.user,
+			affectedOrganizations: result.affectedOrganizations,
+		});
+	} catch (err: any) {
+		if (err instanceof HTTPException) {
+			throw err;
+		}
+
+		throw new HTTPException(500, { message: "Internal Database Error" });
+	}
+});
+
 admin.openapi(getUsers, async (c) => {
 	const authUser = c.get("user");
 
@@ -678,6 +819,7 @@ admin.openapi(getUsers, async (c) => {
 			email: tables.user.email,
 			emailVerified: tables.user.emailVerified,
 			createdAt: tables.user.createdAt,
+			status: tables.user.status,
 		})
 		.from(tables.user)
 		.orderBy(desc(tables.user.createdAt))
@@ -720,6 +862,7 @@ admin.openapi(getUsers, async (c) => {
 		email: user.email,
 		emailVerified: user.emailVerified,
 		createdAt: user.createdAt,
+		status: user.status || "active",
 		organizations: userOrganizations
 			.filter((uo) => uo.userId === user.id)
 			.map((uo) => ({

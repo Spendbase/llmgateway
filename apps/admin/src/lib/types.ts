@@ -40,6 +40,7 @@ export interface AdminUser {
 	email: string;
 	emailVerified: boolean;
 	createdAt: Date;
+	status: "active" | "blocked";
 	organizations: Array<{
 		organizationId: string;
 		organizationName: string;
