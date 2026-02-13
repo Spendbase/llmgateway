@@ -536,6 +536,43 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				},
 		hooks: {
 			before: createAuthMiddleware(async (ctx) => {
+				// Block sign-in for blocked users
+				if (ctx.path.startsWith("/sign-in/email")) {
+					const body = ctx.body as { email?: string } | undefined;
+					if (body?.email) {
+						const user = await db.query.user.findFirst({
+							where: {
+								email: body.email,
+							},
+							columns: {
+								id: true,
+								status: true,
+							},
+						});
+
+						if (user && user.status === "blocked") {
+							logger.warn("Blocked user attempted to sign in", {
+								userId: user.id,
+								email: maskEmail(body.email),
+							});
+
+							return new Response(
+								JSON.stringify({
+									error: "account_blocked",
+									message:
+										"Your account has been suspended. Please contact support for assistance.",
+								}),
+								{
+									status: 403,
+									headers: {
+										"Content-Type": "application/json",
+									},
+								},
+							);
+						}
+					}
+				}
+
 				// Rate limit password reset requests
 				if (ctx.path.startsWith("/forget-password")) {
 					const body = ctx.body as { email?: string } | undefined;
