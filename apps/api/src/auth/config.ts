@@ -79,12 +79,11 @@ export async function checkResetPasswordRateLimit(
 	const maxRequests = 3;
 
 	try {
-		// Redis transaction to check and update count
+		// Redis transaction to check and update count with atomic expire
 		const pipeline = redisClient.pipeline();
-		// Clean up old requests (though we use expiration, list trimming is safer for sliding window if we used it,
-		// but here we'll use a simple counter with expiration for the window)
 		// Simple Fixed Window approach:
 		pipeline.incr(key);
+		pipeline.expire(key, 60 * 60, "NX"); // Set expiry only if key has no expiry
 		pipeline.ttl(key);
 		const results = await pipeline.exec();
 
@@ -93,12 +92,7 @@ export async function checkResetPasswordRateLimit(
 		}
 
 		const count = (results[0][1] as number) || 1;
-		const ttl = (results[1][1] as number) || -1;
-
-		// If key is new (no TTL), set expiration
-		if (ttl === -1) {
-			await redisClient.expire(key, 60 * 60); // 1 hour
-		}
+		const ttl = (results[2][1] as number) || -1;
 
 		if (count > maxRequests) {
 			logger.warn("Password reset rate limit exceeded", {
