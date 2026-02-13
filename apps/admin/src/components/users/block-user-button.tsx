@@ -15,7 +15,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { useApi } from "@/lib/fetch-client";
+import { useAppConfig } from "@/lib/config";
 import Spinner from "@/lib/icons/Spinner";
 
 import type { AdminUser } from "@/lib/types";
@@ -24,29 +24,35 @@ export function BlockUserButton({ user }: { user: AdminUser }) {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const api = useApi();
+	const config = useAppConfig();
 
 	const isBlocked = user.status === "blocked";
-
-	const { mutateAsync: updateUserStatus } = api.useMutation(
-		"patch",
-		"/admin/users/{id}/status",
-	);
 
 	const handleToggleBlock = async () => {
 		setLoading(true);
 
 		try {
-			const result = await updateUserStatus({
-				params: {
-					path: { id: user.id },
+			const response = await fetch(
+				`${config.apiUrl}/admin/users/${user.id}/status`,
+				{
+					method: "PATCH",
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						status: isBlocked ? "active" : "blocked",
+					}),
 				},
-				body: {
-					status: isBlocked ? "active" : "blocked",
-				},
-			});
+			);
 
-			const affectedOrgs = (result as any)?.affectedOrganizations || 0;
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.message || "Failed to update user status");
+			}
+
+			const result = await response.json();
+			const affectedOrgs = result?.affectedOrganizations || 0;
 
 			toast.success(isBlocked ? "User Unblocked" : "User Blocked", {
 				description: isBlocked
