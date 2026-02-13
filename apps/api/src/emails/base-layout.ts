@@ -25,9 +25,15 @@ export function getEmailLayout({
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>${title}</title>
-    ${preview ? `<meta name="description" content="${preview}">` : ""}
 </head>
 <body style="${styles.body}">
+    ${
+			preview
+				? `<span style="display:none;visibility:hidden;mso-hide:all;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        ${preview}
+    </span>`
+				: ""
+		}
 	<div style="${styles.container}">
 		${content}
 	</div>

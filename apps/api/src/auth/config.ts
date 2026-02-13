@@ -51,6 +51,23 @@ export interface RateLimitResult {
  * Check and record password reset attempt with strict rate limiting
  * Limit: 3 requests per hour per email
  */
+/**
+ * specific helper to mask email for logging privacy
+ * retains first char of local part + domain
+ */
+function maskEmail(email: string): string {
+	const parts = email.split("@");
+	if (parts.length < 2) {
+		return email;
+	}
+	const [local, ...domainParts] = parts;
+	const domain = domainParts.join("@");
+	if (local.length === 0) {
+		return `***@${domain}`;
+	}
+	return `${local[0]}***@${domain}`;
+}
+
 export async function checkResetPasswordRateLimit(
 	email: string,
 ): Promise<RateLimitResult> {
@@ -85,7 +102,7 @@ export async function checkResetPasswordRateLimit(
 
 		if (count > maxRequests) {
 			logger.warn("Password reset rate limit exceeded", {
-				email: normalizedEmail,
+				email: maskEmail(normalizedEmail),
 				count,
 			});
 			return {
@@ -430,10 +447,10 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 		],
 		emailAndPassword: {
 			enabled: true,
-			requireEmailVerification: true,
+			requireEmailVerification: isHosted,
 			resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours
 			async sendResetPassword({ user, token }) {
-				const url = `${uiUrl}/reset-password?token=${token}`;
+				const url = `${uiUrl}/reset-password?token=${encodeURIComponent(token)}`;
 				const html = getResetPasswordEmail({ url });
 				await sendTransactionalEmail({
 					to: user.email,
@@ -478,7 +495,10 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					// },
 					sendVerificationEmail: async ({ user, token }) => {
 						try {
-							const url = `${apiUrl}/auth/verify-email?token=${token}&callbackURL=${uiUrl}/dashboard?emailVerified=true`;
+							const callbackURL = `${uiUrl}/dashboard?emailVerified=true`;
+							const url = `${apiUrl}/auth/verify-email?token=${encodeURIComponent(
+								token,
+							)}&callbackURL=${encodeURIComponent(callbackURL)}`;
 
 							const html = getVerifyEmail({ url });
 
