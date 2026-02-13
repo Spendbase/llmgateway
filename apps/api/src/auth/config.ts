@@ -446,11 +446,29 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 			async sendResetPassword({ user, token }) {
 				const url = `${uiUrl}/reset-password?token=${encodeURIComponent(token)}`;
 				const html = getResetPasswordEmail({ url });
-				await sendTransactionalEmail({
-					to: user.email,
-					subject: "Reset your password",
-					html,
-				});
+
+				try {
+					await sendTransactionalEmail({
+						to: user.email,
+						subject: "Reset your password",
+						html,
+					});
+				} catch (err) {
+					const error = err instanceof Error ? err : new Error(String(err)); // Normalize error
+
+					logger.error("Failed to send reset password email", {
+						err: error,
+						email: maskEmail(user.email), // Log masked email for privacy
+					});
+
+					// Throw a user-friendly error but keep the original cause
+					throw new Error(
+						"Failed to send reset password email. Please try again.",
+						{
+							cause: error,
+						},
+					);
+				}
 			},
 		},
 		baseURL: apiUrl || "http://localhost:4002",
