@@ -1,6 +1,7 @@
 // eslint-disable-next-line import/order
 import "./global.css";
 
+import { GoogleTagManager } from "@next/third-parties/google";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import { Geist_Mono, Inter } from "next/font/google";
 
@@ -38,6 +39,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 	// Access environment variables directly on the server
 	const posthogKey = process.env.POSTHOG_KEY || "";
 	const posthogHost = process.env.POSTHOG_HOST || "";
+	const gtmId = process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID;
 
 	return (
 		<html
@@ -45,6 +47,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 			className={`${inter.className} ${mono.variable}`}
 			suppressHydrationWarning
 		>
+			{gtmId && <GoogleTagManager gtmId={gtmId} />}
 			<body className="flex flex-col min-h-screen">
 				<ConfigProvider posthogKey={posthogKey} posthogHost={posthogHost}>
 					<PostHogProvider>
