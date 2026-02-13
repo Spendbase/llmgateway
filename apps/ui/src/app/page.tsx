@@ -4,6 +4,7 @@ import { getLastUsedProjectId } from "@/lib/last-used-project-server";
 import { fetchServerData } from "@/lib/server-api";
 
 import type { User } from "@/lib/types";
+import type { Route } from "next";
 
 // Force dynamic rendering since this page uses cookies for authentication
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function RootPage({
 	// Check if organizations data is null (API error)
 	if (!initialOrganizationsData) {
 		// Show error page or redirect to onboarding
-		redirect("/onboarding");
+		redirect(`/onboarding${querySuffix}` as Route);
 	}
 
 	// Determine default organization and project for redirect
@@ -64,7 +65,7 @@ export default async function RootPage({
 
 			// Check if projects data is null (API error)
 			if (!projectsData) {
-				redirect(`/${defaultOrgId}${querySuffix}`);
+				redirect(`/${defaultOrgId}${querySuffix}` as Route);
 			}
 
 			if (projectsData && typeof projectsData === "object") {
@@ -82,15 +83,17 @@ export default async function RootPage({
 							: projects.projects[0].id;
 
 					// Redirect to the proper route structure (without /dashboard prefix)
-					redirect(`/${defaultOrgId}/${defaultProjectId}${querySuffix}`);
+					redirect(
+						`/${defaultOrgId}/${defaultProjectId}${querySuffix}` as Route,
+					);
 				}
 			}
 
 			// If no projects found, redirect to organization level
-			redirect(`/${defaultOrgId}${querySuffix}`);
+			redirect(`/${defaultOrgId}${querySuffix}` as Route);
 		}
 	}
 
 	// If no organizations found, redirect to onboarding
-	redirect(`/onboarding${querySuffix}`);
+	redirect(`/onboarding${querySuffix}` as Route);
 }

@@ -405,7 +405,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					// },
 					sendVerificationEmail: async ({ user, token }) => {
 						const callbackUrl = `${uiUrl}/?emailVerified=true`;
-						const url = `${apiUrl}/auth/verify-email?token=${token}&callbackURL=${encodeURIComponent(
+						const url = `${apiUrl}/auth/verify-email?token=${encodeURIComponent(token)}&callbackURL=${encodeURIComponent(
 							callbackUrl,
 						)}`;
 						const html = `
@@ -423,10 +423,18 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 													<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 500px; background-color: #ffffff;">
 														<tr>
 															<td style="padding-bottom: 32px;" align="left">
-																<div style="display: flex; align-items: center; gap: 2px;">
-																	<img src="https://app.llmapi.ai/assets/llmapi-logo.png" alt="Email Verification Logo" width="27" height="27" />
-																	<span style="font-weight: 700; font-size: 20px; color: #1a1a1a; margin-left: 4px;">LLM API</span>
-																</div>
+																<table role="presentation" border="0" cellpadding="0" cellspacing="0">
+																	<tr>
+																		<td style="vertical-align: middle;">
+																			<img src="https://app.llmapi.ai/assets/llmapi-logo.png" alt="Logo" width="27" height="27" style="display: block; border: 0;" />
+																		</td>
+																		<td style="vertical-align: middle; padding-left: 6px;">
+																			<span style="font-weight: 700; font-size: 20px; color: #1a1a1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 27px;">
+																				LLM API
+																			</span>
+																		</td>
+																	</tr>
+																</table>
 															</td>
 														</tr>
 														<tr>

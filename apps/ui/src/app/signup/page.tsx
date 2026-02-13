@@ -26,6 +26,8 @@ import { Input } from "@/lib/components/input";
 import { toast } from "@/lib/components/use-toast";
 import { useAppConfig } from "@/lib/config";
 
+import type { Route } from "next";
+
 type VerifyEmailRoute = `/verify-email?email=${string}`;
 
 const createFormSchema = (isHosted: boolean) =>
@@ -100,15 +102,20 @@ export default function Signup() {
 						email: values.email,
 						name: values.name,
 					});
-					toast({
-						title: "Account created",
-						description:
-							"Please check your email to verify your account before signing in.",
-					});
-					const verifyUrl: VerifyEmailRoute = `/verify-email?email=${encodeURIComponent(
-						values.email,
-					)}`;
-					router.push(verifyUrl);
+					if (config.hosted) {
+						toast({
+							title: "Account created",
+							description:
+								"Please check your email to verify your account before signing in.",
+						});
+						const verifyUrl: VerifyEmailRoute = `/verify-email?email=${encodeURIComponent(
+							values.email,
+						)}`;
+						router.push(verifyUrl as Route);
+					} else {
+						toast({ title: "Account created" });
+						router.push("/");
+					}
 				},
 				onError: (ctx) => {
 					toast({
