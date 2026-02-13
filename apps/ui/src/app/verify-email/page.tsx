@@ -2,17 +2,13 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { useAuthClient } from "@/lib/auth-client";
-import { toast } from "@/lib/components/use-toast";
+import { useResendEmail } from "@/hooks/useResendEmail";
 import Logo from "@/lib/icons/Logo";
-
-const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function VerifyEmailPage() {
 	const searchParams = useSearchParams();
-	const authClient = useAuthClient();
 
 	const initialEmail = useMemo(
 		() => searchParams.get("email") ?? "",
@@ -20,54 +16,10 @@ export default function VerifyEmailPage() {
 	);
 
 	const [email] = useState(initialEmail);
-	const [cooldown, setCooldown] = useState(0);
-	const canResend = !!email && cooldown === 0;
 
-	useEffect(() => {
-		if (!cooldown) {
-			return;
-		}
-
-		const interval = setInterval(() => {
-			setCooldown((prev) => {
-				if (prev <= 1) {
-					return 0;
-				}
-				return prev - 1;
-			});
-		}, 1000);
-
-		return () => clearInterval(interval);
-	}, [cooldown]);
-
-	async function handleResend() {
-		if (!email || !canResend) {
-			return;
-		}
-
-		try {
-			await authClient.sendVerificationEmail({
-				email,
-				callbackURL:
-					typeof window !== "undefined"
-						? `${window.location.origin}/?emailVerified=true`
-						: undefined,
-			});
-
-			toast({
-				title: "Verification email sent",
-				description: "Please check your inbox and spam folder.",
-			});
-
-			setCooldown(RESEND_COOLDOWN_SECONDS);
-		} catch (error) {
-			toast({
-				title: "Failed to resend verification email",
-				description: (error as Error)?.message ?? undefined,
-				variant: "destructive",
-			});
-		}
-	}
+	const { cooldown, canResend, handleResend } = useResendEmail({
+		email: initialEmail,
+	});
 
 	return (
 		<div className="flex min-h-screen flex-col items-center justify-center px-4">

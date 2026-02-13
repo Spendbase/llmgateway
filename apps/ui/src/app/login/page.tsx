@@ -11,8 +11,9 @@ import { useForm } from "react-hook-form";
 import { FaGoogle } from "react-icons/fa";
 import { z } from "zod";
 
+import { useResendEmail } from "@/hooks/useResendEmail";
 import { useUser } from "@/hooks/useUser";
-import { useAuth, useAuthClient } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth-client";
 import { Button } from "@/lib/components/button";
 import {
 	Form,
@@ -44,11 +45,12 @@ export default function Login() {
 	const posthog = usePostHog();
 	const [isLoading, setIsLoading] = useState(false);
 	const { signIn } = useAuth();
-	const authClient = useAuthClient();
 	const [verificationEmail, setVerificationEmail] = useState<string | null>(
 		null,
 	);
-	const [cooldown, setCooldown] = useState(0);
+	const { cooldown, setCooldown, handleResend } = useResendEmail({
+		email: verificationEmail,
+	});
 
 	// Redirect to root if already authenticated
 	useUser({
@@ -68,23 +70,6 @@ export default function Login() {
 			password: "",
 		},
 	});
-
-	useEffect(() => {
-		if (!cooldown) {
-			return;
-		}
-
-		const interval = setInterval(() => {
-			setCooldown((prev) => {
-				if (prev <= 1) {
-					return 0;
-				}
-				return prev - 1;
-			});
-		}, 1000);
-
-		return () => clearInterval(interval);
-	}, [cooldown]);
 
 	useEffect(() => {
 		if (window.PublicKeyCredential) {
@@ -140,33 +125,6 @@ export default function Login() {
 		}
 
 		setIsLoading(false);
-	}
-
-	async function handleResendVerification() {
-		if (!verificationEmail || cooldown > 0) {
-			return;
-		}
-
-		try {
-			await authClient.sendVerificationEmail({
-				email: verificationEmail,
-				callbackURL:
-					typeof window !== "undefined"
-						? `${window.location.origin}/?emailVerified=true`
-						: undefined,
-			});
-			toast({
-				title: "Verification email sent",
-				description: "Please check your inbox and spam folder.",
-			});
-			setCooldown(60);
-		} catch (error) {
-			toast({
-				title: "Failed to resend verification email",
-				description: (error as Error)?.message ?? undefined,
-				variant: "destructive",
-			});
-		}
 	}
 
 	async function handlePasskeySignIn() {
@@ -261,7 +219,7 @@ export default function Login() {
 						</p>
 						<button
 							type="button"
-							onClick={handleResendVerification}
+							onClick={handleResend}
 							disabled={cooldown > 0}
 							className="text-sm font-medium text-primary underline underline-offset-4 disabled:cursor-not-allowed disabled:text-muted-foreground"
 						>
