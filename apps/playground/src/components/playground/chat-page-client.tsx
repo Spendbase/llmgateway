@@ -1,8 +1,9 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 // Removed API key manager for playground; we rely on server-set cookie
@@ -22,7 +23,7 @@ import {
 	useDeleteChat,
 } from "@/hooks/useChats";
 import { useUser } from "@/hooks/useUser";
-import { parseImageFile } from "@/lib/image-utils";
+import { useApi } from "@/lib/fetch-client";
 import { mapModels } from "@/lib/mapmodels";
 import { getErrorMessage } from "@/lib/utils";
 
@@ -109,6 +110,9 @@ export default function ChatPageClient({
 	// Track the last chat ID whose settings were synced to prevent overwriting local state
 	const lastSyncedChatIdRef = useRef<string | null>(null);
 
+	const queryClient = useQueryClient();
+	const api = useApi();
+
 	const { messages, setMessages, sendMessage, status, stop, regenerate } =
 		useChat({
 			onError: async (e) => {
@@ -134,128 +138,18 @@ export default function ChatPageClient({
 					}
 				}
 			},
-			onFinish: async ({ message }) => {
+			onFinish: async () => {
 				isNewChatRef.current = false;
-
-				// Wait for chatId to be available (handleUserMessage might still be running)
-				let chatId = chatIdRef.current;
-
-				if (!chatId) {
-					// Poll for chatId with timeout
-					for (let i = 0; i < 50; i++) {
-						await new Promise<void>((resolve) => {
-							setTimeout(resolve, 100);
-						});
-						chatId = chatIdRef.current;
-						if (chatId) {
-							break;
-						}
-					}
-				}
-
-				if (!chatId) {
-					toast.error(
-						"Failed to save AI response: No chat ID found (chat may not have finished saving before the stream ended).",
-					);
-					return;
-				}
-				// Extract assistant text, images, and reasoning from UIMessage parts
-				const textContent = message.parts
-					.filter((p) => p.type === "text")
-					.map((p) => p.text)
-					.join("");
-
-				const reasoningContent = message.parts
-					.filter((p) => p.type === "reasoning")
-					.map((p) => p.text)
-					.join("");
-
-				const imageUrlParts = (message.parts as any[])
-					.filter((p: any) => p.type === "image_url" && p.image_url?.url)
-					.map((p: any) => ({
-						type: "image_url",
-						image_url: { url: p.image_url.url },
-					}));
-
-				// Handle file parts for images (supports multiple shapes from providers)
-				const fileParts = (message.parts as any[])
-					.filter((p) => {
-						if (p.type !== "file") {
-							return false;
-						}
-						const mediaType =
-							p.mediaType ||
-							p.mimeType ||
-							p.mime_type ||
-							p.file?.mediaType ||
-							p.file?.mimeType ||
-							p.file?.mime_type;
-						return (
-							typeof mediaType === "string" && mediaType.startsWith("image/")
-						);
-					})
-					.map((p) => {
-						const mediaType =
-							p.mediaType ||
-							p.mimeType ||
-							p.mime_type ||
-							p.file?.mediaType ||
-							p.file?.mimeType ||
-							p.file?.mime_type;
-						const url =
-							p.url ||
-							p.data ||
-							p.base64 ||
-							p.file?.url ||
-							p.file?.data ||
-							p.file?.base64;
-						const { dataUrl } = parseImageFile({
-							url,
-							mediaType,
-						});
-						return {
-							type: "image_url" as const,
-							image_url: { url: dataUrl },
-						};
-					});
-
-				const images = [...imageUrlParts, ...fileParts];
-
-				// Extract tool parts (AI SDK dynamic tool UI parts)
-				const toolParts = (message.parts as any[]).filter(
-					(p: any) => p.type === "dynamic-tool",
-				);
-
-				const bodyToSave = {
-					role: "assistant" as const,
-					content: textContent || undefined,
-					images: images.length > 0 ? JSON.stringify(images) : undefined,
-					reasoning: reasoningContent || undefined,
-					tools: toolParts.length > 0 ? JSON.stringify(toolParts) : undefined,
-				};
-
-				try {
-					await addMessage.mutateAsync({
+				// Persistence is done server-side in toUIMessageStreamResponse onFinish (no race).
+				const chatId = chatIdRef.current;
+				if (chatId) {
+					const chatsQueryKey = api.queryOptions("get", "/chats").queryKey;
+					queryClient.invalidateQueries({ queryKey: chatsQueryKey });
+					const chatQueryKey = api.queryOptions("get", "/chats/{id}", {
 						params: { path: { id: chatId } },
-						body: bodyToSave,
-					});
-				} catch (error: any) {
-					// If chat not found, clear the stale chat ID
-					if (
-						error?.status === 404 &&
-						error?.message?.includes("Chat not found")
-					) {
-						chatIdRef.current = null;
-						setCurrentChatId(null);
-						setMessages([]);
-						toast.error("Chat was deleted. Please start a new conversation.");
-					} else {
-						toast.error(
-							`Failed to save AI response: ${getErrorMessage(error)}`,
-						);
-					}
+					}).queryKey;
+					queryClient.invalidateQueries({ queryKey: chatQueryKey });
 				}
-				// Note: useAddMessage already invalidates /chats query on success
 			},
 		});
 
@@ -445,6 +339,7 @@ export default function ChatPageClient({
 				},
 				body: {
 					...(options?.body || {}),
+					...(chatIdRef.current ? { chatId: chatIdRef.current } : {}),
 					...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
 					...(imageConfig ? { image_config: imageConfig } : {}),
 					...(webSearchEnabled && supportsWebSearch
