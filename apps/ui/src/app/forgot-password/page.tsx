@@ -28,10 +28,6 @@ import {
 import { Input } from "@/lib/components/input";
 import { useToast } from "@/lib/components/use-toast";
 
-interface RateLimitError {
-	retryAfter?: number;
-}
-
 const formSchema = z.object({
 	email: z.string().email({
 		message: "Please enter a valid email address",
@@ -54,32 +50,33 @@ export default function ForgotPassword() {
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		setIsLoading(true);
 		try {
+			let retryAfterSeconds: number | undefined;
+
 			const { error } = await forgetPassword(
 				{
 					email: values.email,
 					redirectTo: "/reset-password",
 				},
 				{
-					onRequest: () => {
-						// empty
-					},
-					onSuccess: () => {
-						setIsSuccess(true);
-					},
-					onError: (_ctx) => {
-						// This callback might catch it, but we also check return value
-						// checking error below is sufficient usually, but let's see.
+					onError: (ctx) => {
+						if (ctx.response.status === 429) {
+							const retryHeader = ctx.response.headers.get("Retry-After");
+							if (retryHeader) {
+								retryAfterSeconds = parseInt(retryHeader, 10);
+							}
+						}
 					},
 				},
 			);
 
 			if (error) {
 				if (error.status === 429) {
-					const rateLimitError = error as RateLimitError;
-					const retryAfter = rateLimitError.retryAfter;
-					const msg = retryAfter
-						? `Too many attempts. Please try again in ${Math.ceil(retryAfter / 60)} minutes.`
-						: "Too many attempts. Please try again later.";
+					let msg = "Too many attempts. Please try again later.";
+
+					if (retryAfterSeconds) {
+						const minutes = Math.ceil(retryAfterSeconds / 60);
+						msg = `Too many attempts. Please try again in ${minutes} minutes.`;
+					}
 
 					toast({
 						title: msg,
@@ -95,8 +92,7 @@ export default function ForgotPassword() {
 				return;
 			}
 
-			// If no error, we assume success or handled in onSuccess
-			// But verify if result is returned
+			setIsSuccess(true);
 		} catch {
 			toast({
 				title: "An unexpected error occurred",

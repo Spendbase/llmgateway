@@ -35,7 +35,7 @@ const passwordSchema = z
 	.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
 	.regex(/[0-9]/, "Password must contain at least one number")
 	.regex(
-		/[!@#$%^&*(),.?":{}|<>]/,
+		/[^A-Za-z0-9\s]/,
 		"Password must contain at least one special character",
 	);
 
@@ -188,7 +188,7 @@ function ResetPasswordForm() {
 										</li>
 										<li
 											className={
-												/[!@#$%^&*(),.?":{}|<>]/.test(field.value)
+												/[^A-Za-z0-9\s]/.test(field.value)
 													? "text-green-500"
 													: ""
 											}
