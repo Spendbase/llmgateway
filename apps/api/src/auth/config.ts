@@ -456,10 +456,10 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 																<p style="margin: 32px 0 8px 0; font-size: 13px; color: #666666;">
 																	If that button doesn't work, copy and paste this link into your browser:
 																</p>
-																<p style="margin: 0 0 40px 0; font-size: 13px; word-break: break-all;">
+																<p style="margin: 0 0 40px 0; font-size: 13px;line-height: 1.4; color: #666666;">
 																	<a
 																		href="${url}"
-																		style="color: #1D61DB; text-decoration: none; display: block; width: 100%; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+																		style="color: #1D61DB; text-decoration: none; word-break: break-all; display: inline-block;"
 																	>
 																		${url}
 																	</a>
