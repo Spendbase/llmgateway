@@ -102,20 +102,15 @@ export default function Signup() {
 						email: values.email,
 						name: values.name,
 					});
-					if (config.hosted) {
-						toast({
-							title: "Account created",
-							description:
-								"Please check your email to verify your account before signing in.",
-						});
-						const verifyUrl: VerifyEmailRoute = `/verify-email?email=${encodeURIComponent(
-							values.email,
-						)}`;
-						router.push(verifyUrl as Route);
-					} else {
-						toast({ title: "Account created" });
-						router.push("/");
-					}
+					toast({
+						title: "Account created",
+						description:
+							"Please check your email to verify your account before signing in.",
+					});
+					const verifyUrl: VerifyEmailRoute = `/verify-email?email=${encodeURIComponent(
+						values.email,
+					)}`;
+					router.push(verifyUrl as Route);
 				},
 				onError: (ctx) => {
 					toast({
