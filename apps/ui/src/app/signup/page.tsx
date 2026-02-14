@@ -26,6 +26,10 @@ import { Input } from "@/lib/components/input";
 import { toast } from "@/lib/components/use-toast";
 import { useAppConfig } from "@/lib/config";
 
+import type { Route } from "next";
+
+type VerifyEmailRoute = `/verify-email?email=${string}`;
+
 const createFormSchema = (isHosted: boolean) =>
 	z.object({
 		name: z.string().min(2, {
@@ -103,7 +107,10 @@ export default function Signup() {
 						description:
 							"Please check your email to verify your account before signing in.",
 					});
-					router.push("/onboarding");
+					const verifyUrl: VerifyEmailRoute = `/verify-email?email=${encodeURIComponent(
+						values.email,
+					)}`;
+					router.push(verifyUrl as Route);
 				},
 				onError: (ctx) => {
 					toast({
