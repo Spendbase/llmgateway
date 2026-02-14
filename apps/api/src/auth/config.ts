@@ -489,6 +489,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 		],
 		emailAndPassword: {
 			enabled: true,
+			requireEmailVerification: true,
 			resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours
 			async sendResetPassword({ user, token }) {
 				const url = `${uiUrl}/reset-password?token=${encodeURIComponent(token)}`;
@@ -530,6 +531,24 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				passkey: tables.passkey,
 			},
 		}),
+		databaseHooks: {
+			user: {
+				create: {
+					after: async (user) => {
+						if (!isHosted) {
+							await db
+								.update(tables.user)
+								.set({ emailVerified: true })
+								.where(eq(tables.user.id, user.id));
+
+							logger.info("Automatically verified email for self-hosted user", {
+								userId: user.id,
+							});
+						}
+					},
+				},
+			},
+		},
 		socialProviders: {
 			github: {
 				clientId: process.env.GITHUB_CLIENT_ID!,
@@ -756,18 +775,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 				// Perform all DB operations in a single transaction for atomicity
 				await db.transaction(async (tx) => {
-					// For self-hosted installations, automatically verify the user's email
-					if (!isHosted) {
-						await tx
-							.update(tables.user)
-							.set({ emailVerified: true })
-							.where(eq(tables.user.id, userId));
-
-						logger.info("Automatically verified email for self-hosted user", {
-							userId,
-						});
-					}
-
 					const autoDepositAmount = process.env.AUTO_DEPOSIT_CREDITS ?? 50;
 
 					// Create a default organization
