@@ -492,10 +492,10 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 			// In hosted (cloud) mode we require email verification before login.
 			// Users are not auto-signed in on initial sign-up; instead they are
 			// signed in after verifying their email via the verification link.
-			requireEmailVerification: isHosted,
+			requireEmailVerification: true,
 			sendVerificationOnSignIn: false,
 			// For self-hosted instances we keep the default autoSignIn behaviour.
-			autoSignIn: !isHosted,
+			autoSignIn: false,
 			resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours
 			async sendResetPassword({ user, token }) {
 				const url = `${uiUrl}/reset-password?token=${encodeURIComponent(token)}`;
