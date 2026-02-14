@@ -27,6 +27,8 @@ export function useAuth() {
 			signOut: authClient.signOut,
 			useSession: authClient.useSession,
 			getSession: authClient.getSession,
+			forgetPassword: authClient.forgetPassword,
+			resetPassword: authClient.resetPassword,
 		}),
 		[authClient],
 	);
