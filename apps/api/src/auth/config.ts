@@ -210,6 +210,54 @@ export async function checkAndRecordSignupAttempt(
 	}
 }
 
+export async function checkEmailResendRateLimit(
+	email: string,
+): Promise<RateLimitResult> {
+	const normalizedEmail = email.toLowerCase().trim();
+	const key = `email_resend_limit:${normalizedEmail}`;
+	const now = Date.now();
+	const windowSizeSeconds = 60;
+
+	try {
+		const pipeline = redisClient.pipeline();
+		pipeline.incr(key);
+		pipeline.expire(key, windowSizeSeconds, "NX");
+		pipeline.ttl(key);
+		const results = await pipeline.exec();
+
+		if (!results) {
+			throw new Error("Redis pipeline execution failed");
+		}
+
+		const count = (results[0][1] as number) || 1;
+		const ttl = (results[2][1] as number) || -1;
+
+		if (count > 1) {
+			logger.warn("Email resend rate limit exceeded", {
+				email: maskEmail(normalizedEmail),
+				count,
+			});
+			return {
+				allowed: false,
+				resetTime: now + (ttl > 0 ? ttl * 1000 : windowSizeSeconds * 1000),
+				remaining: 0,
+			};
+		}
+
+		return {
+			allowed: true,
+			resetTime: now + windowSizeSeconds * 1000,
+			remaining: 0,
+		};
+	} catch (error) {
+		logger.error(
+			"Email resend rate limit check failed",
+			error instanceof Error ? error : new Error(String(error)),
+		);
+		return { allowed: true, resetTime: now, remaining: 0 };
+	}
+}
+
 export interface ExponentialRateLimitConfig {
 	keyPrefix: string;
 	baseDelayMs: number;
@@ -652,6 +700,34 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 									},
 								);
 							}
+						}
+					}
+				}
+
+				if (ctx.path.startsWith("/send-verification-email")) {
+					const body = ctx.body as { email?: string } | undefined;
+					if (body?.email) {
+						const rateLimit = await checkEmailResendRateLimit(body.email);
+
+						if (!rateLimit.allowed) {
+							const retryAfter = Math.ceil(
+								(rateLimit.resetTime - Date.now()) / 1000,
+							);
+
+							return new Response(
+								JSON.stringify({
+									error: "too_many_requests",
+									message: `Please wait ${retryAfter} seconds before requesting another email.`,
+									retryAfter,
+								}),
+								{
+									status: 429,
+									headers: {
+										"Content-Type": "application/json",
+										"Retry-After": retryAfter.toString(),
+									},
+								},
+							);
 						}
 					}
 				}

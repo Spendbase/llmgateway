@@ -15,6 +15,7 @@ describe("API auth configuration", () => {
 			sendVerificationOnSignIn: false,
 			autoSignIn: !isHosted,
 			resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours
+			sendResetPassword: expect.any(Function),
 		});
 		expect(apiAuth.options.basePath).toBe("/auth");
 		expect(apiAuth.options.plugins).toBeDefined();

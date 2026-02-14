@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { useResendEmail } from "@/hooks/useResendEmail";
@@ -17,9 +17,13 @@ export default function VerifyEmailPage() {
 
 	const [email] = useState(initialEmail);
 
-	const { cooldown, canResend, handleResend } = useResendEmail({
+	const { cooldown, canResend, handleResend, user } = useResendEmail({
 		email: initialEmail,
 	});
+
+	if (user?.emailVerified) {
+		redirect(user?.onboardingCompleted ? "/dashboard" : "/onboarding");
+	}
 
 	return (
 		<div className="flex min-h-screen flex-col items-center justify-center px-4">
