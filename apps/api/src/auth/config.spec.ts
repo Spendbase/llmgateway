@@ -9,9 +9,6 @@ describe("API auth configuration", () => {
 		expect(apiAuth.options).toBeDefined();
 		expect(apiAuth.options.emailAndPassword).toEqual({
 			enabled: true,
-			requireEmailVerification: true,
-			sendVerificationOnSignIn: false,
-			autoSignIn: false,
 			resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours
 			sendResetPassword: expect.any(Function),
 		});
