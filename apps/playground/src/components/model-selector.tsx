@@ -425,6 +425,7 @@ export function ModelSelector({
 	const normalize = (s: string) => s.toLowerCase().replace(/[-_\s]+/g, "");
 
 	// Build entries of model per provider mapping (include all, filter later)
+
 	const allEntries = React.useMemo(() => {
 		const out: {
 			model: ApiModel;
@@ -433,7 +434,7 @@ export function ModelSelector({
 			isRoot?: boolean;
 			searchText: string;
 		}[] = [];
-		const now = new Date();
+		// const now = new Date();
 
 		// Sort models by createdAt (when added to LLM Gateway), newest first
 		// Falls back to releasedAt if createdAt is not available
@@ -475,23 +476,21 @@ export function ModelSelector({
 			}
 
 			for (const mp of m.mappings) {
-				const isDeactivated =
-					mp.deactivatedAt && new Date(mp.deactivatedAt) <= now;
-				if (!isDeactivated) {
-					const provider = providers.find((p) => p.id === mp.providerId);
-					const searchText = normalize(
-						[m.name ?? "", m.family ?? "", m.id, provider?.name ?? ""].join(
-							" ",
-						),
-					);
-					out.push({
-						model: m,
-						mapping: mp,
-						provider,
-						isRoot: false,
-						searchText,
-					});
-				}
+				// const isDeactivated =
+				// 	mp.deactivatedAt && new Date(mp.deactivatedAt) <= now;
+				// if (!isDeactivated) {
+				const provider = providers.find((p) => p.id === mp.providerId);
+				const searchText = normalize(
+					[m.name ?? "", m.family ?? "", m.id, provider?.name ?? ""].join(" "),
+				);
+				out.push({
+					model: m,
+					mapping: mp,
+					provider,
+					isRoot: false,
+					searchText,
+				});
+				// }
 			}
 		}
 		return out;

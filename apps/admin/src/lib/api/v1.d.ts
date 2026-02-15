@@ -216,7 +216,7 @@ export interface paths {
         };
         /**
          * Get all models
-         * @description Returns all models with their provider mappings, sorted by createdAt descending
+         * @description Returns all models with their provider mappings with optional filtering, search and sorting
          */
         get: operations["internal_get_models"];
         put?: never;
@@ -1222,6 +1222,99 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/admin/models/mappings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @example inactive
+                         * @enum {string}
+                         */
+                        status: "active" | "inactive" | "deactivated";
+                        /** @example Model deprecated */
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Model mapping status successfully updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                            mapping: {
+                                id: string;
+                                /** @enum {string} */
+                                status: "active" | "inactive" | "deactivated";
+                                deactivatedAt: string | null;
+                                deactivationReason: string | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid status transition */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Model mapping not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/keys/api": {
@@ -3895,7 +3988,13 @@ export type $defs = Record<string, never>;
 export interface operations {
     internal_get_models: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: "active" | "inactive" | "deactivated";
+                search?: string;
+                family?: string;
+                sort?: "name" | "status" | "createdAt" | "updatedAt";
+                order?: "asc" | "desc";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3951,8 +4050,9 @@ export interface operations {
                                 supportedParameters: string[] | null;
                                 deprecatedAt: string | null;
                                 deactivatedAt: string | null;
+                                deactivationReason: string | null;
                                 /** @enum {string} */
-                                status: "active" | "inactive";
+                                status: "active" | "inactive" | "deactivated";
                             }[];
                         }[];
                     };

@@ -11,18 +11,30 @@ import type { ServerTypes } from "@/vars.js";
 
 export const internalModels = new OpenAPIHono<ServerTypes>();
 
+// Helper to convert null to undefined for optional fields
+const nullableToOptional = <T extends z.ZodTypeAny>(schema: T) =>
+	schema.nullable().transform((v) => v ?? undefined);
+
 // Provider schema
 const providerSchema = z.object({
 	id: z.string(),
 	createdAt: z.coerce.date(),
-	name: z.string().nullable(),
-	description: z.string().nullable(),
-	streaming: z.boolean().nullable(),
-	cancellation: z.boolean().nullable(),
-	color: z.string().nullable(),
-	website: z.string().nullable(),
-	announcement: z.string().nullable(),
+	name: nullableToOptional(z.string()),
+	description: nullableToOptional(z.string()),
+	streaming: nullableToOptional(z.boolean()),
+	cancellation: nullableToOptional(z.boolean()),
+	color: nullableToOptional(z.string()),
+	website: nullableToOptional(z.string()),
+	announcement: nullableToOptional(z.string()),
 	status: z.enum(["active", "inactive"]),
+});
+
+// Pricing tier schema
+const pricingTierSchema = z.object({
+	name: z.string(),
+	upToTokens: z.number(),
+	inputPrice: z.number(),
+	outputPrice: z.number(),
 });
 
 // Model provider mapping schema
@@ -32,45 +44,53 @@ const modelProviderMappingSchema = z.object({
 	modelId: z.string(),
 	providerId: z.string(),
 	modelName: z.string(),
-	inputPrice: z.string().nullable(),
-	outputPrice: z.string().nullable(),
-	cachedInputPrice: z.string().nullable(),
-	imageInputPrice: z.string().nullable(),
-	requestPrice: z.string().nullable(),
-	contextSize: z.number().nullable(),
-	maxOutput: z.number().nullable(),
+	inputPrice: nullableToOptional(z.number()),
+	outputPrice: nullableToOptional(z.number()),
+	cachedInputPrice: nullableToOptional(z.number()),
+	imageInputPrice: nullableToOptional(z.number()),
+	requestPrice: nullableToOptional(z.number()),
+	contextSize: nullableToOptional(z.number()),
+	maxOutput: nullableToOptional(z.number()),
 	streaming: z.boolean(),
-	vision: z.boolean().nullable(),
-	reasoning: z.boolean().nullable(),
-	reasoningOutput: z.string().nullable(),
-	reasoningLevels: z
-		.array(z.enum(["minimal", "low", "medium", "high"]))
-		.nullable()
-		.optional(),
-	tools: z.boolean().nullable(),
-	jsonOutput: z.boolean().nullable(),
-	jsonOutputSchema: z.boolean().nullable(),
-	webSearch: z.boolean().nullable(),
-	discount: z.string().nullable(),
-	stability: z.enum(["stable", "beta", "unstable", "experimental"]).nullable(),
-	supportedParameters: z.array(z.string()).nullable(),
-	deprecatedAt: z.coerce.date().nullable(),
-	deactivatedAt: z.coerce.date().nullable(),
-	status: z.enum(["active", "inactive"]),
+	vision: nullableToOptional(z.boolean()),
+	reasoning: nullableToOptional(z.boolean()),
+	reasoningOutput: nullableToOptional(z.string()),
+	reasoningLevels: nullableToOptional(
+		z.array(z.enum(["minimal", "low", "medium", "high"])),
+	),
+	tools: nullableToOptional(z.boolean()),
+	jsonOutput: nullableToOptional(z.boolean()),
+	jsonOutputSchema: nullableToOptional(z.boolean()),
+	webSearch: nullableToOptional(z.boolean()),
+	webSearchPrice: nullableToOptional(z.number()),
+	discount: nullableToOptional(z.number()),
+	pricingTiers: nullableToOptional(z.array(pricingTierSchema)),
+	stability: nullableToOptional(
+		z.enum(["stable", "beta", "unstable", "experimental"]),
+	),
+	supportedParameters: nullableToOptional(z.array(z.string())),
+	deprecatedAt: nullableToOptional(z.coerce.date()),
+	deactivatedAt: nullableToOptional(z.coerce.date()),
+	deactivationReason: nullableToOptional(z.string()),
+	status: z.enum(["active", "inactive", "deactivated"]),
+	providerInfo: nullableToOptional(providerSchema),
 });
 
 // Model schema with mappings
 const modelSchema = z.object({
 	id: z.string(),
 	createdAt: z.coerce.date(),
-	releasedAt: z.coerce.date().nullable(),
-	name: z.string().nullable(),
-	aliases: z.array(z.string()).nullable(),
-	description: z.string().nullable(),
+	updatedAt: z.coerce.date().optional(),
+	releasedAt: nullableToOptional(z.coerce.date()),
+	name: nullableToOptional(z.string()),
+	aliases: nullableToOptional(z.array(z.string())),
+	description: nullableToOptional(z.string()),
 	family: z.string(),
-	free: z.boolean().nullable(),
-	output: z.array(z.string()).nullable(),
-	stability: z.enum(["stable", "beta", "unstable", "experimental"]).nullable(),
+	free: nullableToOptional(z.boolean()),
+	output: nullableToOptional(z.array(z.string())),
+	stability: nullableToOptional(
+		z.enum(["stable", "beta", "unstable", "experimental"]),
+	),
 	status: z.enum(["active", "inactive"]),
 	mappings: z.array(modelProviderMappingSchema),
 });
@@ -80,10 +100,35 @@ const getModelsRoute = createRoute({
 	operationId: "internal_get_models",
 	summary: "Get all models",
 	description:
-		"Returns all models with their provider mappings, sorted by createdAt descending",
+		"Returns all models with their provider mappings with optional filtering, search and sorting",
 	method: "get",
 	path: "/models",
-	request: {},
+	request: {
+		query: z.object({
+			status: z
+				.enum(["active", "inactive", "deactivated"])
+				.optional()
+				.openapi({ example: "active" }),
+			search: z.string().optional().openapi({ example: "gpt" }),
+			family: z.string().optional().openapi({ example: "openai" }),
+			sort: z
+				.enum(["name", "family", "status", "createdAt", "updatedAt"])
+				.optional()
+				.default("createdAt")
+				.openapi({ example: "name" }),
+			order: z
+				.enum(["asc", "desc"])
+				.optional()
+				.default("desc")
+				.openapi({ example: "asc" }),
+			includeAll: z
+				.string()
+				.optional()
+				.transform((val) => val === "true")
+				.describe("Include all mapping statuses (for admin)")
+				.openapi({ example: "false" }),
+		}),
+	},
 	responses: {
 		200: {
 			content: {
@@ -99,45 +144,113 @@ const getModelsRoute = createRoute({
 });
 
 internalModels.openapi(getModelsRoute, async (c) => {
-	const models = await db.query.model.findMany({
-		where: {
-			status: { eq: "active" },
-		},
-		with: {
-			modelProviderMappings: {
-				where: {
-					status: { eq: "active" },
-				},
+	const query = c.req.valid("query");
+	const {
+		status,
+		search,
+		family,
+		sort = "createdAt",
+		order = "desc",
+		includeAll = false,
+	} = query;
+
+	// Build where conditions using object syntax
+	const whereConditions: any = {};
+
+	if (status) {
+		whereConditions.status = { eq: status };
+	}
+
+	if (family) {
+		whereConditions.family = { eq: family };
+	}
+
+	// Note: search functionality requires SQL operators not supported by query API object syntax
+	// For now we'll filter in memory, or consider using core API for this endpoint
+	const [initialModels, providers] = await Promise.all([
+		db.query.model.findMany({
+			where:
+				Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
+			with: {
+				modelProviderMappings: true,
 			},
-		},
-		orderBy: {
-			createdAt: "desc",
-		},
-	});
+			orderBy: {
+				[sort]: order,
+			},
+		}),
+		db.query.provider.findMany({
+			where: {
+				status: { eq: "active" },
+			},
+		}),
+	]);
 
-	// Enrich with data from models package (e.g., reasoningLevels)
-	const transformedModels = models.map((model) => {
-		const packageModel = modelsPackage.find((m) => m.id === model.id);
+	let models = initialModels;
 
-		return {
-			...model,
-			mappings: model.modelProviderMappings.map((mapping) => {
-				// Find corresponding package mapping to get reasoningLevels
-				const packageMapping = packageModel?.providers.find(
-					(p) =>
-						(p as PackageProviderModelMapping).providerId ===
-						mapping.providerId,
-				) as PackageProviderModelMapping | undefined;
+	// Apply search filter in memory if needed
+	if (search) {
+		const searchLower = search.toLowerCase();
+		models = models.filter(
+			(model) =>
+				model.id.toLowerCase().includes(searchLower) ||
+				model.name?.toLowerCase().includes(searchLower),
+		);
+	}
 
-				return {
-					...mapping,
-					reasoningLevels: packageMapping?.reasoningLevels ?? null,
-				};
-			}),
-		};
-	});
+	// Enrich with data from models package (e.g., reasoningLevels) and filter mappings
+	const transformedModels = models
+		.map((model) => {
+			const packageModel = modelsPackage.find((m) => m.id === model.id);
 
-	return c.json({ models: transformedModels });
+			// Filter mappings
+			const filteredMappings = model.modelProviderMappings.filter((mapping) => {
+				// If specific status is provided, filter by it
+				if (status) {
+					return mapping.status === status;
+				}
+				// If includeAll=true (for admin panel), show all
+				if (includeAll) {
+					return true;
+				}
+				// By default, show only active mappings (for regular requests)
+				return mapping.status === "active";
+			});
+
+			// Exclude modelProviderMappings from spread and add mappings instead
+			const { modelProviderMappings: _modelProviderMappings, ...modelRest } =
+				model;
+
+			return {
+				...modelRest,
+				mappings: filteredMappings.map((mapping) => {
+					// Find corresponding package mapping to enrich with static data
+					const packageMapping = packageModel?.providers.find(
+						(p) =>
+							(p as PackageProviderModelMapping).providerId ===
+							mapping.providerId,
+					) as PackageProviderModelMapping | undefined;
+
+					// Find provider info from DB
+					const providerInfo = providers.find(
+						(p) => p.id === mapping.providerId,
+					);
+
+					return {
+						...mapping,
+						reasoningLevels: packageMapping?.reasoningLevels ?? null,
+						pricingTiers: packageMapping?.pricingTiers ?? null,
+						webSearchPrice: packageMapping?.webSearchPrice ?? null,
+						providerInfo: providerInfo ?? null,
+					};
+				}),
+			};
+		})
+		.filter((model) => model.mappings.length > 0); // Don't return models without mappings
+
+	// Parse through Zod schema to apply transformations (null -> undefined)
+	const parsedModels = z.array(modelSchema).parse(transformedModels);
+
+	return c.json({ models: parsedModels });
 });
 
 // GET /internal/providers - Returns providers sorted by createdAt desc
@@ -172,5 +285,8 @@ internalModels.openapi(getProvidersRoute, async (c) => {
 		},
 	});
 
-	return c.json({ providers });
+	// Parse through Zod schema to apply transformations (null -> undefined)
+	const parsedProviders = z.array(providerSchema).parse(providers);
+
+	return c.json({ providers: parsedProviders });
 });
