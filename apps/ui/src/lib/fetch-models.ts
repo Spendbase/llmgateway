@@ -5,14 +5,21 @@ import { getConfig } from "./config-server";
 export interface ApiProvider {
 	id: string;
 	createdAt: string;
-	name: string | null;
-	description: string | null;
-	streaming: boolean | null;
-	cancellation: boolean | null;
-	color: string | null;
-	website: string | null;
-	announcement: string | null;
+	name?: string;
+	description?: string;
+	streaming?: boolean;
+	cancellation?: boolean;
+	color?: string;
+	website?: string;
+	announcement?: string;
 	status: "active" | "inactive";
+}
+
+export interface PricingTier {
+	name: string;
+	upToTokens: number;
+	inputPrice: number;
+	outputPrice: number;
 }
 
 export interface ApiModelProviderMapping {
@@ -21,40 +28,45 @@ export interface ApiModelProviderMapping {
 	modelId: string;
 	providerId: string;
 	modelName: string;
-	inputPrice: string | null;
-	outputPrice: string | null;
-	cachedInputPrice: string | null;
-	imageInputPrice: string | null;
-	requestPrice: string | null;
-	contextSize: number | null;
-	maxOutput: number | null;
+	inputPrice?: number;
+	outputPrice?: number;
+	cachedInputPrice?: number;
+	imageInputPrice?: number;
+	requestPrice?: number;
+	contextSize?: number;
+	maxOutput?: number;
 	streaming: boolean;
-	vision: boolean | null;
-	reasoning: boolean | null;
-	reasoningOutput: string | null;
-	tools: boolean | null;
-	jsonOutput: boolean | null;
-	jsonOutputSchema: boolean | null;
-	webSearch: boolean | null;
-	discount: string | null;
-	stability: "stable" | "beta" | "unstable" | "experimental" | null;
-	supportedParameters: string[] | null;
-	deprecatedAt: string | null;
-	deactivatedAt: string | null;
-	status: "active" | "inactive";
+	vision?: boolean;
+	reasoning?: boolean;
+	reasoningOutput?: string;
+	reasoningLevels?: ("minimal" | "low" | "medium" | "high")[];
+	tools?: boolean;
+	jsonOutput?: boolean;
+	jsonOutputSchema?: boolean;
+	webSearch?: boolean;
+	webSearchPrice?: number;
+	discount?: number;
+	pricingTiers?: PricingTier[];
+	stability?: "stable" | "beta" | "unstable" | "experimental";
+	supportedParameters?: string[];
+	deprecatedAt?: string;
+	deactivatedAt?: string;
+	deactivationReason?: string;
+	status: "active" | "inactive" | "deactivated";
+	providerInfo?: ApiProvider;
 }
 
 export interface ApiModel {
 	id: string;
 	createdAt: string;
-	releasedAt: string | null;
-	name: string | null;
-	aliases: string[] | null;
-	description: string | null;
+	releasedAt?: string;
+	name?: string;
+	aliases?: string[];
+	description?: string;
 	family: string;
-	free: boolean | null;
-	output: string[] | null;
-	stability: "stable" | "beta" | "unstable" | "experimental" | null;
+	free?: boolean;
+	output?: string[];
+	stability?: "stable" | "beta" | "unstable" | "experimental";
 	status: "active" | "inactive";
 	mappings: ApiModelProviderMapping[];
 }
