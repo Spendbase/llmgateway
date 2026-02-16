@@ -1,7 +1,9 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
 import { db } from "@llmgateway/db";
+import { logger } from "@llmgateway/logger";
 import {
 	models as modelsPackage,
 	type ProviderModelMapping as PackageProviderModelMapping,
@@ -157,10 +159,6 @@ internalModels.openapi(getModelsRoute, async (c) => {
 	// Build where conditions using object syntax
 	const whereConditions: any = {};
 
-	if (status) {
-		whereConditions.status = { eq: status };
-	}
-
 	if (family) {
 		whereConditions.family = { eq: family };
 	}
@@ -247,10 +245,15 @@ internalModels.openapi(getModelsRoute, async (c) => {
 		})
 		.filter((model) => model.mappings.length > 0); // Don't return models without mappings
 
-	// Parse through Zod schema to apply transformations (null -> undefined)
-	const parsedModels = z.array(modelSchema).parse(transformedModels);
+	const result = z.array(modelSchema).safeParse(transformedModels);
+	if (!result.success) {
+		logger.error("Model schema validation failed:", result.error.flatten());
+		throw new HTTPException(400, {
+			message: "Invalid request parameters",
+		});
+	}
 
-	return c.json({ models: parsedModels });
+	return c.json({ models: result.data });
 });
 
 // GET /internal/providers - Returns providers sorted by createdAt desc

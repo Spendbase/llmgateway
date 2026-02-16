@@ -441,8 +441,8 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 				return bDate - aDate; // Descending (newest first)
 			}
 
-			let aValue: any;
-			let bValue: any;
+			let aValue: string | number;
+			let bValue: string | number;
 
 			switch (sortField) {
 				case "name":

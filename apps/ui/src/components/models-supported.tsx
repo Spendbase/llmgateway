@@ -85,11 +85,11 @@ export const ModelsSupported = ({
 				if (!acc[providerName]) {
 					acc[providerName] = [];
 				}
-				// Check if model already exists for this provider
-				const existingModel = acc[providerName].find((m) => m.id === model.id);
-				if (!existingModel) {
-					acc[providerName].push(model);
-				}
+				// Add model with only this provider's mapping
+				acc[providerName].push({
+					...model,
+					mappings: [mapping],
+				});
 			});
 			return acc;
 		},
@@ -343,8 +343,14 @@ export const ModelsSupported = ({
 								{sortedProviderEntries
 									.filter(([providerName]) => providerName !== "LLM Gateway")
 									.map(([providerName, models]) => {
-										const providerId = models[0].mappings[0]
-											.providerId as ProviderId;
+										// const providerId = models[0].mappings[0]
+										// 	.providerId as ProviderId;
+
+										const providerId = (models[0].mappings.find(
+											(m) =>
+												(m.providerInfo?.name || m.providerId) === providerName,
+										)?.providerId ??
+											models[0].mappings[0].providerId) as ProviderId;
 										return (
 											<SelectItem key={providerName} value={providerName}>
 												<div className="flex items-center gap-2">
@@ -373,9 +379,13 @@ export const ModelsSupported = ({
 
 			<section className="space-y-12">
 				{filteredProviderEntries.map(([providerName, models]) => {
-					const providerId = models[0].mappings[0].providerId as ProviderId;
+					// const providerId = models[0].mappings[0].providerId as ProviderId;
+					const providerId = (models[0].mappings.find(
+						(m) => (m.providerInfo?.name || m.providerId) === providerName,
+					)?.providerId ?? models[0].mappings[0].providerId) as ProviderId;
 					return (
 						<div key={providerName} className="space-y-6">
+							{providerName}
 							<Link
 								href={`/providers/${providerId}`}
 								className="flex items-center gap-3 hover:opacity-80 transition-opacity"

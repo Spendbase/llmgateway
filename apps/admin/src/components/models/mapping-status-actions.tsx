@@ -95,7 +95,10 @@ export function MappingStatusActions({
 			router.refresh();
 		} catch (error) {
 			toast.error("Deactivation Failed", {
-				description: (error as any)?.message || "Failed to deactivate mapping",
+				description:
+					error instanceof Error
+						? error.message
+						: "Failed to deactivate mapping",
 				style: {
 					backgroundColor: "var(--destructive)",
 					color: "var(--destructive-foreground)",
