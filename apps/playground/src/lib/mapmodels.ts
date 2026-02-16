@@ -47,11 +47,11 @@ export function mapModels(
 				provider: providerInfo?.name ?? p.providerId,
 				providerId: p.providerId,
 				family: m.family,
-				context: p.contextSize ?? undefined,
-				inputPrice: p.inputPrice ? parseFloat(p.inputPrice) : undefined,
-				outputPrice: p.outputPrice ? parseFloat(p.outputPrice) : undefined,
-				vision: p.vision ?? undefined,
-				tools: p.tools ?? undefined,
+				context: p.contextSize,
+				inputPrice: p.inputPrice,
+				outputPrice: p.outputPrice,
+				vision: p.vision,
+				tools: p.tools,
 				imageGen: m.output?.includes("image"),
 			});
 		}
