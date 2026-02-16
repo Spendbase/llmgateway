@@ -589,6 +589,13 @@
       "when": 1768677738988,
       "tag": "1768677738_ancient_liz_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "8",
+      "when": 1771234825169,
+      "tag": "1771234825_elite_professor_monster",
+      "breakpoints": true
     }
   ]
 }

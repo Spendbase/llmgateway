@@ -875,3 +875,28 @@ export const modelHistory = pgTable(
 		index("model_history_minute_timestamp_idx").on(table.minuteTimestamp),
 	],
 );
+
+export const transactionEvent = pgTable(
+	"transaction_event",
+	{
+		id: text().primaryKey().notNull().$defaultFn(shortid),
+		createdAt: timestamp().notNull().defaultNow(),
+		updatedAt: timestamp()
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+		transactionId: text()
+			.notNull()
+			.references(() => transaction.id, { onDelete: "cascade" }),
+		type: text({
+			enum: ["created", "status_changed"],
+		}).notNull(),
+		newStatus: text({
+			enum: ["pending", "completed", "failed"],
+		}),
+		metadata: jsonb(),
+	},
+	(table) => [
+		index("transaction_event_transaction_id_idx").on(table.transactionId),
+	],
+);
