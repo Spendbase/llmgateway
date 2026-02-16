@@ -103,19 +103,28 @@ export async function syncProvidersAndModels() {
 							.set({
 								modelName: mapping.modelName,
 								inputPrice:
-									"inputPrice" in mapping ? mapping.inputPrice : undefined,
+									"inputPrice" in mapping && mapping.inputPrice !== undefined
+										? mapping.inputPrice.toString()
+										: undefined,
 								outputPrice:
-									"outputPrice" in mapping ? mapping.outputPrice : undefined,
+									"outputPrice" in mapping && mapping.outputPrice !== undefined
+										? mapping.outputPrice.toString()
+										: undefined,
 								cachedInputPrice:
-									"cachedInputPrice" in mapping
-										? mapping.cachedInputPrice
+									"cachedInputPrice" in mapping &&
+									mapping.cachedInputPrice !== undefined
+										? mapping.cachedInputPrice.toString()
 										: undefined,
 								imageInputPrice:
-									"imageInputPrice" in mapping
-										? mapping.imageInputPrice
+									"imageInputPrice" in mapping &&
+									mapping.imageInputPrice !== undefined
+										? mapping.imageInputPrice.toString()
 										: undefined,
 								requestPrice:
-									"requestPrice" in mapping ? mapping.requestPrice : undefined,
+									"requestPrice" in mapping &&
+									mapping.requestPrice !== undefined
+										? mapping.requestPrice.toString()
+										: undefined,
 								contextSize:
 									"contextSize" in mapping ? mapping.contextSize : undefined,
 								maxOutput:
@@ -137,17 +146,10 @@ export async function syncProvidersAndModels() {
 										: undefined,
 								webSearch:
 									"webSearch" in mapping ? mapping.webSearch : undefined,
-								webSearchPrice:
-									"webSearchPrice" in mapping
-										? mapping.webSearchPrice
+								discount:
+									"discount" in mapping && mapping.discount !== undefined
+										? mapping.discount.toString()
 										: undefined,
-								discount: "discount" in mapping ? mapping.discount : undefined,
-								reasoningLevels:
-									"reasoningLevels" in mapping
-										? mapping.reasoningLevels
-										: undefined,
-								pricingTiers:
-									"pricingTiers" in mapping ? mapping.pricingTiers : undefined,
 								stability:
 									"stability" in mapping ? mapping.stability : undefined,
 								supportedParameters:
@@ -174,19 +176,27 @@ export async function syncProvidersAndModels() {
 							providerId: mapping.providerId,
 							modelName: mapping.modelName,
 							inputPrice:
-								"inputPrice" in mapping ? mapping.inputPrice : undefined,
+								"inputPrice" in mapping && mapping.inputPrice !== undefined
+									? mapping.inputPrice.toString()
+									: undefined,
 							outputPrice:
-								"outputPrice" in mapping ? mapping.outputPrice : undefined,
+								"outputPrice" in mapping && mapping.outputPrice !== undefined
+									? mapping.outputPrice.toString()
+									: undefined,
 							cachedInputPrice:
-								"cachedInputPrice" in mapping
-									? mapping.cachedInputPrice
+								"cachedInputPrice" in mapping &&
+								mapping.cachedInputPrice !== undefined
+									? mapping.cachedInputPrice.toString()
 									: undefined,
 							imageInputPrice:
-								"imageInputPrice" in mapping
-									? mapping.imageInputPrice
+								"imageInputPrice" in mapping &&
+								mapping.imageInputPrice !== undefined
+									? mapping.imageInputPrice.toString()
 									: undefined,
 							requestPrice:
-								"requestPrice" in mapping ? mapping.requestPrice : undefined,
+								"requestPrice" in mapping && mapping.requestPrice !== undefined
+									? mapping.requestPrice.toString()
+									: undefined,
 							contextSize:
 								"contextSize" in mapping ? mapping.contextSize : undefined,
 							maxOutput: "maxOutput" in mapping ? mapping.maxOutput : undefined,
@@ -205,17 +215,10 @@ export async function syncProvidersAndModels() {
 									? mapping.jsonOutputSchema
 									: undefined,
 							webSearch: "webSearch" in mapping ? mapping.webSearch : undefined,
-							webSearchPrice:
-								"webSearchPrice" in mapping
-									? mapping.webSearchPrice
+							discount:
+								"discount" in mapping && mapping.discount !== undefined
+									? mapping.discount.toString()
 									: undefined,
-							discount: "discount" in mapping ? mapping.discount : undefined,
-							reasoningLevels:
-								"reasoningLevels" in mapping
-									? mapping.reasoningLevels
-									: undefined,
-							pricingTiers:
-								"pricingTiers" in mapping ? mapping.pricingTiers : undefined,
 							stability: "stability" in mapping ? mapping.stability : undefined,
 							supportedParameters:
 								"supportedParameters" in mapping

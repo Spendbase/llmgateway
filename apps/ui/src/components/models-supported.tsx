@@ -28,18 +28,29 @@ import { useAppConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
 import {
+	models as modelDefinitions,
+	providers as providerDefinitions,
+	type ModelDefinition,
+	type ProviderModelMapping,
+	type ProviderId,
+	type StabilityLevel,
+} from "@llmgateway/models";
+import {
 	getProviderIcon,
 	providerLogoUrls,
 } from "@llmgateway/shared/components";
 
-import type { ApiModel, ApiModelProviderMapping } from "@/lib/fetch-models";
-import type { ProviderId, StabilityLevel } from "@llmgateway/models";
+import type {
+	ApiModel,
+	ApiModelProviderMapping,
+	ApiProvider,
+} from "@/lib/fetch-models";
 
-type ModelWithProviders = ApiModel;
-
-interface ModelsSupportedProps {
-	models: ApiModel[];
-	isDashboard?: boolean;
+interface ModelWithProviders extends ApiModel {
+	providerDetails: Array<{
+		provider: ApiModelProviderMapping;
+		providerInfo: ApiProvider;
+	}>;
 }
 
 const getProviderLogo = (providerId: ProviderId) => {
@@ -73,38 +84,95 @@ const getProviderLogoSmall = (providerId: ProviderId) => {
 };
 
 // Convert static ModelDefinition to ApiModel-like structure
-export const ModelsSupported = ({
-	models,
-	isDashboard,
-}: ModelsSupportedProps) => {
-	// Group models by provider
-	const groupedProviders = models.reduce<Record<string, ModelWithProviders[]>>(
-		(acc, model) => {
-			model.mappings.forEach((mapping) => {
-				const providerName = mapping.providerInfo?.name || mapping.providerId;
-				if (!acc[providerName]) {
-					acc[providerName] = [];
-				}
-				// Add model with only this provider's mapping
-				acc[providerName].push({
-					...model,
-					mappings: [mapping],
-				});
-			});
-			return acc;
-		},
-		{},
-	);
+const convertToApiModel = (
+	def: ModelDefinition,
+	map: ProviderModelMapping,
+): ModelWithProviders => {
+	const provider = providerDefinitions.find((p) => p.id === map.providerId)!;
+	return {
+		id: def.id,
+		createdAt: new Date().toISOString(),
+		releasedAt: def.releasedAt?.toISOString() ?? null,
+		name: def.name ?? null,
+		aliases: def.aliases ?? null,
+		description: def.description ?? null,
+		family: def.family,
+		free: def.free ?? null,
+		output: def.output ?? null,
+		stability: def.stability ?? null,
+		status: "active",
+		mappings: [],
+		providerDetails: [
+			{
+				provider: {
+					id: `${map.providerId}-${def.id}`,
+					createdAt: new Date().toISOString(),
+					modelId: def.id,
+					providerId: map.providerId,
+					modelName: map.modelName,
+					inputPrice: map.inputPrice?.toString() ?? null,
+					outputPrice: map.outputPrice?.toString() ?? null,
+					cachedInputPrice: map.cachedInputPrice?.toString() ?? null,
+					imageInputPrice: map.imageInputPrice?.toString() ?? null,
+					requestPrice: map.requestPrice?.toString() ?? null,
+					contextSize: map.contextSize ?? null,
+					maxOutput: map.maxOutput ?? null,
+					streaming: map.streaming ?? true,
+					vision: map.vision ?? null,
+					reasoning: map.reasoning ?? null,
+					reasoningOutput: map.reasoningOutput ?? null,
+					tools: map.tools ?? null,
+					jsonOutput: map.jsonOutput ?? null,
+					jsonOutputSchema: map.jsonOutputSchema ?? null,
+					webSearch: map.webSearch ?? null,
+					discount: map.discount?.toString() ?? null,
+					stability: map.stability ?? null,
+					supportedParameters: map.supportedParameters ?? null,
+					deprecatedAt: map.deprecatedAt?.toISOString() ?? null,
+					deactivatedAt: map.deactivatedAt?.toISOString() ?? null,
+					status: "active",
+				},
+				providerInfo: {
+					id: provider.id,
+					createdAt: new Date().toISOString(),
+					name: provider.name ?? null,
+					description: provider.description ?? null,
+					streaming: provider.streaming ?? null,
+					cancellation: provider.cancellation ?? null,
+					color: provider.color ?? null,
+					website: provider.website ?? null,
+					announcement: provider.announcement ?? null,
+					status: "active",
+				},
+			},
+		],
+	};
+};
 
-	const sortedProviderEntries = Object.entries(groupedProviders)
-		.sort(([a], [b]) => a.localeCompare(b))
-		.map(([providerName, models]) => [providerName, [...models].reverse()]) as [
-		string,
-		ModelWithProviders[],
-	][];
+const groupedProviders = modelDefinitions.reduce<
+	Record<string, ModelWithProviders[]>
+>((acc, def) => {
+	def.providers.forEach((map) => {
+		const provider = providerDefinitions.find((p) => p.id === map.providerId)!;
+		if (!acc[provider.name]) {
+			acc[provider.name] = [];
+		}
+		acc[provider.name].push(convertToApiModel(def, map));
+	});
+	return acc;
+}, {});
 
-	const totalModels = models.length;
-	const totalProviders = sortedProviderEntries.length;
+const sortedProviderEntries = Object.entries(groupedProviders)
+	.sort(([a], [b]) => a.localeCompare(b))
+	.map(([providerName, models]) => [providerName, [...models].reverse()]) as [
+	string,
+	ModelWithProviders[],
+][];
+
+const totalModels = modelDefinitions.length;
+const totalProviders = sortedProviderEntries.length;
+
+export const ModelsSupported = ({ isDashboard }: { isDashboard?: boolean }) => {
 	const config = useAppConfig();
 	const router = useRouter();
 	const [selectedProvider, setSelectedProvider] = useState<string>("all");
@@ -169,12 +237,15 @@ export const ModelsSupported = ({
 		);
 	};
 
-	const formatPrice = (price?: number, discount?: number) => {
+	const formatPrice = (
+		price: string | null | undefined,
+		discount?: string | null,
+	) => {
 		if (price === null || price === undefined) {
 			return "—";
 		}
-		const priceNum = price;
-		const discountNum = discount ?? 0;
+		const priceNum = parseFloat(price);
+		const discountNum = discount ? parseFloat(discount) : 0;
 		const originalPrice = (priceNum * 1e6).toFixed(2);
 		if (discountNum > 0) {
 			const discountedPrice = (priceNum * 1e6 * (1 - discountNum)).toFixed(2);
@@ -343,14 +414,8 @@ export const ModelsSupported = ({
 								{sortedProviderEntries
 									.filter(([providerName]) => providerName !== "LLM Gateway")
 									.map(([providerName, models]) => {
-										// const providerId = models[0].mappings[0]
-										// 	.providerId as ProviderId;
-
-										const providerId = (models[0].mappings.find(
-											(m) =>
-												(m.providerInfo?.name || m.providerId) === providerName,
-										)?.providerId ??
-											models[0].mappings[0].providerId) as ProviderId;
+										const providerId = models[0].providerDetails[0].provider
+											.providerId as ProviderId;
 										return (
 											<SelectItem key={providerName} value={providerName}>
 												<div className="flex items-center gap-2">
@@ -379,13 +444,10 @@ export const ModelsSupported = ({
 
 			<section className="space-y-12">
 				{filteredProviderEntries.map(([providerName, models]) => {
-					// const providerId = models[0].mappings[0].providerId as ProviderId;
-					const providerId = (models[0].mappings.find(
-						(m) => (m.providerInfo?.name || m.providerId) === providerName,
-					)?.providerId ?? models[0].mappings[0].providerId) as ProviderId;
+					const providerId = models[0].providerDetails[0].provider
+						.providerId as ProviderId;
 					return (
 						<div key={providerName} className="space-y-6">
-							{providerName}
 							<Link
 								href={`/providers/${providerId}`}
 								className="flex items-center gap-3 hover:opacity-80 transition-opacity"
@@ -400,7 +462,7 @@ export const ModelsSupported = ({
 							<div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 								{models.map((model, index) => (
 									<ModelCard
-										key={`${model.mappings[0]?.providerId}-${model.id}-${index}`}
+										key={`${model.providerDetails[0].provider.providerId}-${model.id}-${index}`}
 										model={model}
 										shouldShowStabilityWarning={shouldShowStabilityWarning}
 										getCapabilityIcons={getCapabilityIcons}
