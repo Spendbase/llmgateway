@@ -4051,7 +4051,7 @@ export interface operations {
                                 discount: number | null;
                                 pricingTiers: {
                                     name: string;
-                                    upToTokens: number;
+                                    upToTokens: number | null;
                                     inputPrice: number;
                                     outputPrice: number;
                                 }[] | null;
