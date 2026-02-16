@@ -137,7 +137,17 @@ export async function syncProvidersAndModels() {
 										: undefined,
 								webSearch:
 									"webSearch" in mapping ? mapping.webSearch : undefined,
+								webSearchPrice:
+									"webSearchPrice" in mapping
+										? mapping.webSearchPrice
+										: undefined,
 								discount: "discount" in mapping ? mapping.discount : undefined,
+								reasoningLevels:
+									"reasoningLevels" in mapping
+										? mapping.reasoningLevels
+										: undefined,
+								pricingTiers:
+									"pricingTiers" in mapping ? mapping.pricingTiers : undefined,
 								stability:
 									"stability" in mapping ? mapping.stability : undefined,
 								supportedParameters:
@@ -195,7 +205,17 @@ export async function syncProvidersAndModels() {
 									? mapping.jsonOutputSchema
 									: undefined,
 							webSearch: "webSearch" in mapping ? mapping.webSearch : undefined,
+							webSearchPrice:
+								"webSearchPrice" in mapping
+									? mapping.webSearchPrice
+									: undefined,
 							discount: "discount" in mapping ? mapping.discount : undefined,
+							reasoningLevels:
+								"reasoningLevels" in mapping
+									? mapping.reasoningLevels
+									: undefined,
+							pricingTiers:
+								"pricingTiers" in mapping ? mapping.pricingTiers : undefined,
 							stability: "stability" in mapping ? mapping.stability : undefined,
 							supportedParameters:
 								"supportedParameters" in mapping
