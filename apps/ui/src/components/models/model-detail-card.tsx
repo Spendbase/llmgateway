@@ -13,11 +13,20 @@ import {
 
 import { ModelCard } from "./model-card";
 
-import type { ApiModel, ApiModelProviderMapping } from "@/lib/fetch-models";
+import type {
+	ApiModel,
+	ApiModelProviderMapping,
+	ApiProvider,
+} from "@/lib/fetch-models";
 import type { StabilityLevel } from "@llmgateway/models";
 import type { LucideProps } from "lucide-react";
 
-type ModelWithProviders = ApiModel;
+interface ModelWithProviders extends ApiModel {
+	providerDetails: Array<{
+		provider: ApiModelProviderMapping;
+		providerInfo: ApiProvider;
+	}>;
+}
 
 interface ModelDetailCardProps {
 	model: ModelWithProviders;
@@ -34,12 +43,15 @@ export function ModelDetailCard({ model }: ModelDetailCardProps) {
 		);
 	};
 
-	const formatPrice = (price?: number, discount?: number) => {
-		if (price === undefined) {
+	const formatPrice = (
+		price: string | null | undefined,
+		discount?: string | null,
+	) => {
+		if (price === null || price === undefined) {
 			return "—";
 		}
-		const priceNum = price;
-		const discountNum = discount ?? 0;
+		const priceNum = parseFloat(price);
+		const discountNum = discount ? parseFloat(discount) : 0;
 		const originalPrice = priceNum * 1e6;
 		if (discountNum > 0) {
 			const discountedPrice = priceNum * 1e6 * (1 - discountNum);
@@ -123,10 +135,10 @@ export function ModelDetailCard({ model }: ModelDetailCardProps) {
 				color: "text-pink-500",
 			});
 		}
-		if (provider.discount && provider.discount > 0) {
+		if (provider.discount && parseFloat(provider.discount) > 0) {
 			capabilities.push({
 				icon: Gift,
-				label: `${(provider.discount * 100).toFixed(0)}% Discount`,
+				label: `${(parseFloat(provider.discount) * 100).toFixed(0)}% Discount`,
 				color: "text-green-500",
 			});
 		}
