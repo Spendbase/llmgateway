@@ -4,6 +4,8 @@ export interface VerifyEmailProps {
 	url: string;
 }
 
+const uiUrl = process.env.UI_URL || "http://localhost:3002";
+
 export function getVerifyEmail({ url }: VerifyEmailProps): string {
 	const content = `
 		<!DOCTYPE html>
@@ -23,7 +25,7 @@ export function getVerifyEmail({ url }: VerifyEmailProps): string {
 											<table role="presentation" border="0" cellpadding="0" cellspacing="0">
 												<tr>
 													<td style="vertical-align: middle;">
-														<img src="https://app.llmapi.ai/assets/llmapi-logo.png" alt="Logo" width="27" height="27" style="display: block; border: 0;" />
+														<img src="${uiUrl}/llmapi-logo.png" alt="Logo" width="27" height="27" style="display: block; border: 0;" />
 													</td>
 													<td style="vertical-align: middle; padding-left: 6px;">
 														<span style="font-weight: 700; font-size: 20px; color: #1a1a1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 27px;">
@@ -81,6 +83,6 @@ export function getVerifyEmail({ url }: VerifyEmailProps): string {
 	return getEmailLayout({
 		title: "Verify your email address",
 		content,
-		preview: "Verify your email address for LLMGateway",
+		preview: "Verify your email address for LLM API",
 	});
 }
