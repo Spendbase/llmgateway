@@ -19,9 +19,9 @@ export interface ProviderDefinition {
 	// Color used for UI representation (hex code)
 	color?: string;
 	// Website URL
-	website?: string;
+	website?: string | null;
 	// Announcement text
-	announcement?: string;
+	announcement?: string | null;
 	// Instructions for creating an API key
 	apiKeyInstructions?: string;
 	// Learn more URL for API key creation
@@ -46,7 +46,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#6366f1",
 	// 	website: "https://llmapi.ai",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	{
 		id: "openai",
@@ -62,7 +62,7 @@ export const providers = [
 		cancellation: true,
 		color: "#0ea5e9",
 		website: "https://openai.com",
-		announcement: undefined,
+		announcement: null,
 	},
 	{
 		id: "anthropic",
@@ -78,7 +78,7 @@ export const providers = [
 		cancellation: true,
 		color: "#8b5cf6",
 		website: "https://anthropic.com",
-		announcement: undefined,
+		announcement: null,
 	},
 	{
 		id: "google-ai-studio",
@@ -94,7 +94,7 @@ export const providers = [
 		cancellation: true,
 		color: "#4285f4",
 		website: "https://ai.google.com",
-		announcement: undefined,
+		announcement: null,
 	},
 	{
 		id: "google-vertex",
@@ -114,7 +114,7 @@ export const providers = [
 		cancellation: true,
 		color: "#4285f4",
 		website: "https://cloud.google.com/vertex-ai",
-		announcement: undefined,
+		announcement: null,
 		priority: 0.5,
 	},
 	// {
@@ -130,7 +130,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#F55036",
 	// 	website: "https://groq.com",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "cerebras",
@@ -146,7 +146,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#6b46c1",
 	// 	website: "https://cerebras.ai",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	{
 		id: "xai",
@@ -161,7 +161,7 @@ export const providers = [
 		cancellation: true,
 		color: "#000000",
 		website: "https://x.ai",
-		announcement: undefined,
+		announcement: null,
 	},
 	// {
 	// 	id: "deepseek",
@@ -177,7 +177,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#FF6B00",
 	// 	website: "https://deepseek.com",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	{
 		id: "elevenlabs",
@@ -193,7 +193,7 @@ export const providers = [
 		cancellation: true,
 		color: "#000000",
 		website: "https://elevenlabs.io",
-		announcement: undefined,
+		announcement: null,
 	},
 	{
 		id: "alibaba",
@@ -209,7 +209,7 @@ export const providers = [
 		cancellation: true,
 		color: "#FF6A00",
 		website: "https://www.alibabacloud.com",
-		announcement: undefined,
+		announcement: null,
 	},
 	// {
 	// 	id: "novita",
@@ -224,7 +224,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#9333ea",
 	// 	website: "https://novita.ai",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	{
 		id: "aws-bedrock",
@@ -244,7 +244,7 @@ export const providers = [
 		cancellation: true,
 		color: "#FF9900",
 		website: "https://aws.amazon.com/bedrock",
-		announcement: undefined,
+		announcement: null,
 		apiKeyInstructions:
 			"Use AWS Bedrock Long-Term API Keys (not IAM service account or private keys)",
 		learnMore: "https://docs.llmapi.ai/integrations/aws-bedrock",
@@ -268,7 +268,7 @@ export const providers = [
 	// 	color: "#0078D4",
 	// 	website:
 	// 		"https://azure.microsoft.com/en-us/products/ai-services/openai-service",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// 	apiKeyInstructions:
 	// 		"The resource name can be found in your Azure base URL: https://<resource-name>.openai.azure.com",
 	// 	learnMore: "https://docs.llmapi.ai/integrations/azure",
@@ -286,7 +286,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#22c55e",
 	// 	website: "https://z.ai",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	{
 		id: "moonshot",
@@ -301,7 +301,7 @@ export const providers = [
 		cancellation: true,
 		color: "#4B9EFF",
 		website: "https://moonshot.ai",
-		announcement: undefined,
+		announcement: null,
 	},
 	// {
 	// 	id: "perplexity",
@@ -317,7 +317,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#20B2AA",
 	// 	website: "https://perplexity.ai",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "nebius",
@@ -333,7 +333,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#3b82f6",
 	// 	website: "https://nebius.com",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "mistral",
@@ -348,7 +348,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#FF7000",
 	// 	website: "https://mistral.ai",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "canopywave",
@@ -364,7 +364,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#10b981",
 	// 	website: "https://canopywave.io",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "inference.net",
@@ -380,7 +380,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#10b981",
 	// 	website: "https://inference.net",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "together.ai",
@@ -396,7 +396,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#ff6b35",
 	// 	website: "https://together.ai",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "routeway",
@@ -411,7 +411,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#4f46e5",
 	// 	website: "https://routeway.ai",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "custom",
@@ -423,8 +423,8 @@ export const providers = [
 	// 	streaming: true,
 	// 	cancellation: true,
 	// 	color: "#6b7280",
-	// 	website: undefined,
-	// 	announcement: undefined,
+	// 	website: null,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "cloudrift",
@@ -455,7 +455,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#10b981",
 	// 	website: "https://nano-gpt.com",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 	// {
 	// 	id: "bytedance",
@@ -471,7 +471,7 @@ export const providers = [
 	// 	cancellation: true,
 	// 	color: "#FF4757",
 	// 	website: "https://www.byteplus.com/en/product/modelark",
-	// 	announcement: undefined,
+	// 	announcement: null,
 	// },
 ] as const satisfies ProviderDefinition[];
 
