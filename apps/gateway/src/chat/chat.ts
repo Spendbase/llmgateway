@@ -47,6 +47,7 @@ import {
 } from "@llmgateway/models";
 
 import { applyOrganizationContext } from "./tools/apply-organization-context.js";
+import { countInputImages } from "./tools/count-input-images.js";
 import { createLogEntry } from "./tools/create-log-entry.js";
 import { estimateTokens } from "./tools/estimate-tokens.js";
 import { extractContent } from "./tools/extract-content.js";
@@ -57,6 +58,8 @@ import { extractToolCalls } from "./tools/extract-tool-calls.js";
 import { getFinishReasonFromError } from "./tools/get-finish-reason-from-error.js";
 import { getProviderEnv } from "./tools/get-provider-env.js";
 import { healJsonResponse } from "./tools/heal-json-response.js";
+import { messagesContainImages } from "./tools/messages-contain-images.js";
+import { mightBeCompleteJson } from "./tools/might-be-complete-json.js";
 import { convertAwsEventStreamToSSE } from "./tools/parse-aws-eventstream.js";
 import { parseProviderResponse } from "./tools/parse-provider-response.js";
 import { transformResponseToOpenai } from "./tools/transform-response-to-openai.js";
@@ -131,28 +134,6 @@ async function convertImagesToBase64(
 			}
 		}),
 	);
-}
-
-/**
- * Checks if any messages contain images (image_url or image type content)
- * Used to filter providers that don't support vision
- */
-function messagesContainImages(messages: BaseMessage[]): boolean {
-	for (const message of messages) {
-		if (Array.isArray(message.content)) {
-			for (const part of message.content) {
-				if (
-					typeof part === "object" &&
-					part !== null &&
-					"type" in part &&
-					(part.type === "image_url" || part.type === "image")
-				) {
-					return true;
-				}
-			}
-		}
-	}
-	return false;
 }
 
 /**
@@ -616,37 +597,10 @@ chat.openapi(completions, async (c) => {
 	}
 
 	// Count input images from messages for cost calculation (only for gemini-3-pro-image-preview)
-	let inputImageCount = 0;
-	if (modelInput === "gemini-3-pro-image-preview") {
-		const imageUrlPattern = /https:\/\/[^\s]+/gi;
-		for (const message of messages) {
-			if (Array.isArray(message.content)) {
-				for (const part of message.content) {
-					if (
-						typeof part === "object" &&
-						part !== null &&
-						"type" in part &&
-						part.type === "image_url"
-					) {
-						inputImageCount++;
-					} else if (
-						typeof part === "object" &&
-						part !== null &&
-						"type" in part &&
-						part.type === "text" &&
-						"text" in part &&
-						typeof part.text === "string"
-					) {
-						// Count image URLs in text content
-						const matches = part.text.match(imageUrlPattern);
-						if (matches) {
-							inputImageCount += matches.length;
-						}
-					}
-				}
-			}
-		}
-	}
+	const inputImageCount =
+		modelInput === "gemini-3-pro-image-preview"
+			? countInputImages(messages)
+			: 0;
 
 	// Extract reasoning_effort as mutable variable for auto-routing modification
 	let reasoning_effort = validationResult.data.reasoning_effort;
@@ -2972,11 +2926,20 @@ chat.openapi(completions, async (c) => {
 								const jsonCandidate = betweenEvents
 									.slice(0, firstNewline)
 									.trim();
-								try {
-									JSON.parse(jsonCandidate);
+								// Quick heuristic check before expensive JSON.parse
+								let isValidJson = false;
+								if (mightBeCompleteJson(jsonCandidate)) {
+									try {
+										JSON.parse(jsonCandidate);
+										isValidJson = true;
+									} catch {
+										// JSON is not complete
+									}
+								}
+								if (isValidJson) {
 									// JSON is valid - end at first newline to exclude SSE fields
 									eventEnd = dataIndex + 6 + firstNewline;
-								} catch {
+								} else {
 									// JSON is not complete, use the full segment to next data event
 									eventEnd = nextEventIndex;
 								}
@@ -2997,11 +2960,20 @@ chat.openapi(completions, async (c) => {
 								const jsonCandidate = bufferCopy
 									.slice(eventStartPos, newlinePos)
 									.trim();
-								try {
-									JSON.parse(jsonCandidate);
+								// Quick heuristic check before expensive JSON.parse
+								let isValidJson = false;
+								if (mightBeCompleteJson(jsonCandidate)) {
+									try {
+										JSON.parse(jsonCandidate);
+										isValidJson = true;
+									} catch {
+										// JSON is not complete
+									}
+								}
+								if (isValidJson) {
 									// JSON is valid - this newline marks the end of our data
 									eventEnd = newlinePos;
-								} catch {
+								} else {
 									// JSON is not valid, check if there's more content after the newline
 									if (newlinePos + 1 >= bufferCopy.length) {
 										// Newline is at the end of buffer - event is incomplete
@@ -3035,13 +3007,19 @@ chat.openapi(completions, async (c) => {
 								// Try to detect if we have a complete JSON object
 								const eventDataCandidate = bufferCopy.slice(eventStartPos);
 								if (eventDataCandidate.length > 0) {
-									// Try to validate if this looks like complete JSON
-									try {
-										JSON.parse(eventDataCandidate.trim());
-										// If we can parse it, it's complete
-										eventEnd = bufferCopy.length;
-									} catch {
-										// JSON parsing failed - event is incomplete
+									// Quick heuristic check before expensive JSON.parse
+									const trimmedCandidate = eventDataCandidate.trim();
+									if (mightBeCompleteJson(trimmedCandidate)) {
+										try {
+											JSON.parse(trimmedCandidate);
+											// If we can parse it, it's complete
+											eventEnd = bufferCopy.length;
+										} catch {
+											// JSON parsing failed - event is incomplete
+											break;
+										}
+									} else {
+										// Heuristic says incomplete - don't bother parsing
 										break;
 									}
 								} else {
