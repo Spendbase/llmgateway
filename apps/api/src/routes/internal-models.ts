@@ -3,11 +3,6 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
 import { db } from "@llmgateway/db";
-import { logger } from "@llmgateway/logger";
-import {
-	models as modelsPackage,
-	type ProviderModelMapping as PackageProviderModelMapping,
-} from "@llmgateway/models";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -34,7 +29,7 @@ const providerSchema = z.object({
 // Pricing tier schema
 const pricingTierSchema = z.object({
 	name: z.string(),
-	upToTokens: z.number(),
+	upToTokens: nullableToOptional(z.number()),
 	inputPrice: z.number(),
 	outputPrice: z.number(),
 });
@@ -198,8 +193,6 @@ internalModels.openapi(getModelsRoute, async (c) => {
 	// Enrich with data from models package (e.g., reasoningLevels) and filter mappings
 	const transformedModels = models
 		.map((model) => {
-			const packageModel = modelsPackage.find((m) => m.id === model.id);
-
 			// Filter mappings
 			const filteredMappings = model.modelProviderMappings.filter((mapping) => {
 				// If specific status is provided, filter by it
@@ -222,11 +215,6 @@ internalModels.openapi(getModelsRoute, async (c) => {
 				...modelRest,
 				mappings: filteredMappings.map((mapping) => {
 					// Find corresponding package mapping to enrich with static data
-					const packageMapping = packageModel?.providers.find(
-						(p) =>
-							(p as PackageProviderModelMapping).providerId ===
-							mapping.providerId,
-					) as PackageProviderModelMapping | undefined;
 
 					// Find provider info from DB
 					const providerInfo = providers.find(
@@ -235,10 +223,7 @@ internalModels.openapi(getModelsRoute, async (c) => {
 
 					return {
 						...mapping,
-						reasoningLevels: packageMapping?.reasoningLevels ?? null,
-						pricingTiers: packageMapping?.pricingTiers ?? null,
-						webSearchPrice: packageMapping?.webSearchPrice ?? null,
-						providerInfo: providerInfo ?? null,
+						providerInfo,
 					};
 				}),
 			};
@@ -246,10 +231,10 @@ internalModels.openapi(getModelsRoute, async (c) => {
 		.filter((model) => model.mappings.length > 0); // Don't return models without mappings
 
 	const result = z.array(modelSchema).safeParse(transformedModels);
+
 	if (!result.success) {
-		logger.error("Model schema validation failed:", result.error.flatten());
-		throw new HTTPException(400, {
-			message: "Invalid request parameters",
+		throw new HTTPException(500, {
+			message: "Model schema validation failed",
 		});
 	}
 

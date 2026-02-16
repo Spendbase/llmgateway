@@ -770,7 +770,17 @@ export const modelProviderMapping = pgTable(
 		jsonOutput: boolean().default(false).notNull(),
 		jsonOutputSchema: boolean().default(false).notNull(),
 		webSearch: boolean().default(false).notNull(),
+		webSearchPrice: numericDecimal(),
 		discount: numericDecimal().default(0).notNull(),
+		reasoningLevels: json().$type<("minimal" | "low" | "medium" | "high")[]>(),
+		pricingTiers: json().$type<
+			{
+				name: string;
+				upToTokens?: number;
+				inputPrice: number;
+				outputPrice: number;
+			}[]
+		>(),
 		stability: text({
 			enum: ["stable", "beta", "unstable", "experimental"],
 		})

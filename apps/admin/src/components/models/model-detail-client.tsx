@@ -20,12 +20,11 @@ interface ModelDetailClientProps {
 }
 
 export function ModelDetailClient({ model }: ModelDetailClientProps) {
-	const formatPrice = (price: string | null) => {
+	const formatPrice = (price: number | null) => {
 		if (!price) {
 			return "-";
 		}
-		const num = parseFloat(price);
-		return priceFormatter.format(num / 1_000_000);
+		return priceFormatter.format(price * 1_000_000);
 	};
 
 	return (
@@ -187,10 +186,9 @@ export function ModelDetailClient({ model }: ModelDetailClientProps) {
 													Out: {formatPrice(mapping.outputPrice)}/1M
 												</span>
 											</div>
-											{mapping.discount && parseFloat(mapping.discount) > 0 && (
+											{Boolean(mapping.discount && mapping.discount > 0) && (
 												<Badge variant="success">
-													-{(parseFloat(mapping.discount) * 100).toFixed(0)}%
-													discount
+													-{(mapping.discount! * 100).toFixed(0)}% discount
 												</Badge>
 											)}
 										</div>

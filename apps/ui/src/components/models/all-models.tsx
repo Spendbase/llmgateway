@@ -372,7 +372,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 						return !min && !max;
 					}
 					const inputPrice = p.inputPrice;
-					if (!inputPrice) {
+					if (!Number.isFinite(inputPrice)) {
 						return false;
 					}
 					const price = inputPrice * 1e6; // Convert to per million tokens
@@ -388,7 +388,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 						return !min && !max;
 					}
 					const outputPrice = p.outputPrice;
-					if (!outputPrice) {
+					if (!Number.isFinite(outputPrice)) {
 						return false;
 					}
 					const price = outputPrice * 1e6; // Convert to per million tokens

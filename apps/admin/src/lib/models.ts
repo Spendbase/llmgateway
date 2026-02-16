@@ -8,11 +8,11 @@ export interface ModelProviderMapping {
 	modelId: string;
 	providerId: string;
 	modelName: string;
-	inputPrice: string | null;
-	outputPrice: string | null;
-	cachedInputPrice: string | null;
-	imageInputPrice: string | null;
-	requestPrice: string | null;
+	inputPrice: number | null;
+	outputPrice: number | null;
+	cachedInputPrice: number | null;
+	imageInputPrice: number | null;
+	requestPrice: number | null;
 	contextSize: number | null;
 	maxOutput: number | null;
 	streaming: boolean;
@@ -23,7 +23,7 @@ export interface ModelProviderMapping {
 	jsonOutput: boolean | null;
 	jsonOutputSchema: boolean | null;
 	webSearch: boolean | null;
-	discount: string | null;
+	discount: number | null;
 	stability: "stable" | "beta" | "unstable" | "experimental" | null;
 	supportedParameters: string[] | null;
 	deprecatedAt: Date | null;
