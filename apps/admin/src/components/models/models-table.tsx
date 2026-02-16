@@ -125,8 +125,8 @@ export function ModelsTable({ models: initialModels }: ModelsTableProps) {
 
 	// Sort models locally
 	const models = [...filteredModels].sort((a, b) => {
-		let aValue: any;
-		let bValue: any;
+		let aValue: string | number;
+		let bValue: string | number;
 
 		switch (currentSort) {
 			case "name":

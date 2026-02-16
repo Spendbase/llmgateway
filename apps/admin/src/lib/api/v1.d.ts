@@ -3992,8 +3992,10 @@ export interface operations {
                 status?: "active" | "inactive" | "deactivated";
                 search?: string;
                 family?: string;
-                sort?: "name" | "status" | "createdAt" | "updatedAt";
+                sort?: "name" | "family" | "status" | "createdAt" | "updatedAt";
                 order?: "asc" | "desc";
+                /** @description Include all mapping statuses (for admin) */
+                includeAll?: string;
             };
             header?: never;
             path?: never;
@@ -4011,6 +4013,7 @@ export interface operations {
                         models: {
                             id: string;
                             createdAt: string | null;
+                            updatedAt?: string | null;
                             releasedAt: string | null;
                             name: string | null;
                             aliases: string[] | null;
@@ -4028,23 +4031,30 @@ export interface operations {
                                 modelId: string;
                                 providerId: string;
                                 modelName: string;
-                                inputPrice: string | null;
-                                outputPrice: string | null;
-                                cachedInputPrice: string | null;
-                                imageInputPrice: string | null;
-                                requestPrice: string | null;
+                                inputPrice: number | null;
+                                outputPrice: number | null;
+                                cachedInputPrice: number | null;
+                                imageInputPrice: number | null;
+                                requestPrice: number | null;
                                 contextSize: number | null;
                                 maxOutput: number | null;
                                 streaming: boolean;
                                 vision: boolean | null;
                                 reasoning: boolean | null;
                                 reasoningOutput: string | null;
-                                reasoningLevels?: ("minimal" | "low" | "medium" | "high")[] | null;
+                                reasoningLevels: ("minimal" | "low" | "medium" | "high")[] | null;
                                 tools: boolean | null;
                                 jsonOutput: boolean | null;
                                 jsonOutputSchema: boolean | null;
                                 webSearch: boolean | null;
-                                discount: string | null;
+                                webSearchPrice: number | null;
+                                discount: number | null;
+                                pricingTiers: {
+                                    name: string;
+                                    upToTokens: number;
+                                    inputPrice: number;
+                                    outputPrice: number;
+                                }[] | null;
                                 /** @enum {string|null} */
                                 stability: "stable" | "beta" | "unstable" | "experimental" | null;
                                 supportedParameters: string[] | null;
@@ -4053,6 +4063,19 @@ export interface operations {
                                 deactivationReason: string | null;
                                 /** @enum {string} */
                                 status: "active" | "inactive" | "deactivated";
+                                providerInfo: {
+                                    id: string;
+                                    createdAt: string | null;
+                                    name: string | null;
+                                    description: string | null;
+                                    streaming: boolean | null;
+                                    cancellation: boolean | null;
+                                    color: string | null;
+                                    website: string | null;
+                                    announcement: string | null;
+                                    /** @enum {string} */
+                                    status: "active" | "inactive";
+                                } | null;
                             }[];
                         }[];
                     };

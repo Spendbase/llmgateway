@@ -31,7 +31,7 @@ export interface ProviderDefinition {
 	priority?: number;
 }
 
-export const providers: ProviderDefinition[] = [
+export const providers = [
 	// {
 	// 	id: "llmgateway",
 	// 	name: "LLM Gateway",
