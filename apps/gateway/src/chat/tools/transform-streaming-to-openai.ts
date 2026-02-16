@@ -242,7 +242,8 @@ export function transformStreamingToOpenai(
 		}
 
 		case "google-ai-studio":
-		case "google-vertex": {
+		case "google-vertex":
+		case "obsidian": {
 			const mapFinishReason = (
 				finishReason?: string,
 				hasFunctionCalls?: boolean,
