@@ -19,6 +19,8 @@ import { PlanChoiceStep } from "./plan-choice-step";
 import { ReferralStep } from "./referral-step";
 import { WelcomeStep } from "./welcome-step";
 
+import type { Route } from "next";
+
 const getSteps = () => [
 	{
 		id: "welcome",
@@ -63,6 +65,13 @@ export function OnboardingWizard() {
 
 	const STEPS = getSteps();
 
+	const finishOnboarding = async () => {
+		const result = await completeOnboarding.mutateAsync({});
+		const queryKey = api.queryOptions("get", "/user/me").queryKey;
+		await queryClient.invalidateQueries({ queryKey });
+		router.push((result.redirectTo as Route) ?? "/");
+	};
+
 	const handleStepChange = async (step: number) => {
 		// Special handling for plan choice step (now at index 3)
 		if (activeStep === 3) {
@@ -84,10 +93,7 @@ export function OnboardingWizard() {
 					referralSource || "not_provided",
 				);
 
-				await completeOnboarding.mutateAsync({});
-				const queryKey = api.queryOptions("get", "/user/me").queryKey;
-				await queryClient.invalidateQueries({ queryKey });
-				router.push("/");
+				await finishOnboarding();
 				return;
 			}
 			// If plan is selected, continue to next step
@@ -110,10 +116,7 @@ export function OnboardingWizard() {
 				"Signup",
 				referralSource || "not_provided",
 			);
-			await completeOnboarding.mutateAsync({});
-			const queryKey = api.queryOptions("get", "/user/me").queryKey;
-			await queryClient.invalidateQueries({ queryKey });
-			router.push("/");
+			await finishOnboarding();
 			return;
 		}
 		setActiveStep(step);
