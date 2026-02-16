@@ -1,8 +1,9 @@
 import { ImageResponse } from "next/og";
 
-import { fetchModels } from "@/lib/fetch-models";
-
-import { providers as providerDefinitions } from "@llmgateway/models";
+import {
+	models as modelDefinitions,
+	providers as providerDefinitions,
+} from "@llmgateway/models";
 import { getProviderIcon } from "@llmgateway/shared/components";
 
 export const size = {
@@ -50,10 +51,9 @@ export default async function ProviderOgImage({ params }: ImageProps) {
 
 		const ProviderIcon = getProviderIcon(provider.id);
 
-		// Count how many active models this provider offers
-		const apiModels = await fetchModels();
-		const supportedModels = apiModels.filter((model) =>
-			model.mappings.some((m) => m.providerId === provider.id),
+		// Count how many models this provider offers
+		const supportedModels = modelDefinitions.filter((model) =>
+			model.providers.some((p) => p.providerId === provider.id),
 		);
 		const totalModels = supportedModels.length;
 

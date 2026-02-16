@@ -26,11 +26,20 @@ import { formatContextSize } from "@/lib/utils";
 
 import { getProviderIcon } from "@llmgateway/shared/components";
 
-import type { ApiModel, ApiModelProviderMapping } from "@/lib/fetch-models";
+import type {
+	ApiModel,
+	ApiModelProviderMapping,
+	ApiProvider,
+} from "@/lib/fetch-models";
 import type { StabilityLevel } from "@llmgateway/models";
 import type { LucideProps } from "lucide-react";
 
-type ModelWithProviders = ApiModel;
+interface ModelWithProviders extends ApiModel {
+	providerDetails: Array<{
+		provider: ApiModelProviderMapping;
+		providerInfo: ApiProvider;
+	}>;
+}
 
 export function ModelCard({
 	model,
@@ -55,8 +64,8 @@ export function ModelCard({
 	) => boolean | undefined;
 	goToModel: () => void;
 	formatPrice: (
-		price?: number,
-		discount?: number,
+		price: string | null | undefined,
+		discount?: string | null,
 	) => string | React.JSX.Element;
 }) {
 	const config = useAppConfig();
@@ -162,9 +171,9 @@ export function ModelCard({
 						</h4>
 
 						{(showAllProviders
-							? model.mappings
-							: model.mappings.slice(0, 1)
-						).map((provider) => {
+							? model.providerDetails
+							: model.providerDetails.slice(0, 1)
+						).map(({ provider, providerInfo }) => {
 							const providerModelId = `${provider.providerId}/${model.id}`;
 							const ProviderIcon = getProviderIcon(provider.providerId);
 
@@ -179,14 +188,14 @@ export function ModelCard({
 												<ProviderIcon className="h-5 w-5" />
 											) : (
 												<span className="text-xs font-bold">
-													{(provider.providerInfo?.name ?? provider.providerId)
+													{(providerInfo?.name || provider.providerId)
 														.charAt(0)
 														.toUpperCase()}
 												</span>
 											)}
 										</div>
 										<span className="text-base font-semibold text-foreground">
-											{provider.providerInfo?.name ?? provider.providerId}
+											{providerInfo?.name || provider.providerId}
 										</span>
 										{hasProviderStabilityWarning(provider) && (
 											<AlertTriangle className="h-4 w-4 text-amber-400" />
@@ -343,14 +352,15 @@ export function ModelCard({
 													)}
 												</div>
 											</div>
-											{provider.requestPrice !== undefined &&
-												provider.requestPrice > 0 && (
+											{provider.requestPrice !== null &&
+												provider.requestPrice !== undefined &&
+												parseFloat(provider.requestPrice) > 0 && (
 													<div className="space-y-1">
 														<div className="text-xs text-muted-foreground">
 															Per Request
 														</div>
 														<div className="font-semibold text-foreground text-sm">
-															${provider.requestPrice.toFixed(3)}
+															${parseFloat(provider.requestPrice).toFixed(3)}
 															<span className="text-muted-foreground text-xs ml-1">
 																/req
 															</span>
@@ -410,7 +420,7 @@ export function ModelCard({
 							);
 						})}
 
-						{model.mappings.length > 1 && (
+						{model.providerDetails.length > 1 && (
 							<Button
 								variant="ghost"
 								size="sm"
@@ -427,7 +437,7 @@ export function ModelCard({
 								) : (
 									<>
 										<ChevronDown className="h-4 w-4" /> Show{" "}
-										{model.mappings.length - 1} more
+										{model.providerDetails.length - 1} more
 									</>
 								)}
 							</Button>
