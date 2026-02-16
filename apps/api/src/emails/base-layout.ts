@@ -38,7 +38,7 @@ export function getEmailLayout({
 		${content}
 	</div>
 	<div style="${styles.footer}">
-		<p>LLMGateway - Your LLM API Gateway Platform</p>
+		<p>LLM API - Your LLM API Gateway Platform</p>
 	</div>
 </body>
 </html>
