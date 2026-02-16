@@ -4,27 +4,15 @@ import Footer from "@/components/landing/footer";
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/providers/hero";
 import { ProviderModelsGrid } from "@/components/providers/provider-models-grid";
+import { fetchModels } from "@/lib/fetch-models";
 
 import {
-	models as modelDefinitions,
 	providers as providerDefinitions,
-	type ModelDefinition,
-	type ProviderModelMapping,
+	type ProviderId,
 } from "@llmgateway/models";
 
-import type {
-	ApiModel,
-	ApiModelProviderMapping,
-	ApiProvider,
-} from "@/lib/fetch-models";
+import type { ApiModel } from "@/lib/fetch-models";
 import type { Metadata } from "next";
-
-interface ModelWithProviders extends ApiModel {
-	providerDetails: Array<{
-		provider: ApiModelProviderMapping;
-		providerInfo: ApiProvider;
-	}>;
-}
 
 interface ProviderPageProps {
 	params: Promise<{ id: string }>;
@@ -33,96 +21,26 @@ interface ProviderPageProps {
 export default async function ProviderPage({ params }: ProviderPageProps) {
 	const { id } = await params;
 
-	const provider = providerDefinitions.find((p) => p.id === id);
+	// Fetch all models from API
+	const apiModels = await fetchModels();
 
-	if (!provider) {
+	// Filter models that have mappings for this provider
+	const providerModels = apiModels
+		.filter((model) => model.mappings.some((m) => m.providerId === id))
+		.map((model): ApiModel & { providerDetails: typeof model.mappings } => ({
+			...model,
+			providerDetails: model.mappings.filter((m) => m.providerId === id),
+		}));
+
+	if (providerModels.length === 0) {
 		notFound();
 	}
-
-	// Convert ModelDefinition to ApiModel-like structure
-	const convertToApiModel = (
-		def: ModelDefinition,
-		map: ProviderModelMapping,
-		providerInfo: (typeof providerDefinitions)[number],
-	): ModelWithProviders => ({
-		id: def.id,
-		createdAt: new Date().toISOString(),
-		releasedAt: def.releasedAt?.toISOString() ?? null,
-		name: def.name ?? null,
-		aliases: def.aliases ?? null,
-		description: def.description ?? null,
-		family: def.family,
-		free: def.free ?? null,
-		output: def.output ?? null,
-		stability: def.stability ?? null,
-		status: "active",
-		mappings: [],
-		providerDetails: [
-			{
-				provider: {
-					id: `${map.providerId}-${def.id}`,
-					createdAt: new Date().toISOString(),
-					modelId: def.id,
-					providerId: map.providerId,
-					modelName: map.modelName,
-					inputPrice: map.inputPrice?.toString() ?? null,
-					outputPrice: map.outputPrice?.toString() ?? null,
-					cachedInputPrice: map.cachedInputPrice?.toString() ?? null,
-					imageInputPrice: map.imageInputPrice?.toString() ?? null,
-					requestPrice: map.requestPrice?.toString() ?? null,
-					contextSize: map.contextSize ?? null,
-					maxOutput: map.maxOutput ?? null,
-					streaming: map.streaming ?? true,
-					vision: map.vision ?? null,
-					reasoning: map.reasoning ?? null,
-					reasoningOutput: map.reasoningOutput ?? null,
-					tools: map.tools ?? null,
-					jsonOutput: map.jsonOutput ?? null,
-					jsonOutputSchema: map.jsonOutputSchema ?? null,
-					webSearch: map.webSearch ?? null,
-					discount: map.discount?.toString() ?? null,
-					stability: map.stability ?? null,
-					supportedParameters: map.supportedParameters ?? null,
-					deprecatedAt: map.deprecatedAt?.toISOString() ?? null,
-					deactivatedAt: map.deactivatedAt?.toISOString() ?? null,
-					status: "active",
-				},
-				providerInfo: {
-					id: providerInfo.id,
-					createdAt: new Date().toISOString(),
-					name: providerInfo.name ?? null,
-					description: providerInfo.description ?? null,
-					streaming: providerInfo.streaming ?? null,
-					cancellation: providerInfo.cancellation ?? null,
-					color: providerInfo.color ?? null,
-					website: providerInfo.website ?? null,
-					announcement: providerInfo.announcement ?? null,
-					status: "active",
-				},
-			},
-		],
-	});
-
-	const providerModels: ModelWithProviders[] = modelDefinitions
-		.filter((model) =>
-			model.providers.some((p) => p.providerId === provider.id),
-		)
-		.map((model) => {
-			const currentProviderMapping = model.providers.find(
-				(p) => p.providerId === provider.id,
-			)!;
-			const providerInfo = providerDefinitions.find(
-				(p) => p.id === provider.id,
-			)!;
-
-			return convertToApiModel(model, currentProviderMapping, providerInfo);
-		});
 
 	return (
 		<div className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
 			<main>
 				<Navbar />
-				<Hero providerId={provider.id} />
+				<Hero providerId={id as ProviderId} />
 
 				<section className="py-12 bg-background">
 					<div className="container mx-auto px-4">
