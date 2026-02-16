@@ -23,6 +23,6 @@ export function getResetPasswordEmail({
 	return getEmailLayout({
 		title: "Reset your password",
 		content,
-		preview: "Reset your LLMGateway password",
+		preview: "Reset your LLM API password",
 	});
 }
