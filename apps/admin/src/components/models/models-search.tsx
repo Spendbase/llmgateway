@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 
 export function ModelsSearch() {
 	const router = useRouter();
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [searchValue, setSearchValue] = useState(
 		searchParams.get("search") || "",
@@ -28,10 +29,9 @@ export function ModelsSearch() {
 				params.delete("search");
 			}
 
-			router.push(`/models?${params.toString()}`);
+			router.push(`${pathname}?${params.toString()}`);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [debouncedSearch]);
+	}, [debouncedSearch, pathname, searchParams, router]);
 
 	const handleClear = () => {
 		setSearchValue("");

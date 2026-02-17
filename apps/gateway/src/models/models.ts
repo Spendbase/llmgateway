@@ -269,19 +269,20 @@ modelsApi.openapi(listModels, async (c) => {
 						web_search: "0", // Not defined in model definitions yet
 						internal_reasoning: "0", // Not defined in model definitions yet
 					},
-					// Use context length from model definition (take the largest from all providers)
+					// Use context length from model definition (take the largest from active providers)
 					context_length:
-						Math.max(...model.providers.map((p) => p.contextSize || 0)) ||
+						Math.max(...activeProviders.map((p) => p.contextSize || 0)) ||
 						undefined,
-					// Get supported parameters from model definitions with fallback to defaults
-					supported_parameters: getSupportedParametersFromModel(model),
-					// Add model-level capabilities
+					// Get supported parameters from active providers with fallback to defaults
+					supported_parameters:
+						getSupportedParametersFromModel(activeProviders),
+					// Add model-level capabilities (from active providers only)
 					json_output:
-						model.providers.some(
+						activeProviders.some(
 							(p) => (p as ProviderModelMapping).jsonOutput === true,
 						) || false,
 					structured_outputs:
-						model.providers.some(
+						activeProviders.some(
 							(p) => (p as ProviderModelMapping).jsonOutputSchema === true,
 						) || false,
 					free: model.free || false,
@@ -311,9 +312,11 @@ modelsApi.openapi(listModels, async (c) => {
 	}
 });
 
-// Helper function to determine supported parameters from model definitions
+// Helper function to determine supported parameters from active providers
 // Falls back to common default parameters if not explicitly defined
-function getSupportedParametersFromModel(model: ModelDefinition): string[] {
+function getSupportedParametersFromModel(
+	activeProviders: ProviderModelMapping[],
+): string[] {
 	// Default common parameters that most models support
 	const defaultCommonParams = [
 		"temperature",
@@ -326,13 +329,13 @@ function getSupportedParametersFromModel(model: ModelDefinition): string[] {
 		"tool_choice",
 	];
 
-	// Start with explicit supported parameters if any provider defines them
-	for (const provider of model.providers) {
+	// Start with explicit supported parameters if any active provider defines them
+	for (const provider of activeProviders) {
 		const supportedParameters = provider.supportedParameters;
 		if (supportedParameters && supportedParameters.length > 0) {
 			const params = [...supportedParameters];
-			// If any provider supports reasoning, expose the reasoning parameter
-			if (model.providers.some((p) => p?.reasoning)) {
+			// If any active provider supports reasoning, expose the reasoning parameter
+			if (activeProviders.some((p) => p?.reasoning)) {
 				if (!params.includes("reasoning")) {
 					params.push("reasoning");
 				}
@@ -341,9 +344,9 @@ function getSupportedParametersFromModel(model: ModelDefinition): string[] {
 		}
 	}
 
-	// If no provider has explicit supported parameters, return defaults
+	// If no active provider has explicit supported parameters, return defaults
 	const params = [...defaultCommonParams];
-	if (model.providers.some((p) => p?.reasoning)) {
+	if (activeProviders.some((p) => p?.reasoning)) {
 		params.push("reasoning");
 	}
 	return params;

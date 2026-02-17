@@ -17,7 +17,7 @@ export interface Provider {
 
 export interface PricingTier {
 	name: string;
-	upToTokens: number;
+	upToTokens?: number;
 	inputPrice: number;
 	outputPrice: number;
 }

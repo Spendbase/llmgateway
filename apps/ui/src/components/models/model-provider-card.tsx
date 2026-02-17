@@ -407,7 +407,7 @@ export function ModelProviderCard({
 										className="flex justify-between items-center text-xs"
 									>
 										<span className="text-muted-foreground">
-											{tier.upToTokens === Infinity
+											{tier.upToTokens === undefined
 												? `>${(provider.pricingTiers![index - 1]?.upToTokens || 0) / 1000}K tokens`
 												: `≤${tier.upToTokens / 1000}K tokens`}
 										</span>

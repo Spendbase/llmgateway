@@ -20,7 +20,7 @@ export interface PricingTier {
 	 */
 	name: string;
 	/**
-	 * Maximum number of tokens for this tier (use Infinity for the highest tier)
+	 * Maximum number of tokens for this tier (use Infinity for the highest tier, serializes to null in JSON)
 	 */
 	upToTokens: number;
 	/**
