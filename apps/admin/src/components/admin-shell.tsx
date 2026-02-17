@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	Briefcase,
+	Banknote,
 	KeyRound,
 	LayoutDashboard,
 	LogOut,
@@ -48,6 +49,7 @@ export function AdminShell({ children }: AdminShellProps) {
 	const isDashboard = pathname === "/" || pathname === "";
 	const isTokens = pathname === "/tokens";
 	const isOrganizations = pathname === "/organizations";
+	const isDeposits = pathname === "/deposits";
 	const isUsers = pathname === "/users";
 	const isProviders = pathname.startsWith("/providers");
 	const isModels = pathname.startsWith("/models");
@@ -110,6 +112,12 @@ export function AdminShell({ children }: AdminShellProps) {
 									<SidebarMenuButton isActive={isOrganizations} size="lg">
 										<Briefcase className="h-4 w-4" />
 										<span>Organizations</span>
+									</SidebarMenuButton>
+								</Link>
+								<Link href="/deposits" className="block">
+									<SidebarMenuButton isActive={isDeposits} size="lg">
+										<Banknote className="h-4 w-4" />
+										<span>Deposits</span>
 									</SidebarMenuButton>
 								</Link>
 							</SidebarMenuItem>

@@ -1259,6 +1259,7 @@ export interface paths {
                                 id: string;
                                 createdAt: string;
                                 organizationId: string;
+                                organizationName: string;
                                 amount: string | null;
                                 creditAmount: string | null;
                                 currency: string;
@@ -1267,6 +1268,7 @@ export interface paths {
                                 stripePaymentIntentId: string | null;
                                 stripeInvoiceId: string | null;
                                 description: string | null;
+                                paymentMethod: string;
                             }[];
                             pagination: {
                                 page: number;
@@ -1330,6 +1332,7 @@ export interface paths {
                                 id: string;
                                 createdAt: string;
                                 organizationId: string;
+                                organizationName: string;
                                 amount: string | null;
                                 creditAmount: string | null;
                                 currency: string;
@@ -1338,6 +1341,7 @@ export interface paths {
                                 stripePaymentIntentId: string | null;
                                 stripeInvoiceId: string | null;
                                 description: string | null;
+                                paymentMethod: string;
                             };
                             events: {
                                 id: string;

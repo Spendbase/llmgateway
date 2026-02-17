@@ -93,6 +93,7 @@ const depositTransactionSchema = z.object({
 	id: z.string(),
 	createdAt: z.date(),
 	organizationId: z.string(),
+	organizationName: z.string(),
 	amount: z.string().nullable(),
 	creditAmount: z.string().nullable(),
 	currency: z.string(),
@@ -100,6 +101,7 @@ const depositTransactionSchema = z.object({
 	stripePaymentIntentId: z.string().nullable(),
 	stripeInvoiceId: z.string().nullable(),
 	description: z.string().nullable(),
+	paymentMethod: z.string(),
 });
 
 const depositEventSchema = z.object({
