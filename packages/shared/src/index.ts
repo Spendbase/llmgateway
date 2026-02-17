@@ -30,11 +30,4 @@ export { useIsMobile } from "./hooks/use-mobile.js";
 
 export { cn } from "./lib/utils.js";
 
-export type {
-	ApiModel,
-	ApiProvider,
-	ApiModelProviderMapping,
-	PricingTier,
-} from "./types/api.js";
-
 export * from "./components/ui/index.js";

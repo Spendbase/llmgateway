@@ -2,17 +2,17 @@ import { cookies } from "next/headers";
 
 const API_URL = process.env.API_BACKEND_URL || "http://localhost:4002";
 
-export interface ModelProviderMapping {
+interface ModelProviderMapping {
 	id: string;
 	createdAt: Date;
 	modelId: string;
 	providerId: string;
 	modelName: string;
-	inputPrice: number | null;
-	outputPrice: number | null;
-	cachedInputPrice: number | null;
-	imageInputPrice: number | null;
-	requestPrice: number | null;
+	inputPrice: string | null;
+	outputPrice: string | null;
+	cachedInputPrice: string | null;
+	imageInputPrice: string | null;
+	requestPrice: string | null;
 	contextSize: number | null;
 	maxOutput: number | null;
 	streaming: boolean;
@@ -23,19 +23,17 @@ export interface ModelProviderMapping {
 	jsonOutput: boolean | null;
 	jsonOutputSchema: boolean | null;
 	webSearch: boolean | null;
-	discount: number | null;
+	discount: string | null;
 	stability: "stable" | "beta" | "unstable" | "experimental" | null;
 	supportedParameters: string[] | null;
 	deprecatedAt: Date | null;
 	deactivatedAt: Date | null;
-	deactivationReason: string | null;
-	status: "active" | "inactive" | "deactivated";
+	status: "active" | "inactive";
 }
 
 export interface Model {
 	id: string;
 	createdAt: Date;
-	updatedAt?: Date;
 	releasedAt: Date | null;
 	name: string | null;
 	aliases: string[] | null;
@@ -51,29 +49,14 @@ export interface Model {
 	avgTimeToFirstToken?: number | null;
 }
 
-export async function getModels(
-	searchParams?: Record<string, string>,
-): Promise<Model[] | null> {
+export async function getModels(): Promise<Model[] | null> {
 	try {
 		const cookieStore = await cookies();
 		const key = "better-auth.session_token";
 		const sessionCookie = cookieStore.get(key);
 		const secureSessionCookie = cookieStore.get(`__Secure-${key}`);
 
-		// Build query string from search params
-		const queryParams = new URLSearchParams();
-
-		if (searchParams) {
-			Object.entries(searchParams).forEach(([key, value]) => {
-				if (value) {
-					queryParams.append(key, value);
-				}
-			});
-		}
-
-		const queryString = queryParams.toString();
-		const url = `${API_URL}/internal/models${queryString ? `?${queryString}` : ""}`;
-		const response = await fetch(url, {
+		const response = await fetch(`${API_URL}/internal/models`, {
 			headers: {
 				Cookie: secureSessionCookie
 					? `__Secure-${key}=${secureSessionCookie.value}`
@@ -97,7 +80,7 @@ export async function getModels(
 }
 
 export async function getModel(id: string): Promise<Model | null> {
-	const models = await getModels({ includeAll: "true" });
+	const models = await getModels();
 	if (!models) {
 		return null;
 	}
