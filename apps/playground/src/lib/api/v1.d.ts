@@ -236,7 +236,7 @@ export interface paths {
         };
         /**
          * Get all providers
-         * @description Returns all providers, sorted by createdAt descending
+         * @description Returns all providers with optional filtering, sorted by createdAt descending
          */
         get: operations["internal_get_providers"];
         put?: never;
@@ -4063,7 +4063,7 @@ export interface operations {
                                 deactivationReason: string | null;
                                 /** @enum {string} */
                                 status: "active" | "inactive" | "deactivated";
-                                providerInfo: {
+                                providerInfo?: {
                                     id: string;
                                     createdAt: string | null;
                                     name: string | null;
@@ -4075,7 +4075,7 @@ export interface operations {
                                     announcement: string | null;
                                     /** @enum {string} */
                                     status: "active" | "inactive";
-                                } | null;
+                                };
                             }[];
                         }[];
                     };
@@ -4085,7 +4085,10 @@ export interface operations {
     };
     internal_get_providers: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Include inactive providers (for admin) */
+                includeAll?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;

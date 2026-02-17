@@ -93,8 +93,17 @@ export function ModelsTable({ models: initialModels }: ModelsTableProps) {
 			return model.status;
 		}
 
-		const hasActive = model.mappings.some((m) => m.status === "active");
-		const hasInactive = model.mappings.some((m) => m.status === "inactive");
+		// Check if mapping is truly active (both mapping and provider must be active)
+		const isMappingActive = (m: (typeof model.mappings)[0]) => {
+			return m.status === "active" && m.providerInfo?.status === "active";
+		};
+
+		const hasActive = model.mappings.some(isMappingActive);
+		const hasInactive = model.mappings.some(
+			(m) =>
+				m.status === "inactive" ||
+				(m.status === "active" && m.providerInfo?.status === "inactive"),
+		);
 		const allDeactivated = model.mappings.every(
 			(m) => m.status === "deactivated",
 		);
@@ -170,7 +179,7 @@ export function ModelsTable({ models: initialModels }: ModelsTableProps) {
 	});
 
 	const getStabilityVariant = (
-		stability: string | null,
+		stability: string | null | undefined,
 	): "success" | "info" | "warning" | "error" => {
 		switch (stability) {
 			case "stable":

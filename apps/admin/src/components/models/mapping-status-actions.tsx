@@ -109,6 +109,12 @@ export function MappingStatusActions({
 		}
 	};
 
+	const providerInactive = mapping.providerInfo?.status === "inactive";
+	const effectiveStatus =
+		providerInactive && mapping.status === "active"
+			? "inactive-provider"
+			: mapping.status;
+
 	if (mapping.status === "deactivated") {
 		return (
 			<div className="flex items-center gap-2">
@@ -135,60 +141,93 @@ export function MappingStatusActions({
 	return (
 		<>
 			<div className="flex items-center gap-2">
-				<Badge variant={mapping.status === "active" ? "success" : "warning"}>
-					{mapping.status === "active" ? (
+				<Badge
+					variant={
+						effectiveStatus === "active"
+							? "success"
+							: effectiveStatus === "inactive-provider"
+								? "error"
+								: "warning"
+					}
+				>
+					{effectiveStatus === "active" ? (
 						<CheckCircle className="h-3 w-3" />
+					) : effectiveStatus === "inactive-provider" ? (
+						<XCircle className="h-3 w-3" />
 					) : (
 						<AlertCircle className="h-3 w-3" />
 					)}
-					{mapping.status}
+					{effectiveStatus === "inactive-provider"
+						? "inactive (provider)"
+						: mapping.status}
 				</Badge>
 
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							variant="ghost"
-							size="sm"
-							className="h-7 w-7 p-0"
-							disabled={loading}
-						>
-							<MoreVertical className="h-4 w-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						{mapping.status === "active" ? (
-							<>
-								<DropdownMenuItem
-									onClick={() => handleStatusChange("inactive")}
-								>
-									<AlertCircle className="mr-2 h-4 w-4" />
-									Disable Temporarily
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() => setShowDeactivateDialog(true)}
-									className="text-destructive"
-								>
-									<XCircle className="mr-2 h-4 w-4" />
-									Deactivate Permanently
-								</DropdownMenuItem>
-							</>
-						) : (
-							<>
-								<DropdownMenuItem onClick={() => handleStatusChange("active")}>
-									<CheckCircle className="mr-2 h-4 w-4" />
-									Activate
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() => setShowDeactivateDialog(true)}
-									className="text-destructive"
-								>
-									<XCircle className="mr-2 h-4 w-4" />
-									Deactivate Permanently
-								</DropdownMenuItem>
-							</>
-						)}
-					</DropdownMenuContent>
-				</DropdownMenu>
+				{providerInactive && (
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Info className="h-4 w-4 text-muted-foreground cursor-help" />
+							</TooltipTrigger>
+							<TooltipContent>
+								<p className="max-w-xs">
+									Provider &quot;{mapping.providerId}&quot; is inactive. This
+									mapping is unavailable to users even though the mapping status
+									is {mapping.status}.
+								</p>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+				)}
+
+				{!providerInactive && (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-7 w-7 p-0"
+								disabled={loading}
+							>
+								<MoreVertical className="h-4 w-4" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							{mapping.status === "active" ? (
+								<>
+									<DropdownMenuItem
+										onClick={() => handleStatusChange("inactive")}
+									>
+										<AlertCircle className="mr-2 h-4 w-4" />
+										Disable Temporarily
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={() => setShowDeactivateDialog(true)}
+										className="text-destructive"
+									>
+										<XCircle className="mr-2 h-4 w-4" />
+										Deactivate Permanently
+									</DropdownMenuItem>
+								</>
+							) : (
+								<>
+									<DropdownMenuItem
+										onClick={() => handleStatusChange("active")}
+									>
+										<CheckCircle className="mr-2 h-4 w-4" />
+										Activate
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={() => setShowDeactivateDialog(true)}
+										className="text-destructive"
+									>
+										<XCircle className="mr-2 h-4 w-4" />
+										Deactivate Permanently
+									</DropdownMenuItem>
+								</>
+							)}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
 			</div>
 
 			<ConfirmDeactivateDialog

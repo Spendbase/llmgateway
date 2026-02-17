@@ -20,7 +20,7 @@ interface ModelDetailClientProps {
 }
 
 export function ModelDetailClient({ model }: ModelDetailClientProps) {
-	const formatPrice = (price: number | null) => {
+	const formatPrice = (price?: number) => {
 		if (!price) {
 			return "-";
 		}
@@ -80,7 +80,7 @@ export function ModelDetailClient({ model }: ModelDetailClientProps) {
 								<dt className="text-xs text-muted-foreground">Aliases</dt>
 								<dd className="text-sm mt-1">
 									<div className="flex flex-wrap gap-1">
-										{model.aliases.map((alias) => (
+										{model.aliases.map((alias: string) => (
 											<Badge key={alias} variant="default">
 												{alias}
 											</Badge>

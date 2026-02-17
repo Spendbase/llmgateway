@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
 import { db } from "@llmgateway/db";
+import { logger } from "@llmgateway/logger";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -70,7 +71,7 @@ const modelProviderMappingSchema = z.object({
 	deactivatedAt: nullableToOptional(z.coerce.date()),
 	deactivationReason: nullableToOptional(z.string()),
 	status: z.enum(["active", "inactive", "deactivated"]),
-	providerInfo: nullableToOptional(providerSchema),
+	providerInfo: providerSchema.optional(),
 });
 
 // Model schema with mappings
@@ -171,11 +172,7 @@ internalModels.openapi(getModelsRoute, async (c) => {
 				[sort]: order,
 			},
 		}),
-		db.query.provider.findMany({
-			where: {
-				status: { eq: "active" },
-			},
-		}),
+		db.query.provider.findMany(),
 	]);
 
 	let models = initialModels;
@@ -213,19 +210,25 @@ internalModels.openapi(getModelsRoute, async (c) => {
 
 			return {
 				...modelRest,
-				mappings: filteredMappings.map((mapping) => {
-					// Find corresponding package mapping to enrich with static data
+				mappings: filteredMappings
+					.map((mapping) => {
+						// Find provider info from DB
+						const providerInfo = providers.find(
+							(p) => p.id === mapping.providerId,
+						);
 
-					// Find provider info from DB
-					const providerInfo = providers.find(
-						(p) => p.id === mapping.providerId,
-					);
-
-					return {
-						...mapping,
-						providerInfo,
-					};
-				}),
+						return {
+							...mapping,
+							providerInfo,
+						};
+					})
+					.filter((mapping) => {
+						// Filter out mappings with inactive providers (unless includeAll is true)
+						if (includeAll) {
+							return true;
+						}
+						return mapping.providerInfo?.status === "active";
+					}),
 			};
 		})
 		.filter((model) => model.mappings.length > 0); // Don't return models without mappings
@@ -233,8 +236,11 @@ internalModels.openapi(getModelsRoute, async (c) => {
 	const result = z.array(modelSchema).safeParse(transformedModels);
 
 	if (!result.success) {
+		logger.error("Model schema validation failed:", {
+			error: result.error.format(),
+		});
 		throw new HTTPException(500, {
-			message: "Model schema validation failed",
+			message: `Model schema validation failed: ${result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")}`,
 		});
 	}
 
@@ -245,10 +251,20 @@ internalModels.openapi(getModelsRoute, async (c) => {
 const getProvidersRoute = createRoute({
 	operationId: "internal_get_providers",
 	summary: "Get all providers",
-	description: "Returns all providers, sorted by createdAt descending",
+	description:
+		"Returns all providers with optional filtering, sorted by createdAt descending",
 	method: "get",
 	path: "/providers",
-	request: {},
+	request: {
+		query: z.object({
+			includeAll: z
+				.string()
+				.optional()
+				.transform((val) => val === "true")
+				.describe("Include inactive providers (for admin)")
+				.openapi({ example: "false" }),
+		}),
+	},
 	responses: {
 		200: {
 			content: {
@@ -264,10 +280,11 @@ const getProvidersRoute = createRoute({
 });
 
 internalModels.openapi(getProvidersRoute, async (c) => {
+	const query = c.req.valid("query");
+	const { includeAll = false } = query;
+
 	const providers = await db.query.provider.findMany({
-		where: {
-			status: { eq: "active" },
-		},
+		where: includeAll ? undefined : { status: { eq: "active" } },
 		orderBy: {
 			createdAt: "desc",
 		},

@@ -2,48 +2,72 @@ import { cookies } from "next/headers";
 
 const API_URL = process.env.API_BACKEND_URL || "http://localhost:4002";
 
+export interface Provider {
+	id: string;
+	createdAt: Date;
+	name: string | null;
+	description: string | null;
+	streaming: boolean | null;
+	cancellation: boolean | null;
+	color: string | null;
+	website: string | null;
+	announcement: string | null;
+	status: "active" | "inactive";
+}
+
+export interface PricingTier {
+	name: string;
+	upToTokens: number;
+	inputPrice: number;
+	outputPrice: number;
+}
+
 export interface ModelProviderMapping {
 	id: string;
 	createdAt: Date;
 	modelId: string;
 	providerId: string;
 	modelName: string;
-	inputPrice: number | null;
-	outputPrice: number | null;
-	cachedInputPrice: number | null;
-	imageInputPrice: number | null;
-	requestPrice: number | null;
-	contextSize: number | null;
-	maxOutput: number | null;
+	inputPrice?: number;
+	outputPrice?: number;
+	cachedInputPrice?: number;
+	imageInputPrice?: number;
+	requestPrice?: number;
+	contextSize?: number;
+	maxOutput?: number;
 	streaming: boolean;
-	vision: boolean | null;
-	reasoning: boolean | null;
-	reasoningOutput: string | null;
-	tools: boolean | null;
-	jsonOutput: boolean | null;
-	jsonOutputSchema: boolean | null;
-	webSearch: boolean | null;
-	discount: number | null;
-	stability: "stable" | "beta" | "unstable" | "experimental" | null;
-	supportedParameters: string[] | null;
-	deprecatedAt: Date | null;
-	deactivatedAt: Date | null;
-	deactivationReason: string | null;
+	vision?: boolean;
+	reasoning?: boolean;
+	reasoningOutput?: string;
+	reasoningLevels?: ("minimal" | "low" | "medium" | "high")[];
+	tools?: boolean;
+	jsonOutput?: boolean;
+	jsonOutputSchema?: boolean;
+	webSearch?: boolean;
+	webSearchPrice?: number;
+	discount?: number;
+	pricingTiers?: PricingTier[];
+	stability?: "stable" | "beta" | "unstable" | "experimental";
+	supportedParameters?: string[];
+	deprecatedAt?: Date;
+	deactivatedAt?: Date;
+	deactivationReason?: string;
 	status: "active" | "inactive" | "deactivated";
+	providerInfo?: Provider;
 }
 
 export interface Model {
 	id: string;
 	createdAt: Date;
 	updatedAt?: Date;
-	releasedAt: Date | null;
-	name: string | null;
-	aliases: string[] | null;
-	description: string | null;
+	releasedAt?: Date;
+	name?: string;
+	aliases?: string[];
+	description?: string;
 	family: string;
-	free: boolean | null;
-	output: string[] | null;
-	stability: "stable" | "beta" | "unstable" | "experimental" | null;
+	free?: boolean;
+	output?: string[];
+	stability?: "stable" | "beta" | "unstable" | "experimental";
 	status: "active" | "inactive";
 	mappings: ModelProviderMapping[];
 	logsCount?: number;
