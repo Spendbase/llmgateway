@@ -7,7 +7,6 @@ import { validateSource } from "@/chat/tools/validate-source.js";
 import { reportKeyError, reportKeySuccess } from "@/lib/api-key-health.js";
 import { isCodingModel } from "@/lib/coding-models.js";
 import { calculateCosts, shouldBillCancelledRequests } from "@/lib/costs.js";
-import { getActiveProvidersForModel } from "@/lib/filter-model-mappings.js";
 import { throwIamException, validateModelAccess } from "@/lib/iam.js";
 import { calculateDataStorageCost, insertLog } from "@/lib/logs.js";
 
@@ -24,6 +23,7 @@ import {
 	getProviderMetricsForCombinations,
 	isCachingEnabled,
 	shortid,
+	type tables,
 } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
 import {
@@ -65,7 +65,6 @@ import { validateFreeModelUsage } from "./tools/validate-free-model-usage.js";
 
 import type { ImageObject } from "./tools/types.js";
 import type { ServerTypes } from "@/vars.js";
-import type { tables } from "@llmgateway/db";
 import type { InferSelectModel } from "drizzle-orm";
 
 /**
@@ -812,15 +811,28 @@ chat.openapi(completions, async (c) => {
 		});
 	}
 
-	// Filter providers by status from DB (only active for users)
-	modelInfo = await getActiveProvidersForModel(modelInfo);
+	// Filter out deactivated provider mappings
+	const now = new Date();
+	const activeProviders = modelInfo.providers.filter(
+		(provider) =>
+			!(
+				(provider as ProviderModelMapping).deactivatedAt &&
+				now > (provider as ProviderModelMapping).deactivatedAt!
+			),
+	);
 
-	// Check that available providers remain
-	if (modelInfo.providers.length === 0) {
+	// Check if all providers are deactivated
+	if (activeProviders.length === 0) {
 		throw new HTTPException(410, {
 			message: `Model ${requestedModel} has been deactivated and is no longer available`,
 		});
 	}
+
+	// Update modelInfo to only include active providers
+	modelInfo = {
+		...modelInfo,
+		providers: activeProviders,
+	};
 
 	// === Early API key and organization validation for coding model restriction ===
 	// We need to fetch these early to check coding model restrictions before capability checks
@@ -1266,7 +1278,7 @@ chat.openapi(completions, async (c) => {
 
 						if (cheapestResult) {
 							usedProvider = cheapestResult.provider.providerId;
-							usedModel = cheapestResult.provider.modelName as Model;
+							usedModel = cheapestResult.provider.modelName;
 							routingMetadata = {
 								...cheapestResult.metadata,
 								selectionReason: "low-uptime-fallback",
@@ -1281,7 +1293,7 @@ chat.openapi(completions, async (c) => {
 						} else {
 							// Use first available provider as fallback
 							usedProvider = availableModelProviders[0].providerId;
-							usedModel = availableModelProviders[0].modelName as Model;
+							usedModel = availableModelProviders[0].modelName;
 							routingMetadata = {
 								availableProviders: availableModelProviders.map(
 									(p) => p.providerId,
@@ -1303,7 +1315,7 @@ chat.openapi(completions, async (c) => {
 	if (!usedProvider) {
 		if (modelInfo.providers.length === 1) {
 			usedProvider = modelInfo.providers[0].providerId;
-			usedModel = modelInfo.providers[0].modelName as Model;
+			usedModel = modelInfo.providers[0].modelName;
 		} else {
 			const providerIds = modelInfo.providers.map((p) => p.providerId);
 			const providerKeys = await db.query.providerKey.findMany({
@@ -1405,18 +1417,18 @@ chat.openapi(completions, async (c) => {
 
 				if (cheapestResult) {
 					usedProvider = cheapestResult.provider.providerId;
-					usedModel = cheapestResult.provider.modelName as Model;
+					usedModel = cheapestResult.provider.modelName;
 					routingMetadata = {
 						...cheapestResult.metadata,
 						...(noFallback ? { noFallback: true } : {}),
 					};
 				} else {
 					usedProvider = availableModelProviders[0].providerId;
-					usedModel = availableModelProviders[0].modelName as Model;
+					usedModel = availableModelProviders[0].modelName;
 				}
 			} else {
 				usedProvider = availableModelProviders[0].providerId;
-				usedModel = availableModelProviders[0].modelName as Model;
+				usedModel = availableModelProviders[0].modelName;
 			}
 		}
 	}

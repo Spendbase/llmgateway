@@ -19,11 +19,12 @@ import { ProviderTabs } from "@/components/models/provider-tabs";
 import { Badge } from "@/lib/components/badge";
 import { Button } from "@/lib/components/button";
 import { getConfig } from "@/lib/config-server";
-import { fetchModels } from "@/lib/fetch-models";
 
 import {
 	models as modelDefinitions,
+	providers as providerDefinitions,
 	type StabilityLevel,
+	type ModelDefinition,
 } from "@llmgateway/models";
 
 import type { Metadata } from "next";
@@ -38,21 +39,25 @@ export default async function ModelProviderPage({ params }: PageProps) {
 	const decodedName = decodeURIComponent(name);
 	const decodedProvider = decodeURIComponent(provider);
 
-	// Fetch from API instead of static definitions
-	const apiModels = await fetchModels();
-	const apiModel = apiModels.find((m) => m.id === decodedName);
+	const modelDef = modelDefinitions.find(
+		(m) => m.id === decodedName,
+	) as ModelDefinition;
 
-	if (!apiModel) {
+	if (!modelDef) {
 		notFound();
 	}
 
-	const providerMapping = apiModel.mappings.find(
-		(m) => m.providerId === decodedProvider,
+	const providerMapping = modelDef.providers.find(
+		(p) => p.providerId === decodedProvider,
 	);
 
 	if (!providerMapping) {
 		notFound();
 	}
+
+	const providerInfo = providerDefinitions.find(
+		(p) => p.id === decodedProvider,
+	);
 
 	const getStabilityBadgeProps = (stability?: StabilityLevel) => {
 		switch (stability) {
@@ -83,8 +88,7 @@ export default async function ModelProviderPage({ params }: PageProps) {
 		return stability && ["unstable", "experimental"].includes(stability);
 	};
 
-	const allProviderIds = apiModel.mappings.map((p) => p.providerId);
-	const modelStability = providerMapping.stability ?? apiModel.stability;
+	const allProviderIds = modelDef.providers.map((p) => p.providerId);
 
 	return (
 		<>
@@ -97,27 +101,29 @@ export default async function ModelProviderPage({ params }: PageProps) {
 							className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" />
-							Back to {apiModel.name ?? decodedName}
+							Back to {modelDef.name}
 						</Link>
 					</div>
 					<div className="mb-8">
 						<div className="flex items-center gap-3 mb-2 flex-wrap">
 							<h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-								{apiModel.name ?? decodedName}
+								{modelDef.name}
 							</h1>
-							{shouldShowStabilityWarning(modelStability) && (
+							{shouldShowStabilityWarning(modelDef.stability) && (
 								<AlertTriangle className="h-6 w-6 md:h-8 md:w-8 text-orange-500" />
 							)}
 						</div>
-						{apiModel.description && (
+						{modelDef.description && (
 							<p className="text-muted-foreground mb-4">
-								{apiModel.description}
+								{modelDef.description}
 							</p>
 						)}
 						<div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
 							<CopyModelName modelName={decodedName} />
 							{(() => {
-								const stabilityProps = getStabilityBadgeProps(modelStability);
+								const stabilityProps = getStabilityBadgeProps(
+									modelDef.stability,
+								);
 								return stabilityProps ? (
 									<Badge
 										variant={stabilityProps.variant}
@@ -136,7 +142,7 @@ export default async function ModelProviderPage({ params }: PageProps) {
 							})()}
 
 							<a
-								href={`${config.playgroundUrl}?model=${encodeURIComponent(`${decodedProvider}/${apiModel.id}`)}`}
+								href={`${config.playgroundUrl}?model=${encodeURIComponent(`${decodedProvider}/${modelDef.id}`)}`}
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -197,10 +203,9 @@ export default async function ModelProviderPage({ params }: PageProps) {
 										color: "text-cyan-500",
 									});
 								}
-								const hasImageGen =
-									apiModel.output && Array.isArray(apiModel.output)
-										? apiModel.output.includes("image")
-										: false;
+								const hasImageGen = Array.isArray((modelDef as any)?.output)
+									? ((modelDef as any).output as string[]).includes("image")
+									: false;
 								if (hasImageGen) {
 									items.push({
 										key: "image",
@@ -238,8 +243,8 @@ export default async function ModelProviderPage({ params }: PageProps) {
 						<div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
 							<div>
 								<h2 className="text-xl md:text-2xl font-semibold mb-2">
-									{providerMapping.providerInfo?.name ?? decodedProvider}{" "}
-									Pricing for {apiModel.name ?? decodedName}
+									{providerInfo?.name || decodedProvider} Pricing for{" "}
+									{modelDef.name}
 								</h2>
 								<p className="text-muted-foreground">
 									View detailed pricing and capabilities for this provider.
@@ -249,9 +254,12 @@ export default async function ModelProviderPage({ params }: PageProps) {
 
 						<div className="max-w-md">
 							<ModelProviderCard
-								provider={providerMapping}
+								provider={{
+									...providerMapping,
+									providerInfo,
+								}}
 								modelName={decodedName}
-								modelStability={modelStability}
+								modelStability={modelDef.stability}
 							/>
 						</div>
 					</div>
@@ -286,22 +294,18 @@ export async function generateMetadata({
 	const decodedName = decodeURIComponent(name);
 	const decodedProvider = decodeURIComponent(provider);
 
-	const apiModels = await fetchModels();
-	const model = apiModels.find((m) => m.id === decodedName);
+	const model = modelDefinitions.find((m) => m.id === decodedName) as
+		| ModelDefinition
+		| undefined;
 
 	if (!model) {
 		return {};
 	}
 
-	const providerMapping = model.mappings.find(
-		(m) => m.providerId === decodedProvider,
+	const providerInfo = providerDefinitions.find(
+		(p) => p.id === decodedProvider,
 	);
-
-	if (!providerMapping?.providerInfo) {
-		return {};
-	}
-
-	const providerName = providerMapping.providerInfo.name || decodedProvider;
+	const providerName = providerInfo?.name || decodedProvider;
 
 	const title = `${model.name || model.id} on ${providerName} – LLM API`;
 	const description = `Pricing and capabilities for ${model.name || model.id} via ${providerName} on LLM API.`;
