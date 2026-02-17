@@ -34,7 +34,6 @@ import {
 	getProviderHeaders,
 	hasMaxTokens,
 	hasProviderEnvironmentToken,
-	type Model,
 	type ModelDefinition,
 	models,
 	prepareRequestBody,
@@ -61,11 +60,14 @@ import { healJsonResponse } from "./tools/heal-json-response.js";
 import { messagesContainImages } from "./tools/messages-contain-images.js";
 import { mightBeCompleteJson } from "./tools/might-be-complete-json.js";
 import { convertAwsEventStreamToSSE } from "./tools/parse-aws-eventstream.js";
+import { parseModelInput } from "./tools/parse-model-input.js";
 import { parseProviderResponse } from "./tools/parse-provider-response.js";
+import { resolveModelInfo } from "./tools/resolve-model-info.js";
 import { transformResponseToOpenai } from "./tools/transform-response-to-openai.js";
 import { transformStreamingToOpenai } from "./tools/transform-streaming-to-openai.js";
 import { DEFAULT_TOKENIZER_MODEL } from "./tools/types.js";
 import { validateFreeModelUsage } from "./tools/validate-free-model-usage.js";
+import { validateModelCapabilities } from "./tools/validate-model-capabilities.js";
 
 import type { ImageObject } from "./tools/types.js";
 import type { ServerTypes } from "@/vars.js";
@@ -596,12 +598,6 @@ chat.openapi(completions, async (c) => {
 		});
 	}
 
-	// Count input images from messages for cost calculation (only for gemini-3-pro-image-preview)
-	const inputImageCount =
-		modelInput === "gemini-3-pro-image-preview"
-			? countInputImages(messages)
-			: 0;
-
 	// Extract reasoning_effort as mutable variable for auto-routing modification
 	let reasoning_effort = validationResult.data.reasoning_effort;
 
@@ -665,109 +661,25 @@ chat.openapi(completions, async (c) => {
 	// Store the original llmgateway model ID for logging purposes
 	const initialRequestedModel = modelInput;
 
-	let requestedModel: Model = modelInput as Model;
-	let requestedProvider: Provider | undefined;
+	// Parse model input to resolve model, provider, and custom provider name
+	const parseResult = parseModelInput(modelInput);
+	const requestedModel = parseResult.requestedModel;
+	const _customProviderName = parseResult.customProviderName;
 
-	// check if there is an exact model match
-	if (modelInput.includes("/")) {
-		const split = modelInput.split("/");
-		const providerCandidate = split[0];
+	// Count input images from messages for cost calculation
+	const inputImageCount =
+		requestedModel === "gemini-3-pro-image-preview"
+			? countInputImages(messages)
+			: 0;
 
-		// Check if the provider exists
-		const knownProvider = providers.find((p) => p.id === providerCandidate);
-		if (knownProvider) {
-			requestedProvider = providerCandidate as Provider;
-		}
-		// Handle model names with multiple slashes (e.g. together.ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo)
-		const modelName = split.slice(1).join("/");
-
-		// For custom providers, we don't need to validate the model name
-		// since they can use any OpenAI-compatible model name
-		let modelDef = models.find((m) => m.id === modelName);
-
-		if (!modelDef) {
-			modelDef = models.find((m) =>
-				m.providers.some(
-					(p) =>
-						p.modelName === modelName && p.providerId === requestedProvider,
-				),
-			);
-		}
-
-		if (!modelDef) {
-			throw new HTTPException(400, {
-				message: `Requested model ${modelName} not supported`,
-			});
-		}
-
-		if (!modelDef.providers.some((p) => p.providerId === requestedProvider)) {
-			throw new HTTPException(400, {
-				message: `Provider ${requestedProvider} does not support model ${modelName}`,
-			});
-		}
-
-		// Use the provider-specific model name if available
-		const providerMapping = modelDef.providers.find(
-			(p) => p.providerId === requestedProvider,
-		);
-		if (providerMapping) {
-			requestedModel = providerMapping.modelName as Model;
-		} else {
-			requestedModel = modelName as Model;
-		}
-	} else if (models.find((m) => m.id === modelInput)) {
-		requestedModel = modelInput as Model;
-	} else if (
-		models.find((m) => m.providers.find((p) => p.modelName === modelInput))
-	) {
-		const model = models.find((m) =>
-			m.providers.find((p) => p.modelName === modelInput),
-		);
-		const provider = model?.providers.find((p) => p.modelName === modelInput);
-
-		throw new HTTPException(400, {
-			message: `Model ${modelInput} must be requested with a provider prefix. Use the format: ${provider?.providerId}/${model?.id}`,
-		});
-	} else {
-		throw new HTTPException(400, {
-			message: `Requested model ${modelInput} not supported`,
-		});
-	}
-
-	if (requestedProvider && !providers.find((p) => p.id === requestedProvider)) {
-		throw new HTTPException(400, {
-			message: `Requested provider ${requestedProvider} not supported`,
-		});
-	}
-
-	let modelInfo;
-
-	// First try to find by model ID
-	modelInfo = models.find((m) => m.id === requestedModel);
-
-	// If not found, search by provider model name
-	// If a specific provider is requested, match both modelName and providerId
-	if (!modelInfo) {
-		if (requestedProvider) {
-			modelInfo = models.find((m) =>
-				m.providers.find(
-					(p) =>
-						p.modelName === requestedModel &&
-						p.providerId === requestedProvider,
-				),
-			);
-		} else {
-			modelInfo = models.find((m) =>
-				m.providers.find((p) => p.modelName === requestedModel),
-			);
-		}
-	}
-
-	if (!modelInfo) {
-		throw new HTTPException(400, {
-			message: `Unsupported model: ${requestedModel}`,
-		});
-	}
+	// Resolve model info and filter deactivated providers
+	const modelInfoResult = resolveModelInfo(
+		requestedModel,
+		parseResult.requestedProvider,
+	);
+	let modelInfo = modelInfoResult.modelInfo;
+	const _allModelProviders = modelInfoResult.allModelProviders;
+	let requestedProvider = modelInfoResult.requestedProvider;
 
 	// Filter providers by status from DB (only active for users)
 	modelInfo = await getActiveProvidersForModel(modelInfo);
@@ -879,174 +791,17 @@ chat.openapi(completions, async (c) => {
 		}
 	}
 
-	// Filter providers by requestedProvider if specified
-	const providersToCheck = requestedProvider
-		? modelInfo.providers.filter(
-				(p) => (p as ProviderModelMapping).providerId === requestedProvider,
-			)
-		: modelInfo.providers;
-
-	if (response_format?.type === "json_object") {
-		// Check if the provider(s) support JSON output mode
-		const supportsJsonOutput = providersToCheck.some(
-			(provider) => (provider as ProviderModelMapping).jsonOutput === true,
-		);
-
-		if (!supportsJsonOutput) {
-			throw new HTTPException(400, {
-				message: `Model ${requestedModel} does not support JSON output mode`,
-			});
-		}
-	}
-
-	// Additional validation for json_schema type
-	if (response_format?.type === "json_schema") {
-		// For non-auto/custom models, check if the provider supports json_schema
-		const supportsJsonSchema = providersToCheck.some(
-			(provider) =>
-				(provider as ProviderModelMapping).jsonOutputSchema === true,
-		);
-
-		if (!supportsJsonSchema) {
-			throw new HTTPException(400, {
-				message: `Model ${requestedModel} does not support JSON schema output mode. Use response_format type 'json_object' instead.`,
-			});
-		}
-	}
-
-	// Check if reasoning_effort is specified but model doesn't support reasoning
-	// Skip this check for "auto" and "custom" models as they will be resolved dynamically
-	if (reasoning_effort !== undefined) {
-		// Check if any provider for this model supports reasoning
-		const supportsReasoning = modelInfo.providers.some(
-			(provider) => (provider as ProviderModelMapping).reasoning === true,
-		);
-
-		if (!supportsReasoning) {
-			logger.error(
-				`Reasoning effort specified for non-reasoning model: ${requestedModel}`,
-				{
-					requestedModel,
-					requestedProvider,
-					reasoning_effort,
-					modelProviders: modelInfo.providers.map((p) => ({
-						providerId: p.providerId,
-						reasoning: (p as ProviderModelMapping).reasoning,
-					})),
-				},
-			);
-
-			throw new HTTPException(400, {
-				message: `Model ${requestedModel} does not support reasoning. Remove the reasoning_effort parameter or use a reasoning-capable model.`,
-			});
-		}
-
-		// Determine eligible providers to check based on whether a specific provider was requested
-		const providersToCheck = requestedProvider
-			? modelInfo.providers.filter(
-					(p) => (p as ProviderModelMapping).providerId === requestedProvider,
-				)
-			: modelInfo.providers;
-
-		// Collect all eligible providers that support reasoning
-		const reasoningProviders = providersToCheck.filter(
-			(p) => (p as ProviderModelMapping).reasoning === true,
-		) as ProviderModelMapping[];
-
-		// If a specific provider was requested but it doesn't support reasoning, throw error
-		if (requestedProvider && reasoningProviders.length === 0) {
-			throw new HTTPException(400, {
-				message: `Provider ${requestedProvider} does not support reasoning. Remove the reasoning_effort parameter or choose a reasoning-capable provider.`,
-			});
-		}
-
-		// Validate reasoning_effort against all eligible providers using union semantics
-		if (reasoningProviders.length > 0) {
-			// Check if any provider has no reasoningLevels restriction (allows all levels)
-			const hasUnrestrictedProvider = reasoningProviders.some(
-				(p) => !p.reasoningLevels,
-			);
-
-			if (!hasUnrestrictedProvider) {
-				// Collect union of all supported levels across eligible providers
-				const allSupportedLevels = new Set<string>();
-				for (const provider of reasoningProviders) {
-					if (provider.reasoningLevels) {
-						for (const level of provider.reasoningLevels) {
-							allSupportedLevels.add(level);
-						}
-					}
-				}
-
-				// Validate that the requested reasoning_effort is in the union set
-				if (!allSupportedLevels.has(reasoning_effort)) {
-					// Build detailed error message showing which providers were checked
-					const providerList = requestedProvider
-						? `provider ${requestedProvider}`
-						: `any of the eligible providers (${reasoningProviders.map((p) => p.providerId).join(", ")})`;
-
-					// Sort supported levels in fixed priority order: minimal, low, medium, high
-					const priorityOrder = ["minimal", "low", "medium", "high"];
-					const sortedLevels = priorityOrder.filter((level) =>
-						allSupportedLevels.has(level),
-					);
-
-					throw new HTTPException(400, {
-						message: `Reasoning effort level "${reasoning_effort}" is not supported by ${providerList} for model ${requestedModel}. Supported levels: ${sortedLevels.join(", ")}.`,
-					});
-				}
-			}
-		}
-	}
-
-	// Check if tools are specified but model doesn't support them
-	// Skip this check for "auto" and "custom" models as they will be resolved dynamically
-	if (tools !== undefined || tool_choice !== undefined) {
-		// Filter providers by requestedProvider if specified
-		const providersToCheck = requestedProvider
-			? modelInfo.providers.filter(
-					(p) => (p as ProviderModelMapping).providerId === requestedProvider,
-				)
-			: modelInfo.providers;
-
-		// Check if any provider for this model supports tools
-		const supportsTools = providersToCheck.some(
-			(provider) => (provider as ProviderModelMapping).tools === true,
-		);
-
-		// Check if any provider supports web search
-		const supportsWebSearch = providersToCheck.some(
-			(provider) => (provider as ProviderModelMapping).webSearch === true,
-		);
-
-		// Determine if we have function tools (web_search tools were already extracted earlier)
-		// After extraction, `tools` only contains function tools
-		const hasFunctionTools = tools && tools.length > 0;
-
-		// The request is web-search-only if:
-		// 1. A web search tool was extracted (webSearchTool is set)
-		// 2. No function tools remain in the tools array
-		const isWebSearchOnly = webSearchTool !== undefined && !hasFunctionTools;
-
-		// Allow the request if:
-		// 1. Model supports regular tools, OR
-		// 2. Model supports web search AND request only uses web search (no function tools)
-		if (!supportsTools && !(supportsWebSearch && isWebSearchOnly)) {
-			throw new HTTPException(400, {
-				message: `Model ${requestedModel} does not support tool calls. Remove the tools/tool_choice parameter or use a tool-capable model.`,
-			});
-		}
-
-		// If web_search tool is specifically requested, ensure the model supports it
-		if (webSearchTool && !supportsWebSearch) {
-			throw new HTTPException(400, {
-				message: `Model ${requestedModel} does not support native web search. Remove the web_search tool or use a model that supports it. See https://llmapi.ai/models?features=webSearch for supported models.`,
-			});
-		}
-	}
+	// Validate model capabilities (JSON output, reasoning, tools, web search)
+	validateModelCapabilities(modelInfo, requestedModel, requestedProvider, {
+		response_format,
+		reasoning_effort,
+		tools,
+		tool_choice,
+		webSearchTool,
+	});
 
 	let usedProvider = requestedProvider;
-	let usedModel = requestedModel;
+	let usedModel: string = requestedModel;
 	let routingMetadata: RoutingMetadata | undefined;
 
 	// Extract retention level for data storage cost calculation
@@ -1879,7 +1634,7 @@ chat.openapi(completions, async (c) => {
 				let fullReasoningContent = "";
 				let promptTokens = null;
 				let completionTokens = null;
-				let totalTokens = null;
+				let _totalTokens = null;
 				let reasoningTokens = null;
 				let cachedTokens = null;
 				let rawCachedResponseData = ""; // Raw SSE data from cached response
@@ -1918,7 +1673,7 @@ chat.openapi(completions, async (c) => {
 								completionTokens = chunkData.usage.completion_tokens;
 							}
 							if (chunkData.usage.total_tokens) {
-								totalTokens = chunkData.usage.total_tokens;
+								_totalTokens = chunkData.usage.total_tokens;
 							}
 							if (chunkData.usage.reasoning_tokens) {
 								reasoningTokens = chunkData.usage.reasoning_tokens;
@@ -1998,9 +1753,15 @@ chat.openapi(completions, async (c) => {
 					content: fullContent || null,
 					reasoningContent: fullReasoningContent || null,
 					finishReason: cachedStreamingResponse.metadata.finishReason,
-					promptTokens: promptTokens?.toString() || null,
+					promptTokens:
+						(costs.promptTokens ?? promptTokens)?.toString() || null,
 					completionTokens: completionTokens?.toString() || null,
-					totalTokens: totalTokens?.toString() || null,
+					totalTokens:
+						(
+							(costs.promptTokens || promptTokens || 0) +
+							(completionTokens || 0) +
+							(reasoningTokens || 0)
+						).toString() || null,
 					reasoningTokens: reasoningTokens?.toString() || null,
 					cachedTokens: cachedTokens?.toString() || null,
 					hasError: false,
@@ -2017,7 +1778,7 @@ chat.openapi(completions, async (c) => {
 					discount: costs.discount ?? null,
 					pricingTier: costs.pricingTier ?? null,
 					dataStorageCost: calculateDataStorageCost(
-						promptTokens,
+						costs.promptTokens ?? promptTokens,
 						cachedTokens,
 						completionTokens,
 						reasoningTokens,
@@ -2123,9 +1884,19 @@ chat.openapi(completions, async (c) => {
 					reasoningContent:
 						cachedResponse.choices?.[0]?.message?.reasoning || null,
 					finishReason: cachedResponse.choices?.[0]?.finish_reason || null,
-					promptTokens: cachedResponse.usage?.prompt_tokens || null,
+					promptTokens:
+						(
+							cachedCosts.promptTokens ?? cachedResponse.usage?.prompt_tokens
+						)?.toString() || null,
 					completionTokens: cachedResponse.usage?.completion_tokens || null,
-					totalTokens: cachedResponse.usage?.total_tokens || null,
+					totalTokens:
+						(
+							(cachedCosts.promptTokens ||
+								cachedResponse.usage?.prompt_tokens ||
+								0) +
+							(cachedResponse.usage?.completion_tokens || 0) +
+							(cachedResponse.usage?.reasoning_tokens || 0)
+						).toString() || null,
 					reasoningTokens: cachedResponse.usage?.reasoning_tokens || null,
 					cachedTokens:
 						cachedResponse.usage?.prompt_tokens_details?.cached_tokens || null,
@@ -2143,7 +1914,7 @@ chat.openapi(completions, async (c) => {
 					discount: cachedCosts.discount ?? null,
 					pricingTier: cachedCosts.pricingTier ?? null,
 					dataStorageCost: calculateDataStorageCost(
-						cachedResponse.usage?.prompt_tokens,
+						cachedCosts.promptTokens ?? cachedResponse.usage?.prompt_tokens,
 						cachedResponse.usage?.prompt_tokens_details?.cached_tokens,
 						cachedResponse.usage?.completion_tokens,
 						cachedResponse.usage?.reasoning_tokens,
@@ -2493,11 +2264,15 @@ chat.openapi(completions, async (c) => {
 						reasoningContent: null,
 						finishReason: "canceled",
 						promptTokens: billCancelled
-							? estimatedPromptTokens?.toString()
+							? (
+									cancelledCosts?.promptTokens ?? estimatedPromptTokens
+								)?.toString()
 							: null,
 						completionTokens: billCancelled ? "0" : null,
 						totalTokens: billCancelled
-							? estimatedPromptTokens?.toString()
+							? (
+									cancelledCosts?.promptTokens ?? estimatedPromptTokens
+								)?.toString()
 							: null,
 						reasoningTokens: null,
 						cachedTokens: null,
@@ -2515,7 +2290,7 @@ chat.openapi(completions, async (c) => {
 						discount: cancelledCosts?.discount ?? null,
 						dataStorageCost: billCancelled
 							? calculateDataStorageCost(
-									estimatedPromptTokens,
+									cancelledCosts?.promptTokens ?? estimatedPromptTokens,
 									null,
 									0,
 									null,
@@ -3137,17 +2912,14 @@ chat.openapi(completions, async (c) => {
 											streamingCosts.completionTokens ||
 											finalCompletionTokens ||
 											0,
-										total_tokens: (() => {
-											const fallbackTotal =
-												(streamingCosts.promptTokens ||
-													finalPromptTokens ||
-													0) +
+										total_tokens: Math.max(
+											1,
+											(streamingCosts.promptTokens || finalPromptTokens || 0) +
 												(streamingCosts.completionTokens ||
 													finalCompletionTokens ||
 													0) +
-												(reasoningTokens || 0);
-											return Math.max(1, finalTotalTokens ?? fallbackTotal);
-										})(),
+												(reasoningTokens || 0),
+										),
 										cost_usd_total: streamingCosts.totalCost,
 										cost_usd_input: streamingCosts.inputCost,
 										cost_usd_output: streamingCosts.outputCost,
@@ -3826,36 +3598,41 @@ chat.openapi(completions, async (c) => {
 										finish_reason: null,
 									},
 								],
-								usage: {
-									prompt_tokens: Math.max(
+								usage: (() => {
+									// Only add image input tokens for providers that
+									// exclude them from upstream usage (Google)
+									const providerExcludesImageInput =
+										usedProvider === "google-ai-studio" ||
+										usedProvider === "google-vertex" ||
+										usedProvider === "obsidian";
+									const imageInputAdj = providerExcludesImageInput
+										? inputImageCount * 560
+										: 0;
+									const adjPrompt = Math.max(
 										1,
 										Math.round(
 											promptTokens && promptTokens > 0
-												? promptTokens + inputImageCount * 560
-												: (calculatedPromptTokens || 1) + inputImageCount * 560,
+												? promptTokens + imageInputAdj
+												: (calculatedPromptTokens || 1) + imageInputAdj,
 										),
-									),
-									completion_tokens: Math.round(
+									);
+									const adjCompletion = Math.round(
 										completionTokens || calculatedCompletionTokens || 0,
-									),
-									total_tokens: Math.round(
-										totalTokens ||
-											calculatedTotalTokens ||
-											Math.max(
-												1,
-												(promptTokens && promptTokens > 0
-													? promptTokens + inputImageCount * 560
-													: (calculatedPromptTokens || 1) +
-														inputImageCount * 560) +
-													(completionTokens || calculatedCompletionTokens || 0),
-											),
-									),
-									...(cachedTokens !== null && {
-										prompt_tokens_details: {
-											cached_tokens: cachedTokens,
-										},
-									}),
-								},
+									);
+									return {
+										prompt_tokens: adjPrompt,
+										completion_tokens: adjCompletion,
+										total_tokens: Math.max(
+											1,
+											Math.round(adjPrompt + adjCompletion),
+										),
+										...(cachedTokens !== null && {
+											prompt_tokens_details: {
+												cached_tokens: cachedTokens,
+											},
+										}),
+									};
+								})(),
 							};
 
 							await writeSSEAndCache({
@@ -3924,6 +3701,17 @@ chat.openapi(completions, async (c) => {
 								inputImageCount,
 								webSearchCount,
 							);
+
+				// Use costs.promptTokens as canonical value (includes image input
+				// tokens for providers that exclude them from upstream usage)
+				if (costs.promptTokens !== null && costs.promptTokens !== undefined) {
+					const promptDelta =
+						(costs.promptTokens || 0) - (calculatedPromptTokens || 0);
+					if (promptDelta > 0) {
+						calculatedPromptTokens = costs.promptTokens;
+						calculatedTotalTokens = (calculatedTotalTokens || 0) + promptDelta;
+					}
+				}
 
 				// Extract plugin IDs for logging (streaming - no healing applied)
 				const streamingPluginIds = plugins?.map((p) => p.id) || [];
@@ -4357,9 +4145,13 @@ chat.openapi(completions, async (c) => {
 			content: null,
 			reasoningContent: null,
 			finishReason: "canceled",
-			promptTokens: billCancelled ? estimatedPromptTokens?.toString() : null,
+			promptTokens: billCancelled
+				? (cancelledCosts?.promptTokens ?? estimatedPromptTokens)?.toString()
+				: null,
 			completionTokens: billCancelled ? "0" : null,
-			totalTokens: billCancelled ? estimatedPromptTokens?.toString() : null,
+			totalTokens: billCancelled
+				? (cancelledCosts?.promptTokens ?? estimatedPromptTokens)?.toString()
+				: null,
 			reasoningTokens: null,
 			cachedTokens: null,
 			hasError: false,
@@ -4376,7 +4168,7 @@ chat.openapi(completions, async (c) => {
 			discount: cancelledCosts?.discount ?? null,
 			dataStorageCost: billCancelled
 				? calculateDataStorageCost(
-						estimatedPromptTokens,
+						cancelledCosts?.promptTokens ?? estimatedPromptTokens,
 						null,
 						0,
 						null,
@@ -4643,7 +4435,7 @@ chat.openapi(completions, async (c) => {
 	}
 
 	// Estimate tokens if not provided by the API
-	const { calculatedPromptTokens, calculatedCompletionTokens } = estimateTokens(
+	let { calculatedPromptTokens, calculatedCompletionTokens } = estimateTokens(
 		usedProvider,
 		messages,
 		content,
@@ -4682,6 +4474,21 @@ chat.openapi(completions, async (c) => {
 		inputImageCount,
 		webSearchCount,
 	);
+
+	// Use costs.promptTokens as canonical value (includes image input
+	// tokens for providers that exclude them from upstream usage)
+	if (costs.promptTokens !== null && costs.promptTokens !== undefined) {
+		const promptDelta =
+			(costs.promptTokens || 0) - (calculatedPromptTokens || 0);
+		if (promptDelta > 0) {
+			calculatedPromptTokens = costs.promptTokens;
+			totalTokens = (
+				(calculatedPromptTokens || 0) +
+				(calculatedCompletionTokens || 0) +
+				(calculatedReasoningTokens || 0)
+			).toString();
+		}
+	}
 
 	// Transform response to OpenAI format for non-OpenAI providers
 	// Always include costs in response

@@ -3,7 +3,6 @@ import { encode, encodeChat } from "gpt-tokenizer";
 
 import { logger } from "@llmgateway/logger";
 import {
-	type Model,
 	type ModelDefinition,
 	models,
 	type PricingTier,
@@ -81,7 +80,7 @@ function getPricingForTokenCount(
  * from the fullOutput parameter if provided
  */
 export function calculateCosts(
-	model: Model,
+	model: string,
 	provider: string,
 	promptTokens: number | null,
 	completionTokens: number | null,
@@ -254,14 +253,12 @@ export function calculateCosts(
 	const discount = providerInfo.discount || 0;
 	const discountMultiplier = new Decimal(1).minus(discount);
 
-	// Add input image tokens to prompt tokens if applicable (for Google image generation models)
-	// Google reports text tokens but doesn't include image input tokens in usage
 	// Each input image is 560 tokens ($0.0011 per image at $2/1M)
 	const TOKENS_PER_INPUT_IMAGE = 560;
 	const imageInputPrice = (providerInfo as any).imageInputPrice;
+	let imageInputTokens = 0;
 	if (imageInputPrice && inputImageCount > 0) {
-		const imageInputTokens = inputImageCount * TOKENS_PER_INPUT_IMAGE;
-		calculatedPromptTokens += imageInputTokens;
+		imageInputTokens = inputImageCount * TOKENS_PER_INPUT_IMAGE;
 	}
 
 	// Calculate input cost accounting for cached tokens
@@ -329,7 +326,16 @@ export function calculateCosts(
 		requestCost: requestCost.toNumber(),
 		webSearchCost: webSearchCost.toNumber(),
 		totalCost: totalCost.toNumber(),
-		promptTokens: calculatedPromptTokens,
+		// Only add image input tokens to promptTokens for providers whose upstream
+		// usage excludes them (Google). Other providers (OpenAI, xAI) already
+		// include image tokens in their reported prompt_tokens.
+		promptTokens:
+			imageInputTokens &&
+			(provider === "google-ai-studio" ||
+				provider === "google-vertex" ||
+				provider === "obsidian")
+				? (calculatedPromptTokens || 0) + imageInputTokens
+				: calculatedPromptTokens,
 		completionTokens: calculatedCompletionTokens,
 		cachedTokens,
 		estimatedCost: isEstimated,

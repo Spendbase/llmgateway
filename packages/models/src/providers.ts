@@ -130,8 +130,8 @@ export const providers = [
 		streaming: true,
 		cancellation: true,
 		color: "#1a1a1a",
-		website: null,
-		announcement: null,
+		website: undefined,
+		announcement: undefined,
 	},
 	// {
 	// 	id: "groq",
