@@ -10,11 +10,26 @@ type DepositsResponse =
 export default async function DepositsPage({
 	searchParams,
 }: {
-	searchParams: Promise<{ page?: string; pageSize?: string }>;
+	searchParams: Promise<{
+		page?: string;
+		pageSize?: string;
+		status?: string;
+		from?: string;
+		to?: string;
+		q?: string;
+	}>;
 }) {
 	const params = await searchParams;
 	const page = parseInt(params.page || "1", 10);
 	const pageSize = parseInt(params.pageSize || String(PAGESIZE), 10);
+	const status = params.status as
+		| "pending"
+		| "completed"
+		| "failed"
+		| undefined;
+	const from = params.from;
+	const to = params.to;
+	const q = params.q;
 
 	const depositsData = (await fetchServerData<DepositsResponse>(
 		"GET",
@@ -24,6 +39,10 @@ export default async function DepositsPage({
 				query: {
 					page,
 					pageSize,
+					status,
+					from,
+					to,
+					q,
 				},
 			},
 		},

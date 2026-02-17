@@ -707,6 +707,19 @@ admin.openapi(depositCredits, async (c) => {
 				.where(eq(tables.organization.id, organizationId))
 				.returning({ newBalance: tables.organization.credits });
 
+			await tx.insert(transactionEvent).values({
+				transactionId: newTx.id,
+				type: "created",
+				newStatus: "completed",
+				metadata: {
+					type: "admin_credit_granted",
+					adminUserId: authUser.id,
+					organizationId,
+					amount,
+					description,
+				},
+			});
+
 			return {
 				transaction: {
 					id: newTx.id,

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
 
 import type { paths } from "@/lib/api/v1";
@@ -27,7 +29,12 @@ export function DepositsTable({ deposits }: { deposits: Deposit[] }) {
 								className="p-4 font-mono text-xs max-w-[150px] truncate"
 								title={deposit.id}
 							>
-								{deposit.id}
+								<Link
+									href={`/admin/deposits/${deposit.id}`}
+									className="text-blue-600 hover:underline"
+								>
+									{deposit.id}
+								</Link>
 							</td>
 							<td className="p-4">{deposit.organizationName}</td>
 							<td className="p-4">
