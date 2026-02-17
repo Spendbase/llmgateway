@@ -77,7 +77,12 @@ import type {
 } from "@/lib/fetch-models";
 import type { StabilityLevel } from "@llmgateway/models";
 
-type ModelWithProviders = ApiModel;
+interface ModelWithProviders extends ApiModel {
+	providerDetails: Array<{
+		provider: ApiModelProviderMapping;
+		providerInfo: ApiProvider;
+	}>;
+}
 
 interface AllModelsProps {
 	children: React.ReactNode;
@@ -178,7 +183,33 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 	const totalProviderCount = providers.length;
 
 	const modelsWithProviders: ModelWithProviders[] = useMemo(() => {
-		const baseModels = models;
+		const baseModels = models.map((model) => ({
+			...model,
+			providerDetails: model.mappings
+				.map((mapping) => {
+					const providerInfo = providers.find(
+						(p) => p.id === mapping.providerId,
+					);
+					if (!providerInfo) {
+						console.warn(
+							`Provider not found for mapping: ${mapping.providerId} in model ${model.id}`,
+						);
+						return null;
+					}
+					return {
+						provider: mapping,
+						providerInfo,
+					};
+				})
+				.filter(
+					(
+						detail,
+					): detail is {
+						provider: ApiModelProviderMapping;
+						providerInfo: ApiProvider;
+					} => detail !== null,
+				),
+		}));
 
 		const filteredModels = baseModels.filter((model) => {
 			// Improved fuzzy search: token-based, accent-insensitive, ignores punctuation
@@ -197,8 +228,8 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 					.map((t: string) => t.replace(/[^a-z0-9]/g, ""))
 					.filter(Boolean);
 
-				const providerStrings = (model.mappings || []).flatMap((p) => [
-					p.providerId,
+				const providerStrings = (model.providerDetails || []).flatMap((p) => [
+					p.provider.providerId,
 					p.providerInfo?.name || "",
 				]);
 				const haystackParts = [
@@ -237,9 +268,11 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 						) {
 							return false;
 						}
-						const hasCodeCapabilities = model.mappings.some(
+						const hasCodeCapabilities = model.providerDetails.some(
 							(p) =>
-								(p.jsonOutput || p.jsonOutputSchema) && p.tools && p.streaming,
+								(p.provider.jsonOutput || p.provider.jsonOutputSchema) &&
+								p.provider.tools &&
+								p.provider.streaming,
 						);
 						if (!hasCodeCapabilities) {
 							return false;
@@ -248,7 +281,9 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 					}
 					case "chat": {
 						// Chat & Assistants: general chat models with streaming
-						const hasStreaming = model.mappings.some((p) => p.streaming);
+						const hasStreaming = model.providerDetails.some(
+							(p) => p.provider.streaming,
+						);
 						if (!hasStreaming) {
 							return false;
 						}
@@ -256,7 +291,9 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 					}
 					case "reasoning": {
 						// Reasoning & Analysis: models with reasoning capability
-						const hasReasoning = model.mappings.some((p) => p.reasoning);
+						const hasReasoning = model.providerDetails.some(
+							(p) => p.provider.reasoning,
+						);
 						if (!hasReasoning) {
 							return false;
 						}
@@ -267,8 +304,8 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 						if (model.output?.includes("image")) {
 							return false;
 						}
-						const hasCreativeStreaming = model.mappings.some(
-							(p) => p.streaming,
+						const hasCreativeStreaming = model.providerDetails.some(
+							(p) => p.provider.streaming,
 						);
 						if (!hasCreativeStreaming) {
 							return false;
@@ -284,7 +321,9 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 					}
 					case "multimodal": {
 						// Multimodal: vision capability
-						const hasVision = model.mappings.some((p) => p.vision);
+						const hasVision = model.providerDetails.some(
+							(p) => p.provider.vision,
+						);
 						if (!hasVision) {
 							return false;
 						}
@@ -296,34 +335,37 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 			// Capability filters
 			if (
 				filters.capabilities.streaming &&
-				!model.mappings.some((p) => p.streaming)
+				!model.providerDetails.some((p) => p.provider.streaming)
 			) {
 				return false;
 			}
 			if (
 				filters.capabilities.vision &&
-				!model.mappings.some((p) => p.vision)
+				!model.providerDetails.some((p) => p.provider.vision)
 			) {
 				return false;
 			}
-			if (filters.capabilities.tools && !model.mappings.some((p) => p.tools)) {
+			if (
+				filters.capabilities.tools &&
+				!model.providerDetails.some((p) => p.provider.tools)
+			) {
 				return false;
 			}
 			if (
 				filters.capabilities.reasoning &&
-				!model.mappings.some((p) => p.reasoning)
+				!model.providerDetails.some((p) => p.provider.reasoning)
 			) {
 				return false;
 			}
 			if (
 				filters.capabilities.jsonOutput &&
-				!model.mappings.some((p) => p.jsonOutput)
+				!model.providerDetails.some((p) => p.provider.jsonOutput)
 			) {
 				return false;
 			}
 			if (
 				filters.capabilities.jsonOutputSchema &&
-				!model.mappings.some((p) => p.jsonOutputSchema)
+				!model.providerDetails.some((p) => p.provider.jsonOutputSchema)
 			) {
 				return false;
 			}
@@ -335,14 +377,15 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 			}
 			if (
 				filters.capabilities.webSearch &&
-				!model.mappings.some((p) => p.webSearch)
+				!model.providerDetails.some((p) => p.provider.webSearch)
 			) {
 				return false;
 			}
 			if (filters.capabilities.free) {
 				// A model is only considered free if it has the free flag AND no provider has a per-request cost
-				const hasRequestPrice = model.mappings.some(
-					(p) => p.requestPrice && p.requestPrice > 0,
+				const hasRequestPrice = model.providerDetails.some(
+					(p) =>
+						p.provider.requestPrice && parseFloat(p.provider.requestPrice) > 0,
 				);
 				if (!model.free || hasRequestPrice) {
 					return false;
@@ -350,15 +393,15 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 			}
 			if (
 				filters.capabilities.discounted &&
-				!model.mappings.some((p) => p.discount)
+				!model.providerDetails.some((p) => p.provider.discount)
 			) {
 				return false;
 			}
 
 			// Provider filter
 			if (filters.selectedProvider && filters.selectedProvider !== "all") {
-				const hasSelectedProvider = model.mappings.some(
-					(p) => p.providerId === filters.selectedProvider,
+				const hasSelectedProvider = model.providerDetails.some(
+					(p) => p.provider.providerId === filters.selectedProvider,
 				);
 				if (!hasSelectedProvider) {
 					return false;
@@ -367,15 +410,14 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 			// Price filters
 			const hasInputPrice = (min: string, max: string) => {
-				return model.mappings.some((p) => {
-					if (p.inputPrice === null || p.inputPrice === undefined) {
+				return model.providerDetails.some((p) => {
+					if (
+						p.provider.inputPrice === null ||
+						p.provider.inputPrice === undefined
+					) {
 						return !min && !max;
 					}
-					const inputPrice = p.inputPrice;
-					if (!Number.isFinite(inputPrice)) {
-						return false;
-					}
-					const price = inputPrice * 1e6; // Convert to per million tokens
+					const price = parseFloat(p.provider.inputPrice) * 1e6; // Convert to per million tokens
 					const minPrice = min ? parseFloat(min) : 0;
 					const maxPrice = max ? parseFloat(max) : Infinity;
 					return price >= minPrice && price <= maxPrice;
@@ -383,15 +425,14 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 			};
 
 			const hasOutputPrice = (min: string, max: string) => {
-				return model.mappings.some((p) => {
-					if (p.outputPrice === null || p.outputPrice === undefined) {
+				return model.providerDetails.some((p) => {
+					if (
+						p.provider.outputPrice === null ||
+						p.provider.outputPrice === undefined
+					) {
 						return !min && !max;
 					}
-					const outputPrice = p.outputPrice;
-					if (!Number.isFinite(outputPrice)) {
-						return false;
-					}
-					const price = outputPrice * 1e6; // Convert to per million tokens
+					const price = parseFloat(p.provider.outputPrice) * 1e6; // Convert to per million tokens
 					const minPrice = min ? parseFloat(min) : 0;
 					const maxPrice = max ? parseFloat(max) : Infinity;
 					return price >= minPrice && price <= maxPrice;
@@ -399,11 +440,14 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 			};
 
 			const hasContextSize = (min: string, max: string) => {
-				return model.mappings.some((p) => {
-					if (p.contextSize === null || p.contextSize === undefined) {
+				return model.providerDetails.some((p) => {
+					if (
+						p.provider.contextSize === null ||
+						p.provider.contextSize === undefined
+					) {
 						return !min && !max;
 					}
-					const size = p.contextSize;
+					const size = p.provider.contextSize;
 					const minSize = min ? parseInt(min, 10) : 0;
 					const maxSize = max ? parseInt(max, 10) : Infinity;
 					return size >= minSize && size <= maxSize;
@@ -441,8 +485,8 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 				return bDate - aDate; // Descending (newest first)
 			}
 
-			let aValue: string | number;
-			let bValue: string | number;
+			let aValue: any;
+			let bValue: any;
 
 			switch (sortField) {
 				case "name":
@@ -450,22 +494,28 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 					bValue = (b.name || b.id).toLowerCase();
 					break;
 				case "providers":
-					aValue = a.mappings.length;
-					bValue = b.mappings.length;
+					aValue = a.providerDetails.length;
+					bValue = b.providerDetails.length;
 					break;
 				case "contextSize":
 					// Get the max context size among all providers for this model
-					aValue = Math.max(...a.mappings.map((p) => p.contextSize || 0));
-					bValue = Math.max(...b.mappings.map((p) => p.contextSize || 0));
+					aValue = Math.max(
+						...a.providerDetails.map((p) => p.provider.contextSize || 0),
+					);
+					bValue = Math.max(
+						...b.providerDetails.map((p) => p.provider.contextSize || 0),
+					);
 					break;
 				case "inputPrice": {
 					// Get the min input price among all providers for this model
-					const aInputPrices = a.mappings
-						.map((p) => p.inputPrice)
-						.filter((p): p is number => p !== undefined);
-					const bInputPrices = b.mappings
-						.map((p) => p.inputPrice)
-						.filter((p): p is number => p !== undefined);
+					const aInputPrices = a.providerDetails
+						.map((p) => p.provider.inputPrice)
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
+					const bInputPrices = b.providerDetails
+						.map((p) => p.provider.inputPrice)
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					aValue =
 						aInputPrices.length > 0 ? Math.min(...aInputPrices) : Infinity;
 					bValue =
@@ -474,12 +524,14 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 				}
 				case "outputPrice": {
 					// Get the min output price among all providers for this model
-					const aOutputPrices = a.mappings
-						.map((p) => p.outputPrice)
-						.filter((p): p is number => p !== undefined);
-					const bOutputPrices = b.mappings
-						.map((p) => p.outputPrice)
-						.filter((p): p is number => p !== undefined);
+					const aOutputPrices = a.providerDetails
+						.map((p) => p.provider.outputPrice)
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
+					const bOutputPrices = b.providerDetails
+						.map((p) => p.provider.outputPrice)
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					aValue =
 						aOutputPrices.length > 0 ? Math.min(...aOutputPrices) : Infinity;
 					bValue =
@@ -488,12 +540,14 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 				}
 				case "cachedInputPrice": {
 					// Get the min cached input price among all providers for this model
-					const aCachedInputPrices = a.mappings
-						.map((p) => p.cachedInputPrice)
-						.filter((p): p is number => p !== undefined);
-					const bCachedInputPrices = b.mappings
-						.map((p) => p.cachedInputPrice)
-						.filter((p): p is number => p !== undefined);
+					const aCachedInputPrices = a.providerDetails
+						.map((p) => p.provider.cachedInputPrice)
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
+					const bCachedInputPrices = b.providerDetails
+						.map((p) => p.provider.cachedInputPrice)
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					aValue =
 						aCachedInputPrices.length > 0
 							? Math.min(...aCachedInputPrices)
@@ -506,12 +560,14 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 				}
 				case "requestPrice": {
 					// Get the min request price among all providers for this model
-					const aRequestPrices = a.mappings
-						.map((p) => p.requestPrice)
-						.filter((p): p is number => p !== undefined);
-					const bRequestPrices = b.mappings
-						.map((p) => p.requestPrice)
-						.filter((p): p is number => p !== undefined);
+					const aRequestPrices = a.providerDetails
+						.map((p) => p.provider.requestPrice)
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
+					const bRequestPrices = b.providerDetails
+						.map((p) => p.provider.requestPrice)
+						.filter((p): p is string => p !== null && p !== undefined)
+						.map((p) => parseFloat(p));
 					aValue =
 						aRequestPrices.length > 0 ? Math.min(...aRequestPrices) : Infinity;
 					bValue =
@@ -530,13 +586,13 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 			}
 			return 0;
 		});
-	}, [searchQuery, filters, sortField, sortDirection, models]);
+	}, [searchQuery, filters, sortField, sortDirection, models, providers]);
 
 	// Calculate unique filtered providers
 	const filteredProviderCount = useMemo(() => {
 		const uniqueProviders = new Set(
 			modelsWithProviders.flatMap((model) =>
-				model.mappings.map((p) => p.providerId),
+				model.providerDetails.map((p) => p.provider.providerId),
 			),
 		);
 		return uniqueProviders.size;
@@ -621,12 +677,15 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 		}
 	};
 
-	const formatPrice = (price?: number, discount?: number) => {
-		if (price === undefined) {
+	const formatPrice = (
+		price: string | null | undefined,
+		discount?: string | null,
+	) => {
+		if (price === null || price === undefined) {
 			return "—";
 		}
-		const priceNum = price;
-		const discountNum = discount ?? 0;
+		const priceNum = parseFloat(price);
+		const discountNum = discount ? parseFloat(discount) : 0;
 		const originalPrice = (priceNum * 1e6).toFixed(2);
 		if (discountNum > 0) {
 			const discountedPrice = (priceNum * 1e6 * (1 - discountNum)).toFixed(2);
@@ -1177,7 +1236,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 					<TableBody>
 						{modelsWithProviders.map((model) => (
 							<TableRow
-								key={`${model.id}-${model.mappings[0]?.providerId}`}
+								key={`${model.id}-${model.providerDetails[0]?.provider?.providerId}`}
 								className="cursor-pointer hover:bg-muted/50 transition-colors"
 								onClick={() =>
 									router.push(`/models/${encodeURIComponent(model.id)}`)
@@ -1193,8 +1252,10 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 												<AlertTriangle className="h-4 w-4 text-orange-500" />
 											)}
 											{model.free &&
-												!model.mappings.some(
-													(p) => p.requestPrice && p.requestPrice > 0,
+												!model.providerDetails.some(
+													(p) =>
+														p.provider.requestPrice &&
+														parseFloat(p.provider.requestPrice) > 0,
 												) && (
 													<Badge
 														variant="secondary"
@@ -1245,7 +1306,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 								<TableCell>
 									<div className="flex flex-col flex-wrap gap-2">
-										{model.mappings.map((provider) => (
+										{model.providerDetails.map(({ provider, providerInfo }) => (
 											<div
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="flex items-center gap-1"
@@ -1262,13 +1323,10 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 																className="w-4 h-4 rounded-sm flex items-center justify-center text-xs font-medium text-white"
 																style={{
 																	backgroundColor:
-																		provider.providerInfo?.color || "#6b7280",
+																		providerInfo?.color || "#6b7280",
 																}}
 															>
-																{(
-																	provider.providerInfo?.name ||
-																	provider.providerId
-																)
+																{(providerInfo?.name || provider.providerId)
 																	.charAt(0)
 																	.toUpperCase()}
 															</div>
@@ -1279,11 +1337,10 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 													variant="secondary"
 													className="text-xs"
 													style={{
-														borderColor:
-															provider.providerInfo?.color ?? undefined,
+														borderColor: providerInfo?.color ?? undefined,
 													}}
 												>
-													{provider.providerInfo?.name || provider.providerId}
+													{providerInfo?.name || provider.providerId}
 												</Badge>
 												{hasProviderStabilityWarning(provider) && (
 													<AlertTriangle className="h-3 w-3 text-orange-500" />
@@ -1295,7 +1352,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 								<TableCell className="text-center">
 									<div className="space-y-1">
-										{model.mappings.map((provider) => (
+										{model.providerDetails.map(({ provider }) => (
 											<div
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="text-sm"
@@ -1310,7 +1367,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 								<TableCell className="text-center">
 									<div className="space-y-1">
-										{model.mappings.map((provider) => (
+										{model.providerDetails.map(({ provider }) => (
 											<div
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="text-sm font-mono"
@@ -1337,7 +1394,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 								<TableCell className="text-center">
 									<div className="space-y-1">
-										{model.mappings.map((provider) => (
+										{model.providerDetails.map(({ provider }) => (
 											<div
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="text-sm font-mono"
@@ -1366,7 +1423,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 								<TableCell className="text-center">
 									<div className="space-y-1">
-										{model.mappings.map((provider) => (
+										{model.providerDetails.map(({ provider }) => (
 											<div
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="text-sm font-mono"
@@ -1393,23 +1450,24 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 								<TableCell className="text-center">
 									<div className="space-y-1">
-										{model.mappings.map((provider) => (
+										{model.providerDetails.map(({ provider }) => (
 											<div
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="text-sm font-mono"
 											>
-												{provider.requestPrice !== undefined &&
-												provider.requestPrice > 0 ? (
+												{provider.requestPrice !== null &&
+												provider.requestPrice !== undefined &&
+												parseFloat(provider.requestPrice) > 0 ? (
 													provider.discount ? (
 														<div className="flex flex-col justify-center items-center">
 															<span className="line-through text-muted-foreground text-xs">
-																${provider.requestPrice.toFixed(3)}
+																${parseFloat(provider.requestPrice).toFixed(3)}
 															</span>
 															<span className="text-green-600 font-semibold">
 																$
 																{(
-																	provider.requestPrice *
-																	(1 - provider.discount)
+																	parseFloat(provider.requestPrice) *
+																	(1 - parseFloat(provider.discount))
 																).toFixed(3)}
 															</span>
 															<span className="text-muted-foreground text-xs">
@@ -1418,7 +1476,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 														</div>
 													) : (
 														<>
-															${provider.requestPrice.toFixed(3)}
+															${parseFloat(provider.requestPrice).toFixed(3)}
 															<span className="text-muted-foreground text-xs ml-1">
 																/req
 															</span>
@@ -1434,7 +1492,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 								<TableCell className="text-center">
 									<div className="space-y-1">
-										{model.mappings.map((provider) => (
+										{model.providerDetails.map(({ provider }) => (
 											<div
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="text-sm font-mono"
@@ -1447,7 +1505,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 
 								<TableCell className="text-center">
 									<div className="space-y-2">
-										{model.mappings.map((provider) => (
+										{model.providerDetails.map(({ provider }) => (
 											<div
 												key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 												className="flex justify-center gap-1"
@@ -1511,7 +1569,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 										asChild
 									>
 										<a
-											href={`${config.playgroundUrl}?model=${encodeURIComponent(`${model.mappings[0]?.providerId}/${model.id}`)}`}
+											href={`${config.playgroundUrl}?model=${encodeURIComponent(`${model.providerDetails[0]?.provider?.providerId}/${model.id}`)}`}
 											target="_blank"
 											rel="noopener noreferrer"
 										>
@@ -1532,7 +1590,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 		<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{modelsWithProviders.map((model) => (
 				<ModelCard
-					key={`${model.id}-${model.mappings[0]?.providerId}`}
+					key={`${model.id}-${model.providerDetails[0]?.provider?.providerId}`}
 					shouldShowStabilityWarning={shouldShowStabilityWarning}
 					getCapabilityIcons={getCapabilityIcons}
 					model={model}
@@ -1679,7 +1737,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 										<div className="text-2xl font-bold">
 											{
 												modelsWithProviders.filter((m) =>
-													m.mappings.some((p) => p.vision),
+													m.providerDetails.some((p) => p.provider.vision),
 												).length
 											}
 										</div>
@@ -1693,7 +1751,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 										<div className="text-2xl font-bold">
 											{
 												modelsWithProviders.filter((m) =>
-													m.mappings.some((p) => p.tools),
+													m.providerDetails.some((p) => p.provider.tools),
 												).length
 											}
 										</div>

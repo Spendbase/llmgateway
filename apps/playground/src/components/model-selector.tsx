@@ -173,29 +173,31 @@ function getMappingPriceInfo(
 		return { label: "Unknown" };
 	}
 
-	let basePrice: number | undefined;
+	let basePriceStr: string | null | undefined;
 	if (field === "input") {
-		basePrice = mapping.inputPrice;
+		basePriceStr = mapping.inputPrice;
 	} else if (field === "output") {
-		basePrice = mapping.outputPrice;
+		basePriceStr = mapping.outputPrice;
 	} else if (field === "cachedInput") {
-		basePrice = mapping.cachedInputPrice;
+		basePriceStr = mapping.cachedInputPrice;
 	} else if (field === "request") {
-		basePrice = mapping.requestPrice;
+		basePriceStr = mapping.requestPrice;
 	} else if (field === "imageInput") {
-		basePrice = mapping.imageInputPrice;
+		basePriceStr = mapping.imageInputPrice;
 	}
 
-	if (basePrice === undefined) {
+	if (basePriceStr === null || basePriceStr === undefined) {
 		return { label: "Unknown" };
 	}
+
+	const basePrice = parseFloat(basePriceStr);
 
 	// Free models
 	if (basePrice === 0) {
 		return { label: "Free", original: "Free" };
 	}
 
-	const discountNum = mapping.discount ?? 0;
+	const discountNum = mapping.discount ? parseFloat(mapping.discount) : 0;
 
 	// Request price is a flat per-request fee, not per-token
 	if (field === "request") {
@@ -248,13 +250,18 @@ function getRootAggregateInfo(model: ApiModel): RootAggregateInfo {
 	let maxOutput: number | undefined;
 	const capabilitySet = new Set<string>();
 
-	const applyDiscount = (price: number | undefined, discount?: number) => {
-		if (price === undefined) {
+	const applyDiscount = (
+		priceStr: string | null | undefined,
+		discountStr?: string | null,
+	) => {
+		if (priceStr === null || priceStr === undefined) {
 			return undefined;
 		}
+		const price = parseFloat(priceStr);
 		if (price === 0) {
 			return 0;
 		}
+		const discount = discountStr ? parseFloat(discountStr) : 0;
 		if (!discount || discount <= 0) {
 			return price;
 		}
@@ -418,7 +425,6 @@ export function ModelSelector({
 	const normalize = (s: string) => s.toLowerCase().replace(/[-_\s]+/g, "");
 
 	// Build entries of model per provider mapping (include all, filter later)
-
 	const allEntries = React.useMemo(() => {
 		const out: {
 			model: ApiModel;
@@ -427,7 +433,7 @@ export function ModelSelector({
 			isRoot?: boolean;
 			searchText: string;
 		}[] = [];
-		// const now = new Date();
+		const now = new Date();
 
 		// Sort models by createdAt (when added to LLM Gateway), newest first
 		// Falls back to releasedAt if createdAt is not available
@@ -469,21 +475,23 @@ export function ModelSelector({
 			}
 
 			for (const mp of m.mappings) {
-				// const isDeactivated =
-				// 	mp.deactivatedAt && new Date(mp.deactivatedAt) <= now;
-				// if (!isDeactivated) {
-				const provider = providers.find((p) => p.id === mp.providerId);
-				const searchText = normalize(
-					[m.name ?? "", m.family ?? "", m.id, provider?.name ?? ""].join(" "),
-				);
-				out.push({
-					model: m,
-					mapping: mp,
-					provider,
-					isRoot: false,
-					searchText,
-				});
-				// }
+				const isDeactivated =
+					mp.deactivatedAt && new Date(mp.deactivatedAt) <= now;
+				if (!isDeactivated) {
+					const provider = providers.find((p) => p.id === mp.providerId);
+					const searchText = normalize(
+						[m.name ?? "", m.family ?? "", m.id, provider?.name ?? ""].join(
+							" ",
+						),
+					);
+					out.push({
+						model: m,
+						mapping: mp,
+						provider,
+						isRoot: false,
+						searchText,
+					});
+				}
 			}
 		}
 		return out;
@@ -557,8 +565,12 @@ export function ModelSelector({
 					return false;
 				}
 
-				const price = e.mapping.inputPrice ?? 0;
-				const requestPrice = e.mapping.requestPrice ?? 0;
+				const price = e.mapping.inputPrice
+					? parseFloat(e.mapping.inputPrice)
+					: 0;
+				const requestPrice = e.mapping.requestPrice
+					? parseFloat(e.mapping.requestPrice)
+					: 0;
 				switch (filters.priceRange) {
 					case "free":
 						return price === 0 && requestPrice === 0;
@@ -977,7 +989,8 @@ export function ModelSelector({
 													const entryKey = model.id;
 													const _aggregate = getRootAggregateInfo(model);
 													const hasRequestPrice = model.mappings.some(
-														(p) => p.requestPrice && p.requestPrice > 0,
+														(p) =>
+															p.requestPrice && parseFloat(p.requestPrice) > 0,
 													);
 													const isFreeRoot =
 														model.free === true && !hasRequestPrice;
@@ -1052,7 +1065,8 @@ export function ModelSelector({
 													mapping!.deprecatedAt &&
 													new Date(mapping!.deprecatedAt) <= new Date();
 												const hasRequestPrice =
-													mapping!.requestPrice && mapping!.requestPrice > 0;
+													mapping!.requestPrice &&
+													parseFloat(mapping!.requestPrice) > 0;
 												const isFreeMapping =
 													model.free === true && !hasRequestPrice;
 												return (
