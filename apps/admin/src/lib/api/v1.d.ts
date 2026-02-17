@@ -536,6 +536,7 @@ export interface paths {
                                 isAdmin: boolean;
                             };
                             message: string;
+                            redirectTo: string | null;
                         };
                     };
                 };

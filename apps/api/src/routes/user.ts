@@ -408,6 +408,7 @@ const completeOnboarding = createRoute({
 					schema: z.object({
 						user: publicUserSchema.openapi({}),
 						message: z.string(),
+						redirectTo: z.string().nullable(),
 					}),
 				},
 			},
@@ -467,6 +468,31 @@ user.openapi(completeOnboarding, async (c) => {
 
 	const isAdmin = isAdminEmail(updatedUser.email);
 
+	let redirectTo: string | null = null;
+
+	const userOrgs = await db.query.userOrganization.findMany({
+		where: { userId: authUser.id },
+		with: {
+			organization: {
+				with: {
+					projects: true,
+				},
+			},
+		},
+	});
+
+	const activeOrg = userOrgs.find((uo) => uo.organization?.status === "active");
+
+	if (activeOrg?.organization) {
+		const activeProject = activeOrg.organization.projects.find(
+			(p) => p.status === "active",
+		);
+
+		if (activeProject) {
+			redirectTo = `/${activeOrg.organization.id}/${activeProject.id}/api-keys?openCreateDialog=true`;
+		}
+	}
+
 	return c.json({
 		user: {
 			id: updatedUser.id,
@@ -476,6 +502,7 @@ user.openapi(completeOnboarding, async (c) => {
 			emailVerified: updatedUser.emailVerified,
 			isAdmin,
 		},
+		redirectTo,
 		message: "Onboarding completed successfully",
 	});
 });
