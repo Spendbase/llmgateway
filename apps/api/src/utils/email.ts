@@ -79,7 +79,7 @@ export async function sendTransactionalEmail({
 
 	try {
 		await transporter.sendMail({
-			from: `LLMGateway <${smtpFromEmail}>`,
+			from: `LLM API <${smtpFromEmail}>`,
 			replyTo: replyToEmail,
 			to,
 			subject,
@@ -231,7 +231,7 @@ export function generatePaymentFailureEmailHtml(
 								>documentation</a> or reply to this email for any questions.
 								</p>
 								<p style="margin: 0; color: #999999; font-size: 12px;">
-									© 2025 LLM Gateway. All rights reserved. This is a transactional email and it can't be unsubscribed from.
+									© 2025 LLM API. All rights reserved. This is a transactional email and it can't be unsubscribed from.
 								</p>
 							</td>
 						</tr>
@@ -310,7 +310,7 @@ export function generateSubscriptionCancelledEmailHtml(
 										>documentation</a> or reply to this email for any questions.
 										</p>
 										<p style="margin: 0; color: #999999; font-size: 12px;">
-											© 2025 LLM Gateway. All rights reserved. This is a transactional email and it can't be unsubscribed from.
+											© 2025 LLM API. All rights reserved. This is a transactional email and it can't be unsubscribed from.
 										</p>
 									</td>
 								</tr>
