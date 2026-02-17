@@ -1,6 +1,9 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 
+import { filterProvidersByStatus } from "@/lib/filter-model-mappings.js";
+
+import { cdb as db, tables } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
 import {
 	models as modelsList,
@@ -120,147 +123,183 @@ modelsApi.openapi(listModels, async (c) => {
 		const excludeDeprecated = query.exclude_deprecated || false;
 		const currentDate = new Date();
 
-		// Filter models based on deactivation and deprecation status of their provider mappings
-		const filteredModels = modelsList.filter((model: ModelDefinition) => {
-			// Check if all provider mappings are deactivated
-			const allDeactivated = model.providers.every(
-				(provider) =>
-					(provider as ProviderModelMapping).deactivatedAt &&
-					currentDate > (provider as ProviderModelMapping).deactivatedAt!,
+		// Get all mappings from DB once for all models
+		const allMappings = await db
+			.select({
+				modelId: tables.modelProviderMapping.modelId,
+				providerId: tables.modelProviderMapping.providerId,
+				status: tables.modelProviderMapping.status,
+			})
+			.from(tables.modelProviderMapping);
+
+		// Create a global Map for all models
+		const globalMappingStatusMap = new Map<string, string>();
+		for (const mapping of allMappings) {
+			globalMappingStatusMap.set(
+				`${mapping.modelId}:${mapping.providerId}`,
+				mapping.status,
 			);
+		}
 
-			// Filter out models where all providers are deactivated (unless explicitly included)
-			if (!includeDeactivated && allDeactivated) {
-				return false;
-			}
+		// Filter and process models
+		const modelData = modelsList
+			.map((model: ModelDefinition) => {
+				// Filter providers by status
+				const activeProviders = filterProvidersByStatus(
+					model,
+					globalMappingStatusMap,
+					includeDeactivated,
+				);
 
-			// Check if all provider mappings are deprecated
-			const allDeprecated = model.providers.every(
-				(provider) =>
-					(provider as ProviderModelMapping).deprecatedAt &&
-					currentDate > (provider as ProviderModelMapping).deprecatedAt!,
-			);
+				return {
+					model,
+					activeProviders,
+				};
+			})
+			.filter(({ model, activeProviders }) => {
+				// If no available providers, don't show the model
+				if (activeProviders.length === 0) {
+					return false;
+				}
 
-			// Filter out models where all providers are deprecated if requested
-			if (excludeDeprecated && allDeprecated) {
-				return false;
-			}
+				// Check if all provider mappings are deactivated
+				const allDeactivated = model.providers.every(
+					(provider) =>
+						(provider as ProviderModelMapping).deactivatedAt &&
+						currentDate > (provider as ProviderModelMapping).deactivatedAt!,
+				);
 
-			return true;
-		});
+				// Filter out models where all providers are deactivated (unless explicitly included)
+				if (!includeDeactivated && allDeactivated) {
+					return false;
+				}
 
-		const modelData = filteredModels.map((model: ModelDefinition) => {
-			// Determine input modalities (if model supports images)
-			const inputModalities: ("text" | "image")[] = ["text"];
+				// Check if all provider mappings are deprecated
+				const allDeprecated = model.providers.every(
+					(provider) =>
+						(provider as ProviderModelMapping).deprecatedAt &&
+						currentDate > (provider as ProviderModelMapping).deprecatedAt!,
+				);
 
-			// Check if any provider has vision support
-			if (model.providers.some((p) => p.vision)) {
-				inputModalities.push("image");
-			}
+				// Filter out models where all providers are deprecated if requested
+				if (excludeDeprecated && allDeprecated) {
+					return false;
+				}
 
-			// Determine output modalities from model definition or default to text only
-			const outputModalities: ("text" | "image")[] = model.output || ["text"];
+				return true;
+			})
+			.map(({ model, activeProviders }) => {
+				// Determine input modalities (if model supports images)
+				const inputModalities: ("text" | "image")[] = ["text"];
 
-			const firstProviderWithPricing = model.providers.find(
-				(p: ProviderModelMapping) =>
-					p.inputPrice !== undefined ||
-					p.outputPrice !== undefined ||
-					p.imageInputPrice !== undefined,
-			);
+				// Check if any provider has vision support
+				if (activeProviders.some((p) => p.vision)) {
+					inputModalities.push("image");
+				}
 
-			const inputPrice =
-				firstProviderWithPricing?.inputPrice?.toString() || "0";
-			const outputPrice =
-				firstProviderWithPricing?.outputPrice?.toString() || "0";
-			const imagePrice =
-				firstProviderWithPricing?.imageInputPrice?.toString() || "0";
+				// Determine output modalities from model definition or default to text only
+				const outputModalities: ("text" | "image")[] = model.output || ["text"];
 
-			return {
-				id: model.id,
-				name: model.name || model.id,
-				aliases: model.aliases,
-				created: Math.floor(Date.now() / 1000), // Current timestamp in seconds
-				description: `${model.id} provided by ${model.providers.map((p) => p.providerId).join(", ")}`,
-				family: model.family,
-				architecture: {
-					input_modalities: inputModalities,
-					output_modalities: outputModalities,
-					tokenizer: "GPT", // TODO: Should come from model definitions when available
-				},
-				top_provider: {
-					is_moderated: true,
-				},
-				providers: model.providers.map((provider: ProviderModelMapping) => {
-					// Find the provider definition to get cancellation support
-					const providerDef = providers.find(
-						(p) => p.id === provider.providerId,
-					);
+				const firstProviderWithPricing = activeProviders.find(
+					(p: ProviderModelMapping) =>
+						p.inputPrice !== undefined ||
+						p.outputPrice !== undefined ||
+						p.imageInputPrice !== undefined,
+				);
 
-					return {
-						providerId: provider.providerId,
-						modelName: provider.modelName,
-						pricing:
-							provider.inputPrice !== undefined ||
-							provider.outputPrice !== undefined ||
-							provider.imageInputPrice !== undefined
-								? {
-										prompt: provider.inputPrice?.toString() || "0",
-										completion: provider.outputPrice?.toString() || "0",
-										image: provider.imageInputPrice?.toString() || "0",
-									}
-								: undefined,
-						streaming: provider.streaming,
-						vision: provider.vision || false,
-						cancellation: providerDef?.cancellation || false,
-						tools: provider.tools || false,
-						parallelToolCalls: provider.parallelToolCalls || false,
-						reasoning: provider.reasoning || false,
-						reasoningLevels: provider.reasoningLevels || null,
-						stability: provider.stability || model.stability,
-					};
-				}),
-				pricing: {
-					prompt: inputPrice,
-					completion: outputPrice,
-					image: imagePrice,
-					request: firstProviderWithPricing?.requestPrice?.toString() || "0",
-					input_cache_read:
-						firstProviderWithPricing?.cachedInputPrice?.toString() || "0",
-					input_cache_write: "0", // Not defined in model definitions yet
-					web_search: "0", // Not defined in model definitions yet
-					internal_reasoning: "0", // Not defined in model definitions yet
-				},
-				// Use context length from model definition (take the largest from all providers)
-				context_length:
-					Math.max(...model.providers.map((p) => p.contextSize || 0)) ||
-					undefined,
-				// Get supported parameters from model definitions with fallback to defaults
-				supported_parameters: getSupportedParametersFromModel(model),
-				// Add model-level capabilities
-				json_output:
-					model.providers.some(
-						(p) => (p as ProviderModelMapping).jsonOutput === true,
-					) || false,
-				structured_outputs:
-					model.providers.some(
-						(p) => (p as ProviderModelMapping).jsonOutputSchema === true,
-					) || false,
-				free: model.free || false,
-				// Calculate earliest deprecatedAt from all provider mappings
-				deprecated_at: model.providers
-					.map((p) => (p as ProviderModelMapping).deprecatedAt)
-					.filter((d): d is Date => d !== undefined)
-					.sort((a, b) => a.getTime() - b.getTime())[0]
-					?.toISOString(),
-				// Calculate earliest deactivatedAt from all provider mappings
-				deactivated_at: model.providers
-					.map((p) => (p as ProviderModelMapping).deactivatedAt)
-					.filter((d): d is Date => d !== undefined)
-					.sort((a, b) => a.getTime() - b.getTime())[0]
-					?.toISOString(),
-				stability: model.stability,
-			};
-		});
+				const inputPrice =
+					firstProviderWithPricing?.inputPrice?.toString() || "0";
+				const outputPrice =
+					firstProviderWithPricing?.outputPrice?.toString() || "0";
+				const imagePrice =
+					firstProviderWithPricing?.imageInputPrice?.toString() || "0";
+
+				return {
+					id: model.id,
+					name: model.name || model.id,
+					aliases: model.aliases,
+					created: Math.floor(Date.now() / 1000), // Current timestamp in seconds
+					description: `${model.id} provided by ${activeProviders.map((p) => p.providerId).join(", ")}`,
+					family: model.family,
+					architecture: {
+						input_modalities: inputModalities,
+						output_modalities: outputModalities,
+						tokenizer: "GPT", // TODO: Should come from model definitions when available
+					},
+					top_provider: {
+						is_moderated: true,
+					},
+					providers: activeProviders.map((provider: ProviderModelMapping) => {
+						// Find the provider definition to get cancellation support
+						const providerDef = providers.find(
+							(p) => p.id === provider.providerId,
+						);
+
+						return {
+							providerId: provider.providerId,
+							modelName: provider.modelName,
+							pricing:
+								provider.inputPrice !== undefined ||
+								provider.outputPrice !== undefined ||
+								provider.imageInputPrice !== undefined
+									? {
+											prompt: provider.inputPrice?.toString() || "0",
+											completion: provider.outputPrice?.toString() || "0",
+											image: provider.imageInputPrice?.toString() || "0",
+										}
+									: undefined,
+							streaming: provider.streaming,
+							vision: provider.vision || false,
+							cancellation: providerDef?.cancellation || false,
+							tools: provider.tools || false,
+							parallelToolCalls: provider.parallelToolCalls || false,
+							reasoning: provider.reasoning || false,
+							reasoningLevels: provider.reasoningLevels || null,
+							stability: provider.stability || model.stability,
+						};
+					}),
+					pricing: {
+						prompt: inputPrice,
+						completion: outputPrice,
+						image: imagePrice,
+						request: firstProviderWithPricing?.requestPrice?.toString() || "0",
+						input_cache_read:
+							firstProviderWithPricing?.cachedInputPrice?.toString() || "0",
+						input_cache_write: "0", // Not defined in model definitions yet
+						web_search: "0", // Not defined in model definitions yet
+						internal_reasoning: "0", // Not defined in model definitions yet
+					},
+					// Use context length from model definition (take the largest from all providers)
+					context_length:
+						Math.max(...model.providers.map((p) => p.contextSize || 0)) ||
+						undefined,
+					// Get supported parameters from model definitions with fallback to defaults
+					supported_parameters: getSupportedParametersFromModel(model),
+					// Add model-level capabilities
+					json_output:
+						model.providers.some(
+							(p) => (p as ProviderModelMapping).jsonOutput === true,
+						) || false,
+					structured_outputs:
+						model.providers.some(
+							(p) => (p as ProviderModelMapping).jsonOutputSchema === true,
+						) || false,
+					free: model.free || false,
+					// Calculate earliest deprecatedAt from all provider mappings
+					deprecated_at: model.providers
+						.map((p) => (p as ProviderModelMapping).deprecatedAt)
+						.filter((d): d is Date => d !== undefined)
+						.sort((a, b) => a.getTime() - b.getTime())[0]
+						?.toISOString(),
+					// Calculate earliest deactivatedAt from all provider mappings
+					deactivated_at: model.providers
+						.map((p) => (p as ProviderModelMapping).deactivatedAt)
+						.filter((d): d is Date => d !== undefined)
+						.sort((a, b) => a.getTime() - b.getTime())[0]
+						?.toISOString(),
+					stability: model.stability,
+				};
+			});
 
 		return c.json({ data: modelData });
 	} catch (error) {
