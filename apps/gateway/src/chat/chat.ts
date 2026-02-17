@@ -601,15 +601,6 @@ chat.openapi(completions, async (c) => {
 		});
 	}
 
-<<<<<<< HEAD
-=======
-	// Count input images from messages for cost calculation (only for gemini-3-pro-image-preview)
-	const inputImageCount =
-		modelInput === "gemini-3-pro-image-preview"
-			? countInputImages(messages)
-			: 0;
-
->>>>>>> d7768aea (feat: optimize response parse - add fast check)
 	// Extract reasoning_effort as mutable variable for auto-routing modification
 	let reasoning_effort = validationResult.data.reasoning_effort;
 
@@ -3984,7 +3975,7 @@ chat.openapi(completions, async (c) => {
 					}
 				}
 
-				// Extract plugin IDs for logging
+				// Extract plugin IDs for logging (streaming - no healing applied)
 				const streamingPluginIds = plugins?.map((p) => p.id) || [];
 
 				// Determine plugin results for logging (includes healing results if applicable)
