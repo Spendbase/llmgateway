@@ -12,19 +12,10 @@ import { useRouter } from "next/navigation";
 
 import { ModelCard } from "@/components/models/model-card";
 
-import type {
-	ApiModel,
-	ApiModelProviderMapping,
-	ApiProvider,
-} from "@/lib/fetch-models";
+import type { ApiModel, ApiModelProviderMapping } from "@/lib/fetch-models";
 import type { StabilityLevel } from "@llmgateway/models";
 
-interface ModelWithProviders extends ApiModel {
-	providerDetails: Array<{
-		provider: ApiModelProviderMapping;
-		providerInfo: ApiProvider;
-	}>;
-}
+type ModelWithProviders = ApiModel;
 
 interface ProviderModelsGridProps {
 	models: ModelWithProviders[];
@@ -93,15 +84,12 @@ export function ProviderModelsGrid({ models }: ProviderModelsGridProps) {
 		);
 	};
 
-	const formatPrice = (
-		price: string | null | undefined,
-		discount?: string | null,
-	) => {
-		if (price === null || price === undefined) {
+	const formatPrice = (price?: number, discount?: number) => {
+		if (price === undefined) {
 			return "—";
 		}
-		const priceNum = parseFloat(price);
-		const discountNum = discount ? parseFloat(discount) : 0;
+		const priceNum = price;
+		const discountNum = discount ?? 0;
 		const originalPrice = (priceNum * 1e6).toFixed(2);
 		if (discountNum > 0) {
 			const discountedPrice = (priceNum * 1e6 * (1 - discountNum)).toFixed(2);
@@ -125,7 +113,7 @@ export function ProviderModelsGrid({ models }: ProviderModelsGridProps) {
 		<div className="grid gap-6 md:grid-cols-3">
 			{models.map((model, index) => (
 				<ModelCard
-					key={`${model.providerDetails[0].provider.providerId}-${model.id}-${index}`}
+					key={`${model.mappings[0]?.providerId}-${model.id}-${index}`}
 					model={model}
 					shouldShowStabilityWarning={shouldShowStabilityWarning}
 					getCapabilityIcons={getCapabilityIcons}

@@ -145,12 +145,10 @@ export function ModelSearch({
 						createdAt,
 						free:
 							(model.free ||
-								(mapping.inputPrice !== null &&
-									mapping.inputPrice !== undefined &&
-									parseFloat(mapping.inputPrice) === 0)) &&
+								(mapping.inputPrice !== undefined &&
+									mapping.inputPrice === 0)) &&
 							(mapping.requestPrice === undefined ||
-								mapping.requestPrice === null ||
-								parseFloat(mapping.requestPrice) === 0),
+								mapping.requestPrice === 0),
 					});
 				}
 			}
