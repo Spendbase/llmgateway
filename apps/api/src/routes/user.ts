@@ -481,13 +481,11 @@ user.openapi(completeOnboarding, async (c) => {
 		},
 	});
 
-	const activeOrg = userOrgs.find(
-		(uo) => uo.organization?.status !== "deleted",
-	);
+	const activeOrg = userOrgs.find((uo) => uo.organization?.status === "active");
 
 	if (activeOrg?.organization) {
 		const activeProject = activeOrg.organization.projects.find(
-			(p) => p.status !== "deleted",
+			(p) => p.status === "active",
 		);
 
 		if (activeProject) {

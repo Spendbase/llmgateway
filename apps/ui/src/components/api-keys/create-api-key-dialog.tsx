@@ -60,16 +60,16 @@ export function CreateApiKeyDialog({
 
 	useEffect(() => {
 		const shouldOpen = searchParams.get("openCreateDialog") === "true";
-		if (shouldOpen && selectedProject) {
+		if (shouldOpen && selectedProject && !disabled) {
 			setOpen(true);
-			const params = new URLSearchParams(searchParams);
-			params.delete("openCreateDialog");
-			const newUrl = params.toString()
-				? `${pathname}?${params.toString()}`
-				: pathname;
-			router.replace(newUrl as Route);
 		}
-	}, [searchParams, selectedProject, pathname, router]);
+		if (shouldOpen) {
+			const params = new URLSearchParams(searchParams.toString());
+			params.delete("openCreateDialog");
+			const newUrl = `${pathname}?${params.toString()}` as Route;
+			router.replace(newUrl);
+		}
+	}, [searchParams, selectedProject, pathname, router, disabled]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();

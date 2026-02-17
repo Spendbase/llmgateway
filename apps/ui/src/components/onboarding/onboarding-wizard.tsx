@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useHubSpot } from "@/hooks/useHubSpot";
 import { Card, CardContent } from "@/lib/components/card";
 import { Stepper } from "@/lib/components/stepper";
+import { toast } from "@/lib/components/use-toast";
 import { useApi } from "@/lib/fetch-client";
 import { useStripe } from "@/lib/stripe";
 
@@ -66,10 +67,20 @@ export function OnboardingWizard() {
 	const STEPS = getSteps();
 
 	const finishOnboarding = async () => {
-		const result = await completeOnboarding.mutateAsync({});
-		const queryKey = api.queryOptions("get", "/user/me").queryKey;
-		await queryClient.invalidateQueries({ queryKey });
-		router.push((result.redirectTo as Route) ?? "/");
+		try {
+			const result = await completeOnboarding.mutateAsync({});
+			const queryKey = api.queryOptions("get", "/user/me").queryKey;
+			await queryClient.invalidateQueries({ queryKey });
+			router.push((result.redirectTo as Route) ?? "/");
+		} catch (error) {
+			toast({
+				title: "Error",
+				description:
+					(error as Error).message ||
+					"Failed to complete onboarding. Please try again.",
+				variant: "destructive",
+			});
+		}
 	};
 
 	const handleStepChange = async (step: number) => {
