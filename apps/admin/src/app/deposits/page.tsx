@@ -22,11 +22,11 @@ export default async function DepositsPage({
 	const params = await searchParams;
 	const page = parseInt(params.page || "1", 10);
 	const pageSize = parseInt(params.pageSize || String(PAGESIZE), 10);
-	const status = params.status as
-		| "pending"
-		| "completed"
-		| "failed"
-		| undefined;
+	const validStatuses = ["pending", "completed", "failed"] as const;
+	const statusParam = params.status;
+	const status = validStatuses.includes(statusParam as any)
+		? (statusParam as "pending" | "completed" | "failed")
+		: undefined;
 	const from = params.from;
 	const to = params.to;
 	const q = params.q;

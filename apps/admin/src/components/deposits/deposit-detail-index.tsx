@@ -17,7 +17,7 @@ export function DepositDetailIndex({ data }: { data: DepositDetailResponse }) {
 		<div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 md:px-8">
 			<div className="flex items-center gap-3">
 				<Link
-					href="/admin/deposits"
+					href="/deposits"
 					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
 				>
 					<ArrowLeft className="h-4 w-4" />

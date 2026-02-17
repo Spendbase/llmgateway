@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,19 +25,20 @@ export function DepositsPagination({
 	totalDeposits,
 }: DepositsPaginationProps) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
 	const handlePageChange = (page: number) => {
 		const params = new URLSearchParams(searchParams);
 		params.set("page", page.toString());
-		router.push(`/deposits?${params.toString()}`);
+		router.push(`${pathname}?${params.toString()}`);
 	};
 
 	const handlePageSizeChange = (newPageSize: string) => {
 		const params = new URLSearchParams(searchParams);
 		params.set("pageSize", newPageSize);
 		params.set("page", "1");
-		router.push(`/deposits?${params.toString()}`);
+		router.push(`${pathname}?${params.toString()}`);
 	};
 
 	const startItem = (currentPage - 1) * pageSize + 1;

@@ -21,11 +21,22 @@ export function DepositEventsTable({ events }: { events: DepositEvent[] }) {
 				</thead>
 				<tbody className="divide-y">
 					{events.map((event) => {
-						const metadata = event.metadata as Record<string, any> | undefined;
-						const adminUserId = metadata?.adminUserId;
-						const description = metadata?.description;
+						const metadata = event.metadata as
+							| Record<string, unknown>
+							| undefined;
+						const adminUserId =
+							metadata && typeof metadata.adminUserId === "string"
+								? metadata.adminUserId
+								: undefined;
+						const description =
+							metadata && typeof metadata.description === "string"
+								? metadata.description
+								: undefined;
 						// Use explicit type from metadata if available (e.g. "admin_credit_granted"), otherwise duplicate event.type
-						const displayType = metadata?.type || event.type;
+						const displayType =
+							metadata && typeof metadata.type === "string"
+								? metadata.type
+								: event.type;
 
 						return (
 							<tr key={event.id} className="bg-white">
@@ -74,7 +85,7 @@ export function DepositEventsTable({ events }: { events: DepositEvent[] }) {
 					{events.length === 0 && (
 						<tr>
 							<td colSpan={5} className="p-8 text-center text-gray-500">
-								No audit events records found.
+								No audit event records found.
 							</td>
 						</tr>
 					)}

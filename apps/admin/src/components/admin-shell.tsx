@@ -49,7 +49,8 @@ export function AdminShell({ children }: AdminShellProps) {
 	const isDashboard = pathname === "/" || pathname === "";
 	const isTokens = pathname === "/tokens";
 	const isOrganizations = pathname === "/organizations";
-	const isDeposits = pathname === "/deposits";
+	const isDeposits =
+		pathname === "/deposits" || pathname.startsWith("/deposits/");
 	const isUsers = pathname === "/users";
 	const isProviders = pathname.startsWith("/providers");
 	const isModels = pathname.startsWith("/models");

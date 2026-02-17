@@ -887,6 +887,7 @@ admin.openapi(getDeposits, async (c) => {
 			ilike(tables.transaction.organizationId, search),
 			ilike(tables.transaction.stripePaymentIntentId, search),
 			ilike(tables.transaction.stripeInvoiceId, search),
+			ilike(tables.organization.name, search),
 		);
 		if (searchCondition) {
 			conditions.push(searchCondition);
@@ -894,8 +895,14 @@ admin.openapi(getDeposits, async (c) => {
 	}
 
 	const [totalResult] = await db
-		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.select({
+			count: sql<number>`COUNT(DISTINCT ${tables.transaction.id})`.as("count"),
+		})
 		.from(tables.transaction)
+		.leftJoin(
+			tables.organization,
+			eq(tables.transaction.organizationId, tables.organization.id),
+		)
 		.where(and(...conditions));
 
 	const totalDeposits = Number(totalResult?.count ?? 0);

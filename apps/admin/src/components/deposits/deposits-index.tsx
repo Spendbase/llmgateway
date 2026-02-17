@@ -124,7 +124,7 @@ export default function DepositsIndex({
 		const val = e.target.value;
 		if (val) {
 			const date = new Date(val);
-			date.setHours(23, 59, 59, 999);
+			date.setUTCHours(23, 59, 59, 999);
 			const iso = date.toISOString();
 			setTo(iso);
 			updateFilters({ to: iso });
