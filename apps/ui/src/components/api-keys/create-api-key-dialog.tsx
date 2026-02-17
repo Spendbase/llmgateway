@@ -66,8 +66,10 @@ export function CreateApiKeyDialog({
 		if (shouldOpen) {
 			const params = new URLSearchParams(searchParams.toString());
 			params.delete("openCreateDialog");
-			const newUrl = `${pathname}?${params.toString()}` as Route;
-			router.replace(newUrl);
+			const newUrl = params.toString()
+				? `${pathname}?${params.toString()}`
+				: pathname;
+			router.replace(newUrl as Route);
 		}
 	}, [searchParams, selectedProject, pathname, router, disabled]);
 
