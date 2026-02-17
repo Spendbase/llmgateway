@@ -24,14 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.set-tag.outputs.IMAGE_TAG }}
+      new_version: ${{ steps.set-tag.outputs.NEW_VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Set image tag
         id: set-tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ "${{ github.event_name }}" == "push" ]]; then
             # Get current version from repository variable
@@ -48,14 +47,7 @@ jobs:
             NEW_PATCH=$((PATCH + 1))
             NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
 
-            # Update the repository variable with new version
-            gh api \
-              --method PATCH \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "repos/${{ github.repository }}/actions/variables/BUILD_VERSION" \
-              -f "value=$NEW_VERSION" || echo "Failed to update BUILD_VERSION variable"
-
+            echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
             echo "IMAGE_TAG=v${NEW_VERSION}" >> $GITHUB_OUTPUT
             echo "Build version: v${NEW_VERSION} (was: v${CURRENT_VERSION})"
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -111,15 +103,15 @@ jobs:
             ${{ github.event_name != 'pull_request' && '--push' || '' }} \
             .
 
-      - name: Tag as latest (non-PR only)
-        if: github.event_name != 'pull_request'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
-        run: |
-          docker tag $ECR_REGISTRY/llmgateway/${{ matrix.app }}:$IMAGE_TAG $ECR_REGISTRY/llmgateway/${{ matrix.app }}:latest
-          docker push $ECR_REGISTRY/llmgateway/${{ matrix.app }}:latest
-
+      # - name: Tag as latest (non-PR only)
+      #   if: github.event_name != 'pull_request'
+      #   env:
+      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #     IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
+      #   run: |
+      #     docker tag $ECR_REGISTRY/llmgateway/${{ matrix.app }}:$IMAGE_TAG $ECR_REGISTRY/llmgateway/${{ matrix.app }}:latest
+      #     docker push $ECR_REGISTRY/llmgateway/${{ matrix.app }}:latest
+      #
   test:
     runs-on: k8s-arm64
     needs:
@@ -158,10 +150,32 @@ jobs:
             docker pull $ECR_REGISTRY/llmgateway/$app:$IMAGE_TAG
           done
 
-      - name: Test split Docker images
+      # - name: Test split Docker images
+      #   env:
+      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #     IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
+      #   run: |
+      #     chmod +x .github/test-split-docker.sh
+      #     .github/test-split-docker.sh $ECR_REGISTRY/llmgateway $IMAGE_TAG
+      #
+  update-version:
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+      - build
+    if: github.event_name == 'push' && needs.build.result == 'success'
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Update BUILD_VERSION variable
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ needs.setup.outputs.new_version }}
         run: |
-          chmod +x .github/test-split-docker.sh
-          .github/test-split-docker.sh $ECR_REGISTRY/llmgateway $IMAGE_TAG
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/${{ github.repository }}/actions/variables/BUILD_VERSION" \
+            -f "value=$NEW_VERSION" || echo "Failed to update BUILD_VERSION variable"
