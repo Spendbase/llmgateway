@@ -30,7 +30,7 @@ export function DepositsTable({ deposits }: { deposits: Deposit[] }) {
 								title={deposit.id}
 							>
 								<Link
-									href={`/admin/deposits/${deposit.id}`}
+									href={`/deposits/${deposit.id}`}
 									className="text-blue-600 hover:underline"
 								>
 									{deposit.id}
