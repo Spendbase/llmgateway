@@ -1,7 +1,7 @@
 "use client";
 import { X } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { DepositsPagination } from "@/components/deposits/deposits-pagination";
 import { DepositsTable } from "@/components/deposits/deposits-table";
@@ -37,7 +37,14 @@ export default function DepositsIndex({
 	const [to, setTo] = useState(searchParams.get("to") || "");
 
 	// Debounce search
+	const skipDebounceRef = useRef(false);
+
 	useEffect(() => {
+		if (skipDebounceRef.current) {
+			skipDebounceRef.current = false;
+			return;
+		}
+
 		const timer = setTimeout(() => {
 			updateFilters({ q });
 		}, 500);
@@ -135,6 +142,7 @@ export default function DepositsIndex({
 	};
 
 	const clearFilters = () => {
+		skipDebounceRef.current = true;
 		setQ("");
 		setStatus("all");
 		setFrom("");

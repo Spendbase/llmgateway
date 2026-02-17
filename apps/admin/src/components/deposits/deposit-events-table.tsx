@@ -50,7 +50,7 @@ export function DepositEventsTable({ events }: { events: DepositEvent[] }) {
 										<Badge
 											variant={
 												event.newStatus === "completed"
-													? "default" // Using default (black) or success if available? ui/badge usually has default/secondary/destructive/outline.
+													? "default"
 													: event.newStatus === "failed"
 														? "destructive"
 														: "secondary"

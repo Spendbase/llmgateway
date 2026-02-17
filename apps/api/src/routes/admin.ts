@@ -16,7 +16,6 @@ import {
 	sql,
 	tables,
 	inArray,
-	transactionEvent,
 } from "@llmgateway/db";
 import { revenueCounter } from "@llmgateway/instrumentation";
 
@@ -109,7 +108,7 @@ const depositEventSchema = z.object({
 	createdAt: z.date(),
 	type: z.enum(["created", "status_changed"]),
 	newStatus: z.enum(["pending", "completed", "failed"]).nullable(),
-	metadata: z.any().nullable(),
+	metadata: z.unknown().nullable(),
 });
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -124,6 +123,10 @@ function isAdminEmail(email: string | null | undefined): boolean {
 	}
 
 	return adminEmails.includes(email.toLowerCase());
+}
+
+function escapeLike(value: string): string {
+	return value.replace(/[%_]/g, "\\$&");
 }
 
 const getMetrics = createRoute({
@@ -707,7 +710,7 @@ admin.openapi(depositCredits, async (c) => {
 				.where(eq(tables.organization.id, organizationId))
 				.returning({ newBalance: tables.organization.credits });
 
-			await tx.insert(transactionEvent).values({
+			await tx.insert(tables.transactionEvent).values({
 				transactionId: newTx.id,
 				type: "created",
 				newStatus: "completed",
@@ -881,7 +884,8 @@ admin.openapi(getDeposits, async (c) => {
 	}
 
 	if (query.q) {
-		const search = `%${query.q}%`;
+		const escaped = escapeLike(query.q);
+		const search = `%${escaped}%`;
 		const searchCondition = or(
 			ilike(tables.transaction.id, search),
 			ilike(tables.transaction.organizationId, search),
@@ -899,7 +903,7 @@ admin.openapi(getDeposits, async (c) => {
 			count: sql<number>`COUNT(DISTINCT ${tables.transaction.id})`.as("count"),
 		})
 		.from(tables.transaction)
-		.leftJoin(
+		.innerJoin(
 			tables.organization,
 			eq(tables.transaction.organizationId, tables.organization.id),
 		)
@@ -927,7 +931,7 @@ admin.openapi(getDeposits, async (c) => {
 				),
 		})
 		.from(tables.transaction)
-		.leftJoin(
+		.innerJoin(
 			tables.organization,
 			eq(tables.transaction.organizationId, tables.organization.id),
 		)
@@ -983,7 +987,7 @@ admin.openapi(getDeposit, async (c) => {
 				),
 		})
 		.from(tables.transaction)
-		.leftJoin(
+		.innerJoin(
 			tables.organization,
 			eq(tables.transaction.organizationId, tables.organization.id),
 		)
@@ -1001,15 +1005,15 @@ admin.openapi(getDeposit, async (c) => {
 
 	const events = await db
 		.select({
-			id: transactionEvent.id,
-			createdAt: transactionEvent.createdAt,
-			type: transactionEvent.type,
-			newStatus: transactionEvent.newStatus,
-			metadata: transactionEvent.metadata,
+			id: tables.transactionEvent.id,
+			createdAt: tables.transactionEvent.createdAt,
+			type: tables.transactionEvent.type,
+			newStatus: tables.transactionEvent.newStatus,
+			metadata: tables.transactionEvent.metadata,
 		})
-		.from(transactionEvent)
-		.where(eq(transactionEvent.transactionId, id))
-		.orderBy(desc(transactionEvent.createdAt));
+		.from(tables.transactionEvent)
+		.where(eq(tables.transactionEvent.transactionId, id))
+		.orderBy(desc(tables.transactionEvent.createdAt));
 
 	return c.json({
 		deposit,

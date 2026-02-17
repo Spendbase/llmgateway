@@ -61,9 +61,9 @@ export function DepositDetailIndex({ data }: { data: DepositDetailResponse }) {
 					</Badge>
 					<Badge variant="outline" className="gap-1">
 						<DollarSign className="h-3 w-3" />
-						{deposit.amount
+						{deposit.amount !== null
 							? `${deposit.amount} ${deposit.currency}`
-							: "0.00 USD"}
+							: `0.00 ${deposit.currency}`}
 					</Badge>
 					<Badge variant="secondary">{deposit.paymentMethod}</Badge>
 				</div>
