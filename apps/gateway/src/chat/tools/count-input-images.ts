@@ -1,12 +1,14 @@
+import type { BaseMessage } from "@llmgateway/models";
+
 // Pre-compiled regex pattern to avoid recompilation per request
 const IMAGE_URL_PATTERN = /https:\/\/[^\s]+/gi;
 
 /**
  * Counts images in messages for cost calculation.
- * Used primarily for gemini-3-pro-image-preview model pricing.
+ * Used for models with image input pricing (e.g., gpt-4o, gemini-3-pro-image-preview, grok-2-vision-1212).
  * Counts both image_url type content parts and image URLs found in text content.
  */
-export function countInputImages(messages: any[]): number {
+export function countInputImages(messages: BaseMessage[]): number {
 	let inputImageCount = 0;
 
 	for (const message of messages) {

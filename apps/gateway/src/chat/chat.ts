@@ -47,7 +47,6 @@ import {
 } from "@llmgateway/models";
 
 import { applyOrganizationContext } from "./tools/apply-organization-context.js";
-import { countInputImages } from "./tools/count-input-images.js";
 import { createLogEntry } from "./tools/create-log-entry.js";
 import { estimateTokens } from "./tools/estimate-tokens.js";
 import { extractContent } from "./tools/extract-content.js";
@@ -669,12 +668,6 @@ chat.openapi(completions, async (c) => {
 	const parseResult = parseModelInput(modelInput);
 	const requestedModel = parseResult.requestedModel;
 	const _customProviderName = parseResult.customProviderName;
-
-	// Count input images from messages for cost calculation
-	const inputImageCount =
-		requestedModel === "gemini-3-pro-image-preview"
-			? countInputImages(messages)
-			: 0;
 
 	// Resolve model info and filter deactivated providers
 	const modelInfoResult = resolveModelInfo(
@@ -3235,15 +3228,18 @@ chat.openapi(completions, async (c) => {
 									delete chunkWithoutContent.choices[0].delta.content;
 								}
 
+								// Suppress finish_reason during buffering phase - it will be sent after healing
+								if (chunkWithoutContent.choices?.[0]?.finish_reason) {
+									delete chunkWithoutContent.choices[0].finish_reason;
+								}
+
 								// Only send chunk if it has meaningful data (not just empty delta)
 								const hasUsage = !!chunkWithoutContent.usage;
 								const hasToolCalls =
 									!!chunkWithoutContent.choices?.[0]?.delta?.tool_calls;
-								const hasFinishReason =
-									!!chunkWithoutContent.choices?.[0]?.finish_reason;
 								const hasRole = !!chunkWithoutContent.choices?.[0]?.delta?.role;
 
-								if (hasUsage || hasToolCalls || hasFinishReason || hasRole) {
+								if (hasUsage || hasToolCalls || hasRole) {
 									await writeSSEAndCache({
 										data: JSON.stringify(chunkWithoutContent),
 										id: String(eventId++),
@@ -3773,7 +3769,8 @@ chat.openapi(completions, async (c) => {
 								calculatedCompletionTokens !== null)) ||
 						(completionTokens === null && calculatedCompletionTokens !== null);
 
-					if (needsUsageChunk) {
+					// Skip sending usage chunk if stream already ended with [DONE] or error
+					if (needsUsageChunk && !doneSent && !streamingError) {
 						try {
 							const finalUsageChunk = {
 								id: `chatcmpl-${Date.now()}`,

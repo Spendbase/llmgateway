@@ -154,13 +154,18 @@ function setMockResponse(content: string, error = false) {
 	mockResponseError = error;
 }
 
-/**
- * Helper to extract accumulated content from streaming chunks
- */
-function getStreamedContent(chunks: any[]): string {
+interface StreamChunk {
+	choices?: Array<{
+		delta?: {
+			content?: string;
+		};
+	}>;
+}
+
+function getStreamedContent(chunks: StreamChunk[]): string {
 	return chunks
 		.filter((chunk) => chunk.choices?.[0]?.delta?.content)
-		.map((chunk) => chunk.choices[0].delta.content)
+		.map((chunk) => chunk.choices![0]!.delta!.content!)
 		.join("");
 }
 
