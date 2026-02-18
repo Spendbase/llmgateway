@@ -47,6 +47,7 @@ import {
 } from "@llmgateway/models";
 
 import { applyOrganizationContext } from "./tools/apply-organization-context.js";
+import { countInputImages } from "./tools/count-input-images.js";
 import { createLogEntry } from "./tools/create-log-entry.js";
 import { estimateTokens } from "./tools/estimate-tokens.js";
 import { extractContent } from "./tools/extract-content.js";
@@ -688,6 +689,15 @@ chat.openapi(completions, async (c) => {
 		});
 	}
 
+	// Count input images from messages for cost calculation
+	// Check if any active provider has image input pricing
+	const hasImageInputPricing = modelInfo.providers.some(
+		(provider) => provider.imageInputPrice,
+	);
+	const inputImageCount = hasImageInputPricing
+		? countInputImages(messages as BaseMessage[])
+		: 0;
+
 	// === Early API key and organization validation for coding model restriction ===
 	// We need to fetch these early to check coding model restrictions before capability checks
 	const auth = c.req.header("Authorization");
@@ -983,7 +993,7 @@ chat.openapi(completions, async (c) => {
 
 						if (cheapestResult) {
 							usedProvider = cheapestResult.provider.providerId;
-							usedModel = cheapestResult.provider.modelName as Model;
+							usedModel = cheapestResult.provider.modelName;
 							routingMetadata = {
 								...cheapestResult.metadata,
 								selectionReason: "low-uptime-fallback",
@@ -998,7 +1008,7 @@ chat.openapi(completions, async (c) => {
 						} else {
 							// Use first available provider as fallback
 							usedProvider = availableModelProviders[0].providerId;
-							usedModel = availableModelProviders[0].modelName as Model;
+							usedModel = availableModelProviders[0].modelName;
 							routingMetadata = {
 								availableProviders: availableModelProviders.map(
 									(p) => p.providerId,
@@ -1020,7 +1030,7 @@ chat.openapi(completions, async (c) => {
 	if (!usedProvider) {
 		if (modelInfo.providers.length === 1) {
 			usedProvider = modelInfo.providers[0].providerId;
-			usedModel = modelInfo.providers[0].modelName as Model;
+			usedModel = modelInfo.providers[0].modelName;
 		} else {
 			const providerIds = modelInfo.providers.map((p) => p.providerId);
 			const providerKeys = await db.query.providerKey.findMany({
@@ -1122,18 +1132,18 @@ chat.openapi(completions, async (c) => {
 
 				if (cheapestResult) {
 					usedProvider = cheapestResult.provider.providerId;
-					usedModel = cheapestResult.provider.modelName as Model;
+					usedModel = cheapestResult.provider.modelName;
 					routingMetadata = {
 						...cheapestResult.metadata,
 						...(noFallback ? { noFallback: true } : {}),
 					};
 				} else {
 					usedProvider = availableModelProviders[0].providerId;
-					usedModel = availableModelProviders[0].modelName as Model;
+					usedModel = availableModelProviders[0].modelName;
 				}
 			} else {
 				usedProvider = availableModelProviders[0].providerId;
-				usedModel = availableModelProviders[0].modelName as Model;
+				usedModel = availableModelProviders[0].modelName;
 			}
 		}
 	}
