@@ -126,7 +126,7 @@ function isAdminEmail(email: string | null | undefined): boolean {
 }
 
 function escapeLike(value: string): string {
-	return value.replace(/[%_]/g, "\\$&");
+	return value.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&");
 }
 
 const getMetrics = createRoute({

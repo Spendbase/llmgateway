@@ -36,12 +36,12 @@ export function DepositsTable({ deposits }: { deposits: Deposit[] }) {
 									{deposit.id}
 								</Link>
 							</td>
-							<td className="p-4">{deposit.organizationName}</td>
+							<td className="p-4">{deposit.organizationName ?? "-"}</td>
 							<td className="p-4">
 								{deposit.amount ? `${deposit.amount} ${deposit.currency}` : "-"}
 							</td>
-							<td className="p-4">{deposit.creditAmount}</td>
-							<td className="p-4">{deposit.paymentMethod}</td>
+							<td className="p-4">{deposit.creditAmount ?? "-"}</td>
+							<td className="p-4">{deposit.paymentMethod ?? "-"}</td>
 							<td className="p-4">
 								{new Date(deposit.createdAt).toLocaleDateString()}
 							</td>
