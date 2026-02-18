@@ -689,13 +689,49 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				return;
 			}),
 			after: createAuthMiddleware(async (ctx) => {
-				// Create default org/project for first-time sessions (email signup or first social sign-in)
+				// Block all sign-ins for blocked users (runs for all auth methods: email, passkey, social)
 				const newSession = ctx.context.newSession;
 				if (!newSession?.user) {
 					return;
 				}
 
 				const userId = newSession.user.id;
+
+				// Check if user is blocked before creating session
+				const user = await db.query.user.findFirst({
+					where: {
+						id: userId,
+					},
+					columns: {
+						id: true,
+						email: true,
+						status: true,
+					},
+				});
+
+				if (user && user.status === "blocked") {
+					logger.warn("Blocked user attempted to authenticate", {
+						userId: user.id,
+						email: maskEmail(user.email),
+						path: ctx.path,
+					});
+
+					return new Response(
+						JSON.stringify({
+							error: "account_blocked",
+							message:
+								"Your account has been suspended. Please contact support for assistance.",
+						}),
+						{
+							status: 403,
+							headers: {
+								"Content-Type": "application/json",
+							},
+						},
+					);
+				}
+
+				// Create default org/project for first-time sessions (email signup or first social sign-in)
 
 				// Check if the user already has any active organizations
 				const userOrganizations = await db.query.userOrganization.findMany({

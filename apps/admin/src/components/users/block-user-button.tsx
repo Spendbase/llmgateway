@@ -27,6 +27,9 @@ export function BlockUserButton({ user }: { user: AdminUser }) {
 	const config = useAppConfig();
 
 	const isBlocked = user.status === "blocked";
+	const ownedOrgsCount = user.organizations.filter(
+		(org) => org.role === "owner",
+	).length;
 
 	const handleToggleBlock = async () => {
 		setLoading(true);
@@ -132,13 +135,13 @@ export function BlockUserButton({ user }: { user: AdminUser }) {
 							</p>
 						</div>
 
-						{!isBlocked && user.organizations.length > 0 && (
+						{!isBlocked && ownedOrgsCount > 0 && (
 							<div className="rounded-md bg-yellow-50 border border-yellow-200 p-4">
 								<p className="text-sm font-medium text-yellow-800">Warning</p>
 								<p className="text-sm text-yellow-700 mt-1">
-									This user owns {user.organizations.length} organization(s).
-									All their organizations will be suspended and API access will
-									be blocked immediately.
+									This user owns {ownedOrgsCount} organization(s). All their
+									organizations will be suspended and API access will be blocked
+									immediately.
 								</p>
 							</div>
 						)}

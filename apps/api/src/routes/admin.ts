@@ -706,6 +706,13 @@ admin.openapi(updateUserStatus, async (c) => {
 	const { id: userId } = c.req.valid("param");
 	const { status } = c.req.valid("json");
 
+	// Prevent admin from blocking their own account
+	if (userId === authUser.id && status === "blocked") {
+		throw new HTTPException(403, {
+			message: "You cannot block your own account",
+		});
+	}
+
 	try {
 		// Check if user exists
 		const targetUser = await db.query.user.findFirst({
@@ -862,7 +869,7 @@ admin.openapi(getUsers, async (c) => {
 		email: user.email,
 		emailVerified: user.emailVerified,
 		createdAt: user.createdAt,
-		status: user.status || "active",
+		status: user.status,
 		organizations: userOrganizations
 			.filter((uo) => uo.userId === user.id)
 			.map((uo) => ({
