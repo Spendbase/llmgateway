@@ -2,33 +2,23 @@
 
 import { Gift, X } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
 
 import { Button } from "@/lib/components/button";
 import { cn } from "@/lib/utils";
 
-interface FreeCreditsBannerProps {
-	creditAmount: string;
-	onClose?: () => void;
-}
-
 export function FreeCreditsBanner({
-	creditAmount,
-	onClose,
-}: FreeCreditsBannerProps) {
-	const [isVisible, setIsVisible] = useState(true);
+	handleCloseFreeCreditsBanner,
+}: {
+	handleCloseFreeCreditsBanner: () => void;
+}) {
+	const creditAmount = process.env.NEXT_PUBLIC_AUTO_DEPOSIT_CREDITS || "50";
 
 	const handleClose = () => {
-		setIsVisible(false);
-		onClose?.();
+		handleCloseFreeCreditsBanner();
 	};
 
-	if (!isVisible) {
-		return null;
-	}
-
 	return (
-		<div className="absolute md:top-0 top-[53px] left-0 w-full h-[68px] border border-y-emerald-400">
+		<div className="relative w-full h-[68px] border border-y-emerald-400 mt-[53px] md:mt-0">
 			<Image
 				src="/api-keys/free-credits-banner.svg"
 				alt=""
@@ -55,12 +45,12 @@ export function FreeCreditsBanner({
 					size="icon"
 					onClick={handleClose}
 					className={cn(
-						"h-2 w-2 mb-5 text-black hover:bg-emerald-500/10 hover:text-emerald-500",
+						"h-8 w-8 mb-5 text-black hover:bg-emerald-500/10 hover:text-emerald-500",
 						"transition-colors rounded-full",
 					)}
 					aria-label="Close banner"
 				>
-					<X className="h-2 w-2" />
+					<X className="h-4 w-4" />
 				</Button>
 			</div>
 		</div>

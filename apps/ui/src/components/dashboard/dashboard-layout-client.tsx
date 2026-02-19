@@ -2,8 +2,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
-import { type ReactNode, useEffect, useCallback } from "react";
+import { type ReactNode, useEffect, useCallback, useState } from "react";
 
+import { FreeCreditsBanner } from "@/components/api-keys/free-credits-banner";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { MobileHeader } from "@/components/dashboard/mobile-header";
 import { TopBar } from "@/components/dashboard/top-bar";
@@ -45,6 +46,30 @@ export function DashboardLayoutClient({
 		[router, api, queryClient],
 	);
 
+	const [isFreeCreditsBannerVisible, setIsFreeCreditsBannerVisible] =
+		useState(true);
+
+	const handleCloseFreeCreditsBanner = () => {
+		setIsFreeCreditsBannerVisible(false);
+	};
+
+	const { data: bannersData } = api.useQuery(
+		"get",
+		"/admin/banners",
+		undefined,
+		{
+			staleTime: 5 * 60 * 1000,
+			refetchOnWindowFocus: false,
+		},
+	);
+
+	const freeCreditsBanner = bannersData?.banners?.find(
+		(b) => b.id === "free-credits",
+	);
+
+	const shouldShowBanner =
+		freeCreditsBanner?.enabled && isFreeCreditsBannerVisible;
+
 	const {
 		organizations,
 		projects,
@@ -77,6 +102,7 @@ export function DashboardLayoutClient({
 				handleProjectSelect,
 				handleOrganizationCreated,
 				handleProjectCreated,
+				isFreeCreditsBannerVisible,
 			}}
 		>
 			<div className="flex min-h-screen w-full flex-col">
@@ -97,6 +123,11 @@ export function DashboardLayoutClient({
 							onProjectCreated={handleProjectCreated}
 						/>
 						<EmailVerificationBanner />
+						{shouldShowBanner && (
+							<FreeCreditsBanner
+								handleCloseFreeCreditsBanner={handleCloseFreeCreditsBanner}
+							/>
+						)}
 						<main className="relative bg-background w-full flex-1 overflow-y-auto pt-10 pb-4 px-4 md:p-6 lg:p-8">
 							{children}
 						</main>

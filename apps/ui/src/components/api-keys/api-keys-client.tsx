@@ -9,12 +9,11 @@ import {
 	ShieldCheck,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { FaSitemap } from "react-icons/fa";
 
 import { ApiKeysList } from "@/components/api-keys/api-keys-list";
 import { CreateApiKeyDialog } from "@/components/api-keys/create-api-key-dialog";
-import { FreeCreditsBanner } from "@/components/api-keys/free-credits-banner";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { Button } from "@/lib/components/button";
 import {
@@ -23,7 +22,7 @@ import {
 	CardDescription,
 	CardHeader,
 } from "@/lib/components/card";
-import { useDashboardState } from "@/lib/dashboard-state";
+import { useDashboardContext } from "@/lib/dashboard-context";
 import { useApi } from "@/lib/fetch-client";
 import { extractOrgAndProjectFromPath } from "@/lib/navigation-utils";
 import { cn } from "@/lib/utils";
@@ -32,8 +31,8 @@ import type { Project, ApiKey } from "@/lib/types";
 
 export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 	const pathname = usePathname();
-	const [isBannerVisible, setIsBannerVisible] = useState(true);
-	const { selectedOrganization } = useDashboardState();
+	const { selectedOrganization, isFreeCreditsBannerVisible } =
+		useDashboardContext();
 
 	const { projectId, orgId } = useMemo(() => {
 		const result = extractOrgAndProjectFromPath(pathname);
@@ -41,23 +40,6 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 	}, [pathname]);
 
 	const api = useApi();
-	const creditAmount = process.env.NEXT_PUBLIC_AUTO_DEPOSIT_CREDITS || "50";
-
-	const { data: bannersData } = api.useQuery(
-		"get",
-		"/admin/banners",
-		undefined,
-		{
-			staleTime: 5 * 60 * 1000,
-			refetchOnWindowFocus: false,
-		},
-	);
-
-	const freeCreditsBanner = bannersData?.banners?.find(
-		(b) => b.id === "free-credits",
-	);
-
-	const shouldShowBanner = freeCreditsBanner?.enabled && isBannerVisible;
 
 	const { data: projectsData } = api.useQuery(
 		"get",
@@ -101,24 +83,17 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 	);
 
 	const planLimits = apiKeysData?.planLimits;
-	const hasApiKeys = initialData && initialData.length > 0;
+	const hasApiKeys =
+		(apiKeysData?.apiKeys && apiKeysData.apiKeys.length > 0) ||
+		(initialData && initialData.length > 0);
 	const showOrganizationCredits =
 		selectedOrganization && Number(selectedOrganization.credits) > 0;
 
 	return (
 		<div className="flex flex-col">
-			{shouldShowBanner && (
-				<div className="mb-10 pb-10 md:pb-0 md:mb-8 w-full">
-					<FreeCreditsBanner
-						creditAmount={creditAmount}
-						onClose={() => setIsBannerVisible(false)}
-					/>
-				</div>
-			)}
-
 			<div
-				className={cn("space-y-4 px-4 md:px-[48px] mt-10", {
-					"pt-6 md:pt-0": !shouldShowBanner,
+				className={cn("space-y-4 px-4 md:px-[48px]", {
+					"mt-10": !isFreeCreditsBannerVisible,
 				})}
 			>
 				<div>
@@ -176,7 +151,7 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 								</div>
 							</div>
 
-							<div className="min-w-[240px] dark:bg-background bg-[#F9FAFB] dark:border-none border border-[#F3F4F6] p-6 rounded-lg">
+							<div className="-mx-6 -mb-6 rounded-b-xl border-t border-[#F3F4F6] bg-[#F9FAFB] p-6 dark:border-none dark:bg-background md:mx-0 md:mb-0 md:min-w-[240px] md:rounded-lg md:border">
 								<p className="text-sm font-medium mb-3">
 									With this key you can:
 								</p>
