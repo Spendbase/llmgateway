@@ -875,3 +875,17 @@ export const modelHistory = pgTable(
 		index("model_history_minute_timestamp_idx").on(table.minuteTimestamp),
 	],
 );
+
+export const banner = pgTable("banner", {
+	id: text().primaryKey(),
+	createdAt: timestamp().notNull().defaultNow(),
+	updatedAt: timestamp()
+		.notNull()
+		.defaultNow()
+		.$onUpdate(() => new Date()),
+	name: text().notNull(),
+	description: text(),
+	enabled: boolean().notNull().default(true),
+	type: text().notNull(),
+	priority: integer().notNull().default(0),
+});

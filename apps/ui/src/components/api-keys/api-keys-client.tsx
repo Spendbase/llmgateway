@@ -1,11 +1,21 @@
 "use client";
 
-import { Orbit } from "lucide-react";
+import {
+	CreditCard,
+	Key,
+	Plus,
+	PlusCircle,
+	RefreshCcw,
+	ShieldCheck,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { FaSitemap } from "react-icons/fa";
 
 import { ApiKeysList } from "@/components/api-keys/api-keys-list";
 import { CreateApiKeyDialog } from "@/components/api-keys/create-api-key-dialog";
+import { FreeCreditsBanner } from "@/components/api-keys/free-credits-banner";
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { Button } from "@/lib/components/button";
 import {
 	Card,
@@ -13,22 +23,41 @@ import {
 	CardDescription,
 	CardHeader,
 } from "@/lib/components/card";
+import { useDashboardState } from "@/lib/dashboard-state";
 import { useApi } from "@/lib/fetch-client";
 import { extractOrgAndProjectFromPath } from "@/lib/navigation-utils";
+import { cn } from "@/lib/utils";
 
 import type { Project, ApiKey } from "@/lib/types";
 
 export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 	const pathname = usePathname();
+	const [isBannerVisible, setIsBannerVisible] = useState(true);
+	const { selectedOrganization } = useDashboardState();
 
-	// Extract project and org IDs directly from URL to avoid dashboard state conflicts
 	const { projectId, orgId } = useMemo(() => {
 		const result = extractOrgAndProjectFromPath(pathname);
 		return result;
 	}, [pathname]);
 
-	// Fetch actual project data instead of using mock values
 	const api = useApi();
+	const creditAmount = process.env.NEXT_PUBLIC_AUTO_DEPOSIT_CREDITS || "50";
+
+	const { data: bannersData } = api.useQuery(
+		"get",
+		"/admin/banners",
+		undefined,
+		{
+			staleTime: 5 * 60 * 1000,
+			refetchOnWindowFocus: false,
+		},
+	);
+
+	const freeCreditsBanner = bannersData?.banners?.find(
+		(b) => b.id === "free-credits",
+	);
+
+	const shouldShowBanner = freeCreditsBanner?.enabled && isBannerVisible;
 
 	const { data: projectsData } = api.useQuery(
 		"get",
@@ -40,12 +69,11 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 		},
 		{
 			enabled: !!orgId,
-			staleTime: 5 * 60 * 1000, // 5 minutes
+			staleTime: 5 * 60 * 1000,
 			refetchOnWindowFocus: false,
 		},
 	);
 
-	// Find the actual project from the fetched data
 	const selectedProject = useMemo((): Project | null => {
 		if (!projectId || !projectsData?.projects) {
 			return null;
@@ -57,7 +85,6 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 		return actualProject || null;
 	}, [projectId, projectsData]);
 
-	// Get API keys data to check plan limits
 	const { data: apiKeysData } = api.useQuery(
 		"get",
 		"/keys/api",
@@ -68,57 +95,135 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 		},
 		{
 			enabled: !!selectedProject?.id,
-			staleTime: 5 * 60 * 1000, // 5 minutes
+			staleTime: 5 * 60 * 1000,
 			refetchOnWindowFocus: false,
 		},
 	);
 
 	const planLimits = apiKeysData?.planLimits;
+	const hasApiKeys = initialData && initialData.length > 0;
+	const showOrganizationCredits =
+		shouldShowBanner &&
+		selectedOrganization &&
+		Number(selectedOrganization.credits) > 0;
 
 	return (
-		<div className="flex flex-col">
-			<div className="flex flex-col space-y-4 p-4 pt-6 md:p-8">
-				<div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-					<div>
-						<h2 className="text-3xl font-bold tracking-tight">API Keys</h2>
-						<p className="text-muted-foreground">
-							Create and manage API keys to authenticate requests to LLM API
-						</p>
+		<div className="flex flex-col px-[48px]">
+			<div className="flex flex-col">
+				{shouldShowBanner && (
+					<div className="mb-6 md:mb-8">
+						<FreeCreditsBanner
+							creditAmount={creditAmount}
+							onClose={() => setIsBannerVisible(false)}
+						/>
 					</div>
-					{selectedProject && (
-						<CreateApiKeyDialog
-							selectedProject={selectedProject}
-							disabled={
-								planLimits
-									? planLimits.currentCount >= planLimits.maxKeys
-									: false
-							}
-							disabledMessage={
-								planLimits
-									? `${planLimits.plan === "pro" ? "Pro" : "Free"} plan allows maximum ${planLimits.maxKeys} API keys per project`
-									: undefined
-							}
-						>
-							<Button
-								disabled={
-									!selectedProject ||
-									(planLimits
-										? planLimits.currentCount >= planLimits.maxKeys
-										: false)
-								}
-								className="cursor-pointer flex items-center space-x-1 w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								<Orbit className=" h-4 w-4 mt-0.5" />
-								Create API Key
-							</Button>
-						</CreateApiKeyDialog>
+				)}
+
+				<div
+					className={cn("space-y-4", {
+						"pt-8": shouldShowBanner,
+						"pt-4 md:pt-[72px]": !shouldShowBanner,
+					})}
+				>
+					<div>
+						<h2 className="text-3xl font-bold tracking-tight">
+							Welcome to LLM API 👋
+						</h2>
+					</div>
+
+					<Card>
+						<CardContent>
+							<div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 md:gap-8">
+								<div className="flex flex-col gap-4">
+									<div className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400">
+										<Key className="h-4 w-4" />
+									</div>
+									<div className="flex flex-col gap-4">
+										<div>
+											<h3 className="text-lg font-semibold mb-1">
+												Create your first API Key and run first request
+											</h3>
+											<p className="text-sm text-muted-foreground">
+												One key for all routed models and providers
+											</p>
+										</div>
+										{selectedProject && (
+											<CreateApiKeyDialog
+												selectedProject={selectedProject}
+												disabled={
+													planLimits
+														? planLimits.currentCount >= planLimits.maxKeys
+														: false
+												}
+												disabledMessage={
+													planLimits
+														? `${planLimits.plan === "pro" ? "Pro" : "Free"} plan allows maximum ${planLimits.maxKeys} API keys per project`
+														: undefined
+												}
+											>
+												<Button
+													disabled={
+														!selectedProject ||
+														(planLimits
+															? planLimits.currentCount >= planLimits.maxKeys
+															: false)
+													}
+													className="cursor-pointer w-1/5 disabled:opacity-50 disabled:cursor-not-allowed"
+												>
+													<Plus className="h-4 w-4" />
+													Create Key to Start
+												</Button>
+											</CreateApiKeyDialog>
+										)}
+									</div>
+								</div>
+
+								<div className="min-w-[240px] bg-[#F9FAFB] p-6 rounded-lg">
+									<p className="text-sm font-medium mb-3">
+										With this key you can:
+									</p>
+									<div className="space-y-2 text-sm text-muted-foreground">
+										<p className="flex items-center gap-2">
+											<FaSitemap className="h-3 w-3" />
+											Use 100+ models
+										</p>
+										<p className="flex items-center gap-2">
+											<RefreshCcw className="h-3 w-3" />
+											Route across providers
+										</p>
+										<p className="flex items-center gap-2">
+											<PlusCircle className="h-3 w-3" />
+											Add your own vendors
+										</p>
+										<p className="flex items-center gap-2">
+											<ShieldCheck className="h-3 w-3" />
+											Control fallback logic
+										</p>
+									</div>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+
+					{showOrganizationCredits && (
+						<div className="w-full md:w-1/3">
+							<MetricCard
+								label="Organization Credits"
+								value={`$${
+									selectedOrganization
+										? Number(selectedOrganization.credits).toFixed(2)
+										: "0.00"
+								}`}
+								subtitle="Available balance"
+								icon={<CreditCard className="h-4 w-4" />}
+								accent="green"
+							/>
+						</div>
 					)}
-				</div>
-				<div className="space-y-4">
-					{/* Desktop Card */}
-					<div className="hidden md:block">
+
+					{hasApiKeys && (
 						<Card className="gap-0">
-							<CardHeader>
+							<CardHeader className="hidden md:block">
 								<CardDescription>
 									{!selectedProject && (
 										<span className="text-amber-600">
@@ -127,27 +232,19 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 									)}
 								</CardDescription>
 							</CardHeader>
-							<CardContent>
+							{!selectedProject && (
+								<div className="text-amber-600 mb-4 md:hidden p-4">
+									Loading project information...
+								</div>
+							)}
+							<CardContent className="md:pt-0">
 								<ApiKeysList
 									selectedProject={selectedProject}
 									initialData={initialData}
 								/>
 							</CardContent>
 						</Card>
-					</div>
-
-					{/* Mobile - Direct rendering */}
-					<div className="md:hidden">
-						{!selectedProject && (
-							<div className="text-amber-600 mb-4">
-								Loading project information...
-							</div>
-						)}
-						<ApiKeysList
-							selectedProject={selectedProject}
-							initialData={initialData}
-						/>
-					</div>
+					)}
 				</div>
 			</div>
 		</div>
