@@ -605,10 +605,12 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				// Block sign-in for blocked users
 				if (ctx.path.startsWith("/sign-in/email")) {
 					const body = ctx.body as { email?: string } | undefined;
-					if (body?.email) {
+					const rawEmail = body?.email;
+					if (rawEmail) {
+						const normalizedEmail = rawEmail.toLowerCase().trim();
 						const user = await db.query.user.findFirst({
 							where: {
-								email: body.email,
+								email: normalizedEmail,
 							},
 							columns: {
 								id: true,
@@ -619,7 +621,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						if (user && user.status === "blocked") {
 							logger.warn("Blocked user attempted to sign in", {
 								userId: user.id,
-								email: maskEmail(body.email),
+								email: maskEmail(normalizedEmail),
 							});
 
 							return new Response(
