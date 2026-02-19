@@ -57,7 +57,8 @@ jobs:
             MAJOR="${VERSION_PARTS[0]}"
             MINOR="${VERSION_PARTS[1]}"
             PATCH="${VERSION_PARTS[2]}"
-
+            
+            # Check commit message for version bump type
             if [[ "$COMMIT_MSG" =~ \[major\]|BREAKING\ CHANGE: ]]; then
               # Major version bump (e.g., 1.2.3 -> 2.0.0)
               MAJOR=$((MAJOR + 1))
