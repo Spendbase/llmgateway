@@ -103,149 +103,146 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 	const planLimits = apiKeysData?.planLimits;
 	const hasApiKeys = initialData && initialData.length > 0;
 	const showOrganizationCredits =
-		shouldShowBanner &&
-		selectedOrganization &&
-		Number(selectedOrganization.credits) > 0;
+		selectedOrganization && Number(selectedOrganization.credits) > 0;
 
 	return (
-		<div className="flex flex-col px-[48px]">
-			<div className="flex flex-col">
-				{shouldShowBanner && (
-					<div className="mb-6 md:mb-8">
-						<FreeCreditsBanner
-							creditAmount={creditAmount}
-							onClose={() => setIsBannerVisible(false)}
+		<div className="flex flex-col">
+			{shouldShowBanner && (
+				<div className="mb-10 pb-10 md:pb-0 md:mb-8 w-full">
+					<FreeCreditsBanner
+						creditAmount={creditAmount}
+						onClose={() => setIsBannerVisible(false)}
+					/>
+				</div>
+			)}
+
+			<div
+				className={cn("space-y-4 px-4 md:px-[48px] mt-10", {
+					"pt-6 md:pt-0": !shouldShowBanner,
+				})}
+			>
+				<div>
+					<h2 className="text-3xl font-bold tracking-tight">
+						Welcome to LLM API 👋
+					</h2>
+				</div>
+
+				<Card>
+					<CardContent>
+						<div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 md:gap-8">
+							<div className="flex flex-col gap-4">
+								<div className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400">
+									<Key className="h-4 w-4" />
+								</div>
+								<div className="flex flex-col gap-4">
+									<div>
+										<h3 className="text-lg font-semibold mb-1">
+											{hasApiKeys
+												? "Create and manage API keys to authenticate requests to LLM API"
+												: "Create your first API Key and run first request"}
+										</h3>
+										<p className="text-sm text-muted-foreground">
+											One key for all routed models and providers
+										</p>
+									</div>
+									{selectedProject && (
+										<CreateApiKeyDialog
+											selectedProject={selectedProject}
+											disabled={
+												planLimits
+													? planLimits.currentCount >= planLimits.maxKeys
+													: false
+											}
+											disabledMessage={
+												planLimits
+													? `${planLimits.plan === "pro" ? "Pro" : "Free"} plan allows maximum ${planLimits.maxKeys} API keys per project`
+													: undefined
+											}
+										>
+											<Button
+												disabled={
+													!selectedProject ||
+													(planLimits
+														? planLimits.currentCount >= planLimits.maxKeys
+														: false)
+												}
+												className="cursor-pointer w-full md:w-1/5 disabled:opacity-50 disabled:cursor-not-allowed"
+											>
+												<Plus className="h-4 w-4" />
+												Create Key to Start
+											</Button>
+										</CreateApiKeyDialog>
+									)}
+								</div>
+							</div>
+
+							<div className="min-w-[240px] dark:bg-background bg-[#F9FAFB] dark:border-none border border-[#F3F4F6] p-6 rounded-lg">
+								<p className="text-sm font-medium mb-3">
+									With this key you can:
+								</p>
+								<div className="space-y-2 text-sm text-muted-foreground">
+									<p className="flex items-center gap-2">
+										<FaSitemap className="h-3 w-3" />
+										Use 100+ models
+									</p>
+									<p className="flex items-center gap-2">
+										<RefreshCcw className="h-3 w-3" />
+										Route across providers
+									</p>
+									<p className="flex items-center gap-2">
+										<PlusCircle className="h-3 w-3" />
+										Add your own vendors
+									</p>
+									<p className="flex items-center gap-2">
+										<ShieldCheck className="h-3 w-3" />
+										Control fallback logic
+									</p>
+								</div>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				{showOrganizationCredits && (
+					<div className="w-full md:w-1/3">
+						<MetricCard
+							label="Organization Credits"
+							value={`$${
+								selectedOrganization
+									? Number(selectedOrganization.credits).toFixed(2)
+									: "0.00"
+							}`}
+							subtitle="Available balance"
+							icon={<CreditCard className="h-4 w-4" />}
+							accent="green"
 						/>
 					</div>
 				)}
 
-				<div
-					className={cn("space-y-4", {
-						"pt-8": shouldShowBanner,
-						"pt-4 md:pt-[72px]": !shouldShowBanner,
-					})}
-				>
-					<div>
-						<h2 className="text-3xl font-bold tracking-tight">
-							Welcome to LLM API 👋
-						</h2>
-					</div>
-
-					<Card>
-						<CardContent>
-							<div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 md:gap-8">
-								<div className="flex flex-col gap-4">
-									<div className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400">
-										<Key className="h-4 w-4" />
-									</div>
-									<div className="flex flex-col gap-4">
-										<div>
-											<h3 className="text-lg font-semibold mb-1">
-												Create your first API Key and run first request
-											</h3>
-											<p className="text-sm text-muted-foreground">
-												One key for all routed models and providers
-											</p>
-										</div>
-										{selectedProject && (
-											<CreateApiKeyDialog
-												selectedProject={selectedProject}
-												disabled={
-													planLimits
-														? planLimits.currentCount >= planLimits.maxKeys
-														: false
-												}
-												disabledMessage={
-													planLimits
-														? `${planLimits.plan === "pro" ? "Pro" : "Free"} plan allows maximum ${planLimits.maxKeys} API keys per project`
-														: undefined
-												}
-											>
-												<Button
-													disabled={
-														!selectedProject ||
-														(planLimits
-															? planLimits.currentCount >= planLimits.maxKeys
-															: false)
-													}
-													className="cursor-pointer w-1/5 disabled:opacity-50 disabled:cursor-not-allowed"
-												>
-													<Plus className="h-4 w-4" />
-													Create Key to Start
-												</Button>
-											</CreateApiKeyDialog>
-										)}
-									</div>
-								</div>
-
-								<div className="min-w-[240px] bg-[#F9FAFB] p-6 rounded-lg">
-									<p className="text-sm font-medium mb-3">
-										With this key you can:
-									</p>
-									<div className="space-y-2 text-sm text-muted-foreground">
-										<p className="flex items-center gap-2">
-											<FaSitemap className="h-3 w-3" />
-											Use 100+ models
-										</p>
-										<p className="flex items-center gap-2">
-											<RefreshCcw className="h-3 w-3" />
-											Route across providers
-										</p>
-										<p className="flex items-center gap-2">
-											<PlusCircle className="h-3 w-3" />
-											Add your own vendors
-										</p>
-										<p className="flex items-center gap-2">
-											<ShieldCheck className="h-3 w-3" />
-											Control fallback logic
-										</p>
-									</div>
-								</div>
+				{hasApiKeys && (
+					<Card className="gap-0">
+						<CardHeader className="hidden md:block">
+							<CardDescription>
+								{!selectedProject && (
+									<span className="text-amber-600">
+										Loading project information...
+									</span>
+								)}
+							</CardDescription>
+						</CardHeader>
+						{!selectedProject && (
+							<div className="text-amber-600 mb-4 md:hidden p-4">
+								Loading project information...
 							</div>
+						)}
+						<CardContent className="md:pt-0">
+							<ApiKeysList
+								selectedProject={selectedProject}
+								initialData={initialData}
+							/>
 						</CardContent>
 					</Card>
-
-					{showOrganizationCredits && (
-						<div className="w-full md:w-1/3">
-							<MetricCard
-								label="Organization Credits"
-								value={`$${
-									selectedOrganization
-										? Number(selectedOrganization.credits).toFixed(2)
-										: "0.00"
-								}`}
-								subtitle="Available balance"
-								icon={<CreditCard className="h-4 w-4" />}
-								accent="green"
-							/>
-						</div>
-					)}
-
-					{hasApiKeys && (
-						<Card className="gap-0">
-							<CardHeader className="hidden md:block">
-								<CardDescription>
-									{!selectedProject && (
-										<span className="text-amber-600">
-											Loading project information...
-										</span>
-									)}
-								</CardDescription>
-							</CardHeader>
-							{!selectedProject && (
-								<div className="text-amber-600 mb-4 md:hidden p-4">
-									Loading project information...
-								</div>
-							)}
-							<CardContent className="md:pt-0">
-								<ApiKeysList
-									selectedProject={selectedProject}
-									initialData={initialData}
-								/>
-							</CardContent>
-						</Card>
-					)}
-				</div>
+				)}
 			</div>
 		</div>
 	);

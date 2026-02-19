@@ -1,32 +1,24 @@
 "use client";
 
 import { Megaphone } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import Banner from "@/components/banners/banner";
+import { Card, CardContent } from "@/components/ui/card";
 import { useApi } from "@/lib/fetch-client";
 
 export default function BannersPage() {
 	const api = useApi();
-	const [savingId, setSavingId] = useState<string | null>(null);
 
-	const {
-		data: bannersData,
-		isLoading,
-		refetch,
-	} = api.useQuery("get", "/admin/banners", undefined, {
-		staleTime: 5 * 60 * 1000,
-		refetchOnWindowFocus: false,
-	});
+	const { data: bannersData, isLoading } = api.useQuery(
+		"get",
+		"/admin/banners",
+		undefined,
+		{
+			staleTime: 5 * 60 * 1000,
+			refetchOnWindowFocus: false,
+		},
+	);
 
 	const { mutate: updateBanner } = api.useMutation(
 		"patch",
@@ -34,7 +26,6 @@ export default function BannersPage() {
 	);
 
 	const handleToggle = (bannerId: string, enabled: boolean) => {
-		setSavingId(bannerId);
 		updateBanner(
 			{
 				params: {
@@ -45,18 +36,15 @@ export default function BannersPage() {
 				},
 			},
 			{
-				onSuccess: async () => {
-					await refetch();
+				onSuccess: () => {
 					toast.success("Banner Updated", {
 						description: "Banner settings have been updated successfully.",
 					});
-					setSavingId(null);
 				},
 				onError: () => {
 					toast.error("Error", {
 						description: "Failed to update banner settings.",
 					});
-					setSavingId(null);
 				},
 			},
 		);
@@ -98,50 +86,11 @@ export default function BannersPage() {
 			) : (
 				<div className="space-y-4">
 					{banners.map((banner) => (
-						<Card key={banner.id}>
-							<CardHeader>
-								<CardTitle>{banner.name}</CardTitle>
-								{banner.description && (
-									<CardDescription>{banner.description}</CardDescription>
-								)}
-							</CardHeader>
-							<CardContent className="space-y-6">
-								<div className="flex items-center justify-between">
-									<div className="space-y-0.5">
-										<Label
-											htmlFor={`banner-${banner.id}`}
-											className="text-base"
-										>
-											Show Banner
-										</Label>
-										<p className="text-sm text-muted-foreground">
-											Enable or disable this banner across the platform
-										</p>
-									</div>
-									<Switch
-										id={`banner-${banner.id}`}
-										checked={banner.enabled}
-										onCheckedChange={(checked) =>
-											handleToggle(banner.id, checked)
-										}
-										disabled={savingId === banner.id}
-									/>
-								</div>
-
-								<div className="rounded-lg border bg-muted/50 p-4">
-									<div className="grid grid-cols-2 gap-4 text-sm">
-										<div>
-											<span className="text-muted-foreground">Type:</span>{" "}
-											<span className="font-medium">{banner.type}</span>
-										</div>
-										<div>
-											<span className="text-muted-foreground">Priority:</span>{" "}
-											<span className="font-medium">{banner.priority}</span>
-										</div>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
+						<Banner
+							key={banner.id}
+							banner={banner}
+							handleToggle={handleToggle}
+						/>
 					))}
 				</div>
 			)}

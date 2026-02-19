@@ -261,6 +261,8 @@ const getBannerSettings = createRoute({
 			},
 			description: "List of all banners",
 		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
 	},
 });
 
@@ -801,7 +803,18 @@ admin.openapi(getUsers, async (c) => {
 });
 
 admin.openapi(getBannerSettings, async (c) => {
-	// Get all banners ordered by priority
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
 	const banners = await db.query.banner.findMany({
 		orderBy: (banner, { desc }) => [desc(banner.priority)],
 	});
@@ -829,7 +842,6 @@ admin.openapi(updateBannerSettings, async (c) => {
 	const { id } = c.req.valid("param");
 	const { enabled } = c.req.valid("json");
 
-	// Check if banner exists
 	const banner = await db.query.banner.findFirst({
 		where: {
 			id: {
@@ -844,7 +856,6 @@ admin.openapi(updateBannerSettings, async (c) => {
 		});
 	}
 
-	// Update banner
 	const [updatedBanner] = await db
 		.update(tables.banner)
 		.set({
