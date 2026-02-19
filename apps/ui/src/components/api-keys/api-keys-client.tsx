@@ -86,6 +86,7 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 	const hasApiKeys =
 		(apiKeysData?.apiKeys && apiKeysData.apiKeys.length > 0) ||
 		(initialData && initialData.length > 0);
+
 	const showOrganizationCredits =
 		selectedOrganization && Number(selectedOrganization.credits) > 0;
 

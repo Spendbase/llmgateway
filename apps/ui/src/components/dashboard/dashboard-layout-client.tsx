@@ -47,31 +47,25 @@ export function DashboardLayoutClient({
 		[router, api, queryClient],
 	);
 
-	const [isFreeCreditsBannerVisible, setIsFreeCreditsBannerVisible] =
-		useState(true);
+	const [isFreeCreditsBannerVisible, setIsFreeCreditsBannerVisible] = useState(
+		pathname.includes("/api-keys"),
+	);
 
 	const handleCloseFreeCreditsBanner = () => {
 		setIsFreeCreditsBannerVisible(false);
 	};
 
-	const { data: bannersData } = api.useQuery(
-		"get",
-		"/admin/banners",
-		undefined,
-		{
-			staleTime: 5 * 60 * 1000,
-			refetchOnWindowFocus: false,
-		},
-	);
+	const { data: bannersData } = api.useQuery("get", "/banners", undefined, {
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+	});
 
 	const freeCreditsBanner = bannersData?.banners?.find(
 		(b) => b.id === "free-credits",
 	);
 
 	const shouldShowBanner =
-		freeCreditsBanner?.enabled &&
-		isFreeCreditsBannerVisible &&
-		pathname.includes("/api-keys");
+		freeCreditsBanner?.enabled && isFreeCreditsBannerVisible;
 
 	const {
 		organizations,
@@ -105,7 +99,7 @@ export function DashboardLayoutClient({
 				handleProjectSelect,
 				handleOrganizationCreated,
 				handleProjectCreated,
-				isFreeCreditsBannerVisible,
+				isFreeCreditsBannerVisible: shouldShowBanner ?? false,
 			}}
 		>
 			<div className="flex min-h-screen w-full flex-col">

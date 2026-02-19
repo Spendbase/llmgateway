@@ -259,7 +259,7 @@ const getBannerSettings = createRoute({
 					}),
 				},
 			},
-			description: "List of all banners",
+			description: "List of all banners settings",
 		},
 		401: { description: "Unauthorized" },
 		403: { description: "Forbidden" },

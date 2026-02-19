@@ -1241,7 +1241,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of all banners */
+                /** @description List of all banners settings */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3966,6 +3966,57 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/banners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of all banners */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            banners: {
+                                id: string;
+                                name: string;
+                                description: string | null;
+                                enabled: boolean;
+                                type: string;
+                                priority: number;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
