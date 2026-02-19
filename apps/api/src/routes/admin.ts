@@ -278,6 +278,56 @@ const getUsers = createRoute({
 	},
 });
 
+const modelMappingStatusSchema = z.object({
+	id: z.string(),
+	status: z.enum(["active", "inactive", "deactivated"]),
+	deactivatedAt: z.date().nullable(),
+	deactivationReason: z.string().nullable(),
+});
+
+const updateModelMappingStatus = createRoute({
+	method: "patch",
+	path: "/models/mappings/{id}",
+	request: {
+		params: z.object({
+			id: z.string().openapi({ example: "mapping_123" }),
+		}),
+		body: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						status: z
+							.enum(["active", "inactive", "deactivated"])
+							.openapi({ example: "inactive" }),
+						reason: z
+							.string()
+							.optional()
+							.openapi({ example: "Model deprecated" }),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						success: z.boolean(),
+						mapping: modelMappingStatusSchema,
+					}),
+				},
+			},
+			description: "Model mapping status successfully updated",
+		},
+		400: { description: "Invalid status transition" },
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Model mapping not found" },
+		500: { description: "Internal Server Error" },
+	},
+});
+
 admin.openapi(getMetrics, async (c) => {
 	const authUser = c.get("user");
 
@@ -917,6 +967,78 @@ admin.openapi(getUsers, async (c) => {
 			totalPages,
 		},
 	});
+});
+
+admin.openapi(updateModelMappingStatus, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const { id } = c.req.valid("param");
+	const { status: newStatus, reason } = c.req.valid("json");
+
+	try {
+		const existingMapping = await db.query.modelProviderMapping.findFirst({
+			where: {
+				id: { eq: id },
+			},
+		});
+
+		if (!existingMapping) {
+			throw new HTTPException(404, { message: "Model mapping not found" });
+		}
+
+		const currentStatus = existingMapping.status;
+
+		// Validate status transitions
+		if (currentStatus === "deactivated") {
+			throw new HTTPException(400, {
+				message: "Cannot reactivate a deactivated model mapping",
+			});
+		}
+
+		// Valid transitions:
+		// active -> inactive, active -> deactivated
+		// inactive -> active, inactive -> deactivated
+		// deactivated -> (none - blocked above)
+
+		const [updatedMapping] = await db
+			.update(tables.modelProviderMapping)
+			.set({
+				status: newStatus,
+				deactivatedAt: newStatus === "deactivated" ? new Date() : undefined,
+				deactivationReason: newStatus === "deactivated" ? reason : undefined,
+				updatedAt: new Date(),
+			})
+			.where(eq(tables.modelProviderMapping.id, id))
+			.returning();
+
+		return c.json({
+			success: true,
+			mapping: {
+				id: updatedMapping.id,
+				status: updatedMapping.status,
+				deactivatedAt: updatedMapping.deactivatedAt,
+				deactivationReason: updatedMapping.deactivationReason,
+			},
+		});
+	} catch (err: any) {
+		if (err instanceof HTTPException) {
+			throw err;
+		}
+
+		throw new HTTPException(500, { message: "Internal Server Error" });
+	}
 });
 
 export default admin;
