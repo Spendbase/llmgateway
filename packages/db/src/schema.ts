@@ -176,6 +176,7 @@ export const organization = pgTable("organization", {
 	devPlanCancelled: boolean().notNull().default(false),
 	devPlanExpiresAt: timestamp(),
 	devPlanAllowAllModels: boolean().notNull().default(false),
+	organizationContext: text().notNull().default(""),
 });
 
 export const referral = pgTable(
