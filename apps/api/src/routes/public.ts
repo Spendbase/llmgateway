@@ -8,7 +8,7 @@ import type { ServerTypes } from "@/vars.js";
 export const publicRoutes = new OpenAPIHono<ServerTypes>();
 
 const rankingsQuerySchema = z.object({
-	period: z.enum(["24h", "7d", "30d", "all"]).default("7d").openapi({
+	period: z.enum(["24h", "7d", "30d"]).default("7d").openapi({
 		description: "Time period for statistics",
 		default: "7d",
 	}),
@@ -34,7 +34,7 @@ const rankingsQuerySchema = z.object({
 });
 
 const rankingsResponseSchema = z.object({
-	period: z.enum(["24h", "7d", "30d", "all"]),
+	period: z.enum(["24h", "7d", "30d"]),
 	groupBy: z.enum(["model", "modelProvider"]),
 	limit: z.number(),
 	generatedAt: z.string(),

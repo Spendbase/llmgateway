@@ -2,7 +2,7 @@ import { generateCacheKey, getCache, setCache } from "@llmgateway/cache";
 import { and, db, desc, eq, gte, sql, tables } from "@llmgateway/db";
 
 export interface RankingsParams {
-	period: "24h" | "7d" | "30d" | "all";
+	period: "24h" | "7d" | "30d";
 	limit?: number;
 	groupBy: "model" | "modelProvider";
 	providerId?: string;
@@ -28,7 +28,7 @@ export interface RankedItem {
 }
 
 export interface RankingsResponse {
-	period: "24h" | "7d" | "30d" | "all";
+	period: "24h" | "7d" | "30d";
 	groupBy: "model" | "modelProvider";
 	limit: number;
 	generatedAt: string;
@@ -67,8 +67,12 @@ export class PublicStatsService {
 			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 		} else if (period === "30d") {
 			startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+		} else {
+			// Default to 7d if somehow we get here, though validation should prevent it.
+			// Or strictly: since the type is narrowed, we can just assume one of the above matches
+			// However, to be safe and satisfy the compiler that startDate is assigned:
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 		}
-		// "all" leaves startDate undefined
 
 		// D. Build aggregation query
 		const historyTable = tables.modelProviderMappingHistory;
