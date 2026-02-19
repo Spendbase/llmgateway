@@ -1153,6 +1153,96 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/users/:id/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @example blocked
+                         * @enum {string}
+                         */
+                        status: "active" | "blocked";
+                    };
+                };
+            };
+            responses: {
+                /** @description User status updated successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                            user: {
+                                id: string;
+                                /** @enum {string} */
+                                status: "active" | "blocked";
+                            };
+                            affectedOrganizations: number;
+                        };
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description User not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
     "/admin/users": {
         parameters: {
             query?: never;
@@ -1185,6 +1275,8 @@ export interface paths {
                                 email: string;
                                 emailVerified: boolean;
                                 createdAt: string;
+                                /** @enum {string} */
+                                status: "active" | "blocked";
                                 organizations: {
                                     organizationId: string;
                                     organizationName: string;
