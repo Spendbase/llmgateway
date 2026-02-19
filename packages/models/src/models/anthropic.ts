@@ -326,6 +326,7 @@ export const anthropicModels = [
 				vision: false,
 				tools: true,
 				jsonOutputSchema: true,
+				supportedParameters: ["temperature", "max_tokens", "top_p", "effort"],
 			},
 			{
 				test: "skip",
