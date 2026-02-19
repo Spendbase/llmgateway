@@ -1,5 +1,4 @@
 import { AutoTopUpSettings } from "@/components/billing/auto-topup-settings";
-import { PlanManagement } from "@/components/billing/plan-management";
 import { PaymentMethodsManagement } from "@/components/credits/payment-methods-management";
 import { TopUpCreditsButton } from "@/components/credits/top-up-credits-dialog";
 import {
@@ -48,18 +47,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 						</CardHeader>
 						<CardContent>
 							<CreditsBalance />
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Plan Management</CardTitle>
-							<CardDescription>
-								Manage your subscription plan and billing details
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<PlanManagement />
 						</CardContent>
 					</Card>
 
