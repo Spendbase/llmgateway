@@ -1,2 +1,2 @@
-ALTER TABLE "user" ADD COLUMN "status" text DEFAULT 'active' NOT NULL;--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN "status" text DEFAULT 'active' NOT NULL CHECK ("status" IN ('active', 'blocked'));--> statement-breakpoint
 ALTER TABLE "organization" ALTER COLUMN "plan" SET DEFAULT 'pro';

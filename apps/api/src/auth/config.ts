@@ -849,6 +849,8 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				});
 
 				signupCounter.add(1, { method: "new_onboarding" });
+
+				return;
 			}),
 		},
 	}),

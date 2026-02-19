@@ -741,12 +741,17 @@ admin.openapi(updateUserStatus, async (c) => {
 				.where(eq(tables.user.id, userId))
 				.returning({ id: tables.user.id, status: tables.user.status });
 
-			// Find all organizations where user is the owner (query once)
+			// Find all organizations where user is the owner with their current status
 			const ownedOrgs = await tx
 				.select({
 					organizationId: tables.userOrganization.organizationId,
+					status: tables.organization.status,
 				})
 				.from(tables.userOrganization)
+				.innerJoin(
+					tables.organization,
+					eq(tables.userOrganization.organizationId, tables.organization.id),
+				)
 				.where(
 					and(
 						eq(tables.userOrganization.userId, userId),
@@ -758,18 +763,42 @@ admin.openapi(updateUserStatus, async (c) => {
 
 			// Update organization status based on user status
 			if (ownedOrgs.length > 0) {
-				const orgIds = ownedOrgs.map((o) => o.organizationId);
-				const newOrgStatus = status === "blocked" ? "inactive" : "active";
+				if (status === "blocked") {
+					// Block user: deactivate all active organizations
+					const activeOrgIds = ownedOrgs
+						.filter((o) => o.status === "active")
+						.map((o) => o.organizationId);
 
-				await tx
-					.update(tables.organization)
-					.set({
-						status: newOrgStatus,
-						updatedAt: new Date(),
-					})
-					.where(inArray(tables.organization.id, orgIds));
+					if (activeOrgIds.length > 0) {
+						await tx
+							.update(tables.organization)
+							.set({
+								status: "inactive",
+								updatedAt: new Date(),
+							})
+							.where(inArray(tables.organization.id, activeOrgIds));
 
-				affectedOrganizations = ownedOrgs.length;
+						affectedOrganizations = activeOrgIds.length;
+					}
+				} else {
+					// Unblock user: only restore organizations that are currently inactive
+					// This prevents restoring orgs that were manually deactivated for other reasons
+					const inactiveOrgIds = ownedOrgs
+						.filter((o) => o.status === "inactive")
+						.map((o) => o.organizationId);
+
+					if (inactiveOrgIds.length > 0) {
+						await tx
+							.update(tables.organization)
+							.set({
+								status: "active",
+								updatedAt: new Date(),
+							})
+							.where(inArray(tables.organization.id, inactiveOrgIds));
+
+						affectedOrganizations = inactiveOrgIds.length;
+					}
+				}
 			}
 
 			return {
@@ -783,7 +812,7 @@ admin.openapi(updateUserStatus, async (c) => {
 			user: result.user,
 			affectedOrganizations: result.affectedOrganizations,
 		});
-	} catch (err: any) {
+	} catch (err: unknown) {
 		if (err instanceof HTTPException) {
 			throw err;
 		}
