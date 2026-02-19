@@ -899,6 +899,14 @@ chat.openapi(completions, async (c) => {
 		},
 	});
 
+	// Check if organization is active
+	if (!organization || organization.status !== "active") {
+		throw new HTTPException(403, {
+			message:
+				"Organization has been suspended. Please contact support for assistance.",
+		});
+	}
+
 	// Validate coding model restriction for dev plan personal orgs
 	// This check must happen BEFORE capability checks to give the right error message
 	if (

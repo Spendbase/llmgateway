@@ -209,6 +209,22 @@ audio.openapi(audioSpeechRoute, async (c) => {
 		});
 	}
 
+	// Check if organization is active and get organization data
+	const organization = await cdb.query.organization.findFirst({
+		where: {
+			id: {
+				eq: project.organizationId,
+			},
+		},
+	});
+
+	if (!organization || organization.status !== "active") {
+		throw new HTTPException(403, {
+			message:
+				"Organization has been suspended. Please contact support for assistance.",
+		});
+	}
+
 	// Get provider API key
 	let providerToken: string | undefined;
 
@@ -235,21 +251,7 @@ audio.openapi(audioSpeechRoute, async (c) => {
 
 		providerToken = providerKey.token;
 	} else if (project.mode === "credits" || project.mode === "hybrid") {
-		// Check credits
-		const organization = await cdb.query.organization.findFirst({
-			where: {
-				id: {
-					eq: project.organizationId,
-				},
-			},
-		});
-
-		if (!organization) {
-			throw new HTTPException(500, {
-				message: "Could not find organization",
-			});
-		}
-
+		// Check credits (reuse organization from above)
 		if (parseFloat(organization.credits || "0") <= 0) {
 			throw new HTTPException(402, {
 				message: "Organization has insufficient credits",

@@ -200,6 +200,14 @@ export default function Login() {
 								</FormItem>
 							)}
 						/>
+						<div className="flex justify-end">
+							<Link
+								href="/forgot-password"
+								className="text-sm text-muted-foreground hover:text-primary underline underline-offset-4"
+							>
+								Forgot password?
+							</Link>
+						</div>
 						<Button type="submit" className="w-full" disabled={isLoading}>
 							{isLoading ? (
 								<>
