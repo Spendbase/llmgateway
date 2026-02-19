@@ -1,5 +1,6 @@
 import { generateCacheKey, getCache, setCache } from "@llmgateway/cache";
 import { and, db, desc, eq, gte, sql, tables } from "@llmgateway/db";
+import { logger } from "@llmgateway/logger";
 
 export interface RankingsParams {
 	period: "24h" | "7d" | "30d";
@@ -274,8 +275,13 @@ export class PublicStatsService {
 			data,
 		};
 
-		// I. Save to cache
-		await setCache(cacheKey, response, 600);
+		// I. Save to cache (Fire-and-forget)
+		setCache(cacheKey, response, 600).catch((error) => {
+			logger.warn("Failed to set cache for public rankings", {
+				error,
+				cacheKey,
+			});
+		});
 
 		return response;
 	}

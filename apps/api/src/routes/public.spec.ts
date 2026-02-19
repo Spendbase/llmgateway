@@ -109,6 +109,8 @@ describe("public rankings endpoint", () => {
 		expect(json.data[0].modelId).toBe("model-1");
 		// Usage percent: 1000 / 10000 = 10%
 		expect(json.data[0].usagePercent).toBe(10);
+		// Cost: 400 * 10 + 600 * 30 + 10 * 0.5 = 4000 + 18000 + 5 = 22005
+		expect(json.data[0].estimatedCost).toBe(22005);
 
 		// Verify Period Filter Logic using spy
 		// mainQueryBuilder.where was called.
