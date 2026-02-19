@@ -7,15 +7,11 @@ import { Button } from "@/lib/components/button";
 import { cn } from "@/lib/utils";
 
 export function FreeCreditsBanner({
-	handleCloseFreeCreditsBanner,
+	handleClose,
 }: {
-	handleCloseFreeCreditsBanner: () => void;
+	handleClose: () => void;
 }) {
 	const creditAmount = process.env.NEXT_PUBLIC_AUTO_DEPOSIT_CREDITS || "50";
-
-	const handleClose = () => {
-		handleCloseFreeCreditsBanner();
-	};
 
 	return (
 		<div className="relative w-full h-[68px] border border-y-emerald-400 mt-[53px] md:mt-0">

@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { type ReactNode, useEffect, useCallback, useState } from "react";
 
@@ -33,6 +33,7 @@ export function DashboardLayoutClient({
 	const router = useRouter();
 	const api = useApi();
 	const queryClient = useQueryClient();
+	const pathname = usePathname();
 
 	const handleOrganizationChange = useCallback(
 		(orgId: string) => {
@@ -68,7 +69,9 @@ export function DashboardLayoutClient({
 	);
 
 	const shouldShowBanner =
-		freeCreditsBanner?.enabled && isFreeCreditsBannerVisible;
+		freeCreditsBanner?.enabled &&
+		isFreeCreditsBannerVisible &&
+		pathname.includes("/api-keys");
 
 	const {
 		organizations,
@@ -124,9 +127,7 @@ export function DashboardLayoutClient({
 						/>
 						<EmailVerificationBanner />
 						{shouldShowBanner && (
-							<FreeCreditsBanner
-								handleCloseFreeCreditsBanner={handleCloseFreeCreditsBanner}
-							/>
+							<FreeCreditsBanner handleClose={handleCloseFreeCreditsBanner} />
 						)}
 						<main className="relative bg-background w-full flex-1 overflow-y-auto pt-10 pb-4 px-4 md:p-6 lg:p-8">
 							{children}

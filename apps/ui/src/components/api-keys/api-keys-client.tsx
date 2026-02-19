@@ -92,8 +92,8 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 	return (
 		<div className="flex flex-col">
 			<div
-				className={cn("space-y-4 px-4 md:px-[48px]", {
-					"mt-10": !isFreeCreditsBannerVisible,
+				className={cn("space-y-4 p-4 pt-0 md:p-8", {
+					"pt-10 md:pt-6": !isFreeCreditsBannerVisible,
 				})}
 			>
 				<div>
