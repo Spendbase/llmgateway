@@ -114,6 +114,7 @@ describe("Rate Limiting", () => {
 				devPlanCancelled: false,
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
+				organizationContext: "",
 			});
 
 			vi.mocked(redis.zcard).mockResolvedValue(0);
@@ -169,6 +170,7 @@ describe("Rate Limiting", () => {
 				devPlanCancelled: false,
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
+				organizationContext: "",
 			});
 
 			vi.mocked(redis.zcard).mockResolvedValue(5); // Under elevated limit (20)
@@ -221,6 +223,7 @@ describe("Rate Limiting", () => {
 				devPlanCancelled: false,
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
+				organizationContext: "",
 			});
 
 			vi.mocked(redis.zcard).mockResolvedValue(5); // At limit (5)
@@ -281,6 +284,7 @@ describe("Rate Limiting", () => {
 				devPlanCancelled: false,
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
+				organizationContext: "",
 			});
 
 			vi.mocked(redis.zcard).mockResolvedValue(20); // At elevated limit (20)
@@ -341,6 +345,7 @@ describe("Rate Limiting", () => {
 				devPlanCancelled: false,
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
+				organizationContext: "",
 			});
 			vi.mocked(redis.zremrangebyscore).mockRejectedValue(
 				new Error("Redis error"),

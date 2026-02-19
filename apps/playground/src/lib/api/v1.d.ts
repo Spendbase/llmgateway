@@ -2656,6 +2656,7 @@ export interface paths {
                                 devPlanBillingCycleStart: string | null;
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
+                                organizationContext: string;
                             }[];
                         };
                     };
@@ -2715,6 +2716,7 @@ export interface paths {
                                 devPlanBillingCycleStart: string | null;
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
+                                organizationContext: string;
                             };
                         };
                     };
@@ -2860,6 +2862,7 @@ export interface paths {
                         autoTopUpEnabled?: boolean;
                         autoTopUpThreshold?: number;
                         autoTopUpAmount?: number;
+                        organizationContext?: string;
                     };
                 };
             };
@@ -2902,6 +2905,7 @@ export interface paths {
                                 devPlanBillingCycleStart: string | null;
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
+                                organizationContext: string;
                             };
                         };
                     };

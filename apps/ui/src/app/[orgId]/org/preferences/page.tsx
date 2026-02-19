@@ -1,6 +1,7 @@
 "use client";
 
 import { OrganizationBillingEmailSettings } from "@/components/settings/organization-billing-email-settings";
+import { OrganizationContextSettings } from "@/components/settings/organization-context-settings";
 import { OrganizationNameSettings } from "@/components/settings/organization-name-settings";
 import {
 	Card,
@@ -24,6 +25,18 @@ export default function PreferencesPage() {
 					</CardHeader>
 					<CardContent className="space-y-6">
 						<OrganizationNameSettings />
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader>
+						<CardTitle>Organization Context</CardTitle>
+						<CardDescription>
+							Define a context that will be automatically prepended to all
+							prompts.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-6">
+						<OrganizationContextSettings />
 					</CardContent>
 				</Card>
 				<Card>
