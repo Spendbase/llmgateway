@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useHubSpot } from "@/hooks/useHubSpot";
 import { Card, CardContent } from "@/lib/components/card";
 import { Stepper } from "@/lib/components/stepper";
+import { toast } from "@/lib/components/use-toast";
 import { useApi } from "@/lib/fetch-client";
 import { useStripe } from "@/lib/stripe";
 
@@ -18,6 +19,8 @@ import { CreditsStep } from "./credits-step";
 import { PlanChoiceStep } from "./plan-choice-step";
 import { ReferralStep } from "./referral-step";
 import { WelcomeStep } from "./welcome-step";
+
+import type { Route } from "next";
 
 const getSteps = () => [
 	{
@@ -63,6 +66,23 @@ export function OnboardingWizard() {
 
 	const STEPS = getSteps();
 
+	const finishOnboarding = async () => {
+		try {
+			const result = await completeOnboarding.mutateAsync({});
+			const queryKey = api.queryOptions("get", "/user/me").queryKey;
+			await queryClient.invalidateQueries({ queryKey });
+			router.push((result.redirectTo as Route) ?? "/");
+		} catch (error) {
+			toast({
+				title: "Error",
+				description:
+					(error as Error).message ||
+					"Failed to complete onboarding. Please try again.",
+				variant: "destructive",
+			});
+		}
+	};
+
 	const handleStepChange = async (step: number) => {
 		// Special handling for plan choice step (now at index 3)
 		if (activeStep === 3) {
@@ -84,10 +104,7 @@ export function OnboardingWizard() {
 					referralSource || "not_provided",
 				);
 
-				await completeOnboarding.mutateAsync({});
-				const queryKey = api.queryOptions("get", "/user/me").queryKey;
-				await queryClient.invalidateQueries({ queryKey });
-				router.push("/");
+				await finishOnboarding();
 				return;
 			}
 			// If plan is selected, continue to next step
@@ -110,10 +127,7 @@ export function OnboardingWizard() {
 				"Signup",
 				referralSource || "not_provided",
 			);
-			await completeOnboarding.mutateAsync({});
-			const queryKey = api.queryOptions("get", "/user/me").queryKey;
-			await queryClient.invalidateQueries({ queryKey });
-			router.push("/");
+			await finishOnboarding();
 			return;
 		}
 		setActiveStep(step);

@@ -7,7 +7,12 @@ import { apiAuth, redisClient } from "./config.js";
 describe("API auth configuration", () => {
 	test("should inherit basic auth configuration", () => {
 		expect(apiAuth.options).toBeDefined();
-		expect(apiAuth.options.emailAndPassword).toEqual({ enabled: true });
+		expect(apiAuth.options.emailAndPassword).toEqual({
+			enabled: true,
+			requireEmailVerification: true,
+			resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours
+			sendResetPassword: expect.any(Function),
+		});
 		expect(apiAuth.options.basePath).toBe("/auth");
 		expect(apiAuth.options.plugins).toBeDefined();
 		expect(Array.isArray(apiAuth.options.plugins)).toBe(true);
@@ -96,6 +101,20 @@ describe("API auth hooks functionality", () => {
 
 		expect(signUpResponse.status).toBe(200);
 
+		// In self-hosted mode, email is auto-verified via databaseHooks
+		// Now sign in to create a session and trigger the after hook
+		const signInResponse = await apiAuth.handler(
+			new Request("http://localhost:4002/auth/sign-in/email", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ email, password }),
+			}),
+		);
+
+		expect(signInResponse.status).toBe(200);
+
 		// Get the user from the database
 		const user = await db.query.user.findFirst({
 			where: {
@@ -161,7 +180,7 @@ describe("API auth hooks functionality", () => {
 
 		expect(signUpResponse.status).toBe(200);
 
-		// Get the user from the database
+		// Email should be auto-verified via databaseHooks for self-hosted
 		const user = await db.query.user.findFirst({
 			where: {
 				email: {

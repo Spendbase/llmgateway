@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/lib/components/button";
 import { Checkbox } from "@/lib/components/checkbox";
@@ -25,6 +26,7 @@ import { toast } from "@/lib/components/use-toast";
 import { useApi } from "@/lib/fetch-client";
 
 import type { Project } from "@/lib/types";
+import type { Route } from "next";
 import type React from "react";
 
 interface CreateApiKeyDialogProps {
@@ -50,7 +52,26 @@ export function CreateApiKeyDialog({
 	const [apiKey, setApiKey] = useState("");
 	const api = useApi();
 
+	const pathname = usePathname();
+	const router = useRouter();
+	const searchParams = useSearchParams();
+
 	const { mutate: createApiKey } = api.useMutation("post", "/keys/api");
+
+	useEffect(() => {
+		const shouldOpen = searchParams.get("openCreateDialog") === "true";
+		if (shouldOpen && selectedProject && !disabled) {
+			setOpen(true);
+		}
+		if (shouldOpen) {
+			const params = new URLSearchParams(searchParams.toString());
+			params.delete("openCreateDialog");
+			const newUrl = params.toString()
+				? `${pathname}?${params.toString()}`
+				: pathname;
+			router.replace(newUrl as Route);
+		}
+	}, [searchParams, selectedProject, pathname, router, disabled]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();

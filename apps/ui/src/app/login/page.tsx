@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { FaGoogle } from "react-icons/fa";
 import { z } from "zod";
 
+import { useResendEmail } from "@/hooks/useResendEmail";
 import { useUser } from "@/hooks/useUser";
 import { useAuth } from "@/lib/auth-client";
 import { Button } from "@/lib/components/button";
@@ -34,12 +35,22 @@ const formSchema = z.object({
 	}),
 });
 
+const ERROR_CODES = {
+	EMAIL_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
+} as const;
+
 export default function Login() {
 	const queryClient = useQueryClient();
 	const router = useRouter();
 	const posthog = usePostHog();
 	const [isLoading, setIsLoading] = useState(false);
 	const { signIn } = useAuth();
+	const [verificationEmail, setVerificationEmail] = useState<string | null>(
+		null,
+	);
+	const { cooldown, setCooldown, handleResend } = useResendEmail({
+		email: verificationEmail,
+	});
 
 	// Redirect to root if already authenticated
 	useUser({
@@ -77,6 +88,8 @@ export default function Login() {
 			{
 				onSuccess: (ctx) => {
 					queryClient.clear();
+					setVerificationEmail(null);
+					setCooldown(0);
 					posthog.identify(ctx.data.user.id, {
 						email: ctx.data.user.email,
 						name: ctx.data.user.name,
@@ -89,6 +102,13 @@ export default function Login() {
 					router.push("/");
 				},
 				onError: (ctx) => {
+					// If the backend requires email verification, surface a clear
+					// message and enable the resend flow.
+					const errorCode = ctx?.error?.code;
+					if (errorCode === ERROR_CODES.EMAIL_NOT_VERIFIED) {
+						setVerificationEmail(values.email);
+					}
+
 					toast({
 						title: ctx?.error?.message || "An unknown error occurred",
 						variant: "destructive",
@@ -200,6 +220,23 @@ export default function Login() {
 						</Button>
 					</form>
 				</Form>
+				{verificationEmail && (
+					<div className="mt-4 space-y-1 text-sm text-muted-foreground">
+						<p className="font-medium text-foreground">
+							Please verify your email before signing in.
+						</p>
+						<button
+							type="button"
+							onClick={handleResend}
+							disabled={cooldown > 0}
+							className="text-sm font-medium text-primary underline underline-offset-4 disabled:cursor-not-allowed disabled:text-muted-foreground"
+						>
+							{cooldown > 0
+								? `Resend verification email in ${cooldown} seconds`
+								: "Resend verification email"}
+						</button>
+					</div>
+				)}
 				<div className="relative">
 					<div className="absolute inset-0 flex items-center">
 						<span className="w-full border-t" />
