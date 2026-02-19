@@ -216,7 +216,7 @@ export interface paths {
         };
         /**
          * Get all models
-         * @description Returns all models with their provider mappings, sorted by createdAt descending
+         * @description Returns all models with their provider mappings with optional filtering, search and sorting
          */
         get: operations["internal_get_models"];
         put?: never;
@@ -236,7 +236,7 @@ export interface paths {
         };
         /**
          * Get all providers
-         * @description Returns all providers, sorted by createdAt descending
+         * @description Returns all providers with optional filtering, sorted by createdAt descending
          */
         get: operations["internal_get_providers"];
         put?: never;
@@ -1223,6 +1223,99 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/admin/models/mappings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @example inactive
+                         * @enum {string}
+                         */
+                        status: "active" | "inactive" | "deactivated";
+                        /** @example Model deprecated */
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Model mapping status successfully updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                            mapping: {
+                                id: string;
+                                /** @enum {string} */
+                                status: "active" | "inactive" | "deactivated";
+                                deactivatedAt: string | null;
+                                deactivationReason: string | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid status transition */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Model mapping not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/keys/api": {
@@ -3896,7 +3989,15 @@ export type $defs = Record<string, never>;
 export interface operations {
     internal_get_models: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: "active" | "inactive" | "deactivated";
+                search?: string;
+                family?: string;
+                sort?: "name" | "family" | "status" | "createdAt" | "updatedAt";
+                order?: "asc" | "desc";
+                /** @description Include all mapping statuses (for admin) */
+                includeAll?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3913,6 +4014,7 @@ export interface operations {
                         models: {
                             id: string;
                             createdAt: string | null;
+                            updatedAt?: string | null;
                             releasedAt: string | null;
                             name: string | null;
                             aliases: string[] | null;
@@ -3930,30 +4032,51 @@ export interface operations {
                                 modelId: string;
                                 providerId: string;
                                 modelName: string;
-                                inputPrice: string | null;
-                                outputPrice: string | null;
-                                cachedInputPrice: string | null;
-                                imageInputPrice: string | null;
-                                requestPrice: string | null;
+                                inputPrice: number | null;
+                                outputPrice: number | null;
+                                cachedInputPrice: number | null;
+                                imageInputPrice: number | null;
+                                requestPrice: number | null;
                                 contextSize: number | null;
                                 maxOutput: number | null;
                                 streaming: boolean;
                                 vision: boolean | null;
                                 reasoning: boolean | null;
                                 reasoningOutput: string | null;
-                                reasoningLevels?: ("minimal" | "low" | "medium" | "high")[] | null;
+                                reasoningLevels: ("minimal" | "low" | "medium" | "high")[] | null;
                                 tools: boolean | null;
                                 jsonOutput: boolean | null;
                                 jsonOutputSchema: boolean | null;
                                 webSearch: boolean | null;
-                                discount: string | null;
+                                webSearchPrice: number | null;
+                                discount: number | null;
+                                pricingTiers: {
+                                    name: string;
+                                    upToTokens: number | null;
+                                    inputPrice: number;
+                                    outputPrice: number;
+                                }[] | null;
                                 /** @enum {string|null} */
                                 stability: "stable" | "beta" | "unstable" | "experimental" | null;
                                 supportedParameters: string[] | null;
                                 deprecatedAt: string | null;
                                 deactivatedAt: string | null;
+                                deactivationReason: string | null;
                                 /** @enum {string} */
-                                status: "active" | "inactive";
+                                status: "active" | "inactive" | "deactivated";
+                                providerInfo?: {
+                                    id: string;
+                                    createdAt: string | null;
+                                    name: string | null;
+                                    description: string | null;
+                                    streaming: boolean | null;
+                                    cancellation: boolean | null;
+                                    color: string | null;
+                                    website: string | null;
+                                    announcement: string | null;
+                                    /** @enum {string} */
+                                    status: "active" | "inactive";
+                                };
                             }[];
                         }[];
                     };
@@ -3963,7 +4086,10 @@ export interface operations {
     };
     internal_get_providers: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Include inactive providers (for admin) */
+                includeAll?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;

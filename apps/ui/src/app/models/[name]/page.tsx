@@ -19,14 +19,14 @@ import { ProviderTabs } from "@/components/models/provider-tabs";
 import { Badge } from "@/lib/components/badge";
 import { Button } from "@/lib/components/button";
 import { getConfig } from "@/lib/config-server";
+import { fetchModels } from "@/lib/fetch-models";
 
 import {
 	models as modelDefinitions,
-	providers as providerDefinitions,
 	type StabilityLevel,
-	type ModelDefinition,
 } from "@llmgateway/models";
 
+import type { ApiModelProviderMapping } from "@/lib/fetch-models";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -38,11 +38,13 @@ export default async function ModelPage({ params }: PageProps) {
 	const { name } = await params;
 	const decodedName = decodeURIComponent(name);
 
-	const modelDef = modelDefinitions.find(
-		(m) => m.id === decodedName,
-	) as ModelDefinition;
+	// Fetch models from API (with active mappings only)
+	const apiModels = await fetchModels();
 
-	if (!modelDef) {
+	// Find model from API (includes only active mappings)
+	const model = apiModels.find((m) => m.id === decodedName);
+
+	if (!model) {
 		notFound();
 	}
 
@@ -75,15 +77,8 @@ export default async function ModelPage({ params }: PageProps) {
 		return stability && ["unstable", "experimental"].includes(stability);
 	};
 
-	const modelProviders = modelDef.providers.map((provider) => {
-		const providerInfo = providerDefinitions.find(
-			(p) => p.id === provider.providerId,
-		);
-		return {
-			...provider,
-			providerInfo,
-		};
-	});
+	// Use API data (already filtered by status and enriched with provider info)
+	const modelProviders: ApiModelProviderMapping[] = model.mappings;
 
 	return (
 		<>
@@ -102,23 +97,19 @@ export default async function ModelPage({ params }: PageProps) {
 					<div className="mb-8">
 						<div className="flex items-center gap-3 mb-2 flex-wrap">
 							<h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-								{modelDef.name}
+								{model.name}
 							</h1>
-							{shouldShowStabilityWarning(modelDef.stability) && (
+							{shouldShowStabilityWarning(model.stability) && (
 								<AlertTriangle className="h-6 w-6 md:h-8 md:w-8 text-orange-500" />
 							)}
 						</div>
-						{modelDef.description && (
-							<p className="text-muted-foreground mb-4">
-								{modelDef.description}
-							</p>
+						{model.description && (
+							<p className="text-muted-foreground mb-4">{model.description}</p>
 						)}
 						<div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
 							<CopyModelName modelName={decodedName} />
 							{(() => {
-								const stabilityProps = getStabilityBadgeProps(
-									modelDef.stability,
-								);
+								const stabilityProps = getStabilityBadgeProps(model.stability);
 								return stabilityProps ? (
 									<Badge
 										variant={stabilityProps.variant}
@@ -137,7 +128,7 @@ export default async function ModelPage({ params }: PageProps) {
 							})()}
 
 							<a
-								href={`${config.playgroundUrl}?model=${encodeURIComponent(`${modelDef.providers[0]?.providerId}/${modelDef.id}`)}`}
+								href={`${config.playgroundUrl}?model=${encodeURIComponent(`${modelProviders[0]?.providerId}/${model.id}`)}`}
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -160,12 +151,15 @@ export default async function ModelPage({ params }: PageProps) {
 								{(() => {
 									const inputPrices = modelProviders
 										.filter((p) => p.inputPrice)
-										.map((p) => ({
-											price:
-												p.inputPrice! * 1e6 * (p.discount ? 1 - p.discount : 1),
-											originalPrice: p.inputPrice! * 1e6,
-											discount: p.discount,
-										}));
+										.map((p) => {
+											const price = p.inputPrice!;
+											const discount = p.discount ?? 0;
+											return {
+												price: price * 1e6 * (discount ? 1 - discount : 1),
+												originalPrice: price * 1e6,
+												discount,
+											};
+										});
 									if (inputPrices.length === 0) {
 										return "Free";
 									}
@@ -184,14 +178,15 @@ export default async function ModelPage({ params }: PageProps) {
 								{(() => {
 									const outputPrices = modelProviders
 										.filter((p) => p.outputPrice)
-										.map((p) => ({
-											price:
-												p.outputPrice! *
-												1e6 *
-												(p.discount ? 1 - p.discount : 1),
-											originalPrice: p.outputPrice! * 1e6,
-											discount: p.discount,
-										}));
+										.map((p) => {
+											const price = p.outputPrice!;
+											const discount = p.discount ?? 0;
+											return {
+												price: price * 1e6 * (discount ? 1 - discount : 1),
+												originalPrice: price * 1e6,
+												discount,
+											};
+										});
 									if (outputPrices.length === 0) {
 										return "Free";
 									}
@@ -207,34 +202,35 @@ export default async function ModelPage({ params }: PageProps) {
 								})()}{" "}
 								output tokens
 							</div>
-							{modelProviders.some((p) => p.imageOutputPrice) && (
+							{modelProviders.some((p) => p.imageInputPrice) && (
 								<div>
 									Starting at{" "}
 									{(() => {
-										const imageOutputPrices = modelProviders
-											.filter((p) => p.imageOutputPrice)
-											.map((p) => ({
-												price:
-													p.imageOutputPrice! *
-													1e6 *
-													(p.discount ? 1 - p.discount : 1),
-												originalPrice: p.imageOutputPrice! * 1e6,
-												discount: p.discount,
-											}));
-										if (imageOutputPrices.length === 0) {
+										const imageInputPrices = modelProviders
+											.filter((p) => p.imageInputPrice)
+											.map((p) => {
+												const price = p.imageInputPrice!;
+												const discount = p.discount ?? 0;
+												return {
+													price: price * 1e6 * (discount ? 1 - discount : 1),
+													originalPrice: price * 1e6,
+													discount,
+												};
+											});
+										if (imageInputPrices.length === 0) {
 											return "Free";
 										}
 										const minPrice = Math.min(
-											...imageOutputPrices.map((p) => p.price),
+											...imageInputPrices.map((p) => p.price),
 										);
-										const minPriceItem = imageOutputPrices.find(
+										const minPriceItem = imageInputPrices.find(
 											(p) => p.price === minPrice,
 										);
 										return minPriceItem?.discount
 											? `$${minPrice.toFixed(2)}/M (${(minPriceItem.discount * 100).toFixed(0)}% off)`
 											: `$${minPrice.toFixed(2)}/M`;
 									})()}{" "}
-									image output tokens
+									image input tokens
 								</div>
 							)}
 						</div>
@@ -253,9 +249,10 @@ export default async function ModelPage({ params }: PageProps) {
 								const hasTools = modelProviders.some((p) => p.tools);
 								const hasReasoning = modelProviders.some((p) => p.reasoning);
 								const hasJsonOutput = modelProviders.some((p) => p.jsonOutput);
-								const hasImageGen = Array.isArray((modelDef as any)?.output)
-									? ((modelDef as any).output as string[]).includes("image")
-									: false;
+								const hasImageGen =
+									model.output && Array.isArray(model.output)
+										? model.output.includes("image")
+										: false;
 
 								if (hasStreaming) {
 									items.push({
@@ -334,7 +331,7 @@ export default async function ModelPage({ params }: PageProps) {
 						<div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
 							<div>
 								<h2 className="text-xl md:text-2xl font-semibold mb-2">
-									All Providers for {modelDef.name}
+									All Providers for {model.name}
 								</h2>
 								<p className="text-muted-foreground">
 									LLM API routes requests to the best providers that are able to
@@ -349,7 +346,7 @@ export default async function ModelPage({ params }: PageProps) {
 									key={`${provider.providerId}-${provider.modelName}-${decodedName}`}
 									provider={provider}
 									modelName={decodedName}
-									modelStability={modelDef.stability}
+									modelStability={model.stability}
 								/>
 							))}
 						</div>
@@ -371,9 +368,9 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
 	const { name } = await params;
 	const decodedName = decodeURIComponent(name);
-	const model = modelDefinitions.find((m) => m.id === decodedName) as
-		| ModelDefinition
-		| undefined;
+
+	const apiModels = await fetchModels();
+	const model = apiModels.find((m) => m.id === decodedName);
 
 	if (!model) {
 		return {};
@@ -384,7 +381,7 @@ export async function generateMetadata({
 		model.description ||
 		`Details, pricing, and capabilities for ${model.name || model.id} on LLM API.`;
 
-	const primaryProvider = model.providers[0]?.providerId || "default";
+	const primaryProvider = model.mappings[0]?.providerId || "default";
 	const ogImageUrl = `/models/${encodeURIComponent(decodedName)}/${encodeURIComponent(primaryProvider)}/opengraph-image`;
 
 	return {
