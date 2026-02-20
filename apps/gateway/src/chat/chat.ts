@@ -49,6 +49,7 @@ import {
 import { applyOrganizationContext } from "./tools/apply-organization-context.js";
 import { countInputImages } from "./tools/count-input-images.js";
 import { createLogEntry } from "./tools/create-log-entry.js";
+import { estimateRequiredContextSize } from "./tools/estimate-required-context-size.js";
 import { estimateTokens } from "./tools/estimate-tokens.js";
 import { extractContent } from "./tools/extract-content.js";
 import { extractCustomHeaders } from "./tools/extract-custom-headers.js";
@@ -63,7 +64,9 @@ import { mightBeCompleteJson } from "./tools/might-be-complete-json.js";
 import { convertAwsEventStreamToSSE } from "./tools/parse-aws-eventstream.js";
 import { parseModelInput } from "./tools/parse-model-input.js";
 import { parseProviderResponse } from "./tools/parse-provider-response.js";
+import { resolveAutoRoutingProviders } from "./tools/resolve-auto-routing-providers.js";
 import { resolveModelInfo } from "./tools/resolve-model-info.js";
+import { selectAutoRouteModel } from "./tools/select-auto-route-model.js";
 import { transformResponseToOpenai } from "./tools/transform-response-to-openai.js";
 import { transformStreamingToOpenai } from "./tools/transform-streaming-to-openai.js";
 import { DEFAULT_TOKENIZER_MODEL } from "./tools/types.js";
@@ -74,6 +77,13 @@ import type { ImageObject } from "./tools/types.js";
 import type { ServerTypes } from "@/vars.js";
 import type { tables } from "@llmgateway/db";
 import type { InferSelectModel } from "drizzle-orm";
+
+const ALLOWED_AUTO_MODELS = [
+	"gpt-5-nano",
+	"gpt-4.1-nano",
+	"gpt-4o-mini",
+] as const;
+const AUTO_ROUTING_COMPLETION_BUFFER = 4096;
 
 /**
  * Checks if a model is truly free (has free flag AND no per-request pricing)
@@ -860,212 +870,44 @@ chat.openapi(completions, async (c) => {
 	}
 
 	// Apply auto-routing logic: when model is "auto", select the best real model
-	if (
-		((usedProvider as string) === "llmapi" &&
-			(usedModel as string) === "auto") ||
-		(usedModel as string) === "auto"
-	) {
-		// Estimate the context size needed based on the request
-		let requiredContextSize = 0;
+	const isAutoRouting = (usedModel as string) === "auto";
+	if (isAutoRouting) {
+		const requiredContextSize = estimateRequiredContextSize(
+			messages,
+			tools,
+			max_tokens,
+			AUTO_ROUTING_COMPLETION_BUFFER,
+		);
 
-		// Estimate prompt tokens from messages
-		if (messages && messages.length > 0) {
-			try {
-				const chatMessages: any[] = messages.map((m) => ({
-					role: m.role as "user" | "assistant" | "system" | undefined,
-					content:
-						typeof m.content === "string"
-							? m.content
-							: JSON.stringify(m.content),
-					name: m.name,
-				}));
-				requiredContextSize = encodeChat(
-					chatMessages,
-					DEFAULT_TOKENIZER_MODEL,
-				).length;
-			} catch {
-				// Fallback to simple estimation if encoding fails
-				const messageTokens = messages.reduce(
-					(acc, m) => acc + (m.content?.length || 0),
-					0,
-				);
-				requiredContextSize = Math.max(1, Math.round(messageTokens / 4));
-			}
-		}
+		const availableProviders = await resolveAutoRoutingProviders(project);
 
-		// Add tool definitions to context estimation
-		if (tools && tools.length > 0) {
-			try {
-				const toolsString = JSON.stringify(tools);
-				requiredContextSize += Math.round(toolsString.length / 4);
-			} catch {
-				requiredContextSize += tools.length * 100;
-			}
-		}
+		const selected = selectAutoRouteModel(
+			availableProviders,
+			requiredContextSize,
+			{
+				no_reasoning,
+				reasoning_effort,
+				tools,
+				tool_choice,
+				webSearchTool,
+				response_format,
+				hasImages,
+			},
+			ALLOWED_AUTO_MODELS,
+		);
 
-		// Add max_tokens or a default completion buffer
-		if (max_tokens) {
-			requiredContextSize += max_tokens;
-		} else {
-			requiredContextSize += 4096;
-		}
-
-		// Get available providers based on project mode
-		let availableProviders: string[] = [];
-
-		if (project.mode === "api-keys") {
-			const providerKeys = await db.query.providerKey.findMany({
-				where: {
-					status: { eq: "active" },
-					organizationId: { eq: project.organizationId },
-				},
-			});
-			availableProviders = providerKeys.map((key) => key.provider);
-		} else if (project.mode === "credits" || project.mode === "hybrid") {
-			const providerKeys = await db.query.providerKey.findMany({
-				where: {
-					status: { eq: "active" },
-					organizationId: { eq: project.organizationId },
-				},
-			});
-			const databaseProviders = providerKeys.map((key) => key.provider);
-
-			// Collect providers that have environment tokens configured
-			const envProviders: string[] = [];
-			for (const p of providers) {
-				if (
-					(p.id as string) !== "llmapi" &&
-					hasProviderEnvironmentToken(p.id as Provider)
-				) {
-					envProviders.push(p.id);
-				}
-			}
-
-			if (project.mode === "credits") {
-				availableProviders = envProviders;
-			} else {
-				availableProviders = [
-					...new Set([...databaseProviders, ...envProviders]),
-				];
-			}
-		}
-
-		// Hardcoded whitelist of models eligible for auto-routing
-		const allowedAutoModels = ["gpt-5-nano", "gpt-4.1-nano", "gpt-4o-mini"];
-
-		let selectedModel: ModelDefinition | undefined;
-		let selectedProviders: ProviderModelMapping[] = [];
-		let lowestPrice = Number.MAX_VALUE;
-		const now = new Date();
-
-		for (const modelDef of models) {
-			// Skip virtual models
-			if (
-				(modelDef.id as string) === "auto" ||
-				(modelDef.id as string) === "custom"
-			) {
-				continue;
-			}
-
-			// Only consider whitelisted models
-			if (!allowedAutoModels.includes(modelDef.id)) {
-				continue;
-			}
-
-			// Filter to providers that are available for this project
-			const availableModelProviders = (
-				modelDef.providers as ProviderModelMapping[]
-			).filter((provider) => availableProviders.includes(provider.providerId));
-
-			// Filter by capability requirements and deprecation status
-			const suitableProviders = availableModelProviders.filter((provider) => {
-				// Skip deprecated provider mappings
-				if (provider.deprecatedAt && now > provider.deprecatedAt) {
-					return false;
-				}
-
-				// Context size must be sufficient
-				const modelContextSize = provider.contextSize ?? 8192;
-				if (modelContextSize < requiredContextSize) {
-					return false;
-				}
-
-				// Exclude reasoning models when no_reasoning is set
-				if (no_reasoning && provider.reasoning === true) {
-					return false;
-				}
-
-				// Require reasoning when reasoning_effort is specified
-				if (reasoning_effort !== undefined && provider.reasoning !== true) {
-					return false;
-				}
-
-				// Require tool support when tools are specified
-				if (
-					(tools !== undefined || tool_choice !== undefined) &&
-					provider.tools !== true
-				) {
-					return false;
-				}
-
-				// Require web search support when web search tool is requested
-				if (webSearchTool && provider.webSearch !== true) {
-					return false;
-				}
-
-				// Require JSON output support
-				if (
-					(response_format?.type === "json_object" ||
-						response_format?.type === "json_schema") &&
-					provider.jsonOutput !== true
-				) {
-					return false;
-				}
-
-				// Require JSON schema support
-				if (
-					response_format?.type === "json_schema" &&
-					provider.jsonOutputSchema !== true
-				) {
-					return false;
-				}
-
-				// Require vision support when images are present
-				if (hasImages && provider.vision !== true) {
-					return false;
-				}
-
-				return true;
-			});
-
-			if (suitableProviders.length > 0) {
-				// Track the cheapest model across all candidates
-				for (const provider of suitableProviders) {
-					const totalPrice =
-						((provider.inputPrice || 0) + (provider.outputPrice || 0)) / 2;
-					if (totalPrice < lowestPrice) {
-						lowestPrice = totalPrice;
-						selectedModel = modelDef as ModelDefinition;
-						selectedProviders = suitableProviders;
-					}
-				}
-			}
-		}
-
-		if (selectedModel && selectedProviders.length > 0) {
-			// Use the weighted scoring algorithm to pick the best provider
-			const metricsCombinations = selectedProviders.map((p) => ({
-				modelId: (selectedModel as ModelDefinition).id,
-				providerId: p.providerId,
-			}));
+		if (selected) {
 			const metricsMap = await getProviderMetricsForCombinations(
-				metricsCombinations,
+				selected.providers.map((p) => ({
+					modelId: selected.model.id,
+					providerId: p.providerId,
+				})),
 				5,
 			);
 
 			const cheapestResult = getCheapestFromAvailableProviders(
-				selectedProviders,
-				selectedModel,
+				selected.providers,
+				selected.model,
 				{ metricsMap, isStreaming: stream },
 			);
 
@@ -1077,8 +919,8 @@ chat.openapi(completions, async (c) => {
 					...(noFallback ? { noFallback: true } : {}),
 				};
 			} else {
-				usedProvider = selectedProviders[0].providerId;
-				usedModel = selectedProviders[0].modelName;
+				usedProvider = selected.providers[0].providerId;
+				usedModel = selected.providers[0].modelName;
 			}
 		} else {
 			if (no_reasoning) {
