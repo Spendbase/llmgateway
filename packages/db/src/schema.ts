@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
 	boolean,
+	customType,
 	decimal,
 	index,
 	integer,
@@ -16,6 +17,16 @@ import { customAlphabet } from "nanoid";
 
 import type { errorDetails, tools, toolChoice, toolResults } from "./types.js";
 import type z from "zod";
+
+// Custom decimal type that parses to number automatically
+const numericDecimal = customType<{ data: number; driverData: string }>({
+	dataType() {
+		return "numeric";
+	},
+	fromDriver(value: string): number {
+		return parseFloat(value);
+	},
+});
 
 export const UnifiedFinishReason = {
 	COMPLETED: "completed",
@@ -50,6 +61,11 @@ export const user = pgTable("user", {
 	emailVerified: boolean().notNull().default(false),
 	image: text(),
 	onboardingCompleted: boolean().notNull().default(false),
+	status: text({
+		enum: ["active", "blocked"],
+	})
+		.notNull()
+		.default("active"),
 });
 
 export const session = pgTable(
@@ -160,6 +176,7 @@ export const organization = pgTable("organization", {
 	devPlanCancelled: boolean().notNull().default(false),
 	devPlanExpiresAt: timestamp(),
 	devPlanAllowAllModels: boolean().notNull().default(false),
+	organizationContext: text().notNull().default(""),
 });
 
 export const referral = pgTable(
@@ -744,11 +761,11 @@ export const modelProviderMapping = pgTable(
 			.notNull()
 			.references(() => provider.id, { onDelete: "cascade" }),
 		modelName: text().notNull(),
-		inputPrice: decimal(),
-		outputPrice: decimal(),
-		cachedInputPrice: decimal(),
-		imageInputPrice: decimal(),
-		requestPrice: decimal(),
+		inputPrice: numericDecimal(),
+		outputPrice: numericDecimal(),
+		cachedInputPrice: numericDecimal(),
+		imageInputPrice: numericDecimal(),
+		requestPrice: numericDecimal(),
 		contextSize: integer(),
 		maxOutput: integer(),
 		streaming: boolean().notNull().default(false),
@@ -759,7 +776,17 @@ export const modelProviderMapping = pgTable(
 		jsonOutput: boolean().default(false).notNull(),
 		jsonOutputSchema: boolean().default(false).notNull(),
 		webSearch: boolean().default(false).notNull(),
-		discount: decimal().default("0").notNull(),
+		webSearchPrice: numericDecimal(),
+		discount: numericDecimal().default(0).notNull(),
+		reasoningLevels: json().$type<("minimal" | "low" | "medium" | "high")[]>(),
+		pricingTiers: json().$type<
+			{
+				name: string;
+				upToTokens?: number;
+				inputPrice: number;
+				outputPrice: number;
+			}[]
+		>(),
 		stability: text({
 			enum: ["stable", "beta", "unstable", "experimental"],
 		})
@@ -771,8 +798,9 @@ export const modelProviderMapping = pgTable(
 		}),
 		deprecatedAt: timestamp(),
 		deactivatedAt: timestamp(),
+		deactivationReason: text(),
 		status: text({
-			enum: ["active", "inactive"],
+			enum: ["active", "inactive", "deactivated"],
 		})
 			.notNull()
 			.default("active"),

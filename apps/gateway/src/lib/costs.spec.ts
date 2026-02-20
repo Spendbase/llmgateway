@@ -254,25 +254,27 @@ describe("calculateCosts", () => {
 
 	it("should include reasoning tokens in output cost calculation", () => {
 		// Test with Google model that has reasoning tokens
+		// For Google providers, completionTokens already includes reasoning
+		// (merged during token extraction), so we pass 700 = 500 output + 200 reasoning
 		const result = calculateCosts(
 			"gemini-2.5-pro",
 			"google-ai-studio",
 			1000,
-			500,
+			700, // completionTokens includes reasoning for Google
 			null,
 			undefined,
-			200, // 200 reasoning tokens
+			200, // 200 reasoning tokens (for display, not added again)
 		);
 
 		// For Google: gemini-2.5-pro
 		// inputPrice: 1.25 / 1e6
 		// outputPrice: 10.0 / 1e6
-		// Total output tokens should be 500 + 200 = 700
+		// Total output tokens = 700 (completionTokens already includes reasoning)
 		expect(result.inputCost).toBeCloseTo(0.00125); // 1000 * 1.25e-6
 		expect(result.outputCost).toBeCloseTo(0.007); // 700 * 10.0e-6
 		expect(result.totalCost).toBeCloseTo(0.00825); // 0.00125 + 0.007
 		expect(result.promptTokens).toBe(1000);
-		expect(result.completionTokens).toBe(500);
+		expect(result.completionTokens).toBe(700);
 		expect(result.estimatedCost).toBe(false);
 	});
 
@@ -291,5 +293,94 @@ describe("calculateCosts", () => {
 		expect(result.inputCost).toBeCloseTo(0.00125); // 1000 * 1.25e-6
 		expect(result.outputCost).toBeCloseTo(0.005); // 500 * 10.0e-6
 		expect(result.totalCost).toBeCloseTo(0.00625); // 0.00125 + 0.005
+	});
+
+	it("should include image input cost in inputCost", () => {
+		const result = calculateCosts(
+			"gemini-3-pro-image-preview",
+			"google-ai-studio",
+			1000, // text prompt tokens
+			500,
+			null, // cachedTokens
+			undefined, // fullOutput
+			undefined, // reasoningTokens
+			undefined, // outputImageCount
+			undefined, // imageSize
+			2, // inputImageCount: 2 input images
+			undefined, // webSearchCount
+		);
+
+		// Each input image costs $0.0011, with 20% discount: 2 * 0.0011 * 0.8 = 0.00176
+		expect(result.imageInputCost).toBeCloseTo(0.00176);
+		// promptTokens should include image input tokens (560 tokens per image)
+		expect(result.promptTokens).toBe(2120); // 1000 text + 1120 image
+		// inputCost includes both text and image input costs
+		// text: 1000 * (2/1e6) * 0.8 = 0.0016
+		// image: 0.00176
+		expect(result.inputCost).toBeCloseTo(0.0016 + 0.00176);
+		// totalCost = inputCost + outputCost (image costs are folded into input/output costs)
+		expect(result.totalCost).toBeCloseTo(
+			(result.inputCost ?? 0) + (result.outputCost ?? 0),
+		);
+	});
+
+	it("should include image output cost in outputCost", () => {
+		const result = calculateCosts(
+			"gemini-3-pro-image-preview",
+			"google-ai-studio",
+			1000,
+			2500, // Output tokens including both text and image
+			null, // cachedTokens
+			undefined, // fullOutput
+			undefined, // reasoningTokens
+			2, // outputImageCount: 2 output images (1K size)
+			undefined, // imageSize
+			undefined, // inputImageCount
+			undefined, // webSearchCount
+		);
+
+		// Each 1K output image is 1120 tokens at $120/1M with 20% discount
+		expect(result.imageOutputTokens).toBe(2240); // 2 * 1120
+		// 2240 * (120/1e6) * 0.8 = 0.21504
+		expect(result.imageOutputCost).toBeCloseTo(0.21504);
+		// outputCost includes both text and image output costs
+		// text: (2500 - 2240) * (12/1e6) * 0.8 = 260 * 12e-6 * 0.8 = 0.002496
+		// image: 0.21504
+		expect(result.outputCost).toBeCloseTo(0.002496 + 0.21504);
+		// totalCost = inputCost + outputCost (image costs are folded into input/output costs)
+		expect(result.totalCost).toBeCloseTo(
+			(result.inputCost ?? 0) + (result.outputCost ?? 0),
+		);
+	});
+
+	it("should include image costs in totalCost sum", () => {
+		// totalCost = inputCost + outputCost + cachedInputCost + requestCost + webSearchCost
+		// (inputCost already includes imageInputCost, outputCost already includes imageOutputCost)
+		const result = calculateCosts(
+			"gemini-3-pro-image-preview",
+			"google-ai-studio",
+			1000,
+			2500,
+			null, // cachedTokens
+			undefined, // fullOutput
+			undefined, // reasoningTokens
+			1, // outputImageCount: 1 output image
+			undefined, // imageSize
+			1, // inputImageCount: 1 input image
+			undefined, // webSearchCount
+		);
+
+		// Calculate expected total (image costs are folded into input/output costs)
+		const expectedTotal =
+			(result.inputCost ?? 0) +
+			(result.outputCost ?? 0) +
+			(result.cachedInputCost ?? 0) +
+			(result.requestCost ?? 0) +
+			(result.webSearchCost ?? 0);
+
+		expect(result.totalCost).toBeCloseTo(expectedTotal);
+		// Verify image costs are still tracked as breakdown fields
+		expect(result.imageInputCost).toBeGreaterThan(0);
+		expect(result.imageOutputCost).toBeGreaterThan(0);
 	});
 });

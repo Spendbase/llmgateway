@@ -2,6 +2,8 @@ import React from "react";
 
 import { cn } from "@/lib/utils";
 
+import { Logo } from "./ui/logo";
+
 import type { ProviderId } from "@llmgateway/models";
 
 // Anthropic Icon
@@ -1281,7 +1283,7 @@ export const getProviderLogoDarkModeClasses = () => {
 // Helper function to get an icon by provider name
 export const getProviderIcon = (
 	provider: string,
-): React.FC<React.SVGProps<SVGSVGElement>> | null => {
+): React.FC<React.SVGProps<SVGSVGElement>> => {
 	// First try the exact provider name (for keys like "together.ai", "inference.net")
 	if (ProviderIcons[provider as ProviderIconKey]) {
 		return ProviderIcons[provider as ProviderIconKey];
@@ -1291,5 +1293,5 @@ export const getProviderIcon = (
 	const normalizedProvider = provider
 		.toLowerCase()
 		.replace(/[^a-z0-9]/g, "-") as ProviderIconKey;
-	return ProviderIcons[normalizedProvider] || null;
+	return ProviderIcons[normalizedProvider] || Logo;
 };

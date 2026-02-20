@@ -602,6 +602,45 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				},
 		hooks: {
 			before: createAuthMiddleware(async (ctx) => {
+				// Block sign-in for blocked users
+				if (ctx.path.startsWith("/sign-in/email")) {
+					const body = ctx.body as { email?: string } | undefined;
+					const rawEmail = body?.email;
+					if (rawEmail) {
+						const normalizedEmail = rawEmail.toLowerCase().trim();
+						const user = await db.query.user.findFirst({
+							where: {
+								email: normalizedEmail,
+							},
+							columns: {
+								id: true,
+								status: true,
+							},
+						});
+
+						if (user && user.status === "blocked") {
+							logger.warn("Blocked user attempted to sign in", {
+								userId: user.id,
+								email: maskEmail(normalizedEmail),
+							});
+
+							return new Response(
+								JSON.stringify({
+									error: "account_blocked",
+									message:
+										"Your account has been suspended. Please contact support for assistance.",
+								}),
+								{
+									status: 403,
+									headers: {
+										"Content-Type": "application/json",
+									},
+								},
+							);
+						}
+					}
+				}
+
 				// Rate limit password reset requests
 				if (ctx.path.startsWith("/forget-password")) {
 					const body = ctx.body as { email?: string } | undefined;
@@ -746,13 +785,49 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				return;
 			}),
 			after: createAuthMiddleware(async (ctx) => {
-				// Create default org/project for first-time sessions (email signup or first social sign-in)
+				// Block all sign-ins for blocked users (runs for all auth methods: email, passkey, social)
 				const newSession = ctx.context.newSession;
 				if (!newSession?.user) {
 					return;
 				}
 
 				const userId = newSession.user.id;
+
+				// Check if user is blocked before creating session
+				const user = await db.query.user.findFirst({
+					where: {
+						id: userId,
+					},
+					columns: {
+						id: true,
+						email: true,
+						status: true,
+					},
+				});
+
+				if (user && user.status === "blocked") {
+					logger.warn("Blocked user attempted to authenticate", {
+						userId: user.id,
+						email: maskEmail(user.email),
+						path: ctx.path,
+					});
+
+					return new Response(
+						JSON.stringify({
+							error: "account_blocked",
+							message:
+								"Your account has been suspended. Please contact support for assistance.",
+						}),
+						{
+							status: 403,
+							headers: {
+								"Content-Type": "application/json",
+							},
+						},
+					);
+				}
+
+				// Create default org/project for first-time sessions (email signup or first social sign-in)
 
 				// Check if the user already has any active organizations
 				const userOrganizations = await db.query.userOrganization.findMany({
@@ -858,6 +933,8 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				});
 
 				signupCounter.add(1, { method: "new_onboarding" });
+
+				return;
 			}),
 		},
 	}),

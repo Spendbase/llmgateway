@@ -11,6 +11,7 @@ export const maxDuration = 300; // 5 minutes
 
 interface ChatRequestBody {
 	messages: UIMessage[];
+	chatId?: string | null;
 	model?: LLMGatewayChatModelId;
 	apiKey?: string;
 	provider?: string; // optional provider override
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
 	const body = await req.json();
 	const {
 		messages,
+		chatId,
 		model,
 		apiKey,
 		provider,
@@ -105,16 +107,107 @@ export async function POST(req: Request) {
 		}
 	}
 
+	const apiUrl =
+		process.env.API_URL ||
+		process.env.API_BACKEND_URL ||
+		"http://localhost:4002";
+	const cookieHeader = req.headers.get("cookie") ?? "";
+
+	function buildAssistantMessageBody(msg: UIMessage) {
+		const parts = msg.parts ?? [];
+		const text = parts
+			.filter((p) => p.type === "text")
+			.map((p) => p.text)
+			.join("");
+		const reasoning = parts
+			.filter((p) => p.type === "reasoning")
+			.map((p) => p.text)
+			.join("");
+		const toolParts = parts.filter(
+			(p: { type?: string }) => p.type === "dynamic-tool",
+		);
+
+		const imageParts = parts.filter(
+			(p: { type?: string }) => p.type === "image_url" || p.type === "file",
+		);
+		const images = imageParts
+			.map((p: Record<string, unknown>) => {
+				if (
+					p.type === "image_url" &&
+					p.image_url &&
+					typeof p.image_url === "object" &&
+					"url" in p.image_url
+				) {
+					return {
+						type: "image_url" as const,
+						image_url: { url: (p.image_url as { url?: string }).url },
+					};
+				}
+				const file = p.file as Record<string, unknown> | undefined;
+				const url = (p.url ??
+					p.data ??
+					p.base64 ??
+					file?.url ??
+					file?.data ??
+					file?.base64) as string | undefined;
+				const mt = (p.mediaType ??
+					p.mimeType ??
+					file?.mediaType ??
+					file?.mimeType) as string | undefined;
+				if (typeof mt === "string" && mt.startsWith("image/") && url) {
+					return { type: "image_url" as const, image_url: { url } };
+				}
+				return null;
+			})
+			.filter(Boolean) as { type: "image_url"; image_url: { url: string } }[];
+
+		return {
+			role: "assistant" as const,
+			content: text || undefined,
+			reasoning: reasoning || undefined,
+			images: images.length > 0 ? JSON.stringify(images) : undefined,
+			tools: toolParts.length > 0 ? JSON.stringify(toolParts) : undefined,
+		};
+	}
+
 	try {
-		// Default streaming chat path (no tools)
 		const result = streamText({
 			model: llmgateway.chat(selectedModel),
 			messages: await convertToModelMessages(messages),
 		});
 
+		result.consumeStream();
+
 		return result.toUIMessageStreamResponse({
+			originalMessages: messages,
 			sendReasoning: true,
 			sendSources: true,
+			onFinish: async ({ responseMessage }) => {
+				if (!chatId) {
+					return;
+				}
+				const bodyToSave = buildAssistantMessageBody(responseMessage);
+				if (
+					!bodyToSave.content &&
+					!bodyToSave.images &&
+					!bodyToSave.reasoning &&
+					!bodyToSave.tools
+				) {
+					return;
+				}
+				try {
+					await fetch(`${apiUrl}/chats/${chatId}/messages`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							Cookie: cookieHeader,
+						},
+						body: JSON.stringify(bodyToSave),
+					});
+				} catch {
+					// Log in prod; client may retry or show toast
+				}
+			},
 		});
 	} catch (error: any) {
 		const message = error.message || "LLM API request failed";

@@ -36,18 +36,11 @@ import { formatContextSize } from "@/lib/utils";
 
 import { getProviderIcon } from "@llmgateway/shared/components";
 
-import type {
-	ProviderModelMapping,
-	ProviderDefinition,
-	StabilityLevel,
-} from "@llmgateway/models";
-
-interface ProviderWithInfo extends ProviderModelMapping {
-	providerInfo?: ProviderDefinition;
-}
+import type { ApiModelProviderMapping } from "@/lib/fetch-models";
+import type { StabilityLevel } from "@llmgateway/models";
 
 interface ModelProviderCardProps {
-	provider: ProviderWithInfo;
+	provider: ApiModelProviderMapping;
 	modelName: string;
 	modelStability?: StabilityLevel;
 }
@@ -60,12 +53,14 @@ export function ModelProviderCard({
 	const config = useAppConfig();
 	const [copied, setCopied] = useState(false);
 	const [urlCopied, setUrlCopied] = useState(false);
-	const providerModelName = `${provider.providerId}/${modelName}`;
-	const ProviderIcon = getProviderIcon(provider.providerId);
+
+	const providerId = provider.providerId;
+	const providerModelName = `${providerId}/${modelName}`;
+	const ProviderIcon = getProviderIcon(providerId);
 	const providerStability = provider.stability || modelStability;
 
-	const shareUrl = `${config.appUrl}/models/${encodeURIComponent(modelName)}/${encodeURIComponent(provider.providerId)}`;
-	// const shareTitle = `${provider.providerInfo?.name || provider.providerId} - ${modelName} on LLM API`;
+	const shareUrl = `${config.appUrl}/models/${encodeURIComponent(modelName)}/${encodeURIComponent(providerId)}`;
+	// const shareTitle = `${provider.providerInfo?.name || providerId} - ${modelName} on LLM API`;
 
 	const getStabilityBadgeProps = (stability?: StabilityLevel) => {
 		switch (stability) {
@@ -324,11 +319,11 @@ export function ModelProviderCard({
 							</div>
 						</div>
 					</div>
-					{provider.imageOutputPrice !== undefined && (
+					{provider.imageInputPrice !== undefined && (
 						<div className="grid grid-cols-3 gap-3 mt-3">
 							<div className="col-span-3">
 								<div className="text-muted-foreground text-xs mb-1">
-									Image Output
+									Image Input
 								</div>
 								<div className="font-mono">
 									<div className="space-y-1">
@@ -336,17 +331,17 @@ export function ModelProviderCard({
 											{provider.discount ? (
 												<>
 													<span className="line-through text-muted-foreground text-xs">
-														{formatPrice(provider.imageOutputPrice)}
+														{formatPrice(provider.imageInputPrice)}
 													</span>
 													<span className="text-green-600 font-semibold">
 														{formatPrice(
-															provider.imageOutputPrice *
+															provider.imageInputPrice! *
 																(1 - provider.discount),
 														)}
 													</span>
 												</>
 											) : (
-												formatPrice(provider.imageOutputPrice)
+												formatPrice(provider.imageInputPrice)
 											)}
 										</div>
 										<span className="text-muted-foreground text-xs">/M</span>
@@ -355,45 +350,48 @@ export function ModelProviderCard({
 							</div>
 						</div>
 					)}
-					{provider.requestPrice !== undefined && (
-						<div className="grid grid-cols-3 gap-3 mt-3">
-							<div className="col-span-3">
-								<div className="text-muted-foreground text-xs mb-1">
-									Per Request
-								</div>
-								<div className="font-mono">
-									<div className="space-y-1">
-										<div className="flex items-center gap-2">
-											{provider.discount ? (
-												<>
-													<span className="line-through text-muted-foreground text-xs">
-														${provider.requestPrice.toFixed(3)}
-													</span>
-													<span className="text-green-600 font-semibold">
-														$
-														{(
-															provider.requestPrice *
-															(1 - provider.discount)
-														).toFixed(3)}
-													</span>
-												</>
-											) : (
-												<>${provider.requestPrice.toFixed(3)}</>
-											)}
+					{provider.requestPrice !== null &&
+						provider.requestPrice !== undefined && (
+							<div className="grid grid-cols-3 gap-3 mt-3">
+								<div className="col-span-3">
+									<div className="text-muted-foreground text-xs mb-1">
+										Per Request
+									</div>
+									<div className="font-mono">
+										<div className="space-y-1">
+											<div className="flex items-center gap-2">
+												{provider.discount ? (
+													<>
+														<span className="line-through text-muted-foreground text-xs">
+															${provider.requestPrice.toFixed(3)}
+														</span>
+														<span className="text-green-600 font-semibold">
+															$
+															{(
+																provider.requestPrice *
+																(1 - provider.discount)
+															).toFixed(3)}
+														</span>
+													</>
+												) : (
+													<>${provider.requestPrice.toFixed(3)}</>
+												)}
+											</div>
+											<span className="text-muted-foreground text-xs">
+												/req
+											</span>
 										</div>
-										<span className="text-muted-foreground text-xs">/req</span>
 									</div>
 								</div>
 							</div>
-						</div>
-					)}
-					{provider.discount && (
+						)}
+					{Boolean(provider.discount && provider.discount > 0) && (
 						<div className="mt-2">
 							<Badge
 								variant="secondary"
 								className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 border-green-200"
 							>
-								-{(provider.discount * 100).toFixed(0)}% off
+								-{(provider.discount! * 100).toFixed(0)}% off
 							</Badge>
 						</div>
 					)}
@@ -409,7 +407,7 @@ export function ModelProviderCard({
 										className="flex justify-between items-center text-xs"
 									>
 										<span className="text-muted-foreground">
-											{tier.upToTokens === Infinity
+											{tier.upToTokens === undefined
 												? `>${(provider.pricingTiers![index - 1]?.upToTokens || 0) / 1000}K tokens`
 												: `≤${tier.upToTokens / 1000}K tokens`}
 										</span>

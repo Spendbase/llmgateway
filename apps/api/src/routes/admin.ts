@@ -211,6 +211,49 @@ const getOrganizations = createRoute({
 	},
 });
 
+const updateUserStatus = createRoute({
+	method: "patch",
+	path: "/users/:id/status",
+	request: {
+		params: z.object({
+			id: z.string().openapi({ example: "user_123456" }),
+		}),
+		body: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						status: z
+							.enum(["active", "blocked"])
+							.openapi({ example: "blocked" }),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						success: z.boolean(),
+						user: z.object({
+							id: z.string(),
+							status: z.enum(["active", "blocked"]),
+						}),
+						affectedOrganizations: z.number(),
+					}),
+				},
+			},
+			description: "User status updated successfully",
+		},
+		400: { description: "Validation error" },
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "User not found" },
+		500: { description: "Internal Server Error" },
+	},
+});
+
 const getUsers = createRoute({
 	method: "get",
 	path: "/users",
@@ -238,6 +281,7 @@ const getUsers = createRoute({
 									email: z.string(),
 									emailVerified: z.boolean(),
 									createdAt: z.date(),
+									status: z.enum(["active", "blocked"]),
 									organizations: z.array(
 										z.object({
 											organizationId: z.string(),
@@ -327,6 +371,56 @@ const getDeposit = createRoute({
 		404: { description: "Deposit not found" },
 		401: { description: "Unauthorized" },
 		403: { description: "Forbidden" },
+	},
+});
+
+const modelMappingStatusSchema = z.object({
+	id: z.string(),
+	status: z.enum(["active", "inactive", "deactivated"]),
+	deactivatedAt: z.date().nullable(),
+	deactivationReason: z.string().nullable(),
+});
+
+const updateModelMappingStatus = createRoute({
+	method: "patch",
+	path: "/models/mappings/{id}",
+	request: {
+		params: z.object({
+			id: z.string().openapi({ example: "mapping_123" }),
+		}),
+		body: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						status: z
+							.enum(["active", "inactive", "deactivated"])
+							.openapi({ example: "inactive" }),
+						reason: z
+							.string()
+							.optional()
+							.openapi({ example: "Model deprecated" }),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						success: z.boolean(),
+						mapping: modelMappingStatusSchema,
+					}),
+				},
+			},
+			description: "Model mapping status successfully updated",
+		},
+		400: { description: "Invalid status transition" },
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Model mapping not found" },
+		500: { description: "Internal Server Error" },
 	},
 });
 
@@ -753,6 +847,139 @@ admin.openapi(depositCredits, async (c) => {
 	}
 });
 
+admin.openapi(updateUserStatus, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const { id: userId } = c.req.valid("param");
+	const { status } = c.req.valid("json");
+
+	// Prevent admin from blocking their own account
+	if (userId === authUser.id && status === "blocked") {
+		throw new HTTPException(403, {
+			message: "You cannot block your own account",
+		});
+	}
+
+	try {
+		// Check if user exists
+		const targetUser = await db.query.user.findFirst({
+			where: {
+				id: userId,
+			},
+			columns: {
+				id: true,
+				status: true,
+			},
+		});
+
+		if (!targetUser) {
+			throw new HTTPException(404, { message: "User not found" });
+		}
+
+		// Update user status and affected organizations in a transaction
+		const result = await db.transaction(async (tx) => {
+			// Update user status
+			const [updatedUser] = await tx
+				.update(tables.user)
+				.set({
+					status,
+					updatedAt: new Date(),
+				})
+				.where(eq(tables.user.id, userId))
+				.returning({ id: tables.user.id, status: tables.user.status });
+
+			// Find all organizations where user is the owner with their current status
+			const ownedOrgs = await tx
+				.select({
+					organizationId: tables.userOrganization.organizationId,
+					status: tables.organization.status,
+				})
+				.from(tables.userOrganization)
+				.innerJoin(
+					tables.organization,
+					eq(tables.userOrganization.organizationId, tables.organization.id),
+				)
+				.where(
+					and(
+						eq(tables.userOrganization.userId, userId),
+						eq(tables.userOrganization.role, "owner"),
+					),
+				);
+
+			let affectedOrganizations = 0;
+
+			// Update organization status based on user status
+			if (ownedOrgs.length > 0) {
+				if (status === "blocked") {
+					// Block user: deactivate all active organizations
+					const activeOrgIds = ownedOrgs
+						.filter((o) => o.status === "active")
+						.map((o) => o.organizationId);
+
+					if (activeOrgIds.length > 0) {
+						await tx
+							.update(tables.organization)
+							.set({
+								status: "inactive",
+								updatedAt: new Date(),
+							})
+							.where(inArray(tables.organization.id, activeOrgIds));
+
+						affectedOrganizations = activeOrgIds.length;
+					}
+				} else {
+					// Unblock user: only restore organizations that are currently inactive
+					// This prevents restoring orgs that were manually deactivated for other reasons
+					const inactiveOrgIds = ownedOrgs
+						.filter((o) => o.status === "inactive")
+						.map((o) => o.organizationId);
+
+					if (inactiveOrgIds.length > 0) {
+						await tx
+							.update(tables.organization)
+							.set({
+								status: "active",
+								updatedAt: new Date(),
+							})
+							.where(inArray(tables.organization.id, inactiveOrgIds));
+
+						affectedOrganizations = inactiveOrgIds.length;
+					}
+				}
+			}
+
+			return {
+				user: updatedUser,
+				affectedOrganizations,
+			};
+		});
+
+		return c.json({
+			success: true,
+			user: result.user,
+			affectedOrganizations: result.affectedOrganizations,
+		});
+	} catch (err: unknown) {
+		if (err instanceof HTTPException) {
+			throw err;
+		}
+
+		throw new HTTPException(500, { message: "Internal Database Error" });
+	}
+});
+
 admin.openapi(getUsers, async (c) => {
 	const authUser = c.get("user");
 
@@ -787,6 +1014,7 @@ admin.openapi(getUsers, async (c) => {
 			email: tables.user.email,
 			emailVerified: tables.user.emailVerified,
 			createdAt: tables.user.createdAt,
+			status: tables.user.status,
 		})
 		.from(tables.user)
 		.orderBy(desc(tables.user.createdAt))
@@ -829,6 +1057,7 @@ admin.openapi(getUsers, async (c) => {
 		email: user.email,
 		emailVerified: user.emailVerified,
 		createdAt: user.createdAt,
+		status: user.status,
 		organizations: userOrganizations
 			.filter((uo) => uo.userId === user.id)
 			.map((uo) => ({
@@ -1019,6 +1248,78 @@ admin.openapi(getDeposit, async (c) => {
 		deposit,
 		events,
 	});
+});
+
+admin.openapi(updateModelMappingStatus, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const { id } = c.req.valid("param");
+	const { status: newStatus, reason } = c.req.valid("json");
+
+	try {
+		const existingMapping = await db.query.modelProviderMapping.findFirst({
+			where: {
+				id: { eq: id },
+			},
+		});
+
+		if (!existingMapping) {
+			throw new HTTPException(404, { message: "Model mapping not found" });
+		}
+
+		const currentStatus = existingMapping.status;
+
+		// Validate status transitions
+		if (currentStatus === "deactivated") {
+			throw new HTTPException(400, {
+				message: "Cannot reactivate a deactivated model mapping",
+			});
+		}
+
+		// Valid transitions:
+		// active -> inactive, active -> deactivated
+		// inactive -> active, inactive -> deactivated
+		// deactivated -> (none - blocked above)
+
+		const [updatedMapping] = await db
+			.update(tables.modelProviderMapping)
+			.set({
+				status: newStatus,
+				deactivatedAt: newStatus === "deactivated" ? new Date() : undefined,
+				deactivationReason: newStatus === "deactivated" ? reason : undefined,
+				updatedAt: new Date(),
+			})
+			.where(eq(tables.modelProviderMapping.id, id))
+			.returning();
+
+		return c.json({
+			success: true,
+			mapping: {
+				id: updatedMapping.id,
+				status: updatedMapping.status,
+				deactivatedAt: updatedMapping.deactivatedAt,
+				deactivationReason: updatedMapping.deactivationReason,
+			},
+		});
+	} catch (err: any) {
+		if (err instanceof HTTPException) {
+			throw err;
+		}
+
+		throw new HTTPException(500, { message: "Internal Server Error" });
+	}
 });
 
 export default admin;
