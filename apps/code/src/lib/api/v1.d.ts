@@ -4672,11 +4672,14 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
                 "multipart/form-data": {
-                    /** @description Audio file to transcribe */
-                    file: unknown;
+                    /**
+                     * Format: binary
+                     * @description Audio file to transcribe
+                     */
+                    file: string;
                     /**
                      * @description BCP-47 language code (default: en-US)
                      * @example en-US
@@ -4700,6 +4703,17 @@ export interface operations {
             };
             /** @description Bad request — missing or invalid audio file */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                    };
+                };
+            };
+            /** @description Unauthorized — missing or invalid authentication */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

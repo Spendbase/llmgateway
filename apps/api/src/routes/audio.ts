@@ -24,10 +24,13 @@ const transcriptionRoute = createRoute({
 	path: "/transcriptions",
 	request: {
 		body: {
+			required: true,
 			content: {
 				"multipart/form-data": {
 					schema: z.object({
 						file: z.instanceof(File).openapi({
+							type: "string",
+							format: "binary",
 							description: "Audio file to transcribe",
 						}),
 						language: z.string().optional().openapi({
@@ -49,6 +52,12 @@ const transcriptionRoute = createRoute({
 				},
 			},
 			description: "Transcription result",
+		},
+		401: {
+			content: {
+				"application/json": { schema: z.object({ error: z.string() }) },
+			},
+			description: "Unauthorized — missing or invalid authentication",
 		},
 		400: {
 			content: {
@@ -99,11 +108,6 @@ audio.openapi(transcriptionRoute, async (c) => {
 		return c.json({ error: "Audio file is empty" }, 400);
 	}
 
-	// Chirp 3 auto-detects language — no need to pass a list.
-	// Browser language is sent as a single optional hint only.
-	const browserLanguage = formData.get("language") as string | null;
-	const languageCodes = browserLanguage ? [browserLanguage] : [];
-
 	const arrayBuffer = await file.arrayBuffer();
 	const audioContent = Buffer.from(arrayBuffer).toString("base64");
 
@@ -125,7 +129,7 @@ audio.openapi(transcriptionRoute, async (c) => {
 		recognizer,
 		config: {
 			autoDecodingConfig: {},
-			languageCodes,
+			languageCodes: ["auto"],
 			model: "chirp_3",
 		},
 		content: audioContent,
