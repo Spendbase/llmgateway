@@ -247,6 +247,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/rankings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    period?: "24h" | "7d" | "30d";
+                    limit?: number;
+                    groupBy?: "model" | "modelProvider";
+                    providerId?: string;
+                    modelId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Public rankings of models and providers */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            period: "24h" | "7d" | "30d";
+                            /** @enum {string} */
+                            groupBy: "model" | "modelProvider";
+                            limit: number;
+                            generatedAt: string;
+                            data: {
+                                rank: number;
+                                modelId: string;
+                                modelName: string;
+                                providerId?: string;
+                                providerName?: string;
+                                totalTokens: number;
+                                inputTokens: number;
+                                outputTokens: number;
+                                requestCount: number;
+                                errorCount: number;
+                                usagePercent: number;
+                                avgLatencyMs: number;
+                                avgTtftMs: number;
+                                errorRate: number;
+                                estimatedCost?: number;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/me": {
         parameters: {
             query?: never;
