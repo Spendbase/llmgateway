@@ -4252,11 +4252,6 @@ export interface operations {
                      * @description Audio file to transcribe
                      */
                     file: string;
-                    /**
-                     * @description BCP-47 language code (default: en-US)
-                     * @example en-US
-                     */
-                    language?: string;
                 };
             };
         };

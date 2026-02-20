@@ -33,10 +33,6 @@ const transcriptionRoute = createRoute({
 							format: "binary",
 							description: "Audio file to transcribe",
 						}),
-						language: z.string().optional().openapi({
-							example: "en-US",
-							description: "BCP-47 language code (default: en-US)",
-						}),
 					}),
 				},
 			},
@@ -146,8 +142,13 @@ audio.openapi(transcriptionRoute, async (c) => {
 				Authorization: `Bearer ${accessToken}`,
 			},
 			body: JSON.stringify(requestBody),
+			signal: AbortSignal.timeout(65_000),
 		});
 	} catch (err) {
+		if (err instanceof Error && err.name === "TimeoutError") {
+			logger.error("Google Speech-to-Text API request timed out");
+			return c.json({ error: "Transcription service timed out" }, 502);
+		}
 		logger.error("Failed to reach Google Speech-to-Text API", { err });
 		return c.json({ error: "Failed to reach transcription service" }, 502);
 	}
