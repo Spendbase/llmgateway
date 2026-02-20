@@ -302,6 +302,28 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Validation failures for query params (invalid period, out-of-range limit, etc.) */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
             };
         };
         put?: never;

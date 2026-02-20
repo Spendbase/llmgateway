@@ -258,7 +258,7 @@ export interface paths {
             parameters: {
                 query?: {
                     period?: "24h" | "7d" | "30d";
-                    limit?: string;
+                    limit?: number;
                     groupBy?: "model" | "modelProvider";
                     providerId?: string;
                     modelId?: string;
@@ -299,6 +299,28 @@ export interface paths {
                                 errorRate: number;
                                 estimatedCost?: number;
                             }[];
+                        };
+                    };
+                };
+                /** @description Validation failures for query params (invalid period, out-of-range limit, etc.) */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
                         };
                     };
                 };
