@@ -668,7 +668,7 @@ chat.openapi(completions, async (c) => {
 	// Parse model input to resolve model, provider, and custom provider name
 	const parseResult = parseModelInput(modelInput);
 	const requestedModel = parseResult.requestedModel;
-	const _customProviderName = parseResult.customProviderName;
+	const customProviderName = parseResult.customProviderName;
 
 	// Resolve model info and filter deactivated providers
 	const modelInfoResult = resolveModelInfo(
@@ -1392,6 +1392,7 @@ chat.openapi(completions, async (c) => {
 				provider: {
 					eq: usedProvider,
 				},
+				...(customProviderName ? { name: { eq: customProviderName } } : {}),
 			},
 		});
 
@@ -1460,6 +1461,7 @@ chat.openapi(completions, async (c) => {
 				provider: {
 					eq: usedProvider,
 				},
+				...(customProviderName ? { name: { eq: customProviderName } } : {}),
 			},
 		});
 
