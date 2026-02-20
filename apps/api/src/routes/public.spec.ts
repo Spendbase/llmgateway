@@ -2,12 +2,18 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { app } from "@/index.js";
 
+import type * as DbModule from "@llmgateway/db";
+import type { Context, Next } from "hono";
+import type { Mock } from "vitest";
+
 // Mock instrumentation to avoid OTEL errors
 vi.mock("@llmgateway/instrumentation", () => ({
 	initTelemetry: vi.fn(),
-	createHonoRequestLogger: vi.fn(() => (c: any, next: any) => next()),
-	createRequestLifecycleMiddleware: vi.fn(() => (c: any, next: any) => next()),
-	createTracingMiddleware: vi.fn(() => (c: any, next: any) => next()),
+	createHonoRequestLogger: vi.fn(() => (c: Context, next: Next) => next()),
+	createRequestLifecycleMiddleware: vi.fn(
+		() => (c: Context, next: Next) => next(),
+	),
+	createTracingMiddleware: vi.fn(() => (c: Context, next: Next) => next()),
 }));
 
 // Mock cache module
@@ -39,8 +45,23 @@ vi.mock("@llmgateway/cache", async () => {
 // - Chaining methods (from, leftJoin, innerJoin, where, groupBy, orderBy, mapWith) return this.
 // - limit() returns a Promise resolving to the result array (execution in Drizzle).
 // - Builder is thenable so awaiting a chain that does not end with limit() still resolves to result.
+interface MockQueryBuilder {
+	from: Mock;
+	leftJoin: Mock;
+	innerJoin: Mock;
+	where: Mock;
+	groupBy: Mock;
+	orderBy: Mock;
+	limit: Mock;
+	mapWith: Mock;
+	then: (
+		resolve: (value: unknown[]) => void,
+		_reject?: (reason?: unknown) => void,
+	) => void;
+}
+
 const createMockBuilder = (result: unknown[]) => {
-	const builder: any = {
+	const builder: MockQueryBuilder = {
 		from: vi.fn().mockReturnThis(),
 		leftJoin: vi.fn().mockReturnThis(),
 		innerJoin: vi.fn().mockReturnThis(),
@@ -60,7 +81,7 @@ const createMockBuilder = (result: unknown[]) => {
 };
 
 vi.mock("@llmgateway/db", async () => {
-	const actual = await vi.importActual<any>("@llmgateway/db");
+	const actual = await vi.importActual<typeof DbModule>("@llmgateway/db");
 	return {
 		...actual,
 		db: {
