@@ -258,7 +258,7 @@ export interface paths {
             parameters: {
                 query?: {
                     period?: "24h" | "7d" | "30d";
-                    limit?: string;
+                    limit?: number;
                     groupBy?: "model" | "modelProvider";
                     providerId?: string;
                     modelId?: string;

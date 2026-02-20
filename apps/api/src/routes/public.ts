@@ -19,6 +19,7 @@ const rankingsQuerySchema = z.object({
 		.pipe(z.number().int().min(1).max(200))
 		.openapi({
 			description: "Number of rankings to return (max 200)",
+			type: "integer",
 			default: "50",
 		}),
 	groupBy: z.enum(["model", "modelProvider"]).default("modelProvider").openapi({
@@ -74,6 +75,23 @@ const getRankings = createRoute({
 			},
 			description: "Public rankings of models and providers",
 		},
+		400: {
+			content: {
+				"application/json": {
+					schema: z.object({ message: z.string() }),
+				},
+			},
+			description:
+				"Validation failures for query params (invalid period, out-of-range limit, etc.)",
+		},
+		500: {
+			content: {
+				"application/json": {
+					schema: z.object({ message: z.string() }),
+				},
+			},
+			description: "Internal Server Error",
+		},
 	},
 });
 
@@ -88,5 +106,5 @@ publicRoutes.openapi(getRankings, async (c) => {
 		modelId: query.modelId,
 	});
 
-	return c.json(result);
+	return c.json(result, 200);
 });
