@@ -286,9 +286,10 @@ export class PublicStatsService {
 		};
 
 		// I. Save to cache (Fire-and-forget)
-		setCache(cacheKey, response, 600).catch((error) => {
+		setCache(cacheKey, response, 600).catch((error: unknown) => {
+			const message = error instanceof Error ? error.message : String(error);
 			logger.warn("Failed to set cache for public rankings", {
-				error,
+				error: message,
 				cacheKey,
 			});
 		});
