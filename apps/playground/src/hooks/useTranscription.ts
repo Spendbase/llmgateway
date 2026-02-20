@@ -16,7 +16,6 @@ export function useTranscription(apiUrl: string): UseTranscriptionReturn {
 		async (blob: Blob): Promise<string | null> => {
 			const formData = new FormData();
 			formData.append("file", blob, "recording.webm");
-			formData.append("language", navigator.language);
 
 			const response = await fetch(`${apiUrl}/audio/transcriptions`, {
 				method: "POST",

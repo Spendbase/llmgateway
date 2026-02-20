@@ -83,6 +83,9 @@ export function useVoiceRecorder(
 	// When true, onstop was triggered by the duration limit, not by the user.
 	const isAutoStoppingRef = useRef(false);
 
+	// Mutex: true during the async gap in startRecording before refs are set.
+	const isStartingRef = useRef(false);
+
 	// Holds the latest callback without requiring re-wiring of the recorder.
 	const onMaxDurationReachedRef = useRef(options?.onMaxDurationReached);
 	useEffect(() => {
@@ -115,6 +118,16 @@ export function useVoiceRecorder(
 	}, [clearTimer]);
 
 	const startRecording = useCallback(async () => {
+		if (
+			isStartingRef.current ||
+			streamRef.current ||
+			(mediaRecorderRef.current &&
+				mediaRecorderRef.current.state !== "inactive")
+		) {
+			return;
+		}
+		isStartingRef.current = true;
+
 		setError(null);
 		setDuration(0);
 		durationRef.current = 0;
@@ -124,6 +137,7 @@ export function useVoiceRecorder(
 		try {
 			micStream = await requestMicrophoneAccess();
 		} catch (err) {
+			isStartingRef.current = false;
 			setError((err as Error).message as VoiceRecorderError);
 			return;
 		}
@@ -132,6 +146,7 @@ export function useVoiceRecorder(
 		try {
 			recorder = createMediaRecorder(micStream);
 		} catch {
+			isStartingRef.current = false;
 			setError("recording-failed");
 			micStream.getTracks().forEach((t) => t.stop());
 			return;
@@ -140,6 +155,7 @@ export function useVoiceRecorder(
 		streamRef.current = micStream;
 		setStream(micStream);
 		mediaRecorderRef.current = recorder;
+		isStartingRef.current = false;
 
 		recorder.ondataavailable = (e) => {
 			if (e.data.size > 0) {
