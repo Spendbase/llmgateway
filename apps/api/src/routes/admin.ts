@@ -1071,20 +1071,6 @@ admin.openapi(updateBannerSettings, async (c) => {
 	const { id } = c.req.valid("param");
 	const { enabled } = c.req.valid("json");
 
-	const banner = await db.query.banner.findFirst({
-		where: {
-			id: {
-				eq: id,
-			},
-		},
-	});
-
-	if (!banner) {
-		throw new HTTPException(404, {
-			message: "Banner not found",
-		});
-	}
-
 	const [updatedBanner] = await db
 		.update(tables.banner)
 		.set({
@@ -1092,6 +1078,12 @@ admin.openapi(updateBannerSettings, async (c) => {
 		})
 		.where(eq(tables.banner.id, id))
 		.returning();
+
+	if (!updatedBanner) {
+		throw new HTTPException(404, {
+			message: "Banner not found",
+		});
+	}
 
 	return c.json(updatedBanner);
 });
