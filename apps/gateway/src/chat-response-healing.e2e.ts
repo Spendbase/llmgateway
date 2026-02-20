@@ -248,7 +248,7 @@ describe("Response Healing E2E", () => {
 		await db.insert(tables.providerKey).values({
 			id: "provider-key-id",
 			token: "sk-test-key",
-			provider: "llmgateway",
+			provider: "llmapi",
 			organizationId: "org-id",
 			baseUrl: `http://localhost:${MOCK_PORT}`,
 		});
@@ -266,7 +266,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Say hello" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "response-healing" }],
@@ -285,7 +285,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Say hello" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "invalid-plugin" }],
@@ -307,7 +307,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Say hello" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "response-healing" }],
@@ -333,7 +333,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Return JSON" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "response-healing" }],
@@ -359,7 +359,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Return JSON" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "response-healing" }],
@@ -385,7 +385,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Return JSON" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "response-healing" }],
@@ -413,7 +413,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Return JSON" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "response-healing" }],
@@ -440,7 +440,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Return JSON" }],
 					response_format: { type: "json_object" },
 					// No plugins array - healing should not be applied
@@ -467,7 +467,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Say hello" }],
 					// No response_format - healing should not be applied even with plugin
 					plugins: [{ id: "response-healing" }],
@@ -495,7 +495,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "What is the weather?" }],
 					response_format: {
 						type: "json_schema",
@@ -541,7 +541,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Return JSON" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "response-healing" }],
@@ -567,7 +567,7 @@ describe("Response Healing E2E", () => {
 					Authorization: "Bearer real-token",
 				},
 				body: JSON.stringify({
-					model: "llmgateway/custom",
+					model: "llmapi/custom",
 					messages: [{ role: "user", content: "Return JSON" }],
 					response_format: { type: "json_object" },
 					plugins: [{ id: "response-healing" }],
@@ -594,7 +594,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Return JSON" }],
 						response_format: { type: "json_object" },
 						plugins: [{ id: "response-healing" }],
@@ -626,7 +626,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Return JSON" }],
 						response_format: { type: "json_object" },
 						plugins: [{ id: "response-healing" }],
@@ -656,7 +656,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Return JSON" }],
 						response_format: { type: "json_object" },
 						plugins: [{ id: "response-healing" }],
@@ -685,7 +685,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Return JSON" }],
 						response_format: { type: "json_object" },
 						plugins: [{ id: "response-healing" }],
@@ -712,7 +712,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Return JSON" }],
 						response_format: { type: "json_object" },
 						// No plugins - healing should not be applied
@@ -739,7 +739,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Say hello" }],
 						// No response_format - healing should not be applied
 						plugins: [{ id: "response-healing" }],
@@ -766,7 +766,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Return JSON" }],
 						response_format: { type: "json_object" },
 						plugins: [{ id: "response-healing" }],
@@ -793,7 +793,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "What is the weather?" }],
 						response_format: {
 							type: "json_schema",
@@ -832,7 +832,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Return JSON" }],
 						response_format: { type: "json_object" },
 						plugins: [{ id: "response-healing" }],
@@ -860,7 +860,7 @@ describe("Response Healing E2E", () => {
 						Authorization: "Bearer real-token",
 					},
 					body: JSON.stringify({
-						model: "llmgateway/custom",
+						model: "llmapi/custom",
 						messages: [{ role: "user", content: "Return JSON" }],
 						response_format: { type: "json_object" },
 						plugins: [{ id: "response-healing" }],

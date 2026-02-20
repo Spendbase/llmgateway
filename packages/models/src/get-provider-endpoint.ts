@@ -123,6 +123,14 @@ export function getProviderEndpoint(
 						"https://bedrock-runtime.us-east-1.amazonaws.com",
 					) || "https://bedrock-runtime.us-east-1.amazonaws.com";
 				break;
+			case "llmapi":
+				if (model === "custom" || model === "auto") {
+					// Safety net URL — auto-routing resolves to a real provider before this is called
+					url = "https://api.openai.com";
+				} else {
+					throw new Error(`Provider ${provider} requires a baseUrl`);
+				}
+				break;
 			default:
 				throw new Error(`Provider ${provider} requires a baseUrl`);
 		}

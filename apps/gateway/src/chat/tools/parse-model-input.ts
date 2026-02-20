@@ -17,7 +17,7 @@ export interface ParseModelInputResult {
  * Parses a model input string to resolve the model, provider, and custom provider name.
  *
  * Handles various input formats:
- * - "auto" or "custom" -> llmgateway provider
+ * - "auto" or "custom" -> llmapi provider
  * - "provider/model" -> specific provider and model
  * - "customProvider/model" -> custom provider with any model name
  * - "model-id" -> model ID lookup
@@ -31,7 +31,7 @@ export function parseModelInput(modelInput: string): ParseModelInputResult {
 
 	// check if there is an exact model match
 	if (modelInput === "auto" || modelInput === "custom") {
-		requestedProvider = "llmgateway" as Provider;
+		requestedProvider = "llmapi" as Provider;
 		requestedModel = modelInput as Model;
 	} else if (modelInput.includes("/")) {
 		const split = modelInput.split("/");
