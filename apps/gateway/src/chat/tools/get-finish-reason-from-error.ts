@@ -18,6 +18,11 @@ export function getFinishReasonFromError(
 		return "upstream_error";
 	}
 
+	// Azure OpenAI content filter (ResponsibleAIPolicyViolation)
+	if (errorText?.includes("ResponsibleAIPolicyViolation")) {
+		return "content_filter";
+	}
+
 	// zai content filter
 	if (
 		errorText?.includes(

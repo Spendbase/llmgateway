@@ -44,6 +44,10 @@ export function getProviderHeaders(
 			}
 			// For API key authentication, token goes in URL query parameter
 			return {};
+		case "obsidian":
+			return {
+				Authorization: `Bearer ${token}`,
+			};
 		case "aws-bedrock":
 			return {
 				Authorization: `Bearer ${token}`,
