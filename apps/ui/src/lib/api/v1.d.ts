@@ -1317,6 +1317,167 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/deposits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    status?: "pending" | "completed" | "failed";
+                    from?: string;
+                    to?: string;
+                    q?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Paginated list of deposit transactions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            deposits: {
+                                id: string;
+                                createdAt: string;
+                                organizationId: string;
+                                organizationName: string;
+                                amount: string | null;
+                                creditAmount: string | null;
+                                currency: string;
+                                /** @enum {string} */
+                                status: "pending" | "completed" | "failed";
+                                stripePaymentIntentId: string | null;
+                                stripeInvoiceId: string | null;
+                                description: string | null;
+                                paymentMethod: string;
+                            }[];
+                            pagination: {
+                                page: number;
+                                pageSize: number;
+                                totalDeposits: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/deposits/:id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deposit details and audit events */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            deposit: {
+                                id: string;
+                                createdAt: string;
+                                organizationId: string;
+                                organizationName: string;
+                                amount: string | null;
+                                creditAmount: string | null;
+                                currency: string;
+                                /** @enum {string} */
+                                status: "pending" | "completed" | "failed";
+                                stripePaymentIntentId: string | null;
+                                stripeInvoiceId: string | null;
+                                description: string | null;
+                                paymentMethod: string;
+                            };
+                            events: {
+                                id: string;
+                                createdAt: string;
+                                /** @enum {string} */
+                                type: "created" | "status_changed";
+                                /** @enum {string|null} */
+                                newStatus: "pending" | "completed" | "failed" | null;
+                                metadata?: unknown;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Deposit not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/models/mappings/{id}": {
         parameters: {
             query?: never;
