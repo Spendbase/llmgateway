@@ -1,6 +1,10 @@
 import { join } from "path";
 
+import { config as dotenvConfig } from "dotenv";
+
 import type { NextConfig } from "next";
+
+dotenvConfig({ path: join(__dirname, "../../.env"), override: false });
 
 const nextConfig: NextConfig = {
 	outputFileTracingRoot: join(__dirname, "../../"),
