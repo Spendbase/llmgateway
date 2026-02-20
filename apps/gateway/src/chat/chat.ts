@@ -922,6 +922,11 @@ chat.openapi(completions, async (c) => {
 				usedProvider = selected.providers[0].providerId;
 				usedModel = selected.providers[0].modelName;
 			}
+
+			// Reassign modelInfo to the real selected model so downstream
+			// provider-capability checks (reasoning_effort, supportsReasoning, etc.)
+			// operate on the actual model/provider, not the virtual "auto" placeholder.
+			modelInfo = selected.model;
 		} else {
 			if (no_reasoning) {
 				throw new HTTPException(400, {
@@ -929,9 +934,31 @@ chat.openapi(completions, async (c) => {
 						"No non-reasoning models are available for auto routing. Remove no_reasoning parameter or use a specific model.",
 				});
 			}
-			// Default fallback when no suitable model is found
-			usedModel = "gpt-4o-mini";
-			usedProvider = "openai";
+
+			// No whitelisted model matched — find any available model from the
+			// allowed list that has at least one configured provider.
+			const fallbackModel = models.find(
+				(m) =>
+					(ALLOWED_AUTO_MODELS as readonly string[]).includes(m.id) &&
+					(m.providers as ProviderModelMapping[]).some((p) =>
+						availableProviders.includes(p.providerId),
+					),
+			) as ModelDefinition | undefined;
+
+			if (!fallbackModel) {
+				throw new HTTPException(400, {
+					message:
+						"No models are available for auto routing. Please configure a provider key or switch the project mode.",
+				});
+			}
+
+			const fallbackProvider = (
+				fallbackModel.providers as ProviderModelMapping[]
+			).find((p) => availableProviders.includes(p.providerId))!;
+
+			usedModel = fallbackProvider.modelName;
+			usedProvider = fallbackProvider.providerId;
+			modelInfo = fallbackModel;
 		}
 
 		// Clear requestedProvider so downstream fallback/retry logic knows this was auto-routed
