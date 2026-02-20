@@ -13,7 +13,7 @@ vi.mock("@llmgateway/instrumentation", () => ({
 // Mock cache module
 const mocks = vi.hoisted(() => ({
 	getCache: vi.fn(),
-	setCache: vi.fn(),
+	setCache: vi.fn().mockResolvedValue(undefined),
 	generateCacheKey: vi.fn((payload) => JSON.stringify(payload)),
 	select: vi.fn(),
 }));
@@ -35,8 +35,11 @@ vi.mock("@llmgateway/cache", async () => {
 	};
 });
 
-// Mock Query Builder
-const createMockBuilder = (result: any) => {
+// Mock Query Builder: simulates Drizzle execution semantics.
+// - Chaining methods (from, leftJoin, innerJoin, where, groupBy, orderBy, mapWith) return this.
+// - limit() returns a Promise resolving to the result array (execution in Drizzle).
+// - Builder is thenable so awaiting a chain that does not end with limit() still resolves to result.
+const createMockBuilder = (result: unknown[]) => {
 	const builder: any = {
 		from: vi.fn().mockReturnThis(),
 		leftJoin: vi.fn().mockReturnThis(),
@@ -44,9 +47,14 @@ const createMockBuilder = (result: any) => {
 		where: vi.fn().mockReturnThis(),
 		groupBy: vi.fn().mockReturnThis(),
 		orderBy: vi.fn().mockReturnThis(),
-		limit: vi.fn().mockReturnThis(),
-		mapWith: vi.fn().mockReturnThis(), // handle sql mapWith
-		then: (resolve: any) => resolve(result),
+		limit: vi.fn().mockResolvedValue(result),
+		mapWith: vi.fn().mockReturnThis(),
+		then(
+			resolve: (value: unknown[]) => void,
+			_reject?: (reason?: unknown) => void,
+		) {
+			resolve(result);
+		},
 	};
 	return builder;
 };
@@ -64,6 +72,7 @@ vi.mock("@llmgateway/db", async () => {
 describe("public rankings endpoint", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mocks.setCache.mockResolvedValue(undefined);
 	});
 
 	afterEach(() => {
@@ -138,12 +147,12 @@ describe("public rankings endpoint", () => {
 	test("GET /public/rankings should group by model correctly", async () => {
 		const grandTotalBuilder = createMockBuilder([{ totalTokens: 100 }]);
 		const mainQueryBuilder = createMockBuilder([]);
-		mocks.select.mockReturnValue(mainQueryBuilder); // Default
 		mocks.select
 			.mockReturnValueOnce(grandTotalBuilder)
 			.mockReturnValueOnce(mainQueryBuilder);
 
-		await app.request("/public/rankings?groupBy=model");
+		const response = await app.request("/public/rankings?groupBy=model");
+		expect(response.status).toBe(200);
 
 		// Check if groupBy was called with model fields only
 		// The service logic: if (groupBy === "model") query.groupBy(modelTable.id, modelTable.name)
@@ -164,7 +173,10 @@ describe("public rankings endpoint", () => {
 			.mockReturnValueOnce(grandTotalBuilder)
 			.mockReturnValueOnce(mainQueryBuilder);
 
-		await app.request("/public/rankings?groupBy=modelProvider");
+		const response = await app.request(
+			"/public/rankings?groupBy=modelProvider",
+		);
+		expect(response.status).toBe(200);
 
 		const groupByCalls = mainQueryBuilder.groupBy.mock.calls;
 		expect(groupByCalls.length).toBeGreaterThan(0);

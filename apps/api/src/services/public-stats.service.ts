@@ -37,7 +37,9 @@ export interface RankingsResponse {
 }
 
 export class PublicStatsService {
-	static async getRankings(params: RankingsParams): Promise<RankingsResponse> {
+	public static async getRankings(
+		params: RankingsParams,
+	): Promise<RankingsResponse> {
 		const { period, limit = 50, groupBy, providerId, modelId } = params;
 
 		// Enforce max limit
@@ -54,9 +56,17 @@ export class PublicStatsService {
 		});
 
 		// B. Check cache first
-		const cached = await getCache(cacheKey);
-		if (cached) {
-			return cached as RankingsResponse;
+		try {
+			const cached = await getCache(cacheKey);
+			if (cached) {
+				return cached as RankingsResponse;
+			}
+		} catch (error) {
+			logger.warn("Failed to get cache for public rankings", {
+				error,
+				cacheKey,
+			});
+			// Continue to DB path - treat as cache miss
 		}
 
 		// C. Compute start timestamp
