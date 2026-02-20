@@ -13,12 +13,15 @@ import organization from "./organization.js";
 import { payments } from "./payments.js";
 import playground from "./playground.js";
 import projects from "./projects.js";
+import { publicRoutes } from "./public.js";
 import team from "./team.js";
 import { user } from "./user.js";
 
 import type { ServerTypes } from "@/vars.js";
 
 export const routes = new OpenAPIHono<ServerTypes>();
+
+routes.route("/public", publicRoutes);
 
 // Middleware to verify authentication
 routes.use("/*", async (c, next) => {

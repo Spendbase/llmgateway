@@ -1,0 +1,207 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+import { app } from "@/index.js";
+
+import type * as DbModule from "@llmgateway/db";
+import type { Context, Next } from "hono";
+import type { Mock } from "vitest";
+
+// Mock instrumentation to avoid OTEL errors
+vi.mock("@llmgateway/instrumentation", () => ({
+	initTelemetry: vi.fn(),
+	createHonoRequestLogger: vi.fn(() => (c: Context, next: Next) => next()),
+	createRequestLifecycleMiddleware: vi.fn(
+		() => (c: Context, next: Next) => next(),
+	),
+	createTracingMiddleware: vi.fn(() => (c: Context, next: Next) => next()),
+}));
+
+// Mock cache module
+const mocks = vi.hoisted(() => ({
+	getCache: vi.fn(),
+	setCache: vi.fn().mockResolvedValue(undefined),
+	generateCacheKey: vi.fn((payload) => JSON.stringify(payload)),
+	select: vi.fn(),
+}));
+
+vi.mock("@llmgateway/cache", async () => {
+	const actual = await vi.importActual("@llmgateway/cache");
+	return {
+		...actual,
+		getCache: mocks.getCache,
+		setCache: mocks.setCache,
+		generateCacheKey: mocks.generateCacheKey,
+		redisClient: {
+			on: vi.fn(),
+			get: vi.fn(),
+			set: vi.fn(),
+			disconnect: vi.fn(),
+			quit: vi.fn(),
+		},
+	};
+});
+
+// Mock Query Builder: simulates Drizzle execution semantics.
+// - Chaining methods (from, leftJoin, innerJoin, where, groupBy, orderBy, mapWith) return this.
+// - limit() returns a Promise resolving to the result array (execution in Drizzle).
+// - Builder is thenable so awaiting a chain that does not end with limit() still resolves to result.
+interface MockQueryBuilder {
+	from: Mock;
+	leftJoin: Mock;
+	innerJoin: Mock;
+	where: Mock;
+	groupBy: Mock;
+	orderBy: Mock;
+	limit: Mock;
+	mapWith: Mock;
+	then: (
+		resolve: (value: unknown[]) => void,
+		_reject?: (reason?: unknown) => void,
+	) => void;
+}
+
+const createMockBuilder = (result: unknown[]) => {
+	const builder: MockQueryBuilder = {
+		from: vi.fn().mockReturnThis(),
+		leftJoin: vi.fn().mockReturnThis(),
+		innerJoin: vi.fn().mockReturnThis(),
+		where: vi.fn().mockReturnThis(),
+		groupBy: vi.fn().mockReturnThis(),
+		orderBy: vi.fn().mockReturnThis(),
+		limit: vi.fn().mockResolvedValue(result),
+		mapWith: vi.fn().mockReturnThis(),
+		then(
+			resolve: (value: unknown[]) => void,
+			_reject?: (reason?: unknown) => void,
+		) {
+			resolve(result);
+		},
+	};
+	return builder;
+};
+
+vi.mock("@llmgateway/db", async () => {
+	const actual = await vi.importActual<typeof DbModule>("@llmgateway/db");
+	return {
+		...actual,
+		db: {
+			select: mocks.select,
+		},
+	};
+});
+
+describe("public rankings endpoint", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mocks.setCache.mockResolvedValue(undefined);
+	});
+
+	afterEach(() => {
+		vi.resetAllMocks();
+	});
+
+	test("GET /public/rankings should filter by period and return data", async () => {
+		// Setup mocks for 2 queries:
+		// 1. Grand Total (returns [{ totalTokens: 1000 }])
+		// 2. Main Query (returns list of items)
+
+		const grandTotalBuilder = createMockBuilder([{ totalTokens: 10000 }]);
+		const mainQueryBuilder = createMockBuilder([
+			{
+				modelId: "model-1",
+				modelName: "Model One",
+				// provider info present if groupBy=modelProvider (default)
+				providerId: "provider-1",
+				providerName: "Provider One",
+				totalTokens: 1000,
+				inputTokens: 400,
+				outputTokens: 600,
+				requestCount: 10,
+				errorCount: 1,
+				totalDuration: 5000,
+				totalTtft: 2000,
+				inputPrice: 10,
+				outputPrice: 30,
+				requestPrice: 0.5,
+			},
+		]);
+
+		mocks.select
+			.mockReturnValueOnce(grandTotalBuilder)
+			.mockReturnValueOnce(mainQueryBuilder);
+
+		const response = await app.request("/public/rankings?period=24h");
+		expect(response.status).toBe(200);
+		const json = await response.json();
+
+		expect(json.period).toBe("24h");
+		expect(json.data).toHaveLength(1);
+		expect(json.data[0].modelId).toBe("model-1");
+		// Usage percent: 1000 / 10000 = 10%
+		expect(json.data[0].usagePercent).toBe(10);
+		// Cost: 400 * 10 + 600 * 30 + 10 * 0.5 = 4000 + 18000 + 5 = 22005
+		expect(json.data[0].estimatedCost).toBe(22005);
+
+		// Verify Period Filter Logic using spy
+		// mainQueryBuilder.where was called.
+		// We need to check if the arguments to where() contained the timestamp check.
+		// Since we pass SQL objects to where(), strict equality check is hard.
+		// But we can check calls.length.
+		expect(mainQueryBuilder.where).toHaveBeenCalled();
+	});
+
+	test("GET /public/rankings should handle cache hit", async () => {
+		const cachedResponse = {
+			period: "24h",
+			data: [{ modelId: "cached" }],
+		};
+		mocks.getCache.mockResolvedValueOnce(cachedResponse);
+
+		const response = await app.request("/public/rankings?period=24h");
+		expect(response.status).toBe(200);
+		const json = await response.json();
+
+		expect(json.data[0].modelId).toBe("cached");
+		expect(mocks.select).not.toHaveBeenCalled();
+	});
+
+	test("GET /public/rankings should group by model correctly", async () => {
+		const grandTotalBuilder = createMockBuilder([{ totalTokens: 100 }]);
+		const mainQueryBuilder = createMockBuilder([]);
+		mocks.select
+			.mockReturnValueOnce(grandTotalBuilder)
+			.mockReturnValueOnce(mainQueryBuilder);
+
+		const response = await app.request("/public/rankings?groupBy=model");
+		expect(response.status).toBe(200);
+
+		// Check if groupBy was called with model fields only
+		// The service logic: if (groupBy === "model") query.groupBy(modelTable.id, modelTable.name)
+		// else query.groupBy(modelTable.id, modelTable.name, providerTable.id, providerTable.name)
+
+		// We can inspect the number of args passed to groupBy
+		const groupByCalls = mainQueryBuilder.groupBy.mock.calls;
+		expect(groupByCalls.length).toBeGreaterThan(0);
+		// We expect 2 arguments (id, name) for 'model' mode
+		// Note: Drizzle passes arguments to .groupBy(...args).
+		expect(groupByCalls[0].length).toBe(2);
+	});
+
+	test("GET /public/rankings should group by modelProvider correctly", async () => {
+		const grandTotalBuilder = createMockBuilder([{ totalTokens: 100 }]);
+		const mainQueryBuilder = createMockBuilder([]);
+		mocks.select
+			.mockReturnValueOnce(grandTotalBuilder)
+			.mockReturnValueOnce(mainQueryBuilder);
+
+		const response = await app.request(
+			"/public/rankings?groupBy=modelProvider",
+		);
+		expect(response.status).toBe(200);
+
+		const groupByCalls = mainQueryBuilder.groupBy.mock.calls;
+		expect(groupByCalls.length).toBeGreaterThan(0);
+		// We expect 4 arguments (m.id, m.name, p.id, p.name)
+		expect(groupByCalls[0].length).toBe(4);
+	});
+});
