@@ -11,25 +11,33 @@ async function getRepoStarsAndForks(
 ): Promise<{
 	stars: number;
 	forks: number;
-}> {
+} | null> {
 	const endpoint = `https://api.github.com/repos/${owner}/${repo}`;
 	const headers = new Headers({
 		"Content-Type": "application/json",
+		"User-Agent": "llmgateway-docs",
 	});
 
-	if (token) {
-		headers.set("Authorization", `Bearer ${token}`);
+	const githubToken = token ?? process.env.GITHUB_TOKEN;
+
+	if (githubToken) {
+		headers.set("Authorization", `Bearer ${githubToken}`);
 	}
 
 	const response = await fetch(endpoint, {
 		headers,
 		next: {
-			revalidate: 60,
+			revalidate: 3600,
 		},
 	});
 
 	if (!response.ok) {
-		const message = await response.text();
+		const message = await response.text().catch(() => response.statusText);
+		const isRateLimit = response.status === 403 && message.includes("API rate limit exceeded");
+
+		if (isRateLimit || response.status >= 500) {
+			return null;
+		}
 
 		throw new Error(`Failed to fetch repository data: ${message}`);
 	}
@@ -51,8 +59,8 @@ export async function GithubInfo({
 	repo: string;
 	token?: string;
 }) {
-	const { stars } = await getRepoStarsAndForks(owner, repo, token);
-	const humanizedStars = humanizeNumber(stars);
+	const repoStats = await getRepoStarsAndForks(owner, repo, token);
+	const humanizedStars = repoStats ? humanizeNumber(repoStats.stars) : null;
 
 	return (
 		<a
@@ -72,10 +80,12 @@ export async function GithubInfo({
 				</svg>
 				{owner}/{repo}
 			</p>
-			<p className="flex text-xs items-center gap-1 text-fd-muted-foreground">
-				<Star className="size-3" />
-				{humanizedStars}
-			</p>
+			{humanizedStars ? (
+				<p className="flex text-xs items-center gap-1 text-fd-muted-foreground">
+					<Star className="size-3" />
+					{humanizedStars}
+				</p>
+			) : null}
 		</a>
 	);
 }
