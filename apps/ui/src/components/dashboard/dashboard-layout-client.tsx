@@ -48,12 +48,13 @@ export function DashboardLayoutClient({
 	);
 
 	const [isFreeCreditsBannerVisible, setIsFreeCreditsBannerVisible] = useState(
-		pathname.includes("/api-keys"),
+		localStorage.getItem("isFreeCreditsBannerHidden") !== "true",
 	);
 
-	const handleCloseFreeCreditsBanner = () => {
+	const handleCloseFreeCreditsBanner = useCallback(() => {
 		setIsFreeCreditsBannerVisible(false);
-	};
+		localStorage.setItem("isFreeCreditsBannerHidden", "true");
+	}, []);
 
 	const { data: bannersData } = api.useQuery("get", "/banners", undefined, {
 		staleTime: 5 * 60 * 1000,
@@ -65,7 +66,9 @@ export function DashboardLayoutClient({
 	);
 
 	const shouldShowBanner =
-		freeCreditsBanner?.enabled && isFreeCreditsBannerVisible;
+		freeCreditsBanner?.enabled &&
+		pathname.includes("/api-keys") &&
+		isFreeCreditsBannerVisible;
 
 	const {
 		organizations,
