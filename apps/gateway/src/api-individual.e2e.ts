@@ -296,7 +296,7 @@ describe("e2e individual tests", () => {
 	);
 
 	test(
-		"completions with llmgateway/auto in credits mode",
+		"completions with llmapi/auto in credits mode",
 		getTestOptions({ completions: false }),
 		async () => {
 			// require all provider keys to be set
@@ -305,7 +305,7 @@ describe("e2e individual tests", () => {
 				const envVarValue = envVarName ? process.env[envVarName] : undefined;
 				if (!envVarValue) {
 					console.log(
-						`Skipping llmgateway/auto in credits mode test - no API key provided for ${provider.id}`,
+						`Skipping llmapi/auto in credits mode test - no API key provided for ${provider.id}`,
 					);
 					return;
 				}
@@ -341,11 +341,11 @@ describe("e2e individual tests", () => {
 					Authorization: `Bearer ${creditsToken}`,
 				},
 				body: JSON.stringify({
-					model: "llmgateway/auto",
+					model: "llmapi/auto",
 					messages: [
 						{
 							role: "user",
-							content: "Hello with llmgateway/auto in credits mode!",
+							content: "Hello with llmapi/auto in credits mode!",
 						},
 					],
 				}),
@@ -431,7 +431,7 @@ describe("e2e individual tests", () => {
 
 		await db.insert(tables.providerKey).values({
 			id: "provider-key-custom-model",
-			provider: "llmgateway",
+			provider: "llmapi",
 			token: envVarValue,
 			baseUrl: "https://api.openai.com", // Use real OpenAI endpoint for testing
 			status: "active",
@@ -473,7 +473,7 @@ describe("e2e individual tests", () => {
 
 		const log = await waitForLogByRequestId(requestId);
 		expect(log.requestedModel).toBe("custom");
-		expect(log.usedProvider).toBe("llmgateway");
+		expect(log.usedProvider).toBe("llmapi");
 		expect(log.usedModel).toBe("custom");
 	});
 

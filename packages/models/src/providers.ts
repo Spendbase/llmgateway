@@ -32,22 +32,22 @@ export interface ProviderDefinition {
 }
 
 export const providers = [
-	// {
-	// 	id: "llmgateway",
-	// 	name: "LLM Gateway",
-	// 	description:
-	// 		"LLMGateway is a framework for building and deploying large language models.",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_LLMGATEWAY_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#6366f1",
-	// 	website: "https://llmapi.ai",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "llmapi",
+		name: "LLM Api",
+		description:
+			"LLMApi is a framework for building and deploying large language models.",
+		env: {
+			required: {
+				apiKey: "LLM_LLMAPI_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#6366f1",
+		website: "https://llmapi.ai",
+		announcement: undefined,
+	},
 	{
 		id: "openai",
 		name: "OpenAI",
