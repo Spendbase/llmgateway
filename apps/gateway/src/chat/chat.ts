@@ -49,6 +49,7 @@ import {
 import { applyOrganizationContext } from "./tools/apply-organization-context.js";
 import { countInputImages } from "./tools/count-input-images.js";
 import { createLogEntry } from "./tools/create-log-entry.js";
+import { estimateRequiredContextSize } from "./tools/estimate-required-context-size.js";
 import { estimateTokens } from "./tools/estimate-tokens.js";
 import { extractContent } from "./tools/extract-content.js";
 import { extractCustomHeaders } from "./tools/extract-custom-headers.js";
@@ -63,7 +64,9 @@ import { mightBeCompleteJson } from "./tools/might-be-complete-json.js";
 import { convertAwsEventStreamToSSE } from "./tools/parse-aws-eventstream.js";
 import { parseModelInput } from "./tools/parse-model-input.js";
 import { parseProviderResponse } from "./tools/parse-provider-response.js";
+import { resolveAutoRoutingProviders } from "./tools/resolve-auto-routing-providers.js";
 import { resolveModelInfo } from "./tools/resolve-model-info.js";
+import { selectAutoRouteModel } from "./tools/select-auto-route-model.js";
 import { transformResponseToOpenai } from "./tools/transform-response-to-openai.js";
 import { transformStreamingToOpenai } from "./tools/transform-streaming-to-openai.js";
 import { DEFAULT_TOKENIZER_MODEL } from "./tools/types.js";
@@ -74,6 +77,13 @@ import type { ImageObject } from "./tools/types.js";
 import type { ServerTypes } from "@/vars.js";
 import type { tables } from "@llmgateway/db";
 import type { InferSelectModel } from "drizzle-orm";
+
+const ALLOWED_AUTO_MODELS = [
+	"gpt-5-nano",
+	"gpt-4.1-nano",
+	"gpt-4o-mini",
+] as const;
+const AUTO_ROUTING_COMPLETION_BUFFER = 4096;
 
 /**
  * Checks if a model is truly free (has free flag AND no per-request pricing)
@@ -589,6 +599,7 @@ chat.openapi(completions, async (c) => {
 		effort,
 		web_search,
 		plugins,
+		no_reasoning,
 	} = validationResult.data;
 
 	// If web_search parameter is true, automatically add the web_search tool
@@ -856,6 +867,102 @@ chat.openapi(completions, async (c) => {
 			// Force routing to Anthropic when native tools are present
 			requestedProvider = "anthropic";
 		}
+	}
+
+	// Apply auto-routing logic: when model is "auto", select the best real model
+	const isAutoRouting = (usedModel as string) === "auto";
+	if (isAutoRouting) {
+		const requiredContextSize = estimateRequiredContextSize(
+			messages,
+			tools,
+			max_tokens,
+			AUTO_ROUTING_COMPLETION_BUFFER,
+		);
+
+		const availableProviders = await resolveAutoRoutingProviders(project);
+
+		const selected = selectAutoRouteModel(
+			availableProviders,
+			requiredContextSize,
+			{
+				no_reasoning,
+				reasoning_effort,
+				tools,
+				tool_choice,
+				webSearchTool,
+				response_format,
+				hasImages,
+			},
+			ALLOWED_AUTO_MODELS,
+		);
+
+		if (selected) {
+			const metricsMap = await getProviderMetricsForCombinations(
+				selected.providers.map((p) => ({
+					modelId: selected.model.id,
+					providerId: p.providerId,
+				})),
+				5,
+			);
+
+			const cheapestResult = getCheapestFromAvailableProviders(
+				selected.providers,
+				selected.model,
+				{ metricsMap, isStreaming: stream },
+			);
+
+			if (cheapestResult) {
+				usedProvider = cheapestResult.provider.providerId;
+				usedModel = cheapestResult.provider.modelName;
+				routingMetadata = {
+					...cheapestResult.metadata,
+					...(noFallback ? { noFallback: true } : {}),
+				};
+			} else {
+				usedProvider = selected.providers[0].providerId;
+				usedModel = selected.providers[0].modelName;
+			}
+
+			// Reassign modelInfo to the real selected model so downstream
+			// provider-capability checks (reasoning_effort, supportsReasoning, etc.)
+			// operate on the actual model/provider, not the virtual "auto" placeholder.
+			modelInfo = selected.model;
+		} else {
+			if (no_reasoning) {
+				throw new HTTPException(400, {
+					message:
+						"No non-reasoning models are available for auto routing. Remove no_reasoning parameter or use a specific model.",
+				});
+			}
+
+			// No whitelisted model matched — find any available model from the
+			// allowed list that has at least one configured provider.
+			const fallbackModel = models.find(
+				(m) =>
+					(ALLOWED_AUTO_MODELS as readonly string[]).includes(m.id) &&
+					(m.providers as ProviderModelMapping[]).some((p) =>
+						availableProviders.includes(p.providerId),
+					),
+			) as ModelDefinition | undefined;
+
+			if (!fallbackModel) {
+				throw new HTTPException(400, {
+					message:
+						"No models are available for auto routing. Please configure a provider key or switch the project mode.",
+				});
+			}
+
+			const fallbackProvider = (
+				fallbackModel.providers as ProviderModelMapping[]
+			).find((p) => availableProviders.includes(p.providerId))!;
+
+			usedModel = fallbackProvider.modelName;
+			usedProvider = fallbackProvider.providerId;
+			modelInfo = fallbackModel;
+		}
+
+		// Clear requestedProvider so downstream fallback/retry logic knows this was auto-routed
+		requestedProvider = undefined;
 	}
 
 	// Check uptime for specifically requested providers (not llmgateway or custom)

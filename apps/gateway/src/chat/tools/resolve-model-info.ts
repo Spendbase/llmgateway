@@ -111,7 +111,7 @@ export function resolveModelInfo(
 	let updatedRequestedProvider = requestedProvider;
 	if (
 		requestedProvider &&
-		requestedProvider !== ("llmgateway" as Provider) &&
+		requestedProvider !== ("llmapi" as Provider) &&
 		requestedProvider !== ("custom" as Provider) &&
 		!activeProviders.some((p) => p.providerId === requestedProvider)
 	) {
