@@ -1,5 +1,5 @@
-# syntax=harbor.dev.spendbase.co/dockerhub/docker/dockerfile:1-labs
-FROM harbor.dev.spendbase.co/dockerhub/library/debian:12-slim AS base-builder
+# syntax=docker/dockerfile:1-labs
+FROM library/debian:12-slim AS base-builder
 
 # Install base dependencies including tini for better caching
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -123,7 +123,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm --filter=code..
 COPY . .
 RUN --mount=type=cache,target=/app/.turbo pnpm run build --filter=code
 
-FROM harbor.dev.spendbase.co/dockerhub/library/debian:12-slim AS runtime
+FROM debian:12-slim AS runtime
 
 # Install base runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends bash && rm -rf /var/lib/apt/lists/*
