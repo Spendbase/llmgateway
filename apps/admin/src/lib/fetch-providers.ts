@@ -1,16 +1,8 @@
 import { fetchServerData } from "@/lib/server-api";
 
-interface Provider {
-	id: string;
-	createdAt: Date;
-	name: string | null;
-	description: string | null;
-	streaming: boolean | null;
-	cancellation: boolean | null;
-	color: string | null;
-	website: string | null;
-	announcement: string | null;
-	status: "active" | "inactive";
+import type { Provider } from "./models";
+
+interface ProviderWithMetrics extends Provider {
 	logsCount: number;
 	errorsCount: number;
 	clientErrorsCount: number;
@@ -22,12 +14,17 @@ interface Provider {
 	statsUpdatedAt: Date | null;
 }
 
-export async function getProviders(): Promise<Provider[] | null> {
+export async function getProviders(): Promise<ProviderWithMetrics[] | null> {
 	try {
-		const data = await fetchServerData<{ providers: Provider[] } | null>(
-			"GET",
-			"/internal/providers",
-		);
+		const data = await fetchServerData<{
+			providers: ProviderWithMetrics[];
+		} | null>("GET", "/internal/providers", {
+			params: {
+				query: {
+					includeAll: "true",
+				},
+			},
+		});
 
 		if (!data?.providers) {
 			return null;

@@ -1,6 +1,7 @@
 import { alibabaModels } from "./models/alibaba.js";
 import { anthropicModels } from "./models/anthropic.js";
 import { googleModels } from "./models/google.js";
+import { llmgatewayModels } from "./models/llmgateway.js";
 import { moonshotModels } from "./models/moonshot.js";
 import { openaiModels } from "./models/openai.js";
 import { xaiModels } from "./models/xai.js";
@@ -232,7 +233,7 @@ export interface ModelDefinition {
 }
 
 export const models = [
-	// ...llmgatewayModels,
+	...llmgatewayModels,
 	...openaiModels,
 	...anthropicModels,
 	...googleModels,

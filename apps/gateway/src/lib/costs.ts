@@ -3,7 +3,6 @@ import { encode, encodeChat } from "gpt-tokenizer";
 
 import { logger } from "@llmgateway/logger";
 import {
-	type Model,
 	type ModelDefinition,
 	models,
 	type PricingTier,
@@ -81,7 +80,7 @@ function getPricingForTokenCount(
  * from the fullOutput parameter if provided
  */
 export function calculateCosts(
-	model: Model,
+	model: string,
 	provider: string,
 	promptTokens: number | null,
 	completionTokens: number | null,
@@ -254,14 +253,17 @@ export function calculateCosts(
 	const discount = providerInfo.discount || 0;
 	const discountMultiplier = new Decimal(1).minus(discount);
 
-	// Add input image tokens to prompt tokens if applicable (for Google image generation models)
-	// Google reports text tokens but doesn't include image input tokens in usage
-	// Each input image is 560 tokens ($0.0011 per image at $2/1M)
+	// Each input image is 560 tokens ($0.0011 per image)
 	const TOKENS_PER_INPUT_IMAGE = 560;
 	const imageInputPrice = (providerInfo as any).imageInputPrice;
+	let imageInputTokens = 0;
+	let imageInputCost: Decimal | null = null;
 	if (imageInputPrice && inputImageCount > 0) {
-		const imageInputTokens = inputImageCount * TOKENS_PER_INPUT_IMAGE;
-		calculatedPromptTokens += imageInputTokens;
+		imageInputTokens = inputImageCount * TOKENS_PER_INPUT_IMAGE;
+		// imageInputPrice is per image, not per token
+		imageInputCost = new Decimal(inputImageCount)
+			.times(imageInputPrice)
+			.times(discountMultiplier);
 	}
 
 	// Calculate input cost accounting for cached tokens
@@ -271,32 +273,45 @@ export function calculateCosts(
 	const uncachedPromptTokens = cachedTokens
 		? calculatedPromptTokens - cachedTokens
 		: calculatedPromptTokens;
+	// inputCost includes both text and image input costs when applicable
 	const inputCost = new Decimal(uncachedPromptTokens)
 		.times(inputPrice)
-		.times(discountMultiplier);
+		.times(discountMultiplier)
+		.plus(imageInputCost || 0);
 
-	// For Google models, reasoning tokens are billed at the output token rate
-	const totalOutputTokens = calculatedCompletionTokens + (reasoningTokens || 0);
+	// For Google models, completionTokens already includes reasoning tokens
+	// (merged during extraction). For other providers, add reasoning separately.
+	const isGoogleProvider =
+		provider === "google-ai-studio" ||
+		provider === "google-vertex" ||
+		provider === "obsidian";
+	const totalOutputTokens = isGoogleProvider
+		? calculatedCompletionTokens
+		: calculatedCompletionTokens + (reasoningTokens || 0);
 
 	// Calculate output cost, handling separate image output pricing if applicable
 	let outputCost: Decimal;
+	let imageOutputTokens = 0;
+	let imageOutputCost: Decimal | null = null;
 	const imageOutputPrice = (providerInfo as any).imageOutputPrice;
 	if (imageOutputPrice && outputImageCount > 0) {
 		// Token count per image depends on size:
-		// - 1K/2K images: 1120 tokens ($0.134 per image at $120/1M)
-		// - 4K images: 2000 tokens ($0.24 per image at $120/1M)
+		// - 1K/2K images: 1120 tokens
+		// - 4K images: 2000 tokens
 		const TOKENS_PER_IMAGE = imageSize === "4K" ? 2000 : 1120;
-		const imageTokens = outputImageCount * TOKENS_PER_IMAGE;
-		const textTokens = Math.max(0, totalOutputTokens - imageTokens);
+		imageOutputTokens = outputImageCount * TOKENS_PER_IMAGE;
+		const textTokens = Math.max(0, totalOutputTokens - imageOutputTokens);
 
-		const textCost = new Decimal(textTokens)
-			.times(outputPrice)
-			.times(discountMultiplier);
-		const imageCost = new Decimal(imageTokens)
+		// Separate image output cost (breakdown field)
+		// imageOutputPrice is per token for output images
+		imageOutputCost = new Decimal(imageOutputTokens)
 			.times(imageOutputPrice)
 			.times(discountMultiplier);
-
-		outputCost = textCost.plus(imageCost);
+		// outputCost includes both text and image output costs
+		outputCost = new Decimal(textTokens)
+			.times(outputPrice)
+			.times(discountMultiplier)
+			.plus(imageOutputCost);
 	} else {
 		outputCost = new Decimal(totalOutputTokens)
 			.times(outputPrice)
@@ -316,6 +331,8 @@ export function calculateCosts(
 			? webSearchPrice.times(webSearchCount).times(discountMultiplier)
 			: new Decimal(0);
 
+	// Note: inputCost already includes imageInputCost and outputCost already
+	// includes imageOutputCost when applicable, so they are not added separately.
 	const totalCost = inputCost
 		.plus(outputCost)
 		.plus(cachedInputCost)
@@ -329,7 +346,20 @@ export function calculateCosts(
 		requestCost: requestCost.toNumber(),
 		webSearchCost: webSearchCost.toNumber(),
 		totalCost: totalCost.toNumber(),
-		promptTokens: calculatedPromptTokens,
+		imageInputCost: imageInputCost?.toNumber() ?? undefined,
+		imageOutputCost: imageOutputCost?.toNumber() ?? undefined,
+		imageInputTokens: imageInputTokens || undefined,
+		imageOutputTokens: imageOutputTokens || undefined,
+		// Only add image input tokens to promptTokens for providers whose upstream
+		// usage excludes them (Google). Other providers (OpenAI, xAI) already
+		// include image tokens in their reported prompt_tokens.
+		promptTokens:
+			imageInputTokens &&
+			(provider === "google-ai-studio" ||
+				provider === "google-vertex" ||
+				provider === "obsidian")
+				? (calculatedPromptTokens || 0) + imageInputTokens
+				: calculatedPromptTokens,
 		completionTokens: calculatedCompletionTokens,
 		cachedTokens,
 		estimatedCost: isEstimated,

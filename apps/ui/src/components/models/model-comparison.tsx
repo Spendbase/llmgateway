@@ -285,7 +285,7 @@ function collectModelDetail(modelId?: ModelId): ModelDetail | undefined {
 	if (!modelId) {
 		return undefined;
 	}
-	const model = modelMap.get(modelId) as ModelDefinition | undefined;
+	const model: ModelDefinition | undefined = modelMap.get(modelId);
 
 	if (!model) {
 		return undefined;

@@ -38,6 +38,7 @@ const organizationSchema = z.object({
 	devPlanBillingCycleStart: z.date().nullable(),
 	devPlanExpiresAt: z.date().nullable(),
 	devPlanAllowAllModels: z.boolean(),
+	organizationContext: z.string(),
 });
 
 const projectSchema = z.object({
@@ -67,6 +68,7 @@ const updateOrganizationSchema = z.object({
 	autoTopUpEnabled: z.boolean().optional(),
 	autoTopUpThreshold: z.number().min(5).optional(),
 	autoTopUpAmount: z.number().min(10).optional(),
+	organizationContext: z.string().optional(),
 });
 
 const transactionSchema = z.object({
@@ -395,6 +397,7 @@ organization.openapi(updateOrganization, async (c) => {
 		autoTopUpEnabled,
 		autoTopUpThreshold,
 		autoTopUpAmount,
+		organizationContext,
 	} = c.req.valid("json");
 
 	const userOrganization = await db.query.userOrganization.findFirst({
@@ -439,6 +442,17 @@ organization.openapi(updateOrganization, async (c) => {
 		});
 	}
 
+	// Only owners and admins can update organization context
+	if (
+		organizationContext !== undefined &&
+		userOrganization.role !== "owner" &&
+		userOrganization.role !== "admin"
+	) {
+		throw new HTTPException(403, {
+			message: "Only owners and admins can update organization context",
+		});
+	}
+
 	const updateData: any = {};
 	if (name !== undefined) {
 		updateData.name = name;
@@ -469,6 +483,9 @@ organization.openapi(updateOrganization, async (c) => {
 	}
 	if (autoTopUpAmount !== undefined) {
 		updateData.autoTopUpAmount = autoTopUpAmount.toString();
+	}
+	if (organizationContext !== undefined) {
+		updateData.organizationContext = organizationContext;
 	}
 
 	const [updatedOrganization] = await db
