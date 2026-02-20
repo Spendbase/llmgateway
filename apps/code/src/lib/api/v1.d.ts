@@ -4460,6 +4460,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/audio/transcriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transcribe Audio
+         * @description Transcribes audio to text using Google Cloud Speech-to-Text API
+         */
+        post: operations["audio_transcriptions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/google-workspace/callback": {
         parameters: {
             query?: never;
@@ -4640,6 +4660,74 @@ export interface operations {
                             /** @enum {string} */
                             status: "active" | "inactive";
                         }[];
+                    };
+                };
+            };
+        };
+    };
+    audio_transcriptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** @description Audio file to transcribe */
+                    file: unknown;
+                    /**
+                     * @description BCP-47 language code (default: en-US)
+                     * @example en-US
+                     */
+                    language?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Transcription result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Transcribed text */
+                        text: string;
+                    };
+                };
+            };
+            /** @description Bad request — missing or invalid audio file */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                    };
+                };
+            };
+            /** @description Service not configured or authentication failed */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                    };
+                };
+            };
+            /** @description Google Speech-to-Text API error */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
                     };
                 };
             };
