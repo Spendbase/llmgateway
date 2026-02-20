@@ -2,7 +2,7 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
-import { db, eq, sql, tables } from "@llmgateway/db";
+import { and, db, eq, isNull, sql, tables } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
 import { getDevPlanCreditsLimit, type DevPlanTier } from "@llmgateway/shared";
 
@@ -232,6 +232,53 @@ stripeRoutes.openapi(webhookHandler, async (c) => {
 	}
 });
 
+async function logTransactionEvent(
+	transactionId: string,
+	type: "created" | "status_changed",
+	newStatus: "pending" | "completed" | "failed" | null,
+	metadata: Record<string, any>,
+) {
+	try {
+		const stripeEventId = metadata?.stripeEventId;
+
+		// Deduplication check
+		const [existingEvent] = await db
+			.select()
+			.from(tables.transactionEvent)
+			.where(
+				and(
+					eq(tables.transactionEvent.transactionId, transactionId),
+					eq(tables.transactionEvent.type, type),
+					stripeEventId
+						? sql`${tables.transactionEvent.metadata}->>'stripeEventId' = ${stripeEventId}`
+						: newStatus
+							? eq(tables.transactionEvent.newStatus, newStatus)
+							: isNull(tables.transactionEvent.newStatus),
+				),
+			)
+			.limit(1);
+
+		if (existingEvent) {
+			logger.warn(
+				`Skipping duplicate transaction event log for ${transactionId} (stripeEventId: ${stripeEventId})`,
+			);
+			return;
+		}
+
+		await db.insert(tables.transactionEvent).values({
+			transactionId,
+			type,
+			newStatus,
+			metadata: metadata,
+		});
+	} catch (error) {
+		logger.warn(
+			`Failed to log transaction event for ${transactionId}`,
+			error as Error,
+		);
+	}
+}
+
 async function handleCheckoutSessionCompleted(
 	event: Stripe.CheckoutSessionCompletedEvent,
 ) {
@@ -320,6 +367,13 @@ async function handleCheckoutSessionCompleted(
 						description: `Dev Plan ${devPlanTier.toUpperCase()} started via Stripe Checkout`,
 					})
 					.returning();
+
+				// Audit Log
+				await logTransactionEvent(transaction.id, "created", "completed", {
+					trigger: "stripe_webhook",
+					stripeEventId: event.id,
+					session_id: session.id,
+				});
 
 				// Generate and email invoice
 				try {
@@ -420,6 +474,13 @@ async function handleCheckoutSessionCompleted(
 						description: "Pro subscription started via Stripe Checkout",
 					})
 					.returning();
+
+				// Audit Log
+				await logTransactionEvent(transaction.id, "created", "completed", {
+					trigger: "stripe_webhook",
+					stripeEventId: event.id,
+					session_id: session.id,
+				});
 
 				// Generate and email invoice
 				try {
@@ -602,6 +663,18 @@ async function handlePaymentIntentSucceeded(
 				`Updated pending transaction ${transactionId} to completed for organization ${organizationId}`,
 			);
 			completedTransaction = updatedTransaction;
+
+			// Audit Log
+			await logTransactionEvent(
+				updatedTransaction.id,
+				"status_changed",
+				"completed",
+				{
+					trigger: "stripe_webhook",
+					stripeEventId: event.id,
+					oldStatus: "pending", // Assumed from context of "existing pending transaction"
+				},
+			);
 		} else {
 			logger.warn(
 				`Could not find pending transaction ${transactionId} for organization ${organizationId}`,
@@ -621,6 +694,13 @@ async function handlePaymentIntentSucceeded(
 				})
 				.returning();
 			completedTransaction = newTransaction;
+
+			// Audit Log
+			await logTransactionEvent(newTransaction.id, "created", "completed", {
+				trigger: "stripe_webhook",
+				stripeEventId: event.id,
+				note: "fallback_from_pending",
+			});
 		}
 	} else {
 		// Create new transaction record (for manual top-ups or old auto top-ups)
@@ -638,6 +718,12 @@ async function handlePaymentIntentSucceeded(
 			})
 			.returning();
 		completedTransaction = newTransaction;
+
+		// Audit Log
+		await logTransactionEvent(newTransaction.id, "created", "completed", {
+			trigger: "stripe_webhook",
+			stripeEventId: event.id,
+		});
 	}
 
 	// Generate and email invoice for credit purchase
@@ -756,12 +842,51 @@ async function handlePaymentIntentFailed(
 			logger.info(
 				`Updated pending transaction ${transactionId} to failed for organization ${organizationId}`,
 			);
+
+			// Audit Log
+			await logTransactionEvent(
+				updatedTransaction.id,
+				"status_changed",
+				"failed",
+				{
+					trigger: "stripe_webhook",
+					stripeEventId: event.id,
+					oldStatus: "pending",
+					reason: errorMessage,
+				},
+			);
 		} else {
 			logger.warn(
 				`Could not find pending transaction ${transactionId} for organization ${organizationId}`,
 			);
 			// Fallback: create new failed transaction record
-			await db.insert(tables.transaction).values({
+			const [newTransaction] = await db
+				.insert(tables.transaction)
+				.values({
+					organizationId,
+					type: "credit_topup",
+					creditAmount: creditAmount ? creditAmount.toString() : null,
+					amount: totalAmountInDollars.toString(),
+					currency: paymentIntent.currency.toUpperCase(),
+					status: "failed",
+					stripePaymentIntentId: paymentIntent.id,
+					description: `Credit top-up failed via Stripe (fallback): ${errorMessage}`,
+				})
+				.returning();
+
+			// Audit Log
+			await logTransactionEvent(newTransaction.id, "created", "failed", {
+				trigger: "stripe_webhook",
+				stripeEventId: event.id,
+				reason: errorMessage,
+				note: "fallback_from_pending",
+			});
+		}
+	} else {
+		// Create new failed transaction record (for manual top-ups or payments without transactionId)
+		const [newTransaction] = await db
+			.insert(tables.transaction)
+			.values({
 				organizationId,
 				type: "credit_topup",
 				creditAmount: creditAmount ? creditAmount.toString() : null,
@@ -769,20 +894,15 @@ async function handlePaymentIntentFailed(
 				currency: paymentIntent.currency.toUpperCase(),
 				status: "failed",
 				stripePaymentIntentId: paymentIntent.id,
-				description: `Credit top-up failed via Stripe (fallback): ${errorMessage}`,
-			});
-		}
-	} else {
-		// Create new failed transaction record (for manual top-ups or payments without transactionId)
-		await db.insert(tables.transaction).values({
-			organizationId,
-			type: "credit_topup",
-			creditAmount: creditAmount ? creditAmount.toString() : null,
-			amount: totalAmountInDollars.toString(),
-			currency: paymentIntent.currency.toUpperCase(),
-			status: "failed",
-			stripePaymentIntentId: paymentIntent.id,
-			description: `Credit top-up failed via Stripe: ${errorMessage}`,
+				description: `Credit top-up failed via Stripe: ${errorMessage}`,
+			})
+			.returning();
+
+		// Audit Log
+		await logTransactionEvent(newTransaction.id, "created", "failed", {
+			trigger: "stripe_webhook",
+			stripeEventId: event.id,
+			reason: errorMessage,
 		});
 	}
 
@@ -934,17 +1054,28 @@ async function handleChargeRefunded(event: Stripe.ChargeRefundedEvent) {
 	}
 
 	// Create refund transaction
-	await db.insert(tables.transaction).values({
-		organizationId: originalTransaction.organizationId,
-		type: "credit_refund",
-		amount: refundAmountInDollars.toString(),
-		creditAmount: (-creditRefundAmount).toString(),
-		currency: originalTransaction.currency,
-		status: "completed",
-		stripePaymentIntentId: payment_intent as string,
-		relatedTransactionId: originalTransaction.id,
-		refundReason: latestRefund.reason || null,
-		description: `Credit refund: $${refundAmountInDollars.toFixed(2)} (${(refundRatio * 100).toFixed(1)}% of original purchase)`,
+	const [refundTransaction] = await db
+		.insert(tables.transaction)
+		.values({
+			organizationId: originalTransaction.organizationId,
+			type: "credit_refund",
+			amount: refundAmountInDollars.toString(),
+			creditAmount: (-creditRefundAmount).toString(),
+			currency: originalTransaction.currency,
+			status: "completed",
+			stripePaymentIntentId: payment_intent as string,
+			relatedTransactionId: originalTransaction.id,
+			refundReason: latestRefund.reason || null,
+			description: `Credit refund: $${refundAmountInDollars.toFixed(2)} (${(refundRatio * 100).toFixed(1)}% of original purchase)`,
+		})
+		.returning();
+
+	// Audit Log
+	await logTransactionEvent(refundTransaction.id, "created", "completed", {
+		trigger: "stripe_webhook",
+		stripeEventId: event.id,
+		reason: latestRefund.reason,
+		originalTransactionId: originalTransaction.id,
 	});
 
 	// Deduct credits from organization (allow negative)
@@ -1107,16 +1238,26 @@ async function handleInvoicePaymentSucceeded(
 		);
 
 		// Create transaction record for dev plan renewal
-		await db.insert(tables.transaction).values({
-			organizationId,
-			type: "dev_plan_renewal",
-			amount: (invoice.amount_paid / 100).toString(),
-			creditAmount: creditsLimit.toString(),
-			currency: invoice.currency.toUpperCase(),
-			status: "completed",
-			stripePaymentIntentId: (invoice as any).payment_intent,
-			stripeInvoiceId: invoice.id,
-			description: `Dev Plan ${organization.devPlan?.toUpperCase()} renewed`,
+		const [renewalTransaction] = await db
+			.insert(tables.transaction)
+			.values({
+				organizationId,
+				type: "dev_plan_renewal",
+				amount: (invoice.amount_paid / 100).toString(),
+				creditAmount: creditsLimit.toString(),
+				currency: invoice.currency.toUpperCase(),
+				status: "completed",
+				stripePaymentIntentId: (invoice as any).payment_intent,
+				stripeInvoiceId: invoice.id,
+				description: `Dev Plan ${organization.devPlan?.toUpperCase()} renewed`,
+			})
+			.returning();
+
+		// Audit Log
+		await logTransactionEvent(renewalTransaction.id, "created", "completed", {
+			trigger: "stripe_webhook",
+			stripeEventId: event.id,
+			invoiceId: invoice.id,
 		});
 
 		// Reset credits used and update billing cycle start
@@ -1163,6 +1304,13 @@ async function handleInvoicePaymentSucceeded(
 				description: "Pro subscription started",
 			})
 			.returning();
+
+		// Audit Log
+		await logTransactionEvent(transaction.id, "created", "completed", {
+			trigger: "stripe_webhook",
+			stripeEventId: event.id,
+			invoiceId: invoice.id,
+		});
 
 		// Update organization to pro plan and mark subscription as not cancelled
 		try {
@@ -1276,13 +1424,23 @@ async function handleSubscriptionUpdated(
 
 		// Create transaction record for dev plan cancellation if it was cancelled
 		if (!isSubscriptionActive && !wasDevPlanCancelled) {
-			await db.insert(tables.transaction).values({
-				organizationId,
-				type: "dev_plan_cancel",
-				currency: "USD",
-				status: "completed",
-				stripeInvoiceId: subscription.latest_invoice as string,
-				description: `Dev Plan ${organization.devPlan?.toUpperCase()} cancelled`,
+			const [cancelTransaction] = await db
+				.insert(tables.transaction)
+				.values({
+					organizationId,
+					type: "dev_plan_cancel",
+					currency: "USD",
+					status: "completed",
+					stripeInvoiceId: subscription.latest_invoice as string,
+					description: `Dev Plan ${organization.devPlan?.toUpperCase()} cancelled`,
+				})
+				.returning();
+
+			// Audit Log
+			await logTransactionEvent(cancelTransaction.id, "created", "completed", {
+				trigger: "stripe_webhook",
+				stripeEventId: event.id,
+				subscriptionId: subscription.id,
 			});
 		}
 
@@ -1322,13 +1480,23 @@ async function handleSubscriptionUpdated(
 
 		// Create transaction record for subscription cancellation if it was cancelled
 		if (!isSubscriptionActive && !wasSubscriptionCancelled) {
-			await db.insert(tables.transaction).values({
-				organizationId,
-				type: "subscription_cancel",
-				currency: "USD",
-				status: "completed",
-				stripeInvoiceId: subscription.latest_invoice as string,
-				description: "Pro subscription cancelled",
+			const [cancelTransaction] = await db
+				.insert(tables.transaction)
+				.values({
+					organizationId,
+					type: "subscription_cancel",
+					currency: "USD",
+					status: "completed",
+					stripeInvoiceId: subscription.latest_invoice as string,
+					description: "Pro subscription cancelled",
+				})
+				.returning();
+
+			// Audit Log
+			await logTransactionEvent(cancelTransaction.id, "created", "completed", {
+				trigger: "stripe_webhook",
+				stripeEventId: event.id,
+				subscriptionId: subscription.id,
 			});
 		}
 
@@ -1400,13 +1568,23 @@ async function handleSubscriptionDeleted(
 		const previousDevPlan = organization.devPlan;
 
 		// Create transaction record for dev plan end
-		await db.insert(tables.transaction).values({
-			organizationId,
-			type: "dev_plan_end",
-			currency: "USD",
-			status: "completed",
-			stripeInvoiceId: subscription.latest_invoice as string,
-			description: `Dev Plan ${previousDevPlan?.toUpperCase()} ended`,
+		const [endTransaction] = await db
+			.insert(tables.transaction)
+			.values({
+				organizationId,
+				type: "dev_plan_end",
+				currency: "USD",
+				status: "completed",
+				stripeInvoiceId: subscription.latest_invoice as string,
+				description: `Dev Plan ${previousDevPlan?.toUpperCase()} ended`,
+			})
+			.returning();
+
+		// Audit Log
+		await logTransactionEvent(endTransaction.id, "created", "completed", {
+			trigger: "stripe_webhook",
+			stripeEventId: event.id,
+			subscriptionId: subscription.id,
 		});
 
 		// Reset dev plan fields
@@ -1454,13 +1632,23 @@ async function handleSubscriptionDeleted(
 	} else {
 		// Handle regular pro plan subscription deletion
 		// Create transaction record for subscription end
-		await db.insert(tables.transaction).values({
-			organizationId,
-			type: "subscription_end",
-			currency: "USD",
-			status: "completed",
-			stripeInvoiceId: subscription.latest_invoice as string,
-			description: "Pro subscription ended",
+		const [endTransaction] = await db
+			.insert(tables.transaction)
+			.values({
+				organizationId,
+				type: "subscription_end",
+				currency: "USD",
+				status: "completed",
+				stripeInvoiceId: subscription.latest_invoice as string,
+				description: "Pro subscription ended",
+			})
+			.returning();
+
+		// Audit Log
+		await logTransactionEvent(endTransaction.id, "created", "completed", {
+			trigger: "stripe_webhook",
+			stripeEventId: event.id,
+			subscriptionId: subscription.id,
 		});
 
 		// Downgrade organization to free plan and mark subscription as cancelled
