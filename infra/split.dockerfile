@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1-labs
+# syntax=harbor.dev.spendbase.co/dockerhub/docker/dockerfile:1-labs
 FROM harbor.dev.spendbase.co/dockerhub/library/debian:12-slim AS base-builder
 
 # Install base dependencies including tini for better caching
