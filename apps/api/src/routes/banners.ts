@@ -45,6 +45,11 @@ banners.openapi(getBanners, async (c) => {
 	}
 
 	const banners = await db.query.banner.findMany({
+		where: {
+			enabled: {
+				eq: true,
+			},
+		},
 		orderBy: (banner, { desc }) => [desc(banner.priority)],
 	});
 
