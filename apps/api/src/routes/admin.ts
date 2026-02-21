@@ -842,7 +842,7 @@ admin.openapi(depositCredits, async (c) => {
 		if (err.message === "ORGANIZATION_NOT_FOUND") {
 			throw new HTTPException(404, { message: "Organization not found" });
 		}
-
+		console.error(err);
 		throw new HTTPException(500, { message: "Internal Database Error" });
 	}
 });
