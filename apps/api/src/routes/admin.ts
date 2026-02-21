@@ -388,6 +388,7 @@ const updateBannerSettings = createRoute({
 			id: z.string(),
 		}),
 		body: {
+			required: true,
 			content: {
 				"application/json": {
 					schema: updateBannerSchema,
