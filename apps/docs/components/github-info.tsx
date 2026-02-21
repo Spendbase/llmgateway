@@ -33,7 +33,8 @@ async function getRepoStarsAndForks(
 
 	if (!response.ok) {
 		const message = await response.text().catch(() => response.statusText);
-		const isRateLimit = response.status === 403 && message.includes("API rate limit exceeded");
+		const isRateLimit =
+			response.status === 403 && message.includes("API rate limit exceeded");
 
 		if (isRateLimit || response.status >= 500) {
 			return null;
