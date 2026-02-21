@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1-labs
+# syntax=harbor.dev.spendbase.co/dockerhub/docker/dockerfile:1-labs
 FROM debian:12-slim
 
 # Install base dependencies and runtime requirements

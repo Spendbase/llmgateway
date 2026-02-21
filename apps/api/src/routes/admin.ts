@@ -9,6 +9,9 @@ import {
 	desc,
 	eq,
 	gte,
+	ilike,
+	lte,
+	or,
 	lt,
 	sql,
 	tables,
@@ -98,6 +101,29 @@ const updateBannerSchema = z.object({
 	enabled: z.boolean(),
 });
 
+const depositTransactionSchema = z.object({
+	id: z.string(),
+	createdAt: z.date(),
+	organizationId: z.string(),
+	organizationName: z.string(),
+	amount: z.string().nullable(),
+	creditAmount: z.string().nullable(),
+	currency: z.string(),
+	status: z.enum(["pending", "completed", "failed"]),
+	stripePaymentIntentId: z.string().nullable(),
+	stripeInvoiceId: z.string().nullable(),
+	description: z.string().nullable(),
+	paymentMethod: z.string(),
+});
+
+const depositEventSchema = z.object({
+	id: z.string(),
+	createdAt: z.date(),
+	type: z.enum(["created", "status_changed"]),
+	newStatus: z.enum(["pending", "completed", "failed"]).nullable(),
+	metadata: z.unknown().nullable(),
+});
+
 function isAdminEmail(email: string | null | undefined): boolean {
 	const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
 	const adminEmails = adminEmailsEnv
@@ -110,6 +136,10 @@ function isAdminEmail(email: string | null | undefined): boolean {
 	}
 
 	return adminEmails.includes(email.toLowerCase());
+}
+
+function escapeLike(value: string): string {
+	return value.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&");
 }
 
 const getMetrics = createRoute({
@@ -310,6 +340,46 @@ const getBannerSettings = createRoute({
 	},
 });
 
+const getDeposits = createRoute({
+	method: "get",
+	path: "/deposits",
+	request: {
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1).openapi({ example: 1 }),
+			pageSize: z.coerce
+				.number()
+				.int()
+				.min(1)
+				.default(20)
+				.openapi({ example: 20 }),
+			status: z.enum(["pending", "completed", "failed"]).optional(),
+			from: z.string().datetime().optional(), // ISO date string
+			to: z.string().datetime().optional(), // ISO date string
+			q: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						deposits: z.array(depositTransactionSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							totalDeposits: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Paginated list of deposit transactions",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
 const updateBannerSettings = createRoute({
 	method: "patch",
 	path: "/banners/{id}",
@@ -337,6 +407,32 @@ const updateBannerSettings = createRoute({
 		401: { description: "Unauthorized" },
 		403: { description: "Forbidden" },
 		404: { description: "Banner not found" },
+	},
+});
+
+const getDeposit = createRoute({
+	method: "get",
+	path: "/deposits/:id",
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						deposit: depositTransactionSchema.openapi({}),
+						events: z.array(depositEventSchema).openapi({}),
+					}),
+				},
+			},
+			description: "Deposit details and audit events",
+		},
+		404: { description: "Deposit not found" },
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
 	},
 });
 
@@ -770,6 +866,19 @@ admin.openapi(depositCredits, async (c) => {
 				.where(eq(tables.organization.id, organizationId))
 				.returning({ newBalance: tables.organization.credits });
 
+			await tx.insert(tables.transactionEvent).values({
+				transactionId: newTx.id,
+				type: "created",
+				newStatus: "completed",
+				metadata: {
+					type: "admin_credit_granted",
+					adminUserId: authUser.id,
+					organizationId,
+					amount,
+					description,
+				},
+			});
+
 			return {
 				transaction: {
 					id: newTx.id,
@@ -1041,7 +1150,9 @@ admin.openapi(getBannerSettings, async (c) => {
 	}
 
 	if (!isAdminEmail(authUser.email)) {
-		throw new HTTPException(403, { message: "Admin access required" });
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
 	}
 
 	const banners = await db.query.banner.findMany({
@@ -1086,6 +1197,178 @@ admin.openapi(updateBannerSettings, async (c) => {
 	}
 
 	return c.json(updatedBanner);
+});
+
+admin.openapi(getDeposits, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const query = c.req.valid("query");
+	const page = query.page;
+	const pageSize = Math.min(100, query.pageSize);
+	const offset = (page - 1) * pageSize;
+
+	const conditions = [eq(tables.transaction.type, "credit_topup")];
+
+	if (query.status) {
+		conditions.push(eq(tables.transaction.status, query.status));
+	}
+
+	if (query.from) {
+		conditions.push(gte(tables.transaction.createdAt, new Date(query.from)));
+	}
+
+	if (query.to) {
+		conditions.push(lte(tables.transaction.createdAt, new Date(query.to)));
+	}
+
+	if (query.q) {
+		const escaped = escapeLike(query.q);
+		const search = `%${escaped}%`;
+		const searchCondition = or(
+			ilike(tables.transaction.id, search),
+			ilike(tables.transaction.organizationId, search),
+			ilike(tables.transaction.stripePaymentIntentId, search),
+			ilike(tables.transaction.stripeInvoiceId, search),
+			ilike(tables.organization.name, search),
+		);
+		if (searchCondition) {
+			conditions.push(searchCondition);
+		}
+	}
+
+	const [totalResult] = await db
+		.select({
+			count: sql<number>`COUNT(DISTINCT ${tables.transaction.id})`.as("count"),
+		})
+		.from(tables.transaction)
+		.innerJoin(
+			tables.organization,
+			eq(tables.transaction.organizationId, tables.organization.id),
+		)
+		.where(and(...conditions));
+
+	const totalDeposits = Number(totalResult?.count ?? 0);
+	const totalPages = Math.ceil(totalDeposits / pageSize);
+
+	const deposits = await db
+		.select({
+			id: tables.transaction.id,
+			createdAt: tables.transaction.createdAt,
+			organizationId: tables.transaction.organizationId,
+			amount: tables.transaction.amount,
+			creditAmount: tables.transaction.creditAmount,
+			currency: tables.transaction.currency,
+			status: tables.transaction.status,
+			stripePaymentIntentId: tables.transaction.stripePaymentIntentId,
+			stripeInvoiceId: tables.transaction.stripeInvoiceId,
+			description: tables.transaction.description,
+			organizationName: tables.organization.name,
+			paymentMethod:
+				sql<string>`CASE WHEN ${tables.transaction.stripePaymentIntentId} IS NOT NULL THEN 'Stripe' ELSE 'System' END`.as(
+					"paymentMethod",
+				),
+		})
+		.from(tables.transaction)
+		.innerJoin(
+			tables.organization,
+			eq(tables.transaction.organizationId, tables.organization.id),
+		)
+		.where(and(...conditions))
+		.orderBy(desc(tables.transaction.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	return c.json({
+		deposits,
+		pagination: {
+			page,
+			pageSize,
+			totalDeposits,
+			totalPages,
+		},
+	});
+});
+
+admin.openapi(getDeposit, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const { id } = c.req.valid("param");
+
+	const [deposit] = await db
+		.select({
+			id: tables.transaction.id,
+			createdAt: tables.transaction.createdAt,
+			organizationId: tables.transaction.organizationId,
+			amount: tables.transaction.amount,
+			creditAmount: tables.transaction.creditAmount,
+			currency: tables.transaction.currency,
+			status: tables.transaction.status,
+			stripePaymentIntentId: tables.transaction.stripePaymentIntentId,
+			stripeInvoiceId: tables.transaction.stripeInvoiceId,
+			description: tables.transaction.description,
+			organizationName: tables.organization.name,
+			paymentMethod:
+				sql<string>`CASE WHEN ${tables.transaction.stripePaymentIntentId} IS NOT NULL THEN 'Stripe' ELSE 'System' END`.as(
+					"paymentMethod",
+				),
+		})
+		.from(tables.transaction)
+		.innerJoin(
+			tables.organization,
+			eq(tables.transaction.organizationId, tables.organization.id),
+		)
+		.where(
+			and(
+				eq(tables.transaction.id, id),
+				eq(tables.transaction.type, "credit_topup"),
+			),
+		)
+		.limit(1);
+
+	if (!deposit) {
+		throw new HTTPException(404, { message: "Deposit not found" });
+	}
+
+	const events = await db
+		.select({
+			id: tables.transactionEvent.id,
+			createdAt: tables.transactionEvent.createdAt,
+			type: tables.transactionEvent.type,
+			newStatus: tables.transactionEvent.newStatus,
+			metadata: tables.transactionEvent.metadata,
+		})
+		.from(tables.transactionEvent)
+		.where(eq(tables.transactionEvent.transactionId, id))
+		.orderBy(desc(tables.transactionEvent.createdAt));
+
+	return c.json({
+		deposit,
+		events,
+	});
 });
 
 admin.openapi(updateModelMappingStatus, async (c) => {

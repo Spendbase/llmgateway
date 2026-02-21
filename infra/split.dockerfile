@@ -1,19 +1,19 @@
 # syntax=docker/dockerfile:1-labs
-FROM debian:12-slim AS base-builder
+FROM library/debian:12-slim AS base-builder
 
 # Install base dependencies including tini for better caching
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    pkg-config \
-    curl \
-    bash \
-    tar \
-    xz-utils \
-    ca-certificates \
-    tini \
-    wget \
-    git \
-    && rm -rf /var/lib/apt/lists/* \
-    && /usr/bin/tini --version
+	pkg-config \
+	curl \
+	bash \
+	tar \
+	xz-utils \
+	ca-certificates \
+	tini \
+	wget \
+	git \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& /usr/bin/tini --version
 
 # Install asdf version manager
 ENV ASDF_VERSION=v0.18.0
@@ -22,12 +22,12 @@ ENV ASDF_DATA_DIR=${ASDF_DIR}
 ENV PATH="${ASDF_DIR}:${ASDF_DATA_DIR}/shims:$PATH"
 
 RUN ARCH=$(uname -m) && \
-    if [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi && \
-    if [ "$ARCH" = "x86_64" ]; then ARCH="amd64"; fi && \
-    wget -q https://github.com/asdf-vm/asdf/releases/download/${ASDF_VERSION}/asdf-${ASDF_VERSION}-linux-${ARCH}.tar.gz -O /tmp/asdf.tar.gz && \
-    mkdir -p $ASDF_DIR && \
-    tar -xzf /tmp/asdf.tar.gz -C $ASDF_DIR && \
-    rm /tmp/asdf.tar.gz
+	if [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi && \
+	if [ "$ARCH" = "x86_64" ]; then ARCH="amd64"; fi && \
+	wget -q https://github.com/asdf-vm/asdf/releases/download/${ASDF_VERSION}/asdf-${ASDF_VERSION}-linux-${ARCH}.tar.gz -O /tmp/asdf.tar.gz && \
+	mkdir -p $ASDF_DIR && \
+	tar -xzf /tmp/asdf.tar.gz -C $ASDF_DIR && \
+	rm /tmp/asdf.tar.gz
 
 # Create app directory
 WORKDIR /app
@@ -36,20 +36,20 @@ COPY .tool-versions ./
 
 # Install asdf plugins and tools
 RUN cat .tool-versions | cut -d' ' -f1 | grep "^[^\#]" | xargs -i asdf plugin add  {} && \
-    asdf install && \
-    asdf reshim && \
-    # Verify installations
-    echo "Final versions installed:" && \
-    node -v && \
-    pnpm -v
+	asdf install && \
+	asdf reshim && \
+	# Verify installations
+	echo "Final versions installed:" && \
+	node -v && \
+	pnpm -v
 
 # verify that pnpm store path
 RUN STORE_PATH="/root/.local/share/pnpm/store" && \
-    if [ "${STORE_PATH#/root/.local/share/pnpm/store}" = "${STORE_PATH}" ]; then \
-        echo "pnpm store path mismatch: ${STORE_PATH}"; \
-        exit 1; \
-    fi && \
-    echo "pnpm store path matches: ${STORE_PATH}"
+	if [ "${STORE_PATH#/root/.local/share/pnpm/store}" = "${STORE_PATH}" ]; then \
+	echo "pnpm store path mismatch: ${STORE_PATH}"; \
+	exit 1; \
+	fi && \
+	echo "pnpm store path matches: ${STORE_PATH}"
 
 # Builder for API
 FROM base-builder AS api-builder
