@@ -11,6 +11,7 @@ export interface AppConfig {
 	posthogHost?: string;
 	crispId?: string;
 	gtmId?: string;
+	googleSpeechEnabled: boolean;
 }
 
 export function getConfig(): AppConfig {
@@ -29,5 +30,6 @@ export function getConfig(): AppConfig {
 		posthogHost: process.env.POSTHOG_HOST,
 		crispId: process.env.CRISP_ID,
 		gtmId: process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID,
+		googleSpeechEnabled: process.env.GOOGLE_SPEECH_ENABLED === "true",
 	};
 }
