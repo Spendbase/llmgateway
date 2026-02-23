@@ -6,6 +6,7 @@ import {
 	hasGoogleCredentials,
 	resetGoogleAuthCache,
 } from "@/lib/google-auth.js";
+import { rateLimitMiddleware } from "@/lib/rate-limit.js";
 
 import { logger } from "@llmgateway/logger";
 
@@ -14,6 +15,16 @@ import type { ServerTypes } from "@/vars.js";
 export const audio = new OpenAPIHono<ServerTypes>();
 
 const CHIRP_REGION = process.env.GOOGLE_SPEECH_REGION ?? "us";
+
+const AUDIO_RATE_LIMIT = {
+	keyPrefix: "audio_transcription",
+	windowSizeMs: 60_000,
+	maxRequests: 10,
+};
+
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
+
+audio.use("/*", rateLimitMiddleware(AUDIO_RATE_LIMIT));
 
 const transcriptionRoute = createRoute({
 	operationId: "audio_transcriptions",
@@ -102,6 +113,10 @@ audio.openapi(transcriptionRoute, async (c) => {
 
 	if (file.size === 0) {
 		return c.json({ error: "Audio file is empty" }, 400);
+	}
+
+	if (file.size > MAX_FILE_SIZE_BYTES) {
+		return c.json({ error: "Audio file too large (max 25 MB)" }, 400);
 	}
 
 	const arrayBuffer = await file.arrayBuffer();
