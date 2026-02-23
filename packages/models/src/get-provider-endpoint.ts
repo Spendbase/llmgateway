@@ -70,9 +70,9 @@ export function getProviderEndpoint(
 			// case "mistral":
 			// 	url = "https://api.mistral.ai";
 			// 	break;
-			// case "xai":
-			// 	url = "https://api.x.ai";
-			// 	break;
+			case "xai":
+				url = "https://api.x.ai";
+				break;
 			// case "groq":
 			// 	url = "https://api.groq.com/openai";
 			// 	break;
@@ -82,9 +82,9 @@ export function getProviderEndpoint(
 			// case "deepseek":
 			// 	url = "https://api.deepseek.com";
 			// 	break;
-			// case "elevenlabs":
-			// 	url = "https://api.elevenlabs.io";
-			// 	break;
+			case "elevenlabs":
+				url = "https://api.elevenlabs.io";
+				break;
 			// case "perplexity":
 			// 	url = "https://api.perplexity.ai";
 			// 	break;
