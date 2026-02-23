@@ -295,10 +295,22 @@ const getUsers = createRoute({
 			registeredAtFrom: z
 				.string()
 				.regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
+				.refine((val) => {
+					const date = new Date(val);
+					return (
+						!Number.isNaN(date.getTime()) && date.toISOString().startsWith(val)
+					);
+				}, "Invalid date format or calendar date")
 				.optional(),
 			registeredAtTo: z
 				.string()
 				.regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
+				.refine((val) => {
+					const date = new Date(val);
+					return (
+						!Number.isNaN(date.getTime()) && date.toISOString().startsWith(val)
+					);
+				}, "Invalid date format or calendar date")
 				.optional(),
 		}),
 	},
@@ -1100,13 +1112,13 @@ admin.openapi(getUsers, async (c) => {
 	if (query.userId) {
 		conditions.push(eq(tables.user.id, query.userId));
 	}
+
 	if (query.name) {
+		const escaped = escapeLike(query.name);
+		const search = `%${escaped}%`;
 		conditions.push(
-			ilike(sql`COALESCE(${tables.user.name}, '')`, `%${query.name}%`),
+			sql`COALESCE(${tables.user.name}, '') ILIKE ${search} ESCAPE '\\'`,
 		);
-	}
-	function escapeLike(str: string): string {
-		return str.replace(/[\\%_]/g, "\\$&");
 	}
 
 	if (query.email) {
