@@ -1,9 +1,10 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
-import { type ReactNode, useEffect, useCallback } from "react";
+import { type ReactNode, useEffect, useCallback, useState } from "react";
 
+import { FreeCreditsBanner } from "@/components/api-keys/free-credits-banner";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { MobileHeader } from "@/components/dashboard/mobile-header";
 import { TopBar } from "@/components/dashboard/top-bar";
@@ -32,6 +33,7 @@ export function DashboardLayoutClient({
 	const router = useRouter();
 	const api = useApi();
 	const queryClient = useQueryClient();
+	const pathname = usePathname();
 
 	const handleOrganizationChange = useCallback(
 		(orgId: string) => {
@@ -44,6 +46,29 @@ export function DashboardLayoutClient({
 		},
 		[router, api, queryClient],
 	);
+
+	const [isFreeCreditsBannerVisible, setIsFreeCreditsBannerVisible] = useState(
+		localStorage.getItem("isFreeCreditsBannerHidden") !== "true",
+	);
+
+	const handleCloseFreeCreditsBanner = useCallback(() => {
+		setIsFreeCreditsBannerVisible(false);
+		localStorage.setItem("isFreeCreditsBannerHidden", "true");
+	}, []);
+
+	const { data: bannersData } = api.useQuery("get", "/banners", undefined, {
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+	});
+
+	const freeCreditsBanner = bannersData?.banners?.find(
+		(b) => b.id === "free-credits",
+	);
+
+	const shouldShowBanner =
+		freeCreditsBanner?.enabled &&
+		pathname.includes("/api-keys") &&
+		isFreeCreditsBannerVisible;
 
 	const {
 		organizations,
@@ -77,6 +102,7 @@ export function DashboardLayoutClient({
 				handleProjectSelect,
 				handleOrganizationCreated,
 				handleProjectCreated,
+				isFreeCreditsBannerVisible: shouldShowBanner ?? false,
 			}}
 		>
 			<div className="flex min-h-screen w-full flex-col">
@@ -97,7 +123,10 @@ export function DashboardLayoutClient({
 							onProjectCreated={handleProjectCreated}
 						/>
 						<EmailVerificationBanner />
-						<main className="bg-background w-full flex-1 overflow-y-auto pt-10 pb-4 px-4 md:p-6 lg:p-8">
+						{shouldShowBanner && (
+							<FreeCreditsBanner handleClose={handleCloseFreeCreditsBanner} />
+						)}
+						<main className="relative bg-background w-full flex-1 overflow-y-auto pt-10 pb-4 px-4 md:p-6 lg:p-8">
 							{children}
 						</main>
 					</div>

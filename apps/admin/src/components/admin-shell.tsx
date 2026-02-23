@@ -7,6 +7,7 @@ import {
 	KeyRound,
 	LayoutDashboard,
 	LogOut,
+	Megaphone,
 	Server,
 	Sparkles,
 	Users,
@@ -54,6 +55,7 @@ export function AdminShell({ children }: AdminShellProps) {
 	const isUsers = pathname === "/users";
 	const isProviders = pathname.startsWith("/providers");
 	const isModels = pathname.startsWith("/models");
+	const isBanners = pathname === "/banners";
 
 	const { user, isLoading } = useUser({
 		redirectTo: pathname,
@@ -138,6 +140,12 @@ export function AdminShell({ children }: AdminShellProps) {
 									<SidebarMenuButton isActive={isModels} size="lg">
 										<Sparkles className="h-4 w-4" />
 										<span>Models</span>
+									</SidebarMenuButton>
+								</Link>
+								<Link href="/banners" className="block">
+									<SidebarMenuButton isActive={isBanners} size="lg">
+										<Megaphone className="h-4 w-4" />
+										<span>Banners</span>
 									</SidebarMenuButton>
 								</Link>
 							</SidebarMenuItem>

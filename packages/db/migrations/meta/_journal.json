@@ -624,6 +624,13 @@
       "when": 1771489887161,
       "tag": "1771489887_faithful_masque",
       "breakpoints": true
-    }
+    },
+    {
+			"idx": 89,
+			"version": "8",
+			"when": 1771520579378,
+			"tag": "1771520579_bitter_freak",
+			"breakpoints": true
+		}
   ]
 }
