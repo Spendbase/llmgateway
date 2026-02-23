@@ -216,7 +216,7 @@ export interface paths {
         };
         /**
          * Get all models
-         * @description Returns all models with their provider mappings with optional filtering, search and sorting
+         * @description Returns all models with their provider mappings, sorted by createdAt descending
          */
         get: operations["internal_get_models"];
         put?: never;
@@ -236,7 +236,7 @@ export interface paths {
         };
         /**
          * Get all providers
-         * @description Returns all providers with optional filtering, sorted by createdAt descending
+         * @description Returns all providers, sorted by createdAt descending
          */
         get: operations["internal_get_providers"];
         put?: never;
@@ -257,8 +257,8 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    period?: "24h" | "7d" | "30d";
-                    limit?: number;
+                    period?: "24h" | "7d" | "30d" | "all";
+                    limit?: string;
                     groupBy?: "model" | "modelProvider";
                     providerId?: string;
                     modelId?: string;
@@ -277,7 +277,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** @enum {string} */
-                            period: "24h" | "7d" | "30d";
+                            period: "24h" | "7d" | "30d" | "all";
                             /** @enum {string} */
                             groupBy: "model" | "modelProvider";
                             limit: number;
@@ -299,28 +299,6 @@ export interface paths {
                                 errorRate: number;
                                 estimatedCost?: number;
                             }[];
-                        };
-                    };
-                };
-                /** @description Validation failures for query params (invalid period, out-of-range limit, etc.) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
                         };
                     };
                 };
@@ -1240,96 +1218,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/users/:id/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        /**
-                         * @example blocked
-                         * @enum {string}
-                         */
-                        status: "active" | "blocked";
-                    };
-                };
-            };
-            responses: {
-                /** @description User status updated successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success: boolean;
-                            user: {
-                                id: string;
-                                /** @enum {string} */
-                                status: "active" | "blocked";
-                            };
-                            affectedOrganizations: number;
-                        };
-                    };
-                };
-                /** @description Validation error */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description User not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        trace?: never;
-    };
     "/admin/users": {
         parameters: {
             query?: never;
@@ -1362,8 +1250,6 @@ export interface paths {
                                 email: string;
                                 emailVerified: boolean;
                                 createdAt: string;
-                                /** @enum {string} */
-                                status: "active" | "blocked";
                                 organizations: {
                                     organizationId: string;
                                     organizationName: string;
@@ -1402,389 +1288,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/admin/banners": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of all banners settings */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            banners: {
-                                id: string;
-                                name: string;
-                                description: string | null;
-                                enabled: boolean;
-                                type: string;
-                                priority: number;
-                            }[];
-                        };
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/banners/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        enabled: boolean;
-                    };
-                };
-            };
-            responses: {
-                /** @description Banner updated successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            id: string;
-                            name: string;
-                            description: string | null;
-                            enabled: boolean;
-                            type: string;
-                            priority: number;
-                        };
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Banner not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        trace?: never;
-    };
-    "/admin/deposits": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    page?: number;
-                    pageSize?: number;
-                    status?: "pending" | "completed" | "failed";
-                    from?: string;
-                    to?: string;
-                    q?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of deposit transactions */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            deposits: {
-                                id: string;
-                                createdAt: string;
-                                organizationId: string;
-                                organizationName: string;
-                                amount: string | null;
-                                creditAmount: string | null;
-                                currency: string;
-                                /** @enum {string} */
-                                status: "pending" | "completed" | "failed";
-                                stripePaymentIntentId: string | null;
-                                stripeInvoiceId: string | null;
-                                description: string | null;
-                                paymentMethod: string;
-                            }[];
-                            pagination: {
-                                page: number;
-                                pageSize: number;
-                                totalDeposits: number;
-                                totalPages: number;
-                            };
-                        };
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/deposits/:id": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Deposit details and audit events */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            deposit: {
-                                id: string;
-                                createdAt: string;
-                                organizationId: string;
-                                organizationName: string;
-                                amount: string | null;
-                                creditAmount: string | null;
-                                currency: string;
-                                /** @enum {string} */
-                                status: "pending" | "completed" | "failed";
-                                stripePaymentIntentId: string | null;
-                                stripeInvoiceId: string | null;
-                                description: string | null;
-                                paymentMethod: string;
-                            };
-                            events: {
-                                id: string;
-                                createdAt: string;
-                                /** @enum {string} */
-                                type: "created" | "status_changed";
-                                /** @enum {string|null} */
-                                newStatus: "pending" | "completed" | "failed" | null;
-                                metadata?: unknown;
-                            }[];
-                        };
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Deposit not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/models/mappings/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        /**
-                         * @example inactive
-                         * @enum {string}
-                         */
-                        status: "active" | "inactive" | "deactivated";
-                        /** @example Model deprecated */
-                        reason?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Model mapping status successfully updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success: boolean;
-                            mapping: {
-                                id: string;
-                                /** @enum {string} */
-                                status: "active" | "inactive" | "deactivated";
-                                deactivatedAt: string | null;
-                                deactivationReason: string | null;
-                            };
-                        };
-                    };
-                };
-                /** @description Invalid status transition */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Model mapping not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
         trace?: never;
     };
     "/keys/api": {
@@ -3033,7 +2536,6 @@ export interface paths {
                                 devPlanBillingCycleStart: string | null;
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
-                                organizationContext: string;
                             }[];
                         };
                     };
@@ -3093,7 +2595,6 @@ export interface paths {
                                 devPlanBillingCycleStart: string | null;
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
-                                organizationContext: string;
                             };
                         };
                     };
@@ -3239,7 +2740,6 @@ export interface paths {
                         autoTopUpEnabled?: boolean;
                         autoTopUpThreshold?: number;
                         autoTopUpAmount?: number;
-                        organizationContext?: string;
                     };
                 };
             };
@@ -3282,7 +2782,6 @@ export interface paths {
                                 devPlanBillingCycleStart: string | null;
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
-                                organizationContext: string;
                             };
                         };
                     };
@@ -4409,57 +3908,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/banners": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of all banners */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            banners: {
-                                id: string;
-                                name: string;
-                                description: string | null;
-                                enabled: boolean;
-                                type: string;
-                                priority: number;
-                            }[];
-                        };
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/google-workspace/callback": {
         parameters: {
             query?: never;
@@ -4513,15 +3961,7 @@ export type $defs = Record<string, never>;
 export interface operations {
     internal_get_models: {
         parameters: {
-            query?: {
-                status?: "active" | "inactive" | "deactivated";
-                search?: string;
-                family?: string;
-                sort?: "name" | "family" | "status" | "createdAt" | "updatedAt";
-                order?: "asc" | "desc";
-                /** @description Include all mapping statuses (for admin) */
-                includeAll?: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -4538,7 +3978,6 @@ export interface operations {
                         models: {
                             id: string;
                             createdAt: string | null;
-                            updatedAt?: string | null;
                             releasedAt: string | null;
                             name: string | null;
                             aliases: string[] | null;
@@ -4556,51 +3995,30 @@ export interface operations {
                                 modelId: string;
                                 providerId: string;
                                 modelName: string;
-                                inputPrice: number | null;
-                                outputPrice: number | null;
-                                cachedInputPrice: number | null;
-                                imageInputPrice: number | null;
-                                requestPrice: number | null;
+                                inputPrice: string | null;
+                                outputPrice: string | null;
+                                cachedInputPrice: string | null;
+                                imageInputPrice: string | null;
+                                requestPrice: string | null;
                                 contextSize: number | null;
                                 maxOutput: number | null;
                                 streaming: boolean;
                                 vision: boolean | null;
                                 reasoning: boolean | null;
                                 reasoningOutput: string | null;
-                                reasoningLevels: ("minimal" | "low" | "medium" | "high")[] | null;
+                                reasoningLevels?: ("minimal" | "low" | "medium" | "high")[] | null;
                                 tools: boolean | null;
                                 jsonOutput: boolean | null;
                                 jsonOutputSchema: boolean | null;
                                 webSearch: boolean | null;
-                                webSearchPrice: number | null;
-                                discount: number | null;
-                                pricingTiers: {
-                                    name: string;
-                                    upToTokens: number | null;
-                                    inputPrice: number;
-                                    outputPrice: number;
-                                }[] | null;
+                                discount: string | null;
                                 /** @enum {string|null} */
                                 stability: "stable" | "beta" | "unstable" | "experimental" | null;
                                 supportedParameters: string[] | null;
                                 deprecatedAt: string | null;
                                 deactivatedAt: string | null;
-                                deactivationReason: string | null;
                                 /** @enum {string} */
-                                status: "active" | "inactive" | "deactivated";
-                                providerInfo?: {
-                                    id: string;
-                                    createdAt: string | null;
-                                    name: string | null;
-                                    description: string | null;
-                                    streaming: boolean | null;
-                                    cancellation: boolean | null;
-                                    color: string | null;
-                                    website: string | null;
-                                    announcement: string | null;
-                                    /** @enum {string} */
-                                    status: "active" | "inactive";
-                                };
+                                status: "active" | "inactive";
                             }[];
                         }[];
                     };
@@ -4610,10 +4028,7 @@ export interface operations {
     };
     internal_get_providers: {
         parameters: {
-            query?: {
-                /** @description Include inactive providers (for admin) */
-                includeAll?: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
