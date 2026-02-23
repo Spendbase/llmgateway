@@ -210,16 +210,39 @@ const depositCredits = createRoute({
 const getOrganizations = createRoute({
 	method: "get",
 	path: "/organizations",
+	request: {
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1).openapi({ example: 1 }),
+			pageSize: z.coerce
+				.number()
+				.int()
+				.min(1)
+				.max(100)
+				.default(20)
+				.openapi({ example: 20 }),
+			search: z.string().optional(),
+			plans: z.string().optional(),
+			statuses: z.string().optional(),
+			retentionLevels: z.string().optional(),
+		}),
+	},
 	responses: {
 		200: {
 			content: {
 				"application/json": {
 					schema: z.object({
 						organizations: z.array(organizationSchema).openapi({}),
+						suggestions: z.array(z.string()),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							totalOrganizations: z.number(),
+							totalPages: z.number(),
+						}),
 					}),
 				},
 			},
-			description: "List of all organizations",
+			description: "Paginated list of organizations",
 		},
 	},
 });
@@ -801,14 +824,103 @@ admin.openapi(getOrganizations, async (c) => {
 		activeSpan.setAttribute("user_id", user.id);
 	}
 
-	const organizations = await db
-		.select()
-		.from(tables.organization)
-		.where(eq(tables.organization.status, "active"))
-		.orderBy(desc(tables.organization.createdAt));
+	const {
+		page,
+		pageSize,
+		search,
+		plans: plansParam,
+		statuses: statusesParam,
+		retentionLevels: retentionLevelsParam,
+	} = c.req.valid("query");
+
+	const parsedPlans = (plansParam || "")
+		.split(",")
+		.map((value) => value.trim())
+		.filter((value): value is "free" | "pro" =>
+			["free", "pro"].includes(value),
+		);
+
+	const parsedStatuses = (statusesParam || "")
+		.split(",")
+		.map((value) => value.trim())
+		.filter((value): value is "active" | "inactive" | "deleted" =>
+			["active", "inactive", "deleted"].includes(value),
+		);
+
+	const parsedRetentionLevels = (retentionLevelsParam || "")
+		.split(",")
+		.map((value) => value.trim())
+		.filter((value): value is "retain" | "none" =>
+			["retain", "none"].includes(value),
+		);
+
+	const normalizedSearch = search?.trim();
+	const filters = [
+		normalizedSearch
+			? or(
+					ilike(tables.organization.name, `%${normalizedSearch}%`),
+					ilike(tables.organization.billingEmail, `%${normalizedSearch}%`),
+					ilike(tables.organization.billingCompany, `%${normalizedSearch}%`),
+				)
+			: undefined,
+		parsedPlans.length > 0
+			? inArray(tables.organization.plan, parsedPlans)
+			: undefined,
+		parsedStatuses.length > 0
+			? inArray(tables.organization.status, parsedStatuses)
+			: undefined,
+		parsedRetentionLevels.length > 0
+			? inArray(tables.organization.retentionLevel, parsedRetentionLevels)
+			: undefined,
+	].filter((condition): condition is NonNullable<typeof condition> =>
+		Boolean(condition),
+	);
+
+	const whereClause = filters.length > 0 ? and(...filters) : undefined;
+
+	const [organizations, countResult, suggestionRows] = await Promise.all([
+		db
+			.select()
+			.from(tables.organization)
+			.where(whereClause)
+			.orderBy(desc(tables.organization.createdAt))
+			.limit(pageSize)
+			.offset((page - 1) * pageSize),
+		db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(tables.organization)
+			.where(whereClause),
+		db
+			.select({
+				name: tables.organization.name,
+				billingEmail: tables.organization.billingEmail,
+			})
+			.from(tables.organization)
+			.where(whereClause)
+			.orderBy(desc(tables.organization.createdAt))
+			.limit(120),
+	]);
+
+	const totalOrganizations = countResult[0]?.count || 0;
+	const totalPages = Math.max(1, Math.ceil(totalOrganizations / pageSize));
+
+	const suggestions = Array.from(
+		new Set(
+			suggestionRows
+				.flatMap((row) => [row.name, row.billingEmail])
+				.filter(Boolean),
+		),
+	).slice(0, 20);
 
 	return c.json({
 		organizations,
+		suggestions,
+		pagination: {
+			page,
+			pageSize,
+			totalOrganizations,
+			totalPages,
+		},
 	});
 });
 
@@ -905,7 +1017,6 @@ admin.openapi(depositCredits, async (c) => {
 		if (err.message === "ORGANIZATION_NOT_FOUND") {
 			throw new HTTPException(404, { message: "Organization not found" });
 		}
-		console.error(err);
 		throw new HTTPException(500, { message: "Internal Database Error" });
 	}
 });
