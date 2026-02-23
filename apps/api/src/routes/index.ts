@@ -4,6 +4,7 @@ import { apiAuth as auth } from "@/auth/config.js";
 
 import { activity } from "./activity.js";
 import admin from "./admin.js";
+import { audio } from "./audio.js";
 import { banners } from "./banners.js";
 import { chat } from "./chat.js";
 import { chats } from "./chats.js";
@@ -57,3 +58,4 @@ routes.route("/payments", payments);
 routes.route("/chat", chat);
 routes.route("/chats", chats);
 routes.route("/banners", banners);
+routes.route("/audio", audio);
