@@ -14,7 +14,10 @@ export function rateLimitMiddleware(
 		const result = await checkRateLimit(user.id, config);
 
 		if (!result.allowed) {
-			const retryAfter = Math.ceil((result.resetTime - Date.now()) / 1000);
+			const retryAfter = Math.max(
+				1,
+				Math.ceil((result.resetTime - Date.now()) / 1000),
+			);
 			return c.json(
 				{ error: "Too many requests. Please try again later." },
 				429,
