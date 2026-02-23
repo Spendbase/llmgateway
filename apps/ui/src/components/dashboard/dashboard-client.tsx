@@ -388,7 +388,7 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 							}`}
 							subtitle="Available balance"
 							icon={<CreditCard className="h-4 w-4" />}
-							accent="blue"
+							accent="green"
 						/>
 						<MetricCard
 							label="Total Requests"

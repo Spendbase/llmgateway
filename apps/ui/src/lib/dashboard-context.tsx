@@ -13,6 +13,7 @@ interface DashboardContextType {
 	handleProjectSelect: (project: Project | null) => void;
 	handleOrganizationCreated: (org: Organization) => void;
 	handleProjectCreated: (project: Project) => void;
+	isFreeCreditsBannerVisible: boolean;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(

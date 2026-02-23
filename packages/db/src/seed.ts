@@ -102,6 +102,16 @@ async function seed() {
 		description: "Test credit top-up for referral eligibility",
 	});
 
+	// Insert banners
+	await upsert(tables.banner, {
+		id: "free-credits",
+		name: "Free Credits Banner",
+		description: "Promotional banner for free credits on API Keys page",
+		enabled: true,
+		type: "promotional",
+		priority: 100,
+	});
+
 	// Cleanup all connections
 	await Promise.all([closeDatabase(), closeCachedDatabase()]);
 

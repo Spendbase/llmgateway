@@ -88,6 +88,19 @@ const organizationSchema = z.object({
 	createdAt: z.date(),
 });
 
+const bannerSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	description: z.string().nullable(),
+	enabled: z.boolean(),
+	type: z.string(),
+	priority: z.number(),
+});
+
+const updateBannerSchema = z.object({
+	enabled: z.boolean(),
+});
+
 const depositTransactionSchema = z.object({
 	id: z.string(),
 	createdAt: z.date(),
@@ -308,6 +321,25 @@ const getUsers = createRoute({
 	},
 });
 
+const getBannerSettings = createRoute({
+	method: "get",
+	path: "/banners",
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						banners: z.array(bannerSchema).openapi({}),
+					}),
+				},
+			},
+			description: "List of all banners settings",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
 const getDeposits = createRoute({
 	method: "get",
 	path: "/deposits",
@@ -345,6 +377,37 @@ const getDeposits = createRoute({
 		},
 		401: { description: "Unauthorized" },
 		403: { description: "Forbidden" },
+	},
+});
+
+const updateBannerSettings = createRoute({
+	method: "patch",
+	path: "/banners/{id}",
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+		body: {
+			required: true,
+			content: {
+				"application/json": {
+					schema: updateBannerSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: bannerSchema.openapi({}),
+				},
+			},
+			description: "Banner updated successfully",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Banner not found" },
 	},
 });
 
@@ -1076,6 +1139,65 @@ admin.openapi(getUsers, async (c) => {
 			totalPages,
 		},
 	});
+});
+
+admin.openapi(getBannerSettings, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const banners = await db.query.banner.findMany({
+		orderBy: (banner, { desc }) => [desc(banner.priority)],
+	});
+
+	return c.json({
+		banners,
+	});
+});
+
+admin.openapi(updateBannerSettings, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
+	const { id } = c.req.valid("param");
+	const { enabled } = c.req.valid("json");
+
+	const [updatedBanner] = await db
+		.update(tables.banner)
+		.set({
+			enabled,
+		})
+		.where(eq(tables.banner.id, id))
+		.returning();
+
+	if (!updatedBanner) {
+		throw new HTTPException(404, {
+			message: "Banner not found",
+		});
+	}
+
+	return c.json(updatedBanner);
 });
 
 admin.openapi(getDeposits, async (c) => {

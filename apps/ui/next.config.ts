@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
 	typedRoutes: true,
 	reactStrictMode: true,
 	reactCompiler: true,
+	env: {
+		NEXT_PUBLIC_AUTO_DEPOSIT_CREDITS: process.env.AUTO_DEPOSIT_CREDITS || "50",
+	},
 	webpack: (config, { isServer }) => {
 		if (isServer) {
 			config.devtool = "source-map";

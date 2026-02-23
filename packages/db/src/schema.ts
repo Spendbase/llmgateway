@@ -904,6 +904,20 @@ export const modelHistory = pgTable(
 	],
 );
 
+export const banner = pgTable("banner", {
+	id: text().primaryKey(),
+	createdAt: timestamp().notNull().defaultNow(),
+	updatedAt: timestamp()
+		.notNull()
+		.defaultNow()
+		.$onUpdate(() => new Date()),
+	name: text().notNull(),
+	description: text(),
+	enabled: boolean().notNull().default(true),
+	type: text().notNull(),
+	priority: integer().notNull().default(0),
+});
+
 export const transactionEvent = pgTable(
 	"transaction_event",
 	{
