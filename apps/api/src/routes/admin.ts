@@ -1,7 +1,6 @@
-import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { trace } from "@opentelemetry/api";
 import { HTTPException } from "hono/http-exception";
-import { z } from "zod";
 
 import {
 	and,
@@ -18,6 +17,7 @@ import {
 	inArray,
 } from "@llmgateway/db";
 import { revenueCounter } from "@llmgateway/instrumentation";
+import { logger } from "@llmgateway/logger";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -804,19 +804,6 @@ admin.openapi(depositCredits, async (c) => {
 				.where(eq(tables.organization.id, organizationId))
 				.returning({ newBalance: tables.organization.credits });
 
-			await tx.insert(tables.transactionEvent).values({
-				transactionId: newTx.id,
-				type: "created",
-				newStatus: "completed",
-				metadata: {
-					type: "admin_credit_granted",
-					adminUserId: authUser.id,
-					organizationId,
-					amount,
-					description,
-				},
-			});
-
 			return {
 				transaction: {
 					id: newTx.id,
@@ -828,6 +815,26 @@ admin.openapi(depositCredits, async (c) => {
 			};
 		});
 
+		void db
+			.insert(tables.transactionEvent)
+			.values({
+				transactionId: result.transaction.id,
+				type: "created",
+				newStatus: "completed",
+				metadata: {
+					type: "admin_credit_granted",
+					adminUserId: authUser.id,
+					organizationId,
+					amount,
+					description,
+				},
+			})
+			.catch((logError) => {
+				logger.error("Failed to log transaction event (best effort)", {
+					err: logError,
+				});
+			});
+
 		revenueCounter.add(result.transaction.creditAmount, {
 			org_id: organizationId,
 			user_id: authUser.id,
@@ -838,12 +845,16 @@ admin.openapi(depositCredits, async (c) => {
 			success: true,
 			...result,
 		});
-	} catch (err: any) {
-		if (err.message === "ORGANIZATION_NOT_FOUND") {
-			throw new HTTPException(404, { message: "Organization not found" });
+	} catch (err: unknown) {
+		if (err instanceof HTTPException) {
+			throw err;
 		}
-		console.error(err);
-		throw new HTTPException(500, { message: "Internal Database Error" });
+
+		logger.error("Unexpected error in depositCredits", { err });
+
+		throw new HTTPException(500, {
+			message: "Internal Database Error",
+		});
 	}
 });
 
