@@ -14,7 +14,7 @@ import type { ServerTypes } from "@/vars.js";
 
 export const audio = new OpenAPIHono<ServerTypes>();
 
-const CHIRP_REGION = process.env.GOOGLE_SPEECH_REGION ?? "us";
+const CHIRP_REGION = process.env.GOOGLE_SPEECH_REGION ?? "eu";
 
 const AUDIO_RATE_LIMIT = {
 	keyPrefix: "audio_transcription",
@@ -77,6 +77,12 @@ const transcriptionRoute = createRoute({
 				"application/json": { schema: z.object({ error: z.string() }) },
 			},
 			description: "Service not configured or authentication failed",
+		},
+		429: {
+			content: {
+				"application/json": { schema: z.object({ error: z.string() }) },
+			},
+			description: "Too Many Requests — rate limit exceeded",
 		},
 		502: {
 			content: {

@@ -4718,6 +4718,17 @@ export interface operations {
                     };
                 };
             };
+            /** @description Too Many Requests — rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                    };
+                };
+            };
             /** @description Service not configured or authentication failed */
             500: {
                 headers: {
