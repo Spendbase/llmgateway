@@ -1240,7 +1240,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/users/:id/status": {
+    "/admin/users/{id}/status": {
         parameters: {
             query?: never;
             header?: never;
