@@ -43,7 +43,7 @@ export const useSearchQueryParam = ({
 		}
 
 		params.set(resetPageParam, "1");
-		router.push(`${pathname}?${params.toString()}`);
+		router.replace(`${pathname}?${params.toString()}`);
 	}, [
 		debouncedSearchValue,
 		paramKey,

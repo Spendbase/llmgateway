@@ -102,17 +102,16 @@ export function DepositCreditsDialog({
 
 			setOpen(false);
 			router.refresh();
-		} catch (error) {
+		} catch (error: unknown) {
 			toast.error("Payment Failed", {
 				description:
-					(error as any)?.message ||
+					(error instanceof Error ? error.message : undefined) ||
 					"An error occurred while processing your payment.",
 				style: {
 					backgroundColor: "var(--destructive)",
 					color: "var(--destructive-foreground)",
 				},
 			});
-			setLoading(false);
 		} finally {
 			setLoading(false);
 		}
