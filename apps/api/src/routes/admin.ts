@@ -865,12 +865,13 @@ admin.openapi(getOrganizations, async (c) => {
 		);
 
 	const normalizedSearch = search?.trim();
+	const escapedSearch = normalizedSearch ? escapeLike(normalizedSearch) : "";
 	const filters = [
-		normalizedSearch
+		escapedSearch
 			? or(
-					ilike(tables.organization.name, `%${normalizedSearch}%`),
-					ilike(tables.organization.billingEmail, `%${normalizedSearch}%`),
-					ilike(tables.organization.billingCompany, `%${normalizedSearch}%`),
+					ilike(tables.organization.name, `%${escapedSearch}%`),
+					ilike(tables.organization.billingEmail, `%${escapedSearch}%`),
+					ilike(tables.organization.billingCompany, `%${escapedSearch}%`),
 				)
 			: undefined,
 		parsedPlans.length > 0

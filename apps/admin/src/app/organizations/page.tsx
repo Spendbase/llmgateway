@@ -19,7 +19,6 @@ export default async function OrganizationsPage({
 		search?: string;
 		plans?: string;
 		statuses?: string;
-		retentionLevels?: string;
 		sort?: string;
 		order?: string;
 		from?: string;
@@ -27,13 +26,14 @@ export default async function OrganizationsPage({
 	}>;
 }) {
 	const params = await searchParams;
-	const page = Number.parseInt(params.page || "1", 10) || 1;
+	const pageRaw = Number.parseInt(params.page || "1", 10);
+	const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+	const pageSizeRaw = Number.parseInt(params.pageSize || String(PAGESIZE), 10);
 	const pageSize =
-		Number.parseInt(params.pageSize || String(PAGESIZE), 10) || PAGESIZE;
+		Number.isFinite(pageSizeRaw) && pageSizeRaw > 0 ? pageSizeRaw : PAGESIZE;
 	const search = params.search?.trim() || "";
 	const plans = parseList(params.plans);
 	const statuses = parseList(params.statuses);
-	const retentionLevels = parseList(params.retentionLevels);
 	const sort = params.sort || "createdAt";
 	const order = params.order || "desc";
 	const from = params.from;
@@ -50,7 +50,6 @@ export default async function OrganizationsPage({
 					search,
 					plans: plans.join(","),
 					statuses: statuses.join(","),
-					retentionLevels: retentionLevels.join(","),
 					sort,
 					order,
 					from,
@@ -75,7 +74,6 @@ export default async function OrganizationsPage({
 			search={search}
 			plans={plans}
 			statuses={statuses}
-			retentionLevels={retentionLevels}
 		/>
 	);
 }

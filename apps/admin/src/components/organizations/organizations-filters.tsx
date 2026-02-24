@@ -42,7 +42,6 @@ const toInputDate = (iso: string) => {
 interface OrganizationsFiltersProps {
 	plans: string[];
 	statuses: string[];
-	retentionLevels: string[];
 }
 
 export const OrganizationsFilters = ({

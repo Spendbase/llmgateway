@@ -31,7 +31,7 @@ export function DepositCreditsButton({
 }) {
 	return (
 		<DepositCreditsDialog organization={organization}>
-			<Button className="flex items-center cursor-pointer">
+			<Button className="flex items-center cursor-pointer gap-2">
 				<Plus className="h-4 w-4" />
 				Deposit Credits
 			</Button>

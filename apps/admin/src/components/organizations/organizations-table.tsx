@@ -53,13 +53,25 @@ function SortableHeader({
 
 	return (
 		<th
-			onClick={() => onSort(field)}
-			className="cursor-pointer px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted/50 group"
+			scope="col"
+			aria-sort={
+				currentSort === field
+					? currentOrder === "asc"
+						? "ascending"
+						: "descending"
+					: "none"
+			}
+			className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
 		>
-			<div className="flex items-center gap-1">
+			<button
+				type="button"
+				aria-label={`Sort by ${children}`}
+				onClick={() => onSort(field)}
+				className="cursor-pointer group flex w-full items-center gap-1 text-left transition-colors hover:bg-muted/50"
+			>
 				{children}
 				{getSortIcon()}
-			</div>
+			</button>
 		</th>
 	);
 }

@@ -18,13 +18,11 @@ export default function OrganizationClient({
 	search,
 	plans,
 	statuses,
-	retentionLevels,
 }: {
 	organizationsData: OrganizationsPaginationResponse;
 	search: string;
 	plans: string[];
 	statuses: string[];
-	retentionLevels: string[];
 }) {
 	const { user, isLoading } = useUser();
 	const { organizations, suggestions, pagination } = organizationsData;
@@ -61,11 +59,7 @@ export default function OrganizationClient({
 			<div className="flex flex-col gap-4">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 					<OrganizationsSearch suggestions={suggestions} />
-					<OrganizationsFilters
-						plans={plans}
-						statuses={statuses}
-						retentionLevels={retentionLevels}
-					/>
+					<OrganizationsFilters plans={plans} statuses={statuses} />
 				</div>
 			</div>
 
