@@ -3,7 +3,12 @@ import { PAGESIZE } from "@/lib/constants";
 import { fetchServerData } from "@/lib/server-api";
 
 import type { SortBy, SortOrder } from "@/hooks/use-users-query-params";
+import type { paths } from "@/lib/api/v1";
 import type { UsersPaginationResponse } from "@/lib/types";
+
+type UsersQueryParams = NonNullable<
+	paths["/admin/users"]["get"]["parameters"]["query"]
+>;
 
 export default async function UsersPage({
 	searchParams,
@@ -28,7 +33,7 @@ export default async function UsersPage({
 	const page = parseInt(params.page || "1", 10);
 	const pageSize = parseInt(params.pageSize || PAGESIZE.toString(), 10);
 
-	const queryProps: Record<string, any> = {
+	const queryProps: UsersQueryParams = {
 		page,
 		pageSize,
 	};

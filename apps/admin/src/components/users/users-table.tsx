@@ -7,8 +7,8 @@ import type { AdminUser } from "@/lib/types";
 
 export function UsersTable({ users }: { users: AdminUser[] }) {
 	return (
-		<div className="rounded-md border">
-			<table className="w-full text-sm text-left">
+		<div className="rounded-md border overflow-x-auto">
+			<table className="w-full text-sm text-left min-w-[900px]">
 				<thead className="bg-gray-50 text-gray-700 h-14">
 					<tr>
 						<th className="px-4 py-2 font-medium">
