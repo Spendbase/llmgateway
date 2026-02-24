@@ -6,7 +6,7 @@ import { fetchServerData } from "@/lib/server-api";
 import type { paths } from "@/lib/api/v1";
 
 type DepositDetailResponse =
-	paths["/admin/deposits/:id"]["get"]["responses"]["200"]["content"]["application/json"];
+	paths["/admin/deposits/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 
 export default async function DepositDetailPage({
 	params,
@@ -17,7 +17,7 @@ export default async function DepositDetailPage({
 
 	const data = await fetchServerData<DepositDetailResponse>(
 		"GET",
-		"/admin/deposits/:id",
+		"/admin/deposits/{id}",
 		{
 			params: {
 				path: {
