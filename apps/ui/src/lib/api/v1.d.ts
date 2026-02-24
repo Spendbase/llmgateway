@@ -1342,6 +1342,16 @@ export interface paths {
                 query?: {
                     page?: number;
                     pageSize?: number;
+                    sortBy?: "createdAt" | "name" | "email" | "status" | "emailVerified" | "id";
+                    order?: "asc" | "desc";
+                    userId?: string;
+                    name?: string;
+                    email?: string;
+                    role?: "owner" | "admin" | "developer";
+                    emailStatus?: "verified" | "unverified";
+                    accountStatus?: "active" | "blocked";
+                    registeredAtFrom?: string;
+                    registeredAtTo?: string;
                 };
                 header?: never;
                 path?: never;

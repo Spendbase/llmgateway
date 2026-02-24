@@ -1240,7 +1240,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/users/{id}/status": {
+    "/admin/users/:id/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -1342,6 +1342,16 @@ export interface paths {
                 query?: {
                     page?: number;
                     pageSize?: number;
+                    sortBy?: "createdAt" | "name" | "email" | "status" | "emailVerified" | "id";
+                    order?: "asc" | "desc";
+                    userId?: string;
+                    name?: string;
+                    email?: string;
+                    role?: "owner" | "admin" | "developer";
+                    emailStatus?: "verified" | "unverified";
+                    accountStatus?: "active" | "blocked";
+                    registeredAtFrom?: string;
+                    registeredAtTo?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1611,7 +1621,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/deposits/{id}": {
+    "/admin/deposits/:id": {
         parameters: {
             query?: never;
             header?: never;

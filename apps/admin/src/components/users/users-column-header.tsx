@@ -210,13 +210,15 @@ export function UsersColumnHeader({
 					className="h-8 -ml-3"
 				>
 					<span>{title}</span>
-					{isSortedDesc ? (
-						<ArrowDown className="ml-2 h-4 w-4" />
-					) : isSortedAsc ? (
-						<ArrowUp className="ml-2 h-4 w-4" />
-					) : (
-						<ChevronsUpDown className="ml-2 h-4 w-4 text-muted-foreground/30" />
-					)}
+					<span className="ml-2 inline-flex h-4 w-4 items-center justify-center">
+						{isSortedDesc ? (
+							<ArrowDown className="h-4 w-4" />
+						) : isSortedAsc ? (
+							<ArrowUp className="h-4 w-4" />
+						) : (
+							<ChevronsUpDown className="h-4 w-4 text-muted-foreground/30" />
+						)}
+					</span>
 				</Button>
 			) : (
 				<span className="text-sm font-medium">{title}</span>

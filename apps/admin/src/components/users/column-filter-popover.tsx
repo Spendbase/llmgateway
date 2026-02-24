@@ -47,10 +47,13 @@ export function ColumnFilterPopover({
 					<span className="sr-only">Open filter menu</span>
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-80 p-4" align="start">
+			<PopoverContent
+				className="w-[min(22rem,calc(100vw-2rem))] p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-md text-gray-900 dark:text-gray-100"
+				align="start"
+			>
 				<div className="space-y-4">
 					<div className="space-y-2">{children}</div>
-					<div className="flex items-center justify-between space-x-2 pt-2">
+					<div className="grid grid-cols-2 gap-2 pt-2">
 						<Button
 							variant="outline"
 							size="sm"
