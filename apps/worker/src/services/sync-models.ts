@@ -144,10 +144,22 @@ export async function syncProvidersAndModels() {
 								discount: "discount" in mapping ? mapping.discount : undefined,
 								reasoningLevels:
 									"reasoningLevels" in mapping
-										? mapping.reasoningLevels
+										? (mapping.reasoningLevels as
+												| ("minimal" | "low" | "medium" | "high")[]
+												| undefined)
 										: undefined,
 								pricingTiers:
-									"pricingTiers" in mapping ? mapping.pricingTiers : undefined,
+									"pricingTiers" in mapping
+										? (mapping.pricingTiers as
+												| {
+														name: string;
+														upToTokens?: number;
+														inputPrice: number;
+														outputPrice: number;
+														cachedInputPrice?: number;
+												  }[]
+												| undefined)
+										: undefined,
 								stability:
 									"stability" in mapping ? mapping.stability : undefined,
 								supportedParameters:
@@ -212,10 +224,22 @@ export async function syncProvidersAndModels() {
 							discount: "discount" in mapping ? mapping.discount : undefined,
 							reasoningLevels:
 								"reasoningLevels" in mapping
-									? mapping.reasoningLevels
+									? (mapping.reasoningLevels as
+											| ("minimal" | "low" | "medium" | "high")[]
+											| undefined)
 									: undefined,
 							pricingTiers:
-								"pricingTiers" in mapping ? mapping.pricingTiers : undefined,
+								"pricingTiers" in mapping
+									? (mapping.pricingTiers as
+											| {
+													name: string;
+													upToTokens?: number;
+													inputPrice: number;
+													outputPrice: number;
+													cachedInputPrice?: number;
+											  }[]
+											| undefined)
+									: undefined,
 							stability: "stability" in mapping ? mapping.stability : undefined,
 							supportedParameters:
 								"supportedParameters" in mapping

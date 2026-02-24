@@ -785,6 +785,7 @@ export const modelProviderMapping = pgTable(
 				upToTokens?: number;
 				inputPrice: number;
 				outputPrice: number;
+				cachedInputPrice?: number;
 			}[]
 		>(),
 		stability: text({

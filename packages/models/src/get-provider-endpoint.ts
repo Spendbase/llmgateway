@@ -64,15 +64,15 @@ export function getProviderEndpoint(
 			// case "together.ai":
 			// 	url = "https://api.together.ai";
 			// 	break;
-			// case "cloudrift":
-			// 	url = "https://inference.cloudrift.ai";
-			// 	break;
+			case "cloudrift":
+				url = "https://inference.cloudrift.ai";
+				break;
 			// case "mistral":
 			// 	url = "https://api.mistral.ai";
 			// 	break;
-			// case "xai":
-			// 	url = "https://api.x.ai";
-			// 	break;
+			case "xai":
+				url = "https://api.x.ai";
+				break;
 			// case "groq":
 			// 	url = "https://api.groq.com/openai";
 			// 	break;
@@ -82,15 +82,15 @@ export function getProviderEndpoint(
 			// case "deepseek":
 			// 	url = "https://api.deepseek.com";
 			// 	break;
-			// case "elevenlabs":
-			// 	url = "https://api.elevenlabs.io";
-			// 	break;
-			// case "perplexity":
-			// 	url = "https://api.perplexity.ai";
-			// 	break;
-			// case "novita":
-			// 	url = "https://api.novita.ai/v3/openai";
-			// 	break;
+			case "elevenlabs":
+				url = "https://api.elevenlabs.io";
+				break;
+			case "perplexity":
+				url = "https://api.perplexity.ai";
+				break;
+			case "novita":
+				url = "https://api.novita.ai/v3/openai";
+				break;
 			case "moonshot":
 				url = "https://api.moonshot.ai";
 				break;
@@ -130,6 +130,9 @@ export function getProviderEndpoint(
 				} else {
 					throw new Error(`Provider ${provider} requires a baseUrl`);
 				}
+				break;
+			case "canopywave":
+				url = "https://inference.canopywave.io";
 				break;
 			default:
 				throw new Error(`Provider ${provider} requires a baseUrl`);

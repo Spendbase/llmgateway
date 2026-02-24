@@ -1,9 +1,12 @@
 import { alibabaModels } from "./models/alibaba.js";
 import { anthropicModels } from "./models/anthropic.js";
+import { deepseekModels } from "./models/deepseek.js";
 import { googleModels } from "./models/google.js";
 import { llmgatewayModels } from "./models/llmgateway.js";
+import { minimaxModels } from "./models/minimax.js";
 import { moonshotModels } from "./models/moonshot.js";
 import { openaiModels } from "./models/openai.js";
+import { perplexityModels } from "./models/perplexity.js";
 import { xaiModels } from "./models/xai.js";
 
 import type { providers } from "./providers.js";
@@ -237,13 +240,13 @@ export const models = [
 	...openaiModels,
 	...anthropicModels,
 	...googleModels,
-	// ...perplexityModels,
+	...perplexityModels,
 	...xaiModels,
 	// ...metaModels,
-	// ...deepseekModels,
+	...deepseekModels,
 	// ...mistralModels,
 	// ...microsoftModels,
-	// ...minimaxModels,
+	...minimaxModels,
 	...moonshotModels,
 	...alibabaModels,
 	// ...nousresearchModels,
