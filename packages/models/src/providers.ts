@@ -227,21 +227,21 @@ export const providers = [
 		website: "https://www.alibabacloud.com",
 		announcement: undefined,
 	},
-	// {
-	// 	id: "novita",
-	// 	name: "NovitaAI",
-	// 	description: "NovitaAI's OpenAI-compatible large language models",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_NOVITA_AI_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#9333ea",
-	// 	website: "https://novita.ai",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "novita",
+		name: "NovitaAI",
+		description: "NovitaAI's OpenAI-compatible large language models",
+		env: {
+			required: {
+				apiKey: "LLM_NOVITA_AI_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#9333ea",
+		website: "https://novita.ai",
+		announcement: undefined,
+	},
 	{
 		id: "aws-bedrock",
 		name: "AWS Bedrock",
@@ -319,22 +319,22 @@ export const providers = [
 		website: "https://moonshot.ai",
 		announcement: undefined,
 	},
-	// {
-	// 	id: "perplexity",
-	// 	name: "Perplexity",
-	// 	description:
-	// 		"Perplexity's AI models for search and conversation with real-time web access",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_PERPLEXITY_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#20B2AA",
-	// 	website: "https://perplexity.ai",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "perplexity",
+		name: "Perplexity",
+		description:
+			"Perplexity's AI models for search and conversation with real-time web access",
+		env: {
+			required: {
+				apiKey: "LLM_PERPLEXITY_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#20B2AA",
+		website: "https://perplexity.ai",
+		announcement: undefined,
+	},
 	// {
 	// 	id: "nebius",
 	// 	name: "Nebius AI",
@@ -366,22 +366,22 @@ export const providers = [
 	// 	website: "https://mistral.ai",
 	// 	announcement: undefined,
 	// },
-	// {
-	// 	id: "canopywave",
-	// 	name: "CanopyWave",
-	// 	description:
-	// 		"CanopyWave is a platform for running large language models with OpenAI-compatible API",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_CANOPY_WAVE_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#10b981",
-	// 	website: "https://canopywave.io",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "canopywave",
+		name: "CanopyWave",
+		description:
+			"CanopyWave is a platform for running large language models with OpenAI-compatible API",
+		env: {
+			required: {
+				apiKey: "LLM_CANOPY_WAVE_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#10b981",
+		website: "https://canopywave.io",
+		announcement: undefined,
+	},
 	// {
 	// 	id: "inference.net",
 	// 	name: "Inference.net",
@@ -442,22 +442,22 @@ export const providers = [
 	// 	website: undefined,
 	// 	announcement: undefined,
 	// },
-	// {
-	// 	id: "cloudrift",
-	// 	name: "CloudRift",
-	// 	description:
-	// 		"CloudRift is a platform for running large language models in the cloud with fast inference.",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_CLOUD_RIFT_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#00d4aa",
-	// 	website: "https://www.cloudrift.ai",
-	// 	announcement: "DeepSeek & Kimi K2 are 30-50% cheaper than the competition!",
-	// },
+	{
+		id: "cloudrift",
+		name: "CloudRift",
+		description:
+			"CloudRift is a platform for running large language models in the cloud with fast inference.",
+		env: {
+			required: {
+				apiKey: "LLM_CLOUD_RIFT_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#00d4aa",
+		website: "https://www.cloudrift.ai",
+		announcement: "DeepSeek & Kimi K2 are 30-50% cheaper than the competition!",
+	},
 	// {
 	// 	id: "nanogpt",
 	// 	name: "NanoGPT",
