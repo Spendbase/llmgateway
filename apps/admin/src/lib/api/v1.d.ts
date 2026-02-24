@@ -1112,14 +1112,24 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    search?: string;
+                    plans?: string;
+                    statuses?: string;
+                    from?: string;
+                    to?: string;
+                    sort?: "name" | "billingEmail" | "credits" | "plan" | "status" | "createdAt";
+                    order?: "asc" | "desc";
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description List of all organizations */
+                /** @description Paginated list of organizations */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1137,6 +1147,13 @@ export interface paths {
                                 status: "active" | "inactive" | "deleted" | null;
                                 createdAt: string;
                             }[];
+                            suggestions: string[];
+                            pagination: {
+                                page: number;
+                                pageSize: number;
+                                totalOrganizations: number;
+                                totalPages: number;
+                            };
                         };
                     };
                 };
