@@ -1,7 +1,68 @@
+"use client";
+
+import {
+	AlertCircle,
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
+	CheckCircle2,
+	XCircle,
+} from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
 import { DepositCreditsButton } from "@/components/deposit-credits/deposit-credits-dialog";
-import { Badge } from "@/components/ui/badge";
+import { CustomBadge as Badge } from "@/components/ui/custom-badge";
 
 import type { Organization } from "@/lib/types";
+
+type SortField =
+	| "name"
+	| "billingEmail"
+	| "credits"
+	| "plan"
+	| "status"
+	| "createdAt";
+
+interface SortableHeaderProps {
+	field: SortField;
+	children: React.ReactNode;
+	currentSort: SortField;
+	currentOrder: string;
+	onSort: (field: SortField) => void;
+}
+
+function SortableHeader({
+	field,
+	children,
+	currentSort,
+	currentOrder,
+	onSort,
+}: SortableHeaderProps) {
+	const getSortIcon = () => {
+		if (currentSort !== field) {
+			return (
+				<ArrowUpDown className="h-3 w-3 opacity-0 group-hover:opacity-50" />
+			);
+		}
+		return currentOrder === "asc" ? (
+			<ArrowUp className="h-3 w-3" />
+		) : (
+			<ArrowDown className="h-3 w-3" />
+		);
+	};
+
+	return (
+		<th
+			onClick={() => onSort(field)}
+			className="cursor-pointer px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted/50 group"
+		>
+			<div className="flex items-center gap-1">
+				{children}
+				{getSortIcon()}
+			</div>
+		</th>
+	);
+}
 
 interface OrganizationsTableProps {
 	organizations: Organization[];
@@ -23,7 +84,7 @@ const highlightMatch = (value: string, query: string) => {
 		part.toLowerCase() === query.toLowerCase() ? (
 			<mark
 				key={`${part}-${index}`}
-				className="rounded bg-yellow-200 px-0.5 text-foreground"
+				className="rounded bg-yellow-200/50 px-0.5 text-foreground"
 			>
 				{part}
 			</mark>
@@ -33,34 +94,109 @@ const highlightMatch = (value: string, query: string) => {
 	);
 };
 
+export const getStatusVariant = (
+	status: string | null,
+): "success" | "warning" | "error" => {
+	switch (status) {
+		case "active":
+			return "success";
+		case "inactive":
+			return "warning";
+		case "deleted":
+			return "error";
+		default:
+			return "warning";
+	}
+};
+
+export const getStatusIcon = (status: string | null) => {
+	switch (status) {
+		case "active":
+			return <CheckCircle2 className="h-3 w-3" />;
+		case "inactive":
+			return <AlertCircle className="h-3 w-3" />;
+		case "deleted":
+			return <XCircle className="h-3 w-3" />;
+		default:
+			return <AlertCircle className="h-3 w-3" />;
+	}
+};
+
 export function OrganizationsTable({
 	organizations,
 	searchQuery,
 }: OrganizationsTableProps) {
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+
+	const currentSort = (searchParams.get("sort") || "createdAt") as SortField;
+	const currentOrder = searchParams.get("order") || "desc";
+
+	const handleSort = (field: SortField) => {
+		const params = new URLSearchParams(searchParams);
+
+		if (currentSort === field) {
+			const newOrder = currentOrder === "asc" ? "desc" : "asc";
+			params.set("order", newOrder);
+		} else {
+			params.set("sort", field);
+			params.set("order", "desc");
+		}
+
+		params.set("page", "1");
+		router.push(`${pathname}?${params.toString()}`);
+	};
+
 	return (
 		<div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
 			<div className="overflow-x-auto">
 				<table className="w-full text-sm">
 					<thead className="border-b border-border/60 bg-muted/40">
 						<tr>
-							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+							<SortableHeader
+								field="name"
+								currentSort={currentSort}
+								currentOrder={currentOrder}
+								onSort={handleSort}
+							>
 								Organization
-							</th>
-							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-								Billing Email
-							</th>
+							</SortableHeader>
+							<SortableHeader
+								field="billingEmail"
+								currentSort={currentSort}
+								currentOrder={currentOrder}
+								onSort={handleSort}
+							>
+								Email
+							</SortableHeader>
 							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
 								Company
 							</th>
-							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+							<SortableHeader
+								field="credits"
+								currentSort={currentSort}
+								currentOrder={currentOrder}
+								onSort={handleSort}
+							>
 								Current Credit Balance
-							</th>
-							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+							</SortableHeader>
+							<SortableHeader
+								field="plan"
+								currentSort={currentSort}
+								currentOrder={currentOrder}
+								onSort={handleSort}
+							>
 								Plan type
-							</th>
-							<th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+							</SortableHeader>
+							<SortableHeader
+								field="status"
+								currentSort={currentSort}
+								currentOrder={currentOrder}
+								onSort={handleSort}
+							>
 								Status
-							</th>
+							</SortableHeader>
 							<th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
 								Actions
 							</th>
@@ -84,23 +220,16 @@ export function OrganizationsTable({
 									${Number(org.credits).toFixed(2)}
 								</td>
 								<td className="px-4 py-4 font-mono">
-									<Badge variant={org.plan === "pro" ? "default" : "outline"}>
+									<Badge variant={org.plan === "pro" ? "blue" : "default"}>
 										{org.plan ? org.plan.toUpperCase() : "-"}
 									</Badge>
 								</td>
 								<td className="px-4 py-4">
-									<Badge
-										variant={
-											org.status === "active"
-												? "default"
-												: org.status === "inactive"
-													? "secondary"
-													: org.status === "deleted"
-														? "destructive"
-														: "outline"
-										}
-									>
-										{org.status || "-"}
+									<Badge variant={getStatusVariant(org.status)}>
+										<div className="flex items-center gap-1">
+											{getStatusIcon(org.status)}
+											{org.status || "-"}
+										</div>
 									</Badge>
 								</td>
 								<td className="px-4 py-4 flex justify-center">

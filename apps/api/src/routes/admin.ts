@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import {
 	and,
+	asc,
 	db,
 	desc,
 	eq,
@@ -218,12 +219,25 @@ const getOrganizations = createRoute({
 				.int()
 				.min(1)
 				.max(100)
-				.default(20)
-				.openapi({ example: 20 }),
+				.default(25)
+				.openapi({ example: 25 }),
 			search: z.string().optional(),
 			plans: z.string().optional(),
 			statuses: z.string().optional(),
-			retentionLevels: z.string().optional(),
+			from: z.string().datetime().optional(),
+			to: z.string().datetime().optional(),
+			sort: z
+				.enum([
+					"name",
+					"billingEmail",
+					"credits",
+					"plan",
+					"status",
+					"createdAt",
+				])
+				.default("createdAt")
+				.optional(),
+			order: z.enum(["asc", "desc"]).default("desc").optional(),
 		}),
 	},
 	responses: {
@@ -830,7 +844,10 @@ admin.openapi(getOrganizations, async (c) => {
 		search,
 		plans: plansParam,
 		statuses: statusesParam,
-		retentionLevels: retentionLevelsParam,
+		from,
+		to,
+		sort: sortField = "createdAt",
+		order: sortOrder = "desc",
 	} = c.req.valid("query");
 
 	const parsedPlans = (plansParam || "")
@@ -845,13 +862,6 @@ admin.openapi(getOrganizations, async (c) => {
 		.map((value) => value.trim())
 		.filter((value): value is "active" | "inactive" | "deleted" =>
 			["active", "inactive", "deleted"].includes(value),
-		);
-
-	const parsedRetentionLevels = (retentionLevelsParam || "")
-		.split(",")
-		.map((value) => value.trim())
-		.filter((value): value is "retain" | "none" =>
-			["retain", "none"].includes(value),
 		);
 
 	const normalizedSearch = search?.trim();
@@ -869,21 +879,32 @@ admin.openapi(getOrganizations, async (c) => {
 		parsedStatuses.length > 0
 			? inArray(tables.organization.status, parsedStatuses)
 			: undefined,
-		parsedRetentionLevels.length > 0
-			? inArray(tables.organization.retentionLevel, parsedRetentionLevels)
-			: undefined,
+		from ? gte(tables.organization.createdAt, new Date(from)) : undefined,
+		to ? lte(tables.organization.createdAt, new Date(to)) : undefined,
 	].filter((condition): condition is NonNullable<typeof condition> =>
 		Boolean(condition),
 	);
 
 	const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
+	const sortColumnMap = {
+		name: tables.organization.name,
+		billingEmail: tables.organization.billingEmail,
+		credits: tables.organization.credits,
+		plan: tables.organization.plan,
+		status: tables.organization.status,
+		createdAt: tables.organization.createdAt,
+	} as const;
+
+	const sortColumn = sortColumnMap[sortField] ?? tables.organization.createdAt;
+	const orderFn = sortOrder === "asc" ? asc : desc;
+
 	const [organizations, countResult, suggestionRows] = await Promise.all([
 		db
 			.select()
 			.from(tables.organization)
 			.where(whereClause)
-			.orderBy(desc(tables.organization.createdAt))
+			.orderBy(orderFn(sortColumn))
 			.limit(pageSize)
 			.offset((page - 1) * pageSize),
 		db

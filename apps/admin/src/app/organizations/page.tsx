@@ -20,6 +20,10 @@ export default async function OrganizationsPage({
 		plans?: string;
 		statuses?: string;
 		retentionLevels?: string;
+		sort?: string;
+		order?: string;
+		from?: string;
+		to?: string;
 	}>;
 }) {
 	const params = await searchParams;
@@ -30,6 +34,10 @@ export default async function OrganizationsPage({
 	const plans = parseList(params.plans);
 	const statuses = parseList(params.statuses);
 	const retentionLevels = parseList(params.retentionLevels);
+	const sort = params.sort || "createdAt";
+	const order = params.order || "desc";
+	const from = params.from;
+	const to = params.to;
 
 	const data = (await fetchServerData<OrganizationsPaginationResponse>(
 		"GET",
@@ -43,6 +51,10 @@ export default async function OrganizationsPage({
 					plans: plans.join(","),
 					statuses: statuses.join(","),
 					retentionLevels: retentionLevels.join(","),
+					sort,
+					order,
+					from,
+					to,
 				},
 			},
 		},

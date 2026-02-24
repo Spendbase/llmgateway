@@ -85,7 +85,10 @@ export const OrganizationsPagination = ({
 				</div>
 				<div className="flex items-center gap-2">
 					<span className="text-sm text-muted-foreground">Show:</span>
-					<Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+					<Select
+						value={pageSize.toString()}
+						onValueChange={handlePageSizeChange}
+					>
 						<SelectTrigger className="w-20">
 							<SelectValue />
 						</SelectTrigger>
