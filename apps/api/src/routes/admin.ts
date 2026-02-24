@@ -413,7 +413,7 @@ const updateBannerSettings = createRoute({
 
 const getDeposit = createRoute({
 	method: "get",
-	path: "/deposits/:id",
+	path: "/deposits/{id}",
 	request: {
 		params: z.object({
 			id: z.string(),
