@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { paths } from "@/lib/api/v1";
 
 type DepositDetailResponse =
-	paths["/admin/deposits/:id"]["get"]["responses"]["200"]["content"]["application/json"];
+	paths["/admin/deposits/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 
 export function DepositDetailIndex({ data }: { data: DepositDetailResponse }) {
 	const { deposit, events } = data;
