@@ -4,9 +4,11 @@ import { HTTPException } from "hono/http-exception";
 
 import {
 	and,
+	asc,
 	db,
 	desc,
 	eq,
+	exists,
 	gte,
 	ilike,
 	lte,
@@ -277,8 +279,39 @@ const getUsers = createRoute({
 				.number()
 				.int()
 				.min(1)
+				.max(100)
 				.default(20)
 				.openapi({ example: 20 }),
+			sortBy: z
+				.enum(["createdAt", "name", "email", "status", "emailVerified", "id"])
+				.optional(),
+			order: z.enum(["asc", "desc"]).default("desc"),
+			userId: z.string().optional(),
+			name: z.string().optional(),
+			email: z.string().optional(),
+			role: z.enum(["owner", "admin", "developer"]).optional(),
+			emailStatus: z.enum(["verified", "unverified"]).optional(),
+			accountStatus: z.enum(["active", "blocked"]).optional(),
+			registeredAtFrom: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
+				.refine((val) => {
+					const date = new Date(val);
+					return (
+						!Number.isNaN(date.getTime()) && date.toISOString().startsWith(val)
+					);
+				}, "Invalid date format or calendar date")
+				.optional(),
+			registeredAtTo: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD")
+				.refine((val) => {
+					const date = new Date(val);
+					return (
+						!Number.isNaN(date.getTime()) && date.toISOString().startsWith(val)
+					);
+				}, "Invalid date format or calendar date")
+				.optional(),
 		}),
 	},
 	responses: {
@@ -1074,12 +1107,91 @@ admin.openapi(getUsers, async (c) => {
 	const pageSize = Math.min(100, query.pageSize);
 	const offset = (page - 1) * pageSize;
 
+	const conditions = [];
+
+	if (query.userId) {
+		conditions.push(eq(tables.user.id, query.userId));
+	}
+
+	if (query.name) {
+		const escaped = escapeLike(query.name);
+		const search = `%${escaped}%`;
+		conditions.push(
+			sql`COALESCE(${tables.user.name}, '') ILIKE ${search} ESCAPE '\\'`,
+		);
+	}
+
+	if (query.email) {
+		const escaped = escapeLike(query.email);
+		const search = `%${escaped}%`;
+		conditions.push(sql`${tables.user.email} ILIKE ${search} ESCAPE '\\'`);
+	}
+	if (query.role) {
+		conditions.push(
+			exists(
+				db
+					.select({ id: sql`1` })
+					.from(tables.userOrganization)
+					.where(
+						and(
+							eq(tables.userOrganization.userId, tables.user.id),
+							eq(tables.userOrganization.role, query.role),
+						),
+					),
+			),
+		);
+	}
+	if (query.emailStatus) {
+		conditions.push(
+			eq(tables.user.emailVerified, query.emailStatus === "verified"),
+		);
+	}
+	if (query.accountStatus) {
+		conditions.push(eq(tables.user.status, query.accountStatus));
+	}
+	if (query.registeredAtFrom) {
+		const startOfDay = new Date(`${query.registeredAtFrom}T00:00:00.000Z`);
+		conditions.push(gte(tables.user.createdAt, startOfDay));
+	}
+	if (query.registeredAtTo) {
+		const endOfDayDate = new Date(`${query.registeredAtTo}T00:00:00.000Z`);
+		const nextDay = new Date(endOfDayDate.getTime() + 24 * 60 * 60 * 1000);
+		conditions.push(lt(tables.user.createdAt, nextDay));
+	}
+
+	const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
 	const [totalUsersResult] = await db
 		.select({ count: sql<number>`COUNT(*)`.as("count") })
-		.from(tables.user);
+		.from(tables.user)
+		.where(whereCondition);
 
 	const totalUsers = Number(totalUsersResult?.count ?? 0);
 	const totalPages = Math.ceil(totalUsers / pageSize);
+
+	const sortColumnMap = {
+		createdAt: tables.user.createdAt,
+		name: tables.user.name,
+		email: tables.user.email,
+		status: tables.user.status,
+		emailVerified: tables.user.emailVerified,
+		id: tables.user.id,
+	} as const;
+
+	const validSortBy =
+		query.sortBy && query.sortBy in sortColumnMap
+			? (query.sortBy as keyof typeof sortColumnMap)
+			: "createdAt";
+
+	const primarySortColumn = sortColumnMap[validSortBy];
+
+	const primarySort =
+		query.order === "asc" ? asc(primarySortColumn) : desc(primarySortColumn);
+
+	const orderByParams = [primarySort];
+	if (validSortBy !== "id") {
+		orderByParams.push(asc(tables.user.id));
+	}
 
 	const usersData = await db
 		.select({
@@ -1091,7 +1203,8 @@ admin.openapi(getUsers, async (c) => {
 			status: tables.user.status,
 		})
 		.from(tables.user)
-		.orderBy(desc(tables.user.createdAt))
+		.where(whereCondition)
+		.orderBy(...orderByParams)
 		.limit(pageSize)
 		.offset(offset);
 
