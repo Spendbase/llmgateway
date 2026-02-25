@@ -31,9 +31,12 @@ export function useUsersQueryParams() {
 	const pathname = usePathname();
 
 	const query = useMemo(() => {
+		const parsedPage = parseInt(searchParams.get("page") || "1", 10);
+		const parsedPageSize = parseInt(searchParams.get("pageSize") || "20", 10);
+
 		const q: UsersQueryParams = {
-			page: parseInt(searchParams.get("page") || "1", 10),
-			pageSize: parseInt(searchParams.get("pageSize") || "20", 10),
+			page: Number.isNaN(parsedPage) ? 1 : parsedPage,
+			pageSize: Number.isNaN(parsedPageSize) ? 20 : parsedPageSize,
 		};
 
 		const sortBy = searchParams.get("sortBy");
