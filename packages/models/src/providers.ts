@@ -289,21 +289,21 @@ export const providers = [
 	// 		"The resource name can be found in your Azure base URL: https://<resource-name>.openai.azure.com",
 	// 	learnMore: "https://docs.llmapi.ai/integrations/azure",
 	// },
-	// {
-	// 	id: "zai",
-	// 	name: "Z AI",
-	// 	description: "Z AI's OpenAI-compatible large language models",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_Z_AI_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#22c55e",
-	// 	website: "https://z.ai",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "zai",
+		name: "Z AI",
+		description: "Z AI's OpenAI-compatible large language models",
+		env: {
+			required: {
+				apiKey: "LLM_Z_AI_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#22c55e",
+		website: "https://z.ai",
+		announcement: undefined,
+	},
 	{
 		id: "moonshot",
 		name: "Moonshot AI",
@@ -335,22 +335,22 @@ export const providers = [
 		website: "https://perplexity.ai",
 		announcement: undefined,
 	},
-	// {
-	// 	id: "nebius",
-	// 	name: "Nebius AI",
-	// 	description:
-	// 		"Nebius AI Studio - OpenAI-compatible API for large language models",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_NEBIUS_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#3b82f6",
-	// 	website: "https://nebius.com",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "nebius",
+		name: "Nebius AI",
+		description:
+			"Nebius AI Studio - OpenAI-compatible API for large language models",
+		env: {
+			required: {
+				apiKey: "LLM_NEBIUS_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#3b82f6",
+		website: "https://nebius.com",
+		announcement: undefined,
+	},
 	{
 		id: "mistral",
 		name: "Mistral AI",
