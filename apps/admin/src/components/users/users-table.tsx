@@ -7,8 +7,8 @@ import type { AdminUser } from "@/lib/types";
 
 export function UsersTable({ users }: { users: AdminUser[] }) {
 	return (
-		<div className="rounded-md border overflow-x-auto">
-			<table className="w-full text-sm text-left min-w-[900px]">
+		<div className="rounded-md border overflow-x-auto max-w-full">
+			<table className="min-w-[1100px] w-max text-sm text-left">
 				<thead className="bg-gray-50 text-gray-700 h-14">
 					<tr>
 						<th className="px-4 py-2 font-medium">
@@ -93,9 +93,13 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
 					) : (
 						users.map((user) => (
 							<tr key={user.id} className="border-t">
-								<td className="p-4 font-mono text-xs">{user.id}</td>
+								<td className="p-4 font-mono text-xs max-w-[180px] truncate">
+									<span title={user.id}>{user.id}</span>
+								</td>
 								<td className="p-4">{user.name || "-"}</td>
-								<td className="p-4">{user.email}</td>
+								<td className="p-4 max-w-[220px] truncate">
+									<span title={user.email}>{user.email}</span>
+								</td>
 								<td className="p-4">
 									{user.organizations.length > 0 ? (
 										<div className="flex flex-col gap-1">

@@ -2,7 +2,6 @@ import UsersIndex from "@/components/users/users-index";
 import { PAGESIZE } from "@/lib/constants";
 import { fetchServerData } from "@/lib/server-api";
 
-import type { SortBy, SortOrder } from "@/hooks/use-users-query-params";
 import type { paths } from "@/lib/api/v1";
 import type { UsersPaginationResponse } from "@/lib/types";
 
@@ -38,11 +37,18 @@ export default async function UsersPage({
 		pageSize,
 	};
 
-	if (params.sortBy) {
-		queryProps.sortBy = params.sortBy as SortBy;
+	if (
+		params.sortBy === "createdAt" ||
+		params.sortBy === "name" ||
+		params.sortBy === "email" ||
+		params.sortBy === "status" ||
+		params.sortBy === "emailVerified" ||
+		params.sortBy === "id"
+	) {
+		queryProps.sortBy = params.sortBy;
 	}
-	if (params.order) {
-		queryProps.order = params.order as SortOrder;
+	if (params.order === "asc" || params.order === "desc") {
+		queryProps.order = params.order;
 	}
 
 	if (params.userId) {
@@ -55,14 +61,21 @@ export default async function UsersPage({
 		queryProps.email = params.email;
 	}
 
-	if (params.role) {
-		queryProps.role = params.role as "owner" | "admin" | "developer";
+	if (
+		params.role === "owner" ||
+		params.role === "admin" ||
+		params.role === "developer"
+	) {
+		queryProps.role = params.role;
 	}
-	if (params.emailStatus) {
-		queryProps.emailStatus = params.emailStatus as "verified" | "unverified";
+	if (
+		params.emailStatus === "verified" ||
+		params.emailStatus === "unverified"
+	) {
+		queryProps.emailStatus = params.emailStatus;
 	}
-	if (params.accountStatus) {
-		queryProps.accountStatus = params.accountStatus as "active" | "blocked";
+	if (params.accountStatus === "active" || params.accountStatus === "blocked") {
+		queryProps.accountStatus = params.accountStatus;
 	}
 
 	if (params.registeredAtFrom) {

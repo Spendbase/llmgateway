@@ -1621,7 +1621,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/deposits/:id": {
+    "/admin/deposits/{id}": {
         parameters: {
             query?: never;
             header?: never;
