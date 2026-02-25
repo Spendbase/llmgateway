@@ -258,6 +258,8 @@ const getOrganizations = createRoute({
 			},
 			description: "Paginated list of organizations",
 		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
 	},
 });
 
@@ -833,6 +835,12 @@ admin.openapi(getOrganizations, async (c) => {
 		});
 	}
 
+	if (!isAdminEmail(user.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
 	const activeSpan = trace.getActiveSpan();
 	if (activeSpan) {
 		activeSpan.setAttribute("user_id", user.id);
@@ -900,37 +908,33 @@ admin.openapi(getOrganizations, async (c) => {
 	const sortColumn = sortColumnMap[sortField] ?? tables.organization.createdAt;
 	const orderFn = sortOrder === "asc" ? asc : desc;
 
-	const [organizations, countResult, suggestionRows] = await Promise.all([
-		db
-			.select()
-			.from(tables.organization)
-			.where(whereClause)
-			.orderBy(orderFn(sortColumn))
-			.limit(pageSize)
-			.offset((page - 1) * pageSize),
-		db
-			.select({ count: sql<number>`count(*)::int` })
-			.from(tables.organization)
-			.where(whereClause),
-		db
-			.select({
-				name: tables.organization.name,
-				billingEmail: tables.organization.billingEmail,
-			})
-			.from(tables.organization)
-			.where(whereClause)
-			.orderBy(desc(tables.organization.createdAt))
-			.limit(120),
-	]);
+	const organizationsWithCount = await db
+		.select({
+			organization: tables.organization,
+			totalCount: sql<number>`count(*) over()::int`,
+		})
+		.from(tables.organization)
+		.where(whereClause)
+		.orderBy(orderFn(sortColumn))
+		.limit(pageSize)
+		.offset((page - 1) * pageSize);
 
-	const totalOrganizations = countResult[0]?.count || 0;
+	const organizations = organizationsWithCount.map((row) => row.organization);
+	const totalOrganizations = organizationsWithCount[0]?.totalCount || 0;
 	const totalPages = Math.max(1, Math.ceil(totalOrganizations / pageSize));
+
+	const isNonEmptyString = (value: string | null): value is string =>
+		Boolean(value);
 
 	const suggestions = Array.from(
 		new Set(
-			suggestionRows
-				.flatMap((row) => [row.name, row.billingEmail])
-				.filter(Boolean),
+			organizationsWithCount
+				.flatMap((row) => [
+					row.organization.name,
+					row.organization.billingEmail,
+					row.organization.billingCompany,
+				])
+				.filter(isNonEmptyString),
 		),
 	).slice(0, 20);
 
