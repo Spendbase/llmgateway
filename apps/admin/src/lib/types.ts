@@ -57,3 +57,14 @@ export interface UsersPaginationResponse {
 		totalPages: number;
 	};
 }
+
+export interface OrganizationsPaginationResponse {
+	organizations: Organization[];
+	suggestions: string[];
+	pagination: {
+		page: number;
+		pageSize: number;
+		totalOrganizations: number;
+		totalPages: number;
+	};
+}
