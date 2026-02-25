@@ -31,8 +31,8 @@ export function DepositCreditsButton({
 }) {
 	return (
 		<DepositCreditsDialog organization={organization}>
-			<Button className="flex items-center cursor-pointer">
-				<Plus className="mr-2 h-4 w-4" />
+			<Button className="flex items-center cursor-pointer gap-2">
+				<Plus className="h-4 w-4" />
 				Deposit Credits
 			</Button>
 		</DepositCreditsDialog>
@@ -102,17 +102,16 @@ export function DepositCreditsDialog({
 
 			setOpen(false);
 			router.refresh();
-		} catch (error) {
+		} catch (error: unknown) {
 			toast.error("Payment Failed", {
 				description:
-					(error as any)?.message ||
+					(error instanceof Error ? error.message : undefined) ||
 					"An error occurred while processing your payment.",
 				style: {
 					backgroundColor: "var(--destructive)",
 					color: "var(--destructive-foreground)",
 				},
 			});
-			setLoading(false);
 		} finally {
 			setLoading(false);
 		}

@@ -144,6 +144,9 @@ function escapeLike(value: string): string {
 	return value.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&");
 }
 
+const organizationPlanSchema = z.enum(["free", "pro"]);
+const organizationStatusSchema = z.enum(["active", "inactive", "deleted"]);
+
 const getMetrics = createRoute({
 	method: "get",
 	path: "/metrics",
@@ -212,17 +215,67 @@ const depositCredits = createRoute({
 const getOrganizations = createRoute({
 	method: "get",
 	path: "/organizations",
+	request: {
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1).openapi({ example: 1 }),
+			pageSize: z.coerce
+				.number()
+				.int()
+				.min(1)
+				.max(100)
+				.default(25)
+				.openapi({ example: 25 }),
+			search: z.string().optional(),
+			plans: z
+				.array(organizationPlanSchema)
+				.optional()
+				.openapi({
+					example: ["free", "pro"],
+					description: "Organization plans filter",
+				}),
+			statuses: z
+				.array(organizationStatusSchema)
+				.optional()
+				.openapi({
+					example: ["active", "inactive"],
+					description: "Organization statuses filter",
+				}),
+			from: z.string().datetime().optional(),
+			to: z.string().datetime().optional(),
+			sort: z
+				.enum([
+					"name",
+					"billingEmail",
+					"credits",
+					"plan",
+					"status",
+					"createdAt",
+				])
+				.default("createdAt")
+				.optional(),
+			order: z.enum(["asc", "desc"]).default("desc").optional(),
+		}),
+	},
 	responses: {
 		200: {
 			content: {
 				"application/json": {
 					schema: z.object({
 						organizations: z.array(organizationSchema).openapi({}),
+						suggestions: z.array(z.string()),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							totalOrganizations: z.number(),
+							totalPages: z.number(),
+						}),
 					}),
 				},
 			},
-			description: "List of all organizations",
+			description: "Paginated list of organizations",
 		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
 	},
 });
 
@@ -829,19 +882,102 @@ admin.openapi(getOrganizations, async (c) => {
 		});
 	}
 
+	if (!isAdminEmail(user.email)) {
+		throw new HTTPException(403, {
+			message: "Admin access required",
+		});
+	}
+
 	const activeSpan = trace.getActiveSpan();
 	if (activeSpan) {
 		activeSpan.setAttribute("user_id", user.id);
 	}
 
-	const organizations = await db
-		.select()
+	const {
+		page,
+		pageSize,
+		search,
+		plans = [],
+		statuses = [],
+		from,
+		to,
+		sort: sortField = "createdAt",
+		order: sortOrder = "desc",
+	} = c.req.valid("query");
+
+	const normalizedSearch = search?.trim();
+	const escapedSearch = normalizedSearch ? escapeLike(normalizedSearch) : "";
+	const filters = [
+		escapedSearch
+			? or(
+					ilike(tables.organization.name, `%${escapedSearch}%`),
+					ilike(tables.organization.billingEmail, `%${escapedSearch}%`),
+					ilike(tables.organization.billingCompany, `%${escapedSearch}%`),
+				)
+			: undefined,
+		plans.length > 0 ? inArray(tables.organization.plan, plans) : undefined,
+		statuses.length > 0
+			? inArray(tables.organization.status, statuses)
+			: undefined,
+		from ? gte(tables.organization.createdAt, new Date(from)) : undefined,
+		to ? lte(tables.organization.createdAt, new Date(to)) : undefined,
+	].filter((condition): condition is NonNullable<typeof condition> =>
+		Boolean(condition),
+	);
+
+	const whereClause = filters.length > 0 ? and(...filters) : undefined;
+
+	const sortColumnMap = {
+		name: tables.organization.name,
+		billingEmail: tables.organization.billingEmail,
+		credits: tables.organization.credits,
+		plan: tables.organization.plan,
+		status: tables.organization.status,
+		createdAt: tables.organization.createdAt,
+	} as const;
+
+	const sortColumn = sortColumnMap[sortField] ?? tables.organization.createdAt;
+	const orderFn = sortOrder === "asc" ? asc : desc;
+
+	const organizationsWithCount = await db
+		.select({
+			organization: tables.organization,
+			totalCount: sql<number>`count(*) over()::int`,
+		})
 		.from(tables.organization)
-		.where(eq(tables.organization.status, "active"))
-		.orderBy(desc(tables.organization.createdAt));
+		.where(whereClause)
+		.orderBy(orderFn(sortColumn))
+		.limit(pageSize)
+		.offset((page - 1) * pageSize);
+
+	const organizations = organizationsWithCount.map((row) => row.organization);
+	const totalOrganizations = organizationsWithCount[0]?.totalCount || 0;
+	const totalPages = Math.max(1, Math.ceil(totalOrganizations / pageSize));
+
+	const isNonEmptyString = (value: string | null): value is string =>
+		Boolean(value);
+
+	const suggestions = Array.from(
+		new Set(
+			organizationsWithCount
+				.flatMap((row) => [
+					row.organization.name,
+					row.organization.billingEmail,
+					row.organization.billingCompany,
+				])
+				.filter(isNonEmptyString),
+		),
+	).slice(0, 20);
 
 	return c.json({
 		organizations,
+		suggestions,
+		pagination: {
+			page,
+			pageSize,
+			totalOrganizations,
+			totalPages,
+		},
 	});
 });
 
