@@ -1,7 +1,11 @@
-import { models, type ProviderModelMapping } from "./models.js";
-import { getProviderEnvValue, getProviderEnvConfig } from "./provider.js";
+import {
+	models,
+	type ProviderModelMapping,
+	type ProviderId,
+	getProviderEnvValue,
+	getProviderEnvConfig,
+} from "@llmgateway/models";
 
-import type { ProviderId } from "./providers.js";
 import type { ProviderKeyOptions } from "@llmgateway/db";
 
 /**
@@ -18,7 +22,6 @@ export function getProviderEndpoint(
 	providerKeyOptions?: ProviderKeyOptions,
 	configIndex?: number,
 	imageGenerations?: boolean,
-	isOAuth2?: boolean,
 ): string {
 	let modelName = model;
 	if (model && model !== "custom") {
@@ -38,6 +41,14 @@ export function getProviderEndpoint(
 		url = baseUrl;
 	} else {
 		switch (provider) {
+			case "llmapi":
+				if (model === "custom" || model === "auto") {
+					// For custom model, use a default URL for testing
+					url = "https://api.openai.com";
+				} else {
+					throw new Error(`Provider ${provider} requires a baseUrl`);
+				}
+				break;
 			case "openai":
 				url = "https://api.openai.com";
 				break;
@@ -64,9 +75,6 @@ export function getProviderEndpoint(
 			// case "together.ai":
 			// 	url = "https://api.together.ai";
 			// 	break;
-			case "cloudrift":
-				url = "https://inference.cloudrift.ai";
-				break;
 			case "mistral":
 				url = "https://api.mistral.ai";
 				break;
@@ -81,9 +89,6 @@ export function getProviderEndpoint(
 			// 	break;
 			case "deepseek":
 				url = "https://api.deepseek.com";
-				break;
-			case "elevenlabs":
-				url = "https://api.elevenlabs.io";
 				break;
 			case "perplexity":
 				url = "https://api.perplexity.ai";
@@ -108,11 +113,11 @@ export function getProviderEndpoint(
 			case "zai":
 				url = "https://api.z.ai";
 				break;
-			// case "routeway":
-			// 	url = "https://api.routeway.ai";
-			// 	break;
 			// case "nanogpt":
 			// 	url = "https://nano-gpt.com/api";
+			// 	break;
+			// case "bytedance":
+			// 	url = "https://ark.ap-southeast.bytepluses.com/api/v3";
 			// 	break;
 			case "minimax":
 				url = "https://api.minimax.io";
@@ -124,19 +129,31 @@ export function getProviderEndpoint(
 						"baseUrl",
 						configIndex,
 						"https://bedrock-runtime.us-east-1.amazonaws.com",
-					) || "https://bedrock-runtime.us-east-1.amazonaws.com";
+					) ?? "https://bedrock-runtime.us-east-1.amazonaws.com";
 				break;
-			case "llmapi":
-				if (model === "custom" || model === "auto") {
-					// Safety net URL — auto-routing resolves to a real provider before this is called
-					url = "https://api.openai.com";
-				} else {
-					throw new Error(`Provider ${provider} requires a baseUrl`);
-				}
-				break;
+			// case "azure": {
+			// 	const resource =
+			// 		providerKeyOptions?.azure_resource ??
+			// 		getProviderEnvValue("azure", "resource", configIndex);
+			//
+			// 	if (!resource) {
+			// 		const azureEnv = getProviderEnvConfig("azure");
+			// 		throw new Error(
+			// 			`Azure resource is required - set via provider options or ${azureEnv?.required.resource ?? "LLM_AZURE_RESOURCE"} env var`,
+			// 		);
+			// 	}
+			// 	url = `https://${resource}.openai.azure.com`;
+			// 	break;
+			// }
 			case "canopywave":
 				url = "https://inference.canopywave.io";
 				break;
+			// case "custom":
+			// 	if (!baseUrl) {
+			// 		throw new Error(`Custom provider requires a baseUrl`);
+			// 	}
+			// 	url = baseUrl;
+			// break;
 			default:
 				throw new Error(`Provider ${provider} requires a baseUrl`);
 		}
@@ -165,9 +182,22 @@ export function getProviderEndpoint(
 				? `${baseEndpoint}?${queryParams.join("&")}`
 				: baseEndpoint;
 		}
+		case "obsidian": {
+			const endpoint = stream ? "streamGenerateContent" : "generateContent";
+			const baseEndpoint = modelName
+				? `${url}/v1beta/models/${modelName}:${endpoint}`
+				: `${url}/v1beta/models/gemini-3-pro-image-preview:${endpoint}`;
+			const queryParams = [];
+			if (stream) {
+				queryParams.push("alt=sse");
+			}
+			return queryParams.length > 0
+				? `${baseEndpoint}?${queryParams.join("&")}`
+				: baseEndpoint;
+		}
 		case "google-vertex": {
 			const endpoint = stream ? "streamGenerateContent" : "generateContent";
-			const model = modelName || "gemini-2.5-flash-lite";
+			const model = modelName ?? "gemini-2.5-flash-lite";
 
 			// Special handling for some models which require a non-global location
 			let baseEndpoint: string;
@@ -189,12 +219,12 @@ export function getProviderEndpoint(
 						"region",
 						configIndex,
 						"global",
-					) || "global";
+					) ?? "global";
 
 				if (!projectId) {
 					const vertexEnv = getProviderEnvConfig("google-vertex");
 					throw new Error(
-						`${vertexEnv?.required.project || "LLM_GOOGLE_CLOUD_PROJECT"} environment variable is required for Vertex model "${model}"`,
+						`${vertexEnv?.required.project ?? "LLM_GOOGLE_CLOUD_PROJECT"} environment variable is required for Vertex model "${model}"`,
 					);
 				}
 
@@ -202,9 +232,7 @@ export function getProviderEndpoint(
 			}
 
 			const queryParams = [];
-			// Only add API key to URL for non-OAuth2 authentication
-			// OAuth2 tokens go in Authorization header instead
-			if (token && !isOAuth2) {
+			if (token) {
 				queryParams.push(`key=${token}`);
 			}
 			if (stream) {
@@ -214,28 +242,79 @@ export function getProviderEndpoint(
 				? `${baseEndpoint}?${queryParams.join("&")}`
 				: baseEndpoint;
 		}
-		case "obsidian": {
-			const endpoint = stream ? "streamGenerateContent" : "generateContent";
-			const baseEndpoint = modelName
-				? `${url}/v1beta/models/${modelName}:${endpoint}`
-				: `${url}/v1beta/models/gemini-3-pro-image-preview:${endpoint}`;
-			const queryParams = [];
-			if (stream) {
-				queryParams.push("alt=sse");
+		case "perplexity":
+			return `${url}/chat/completions`;
+		case "novita":
+			return `${url}/chat/completions`;
+		case "zai":
+			if (imageGenerations) {
+				return `${url}/api/paas/v4/images/generations`;
 			}
-			return queryParams.length > 0
-				? `${baseEndpoint}?${queryParams.join("&")}`
-				: baseEndpoint;
-		}
+			return `${url}/api/paas/v4/chat/completions`;
 		case "aws-bedrock": {
 			const prefix =
-				providerKeyOptions?.aws_bedrock_region_prefix ||
-				getProviderEnvValue("aws-bedrock", "region", configIndex, "global.") ||
+				providerKeyOptions?.aws_bedrock_region_prefix ??
+				getProviderEnvValue("aws-bedrock", "region", configIndex, "global.") ??
 				"global.";
 
 			const endpoint = stream ? "converse-stream" : "converse";
 			return `${url}/model/${prefix}${modelName}/${endpoint}`;
 		}
+		// case "azure": {
+		// 	const deploymentType =
+		// 		providerKeyOptions?.azure_deployment_type ??
+		// 		getProviderEnvValue(
+		// 			"azure",
+		// 			"deploymentType",
+		// 			configIndex,
+		// 			"ai-foundry",
+		// 		) ??
+		// 		"ai-foundry";
+		//
+		// 	if (deploymentType === "openai") {
+		// 		// Traditional Azure (deployment-based)
+		// 		const apiVersion =
+		// 			providerKeyOptions?.azure_api_version ??
+		// 			getProviderEnvValue(
+		// 				"azure",
+		// 				"apiVersion",
+		// 				configIndex,
+		// 				"2024-10-21",
+		// 			) ??
+		// 			"2024-10-21";
+		//
+		// 		return `${url}/openai/deployments/${modelName}/chat/completions?api-version=${apiVersion}`;
+		// 	} else {
+		// 		// Azure AI Foundry (unified endpoint)
+		// 		const useResponsesApiEnv = getProviderEnvValue(
+		// 			"azure",
+		// 			"useResponsesApi",
+		// 			configIndex,
+		// 			"true",
+		// 		);
+		//
+		// 		if (model && useResponsesApiEnv !== "false") {
+		// 			const modelDef = models.find(
+		// 				(m) =>
+		// 					m.id === model ||
+		// 					m.providers.some(
+		// 						(p) => p.modelName === model && p.providerId === "azure",
+		// 					),
+		// 			);
+		// 			const providerMapping = modelDef?.providers.find(
+		// 				(p) => p.providerId === "azure",
+		// 			);
+		// 			const supportsResponsesApi =
+		// 				(providerMapping as ProviderModelMapping)?.supportsResponsesApi ===
+		// 				true;
+		//
+		// 			if (supportsResponsesApi) {
+		// 				return `${url}/openai/v1/responses`;
+		// 			}
+		// 		}
+		// 		return `${url}/openai/v1/chat/completions`;
+		// 	}
+		// }
 		case "openai": {
 			// Use responses endpoint for models that support responses API
 			if (model) {
@@ -260,6 +339,17 @@ export function getProviderEndpoint(
 			}
 			return `${url}/v1/chat/completions`;
 		}
+		case "alibaba":
+			if (imageGenerations) {
+				return `${url}/api/v1/services/aigc/multimodal-generation/generation`;
+			}
+			return `${url}/v1/chat/completions`;
+		// case "bytedance":
+		// 	if (imageGenerations) {
+		// 		return `${url}/images/generations`;
+		// 	}
+		// 	return `${url}/chat/completions`;
+		// case "inference.net":
 		default:
 			return `${url}/v1/chat/completions`;
 	}
