@@ -102,12 +102,12 @@ export function getProviderEndpoint(
 					url = "https://dashscope-intl.aliyuncs.com/compatible-mode";
 				}
 				break;
-			// case "nebius":
-			// 	url = "https://api.studio.nebius.com";
-			// 	break;
-			// case "zai":
-			// 	url = "https://api.z.ai";
-			// 	break;
+			case "nebius":
+				url = "https://api.studio.nebius.com";
+				break;
+			case "zai":
+				url = "https://api.z.ai";
+				break;
 			// case "routeway":
 			// 	url = "https://api.routeway.ai";
 			// 	break;
