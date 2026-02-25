@@ -3,11 +3,14 @@ import { anthropicModels } from "./models/anthropic.js";
 import { deepseekModels } from "./models/deepseek.js";
 import { googleModels } from "./models/google.js";
 import { llmgatewayModels } from "./models/llmgateway.js";
+import { metaModels } from "./models/meta.js";
 import { minimaxModels } from "./models/minimax.js";
+import { mistralModels } from "./models/mistral.js";
 import { moonshotModels } from "./models/moonshot.js";
 import { openaiModels } from "./models/openai.js";
 // import { perplexityModels } from "./models/perplexity.js";
 import { xaiModels } from "./models/xai.js";
+import { zaiModels } from "./models/zai.js";
 
 import type { providers } from "./providers.js";
 
@@ -242,14 +245,14 @@ export const models = [
 	...googleModels,
 	// ...perplexityModels,
 	...xaiModels,
-	// ...metaModels,
+	...metaModels,
 	...deepseekModels,
-	// ...mistralModels,
+	...mistralModels,
 	// ...microsoftModels,
 	...minimaxModels,
 	...moonshotModels,
 	...alibabaModels,
 	// ...nousresearchModels,
 	// ...routewayModels,
-	// ...zaiModels,
+	...zaiModels,
 ] as const satisfies ModelDefinition[];
