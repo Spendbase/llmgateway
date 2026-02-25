@@ -21,7 +21,7 @@ export const minimaxModels = [
 				reasoning: true,
 				reasoningOutput: "omit",
 				vision: false,
-				tools: false,
+				tools: true,
 				jsonOutput: false,
 			},
 			{
@@ -38,7 +38,7 @@ export const minimaxModels = [
 				reasoning: true,
 				reasoningOutput: "omit",
 				vision: false,
-				tools: false,
+				tools: true,
 				jsonOutput: false,
 			},
 			{
