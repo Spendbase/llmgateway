@@ -114,6 +114,9 @@ export function getProviderEndpoint(
 			// case "nanogpt":
 			// 	url = "https://nano-gpt.com/api";
 			// 	break;
+			case "minimax":
+				url = "https://api.minimax.io";
+				break;
 			case "aws-bedrock":
 				url =
 					getProviderEnvValue(
