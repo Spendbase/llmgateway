@@ -30,6 +30,7 @@ export function ReferralStep({ onComplete }: ReferralStepProps) {
 		{ value: "referral", label: "Referred by a friend" },
 		{ value: "email", label: "Email" },
 		{ value: "reddit", label: "Reddit" },
+		{ value: "mwc2026", label: "MWC 2026" },
 		{ value: "other", label: "Other (Specify)" },
 	];
 
