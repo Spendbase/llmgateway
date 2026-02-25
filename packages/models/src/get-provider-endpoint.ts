@@ -67,21 +67,21 @@ export function getProviderEndpoint(
 			case "cloudrift":
 				url = "https://inference.cloudrift.ai";
 				break;
-			// case "mistral":
-			// 	url = "https://api.mistral.ai";
-			// 	break;
+			case "mistral":
+				url = "https://api.mistral.ai";
+				break;
 			case "xai":
 				url = "https://api.x.ai";
 				break;
-			// case "groq":
-			// 	url = "https://api.groq.com/openai";
-			// 	break;
+			case "groq":
+				url = "https://api.groq.com/openai";
+				break;
 			// case "cerebras":
 			// 	url = "https://api.cerebras.ai";
 			// 	break;
-			// case "deepseek":
-			// 	url = "https://api.deepseek.com";
-			// 	break;
+			case "deepseek":
+				url = "https://api.deepseek.com";
+				break;
 			case "elevenlabs":
 				url = "https://api.elevenlabs.io";
 				break;

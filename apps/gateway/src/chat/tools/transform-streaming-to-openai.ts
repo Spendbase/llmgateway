@@ -1045,19 +1045,19 @@ export function transformStreamingToOpenai(
 			break;
 		}
 
-		// case "mistral":
-		// case "novita": {
-		// 	// Transform standard OpenAI streaming format with finish reason mapping
-		// 	transformedData = transformOpenaiStreaming(data, usedModel);
+		case "mistral":
+		case "novita": {
+			// Transform standard OpenAI streaming format with finish reason mapping
+			transformedData = transformOpenaiStreaming(data, usedModel);
 
-		// 	// Map non-standard finish reasons to OpenAI-compatible values
-		// 	if (transformedData?.choices?.[0]?.finish_reason === "end_turn") {
-		// 		transformedData.choices[0].finish_reason = "stop";
-		// 	} else if (transformedData?.choices?.[0]?.finish_reason === "tool_use") {
-		// 		transformedData.choices[0].finish_reason = "tool_calls";
-		// 	}
-		// 	break;
-		// }
+			// Map non-standard finish reasons to OpenAI-compatible values
+			if (transformedData?.choices?.[0]?.finish_reason === "end_turn") {
+				transformedData.choices[0].finish_reason = "stop";
+			} else if (transformedData?.choices?.[0]?.finish_reason === "tool_use") {
+				transformedData.choices[0].finish_reason = "tool_calls";
+			}
+			break;
+		}
 
 		default: {
 			transformedData = transformOpenaiStreaming(data, usedModel);
