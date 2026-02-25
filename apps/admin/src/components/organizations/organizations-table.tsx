@@ -23,6 +23,17 @@ type SortField =
 	| "status"
 	| "createdAt";
 
+const SORT_FIELDS: SortField[] = [
+	"name",
+	"billingEmail",
+	"credits",
+	"plan",
+	"status",
+	"createdAt",
+];
+
+type SortOrder = "asc" | "desc";
+
 interface SortableHeaderProps {
 	field: SortField;
 	children: React.ReactNode;
@@ -142,8 +153,13 @@ export function OrganizationsTable({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
-	const currentSort = (searchParams.get("sort") || "createdAt") as SortField;
-	const currentOrder = searchParams.get("order") || "desc";
+	const sortParam = searchParams.get("sort");
+	const orderParam = searchParams.get("order");
+	const currentSort = SORT_FIELDS.includes(sortParam as SortField)
+		? (sortParam as SortField)
+		: "createdAt";
+	const currentOrder: SortOrder =
+		orderParam === "asc" || orderParam === "desc" ? orderParam : "desc";
 
 	const handleSort = (field: SortField) => {
 		const params = new URLSearchParams(searchParams);

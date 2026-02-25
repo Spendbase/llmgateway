@@ -2,7 +2,7 @@
 
 import { SlidersHorizontal, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,16 @@ import { getStatusVariant, getStatusIcon } from "./organizations-table";
 const PLAN_OPTIONS = ["free", "pro"] as const;
 const STATUS_OPTIONS = ["active", "inactive", "deleted"] as const;
 
-const serializeMultiValue = (value: string[]) => value.join(",");
+const setMultiParam = (
+	params: URLSearchParams,
+	key: "plans" | "statuses",
+	values: string[],
+) => {
+	params.delete(key);
+	values.forEach((value) => {
+		params.append(key, value);
+	});
+};
 
 const toInputDate = (iso: string) => {
 	if (!iso) {
@@ -59,12 +68,17 @@ export const OrganizationsFilters = ({
 	const selectedCount =
 		plans.length + statuses.length + (hasDateFilter ? 1 : 0);
 
+	useEffect(() => {
+		setFrom(searchParams.get("from") || "");
+		setTo(searchParams.get("to") || "");
+	}, [searchParams]);
+
 	const pushParams = (params: URLSearchParams) => {
 		router.push(`${pathname}?${params.toString()}`);
 	};
 
 	const toggleValue = (
-		key: string,
+		key: "plans" | "statuses",
 		currentValues: string[],
 		nextValue: string,
 	) => {
@@ -73,11 +87,7 @@ export const OrganizationsFilters = ({
 			? currentValues.filter((value) => value !== nextValue)
 			: [...currentValues, nextValue];
 
-		if (nextValues.length) {
-			params.set(key, serializeMultiValue(nextValues));
-		} else {
-			params.delete(key);
-		}
+		setMultiParam(params, key, nextValues);
 
 		params.set("page", "1");
 		pushParams(params);

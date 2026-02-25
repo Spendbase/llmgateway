@@ -143,6 +143,9 @@ function escapeLike(value: string): string {
 	return value.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&");
 }
 
+const organizationPlanSchema = z.enum(["free", "pro"]);
+const organizationStatusSchema = z.enum(["active", "inactive", "deleted"]);
+
 const getMetrics = createRoute({
 	method: "get",
 	path: "/metrics",
@@ -222,8 +225,20 @@ const getOrganizations = createRoute({
 				.default(25)
 				.openapi({ example: 25 }),
 			search: z.string().optional(),
-			plans: z.string().optional(),
-			statuses: z.string().optional(),
+			plans: z
+				.array(organizationPlanSchema)
+				.optional()
+				.openapi({
+					example: ["free", "pro"],
+					description: "Organization plans filter",
+				}),
+			statuses: z
+				.array(organizationStatusSchema)
+				.optional()
+				.openapi({
+					example: ["active", "inactive"],
+					description: "Organization statuses filter",
+				}),
 			from: z.string().datetime().optional(),
 			to: z.string().datetime().optional(),
 			sort: z
@@ -850,27 +865,13 @@ admin.openapi(getOrganizations, async (c) => {
 		page,
 		pageSize,
 		search,
-		plans: plansParam,
-		statuses: statusesParam,
+		plans = [],
+		statuses = [],
 		from,
 		to,
 		sort: sortField = "createdAt",
 		order: sortOrder = "desc",
 	} = c.req.valid("query");
-
-	const parsedPlans = (plansParam || "")
-		.split(",")
-		.map((value) => value.trim())
-		.filter((value): value is "free" | "pro" =>
-			["free", "pro"].includes(value),
-		);
-
-	const parsedStatuses = (statusesParam || "")
-		.split(",")
-		.map((value) => value.trim())
-		.filter((value): value is "active" | "inactive" | "deleted" =>
-			["active", "inactive", "deleted"].includes(value),
-		);
 
 	const normalizedSearch = search?.trim();
 	const escapedSearch = normalizedSearch ? escapeLike(normalizedSearch) : "";
@@ -882,11 +883,9 @@ admin.openapi(getOrganizations, async (c) => {
 					ilike(tables.organization.billingCompany, `%${escapedSearch}%`),
 				)
 			: undefined,
-		parsedPlans.length > 0
-			? inArray(tables.organization.plan, parsedPlans)
-			: undefined,
-		parsedStatuses.length > 0
-			? inArray(tables.organization.status, parsedStatuses)
+		plans.length > 0 ? inArray(tables.organization.plan, plans) : undefined,
+		statuses.length > 0
+			? inArray(tables.organization.status, statuses)
 			: undefined,
 		from ? gte(tables.organization.createdAt, new Date(from)) : undefined,
 		to ? lte(tables.organization.createdAt, new Date(to)) : undefined,

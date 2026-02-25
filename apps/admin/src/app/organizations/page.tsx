@@ -4,11 +4,14 @@ import { fetchServerData } from "@/lib/server-api";
 
 import type { OrganizationsPaginationResponse } from "@/lib/types";
 
-const parseList = (value?: string) =>
-	value
-		?.split(",")
-		.map((item) => item.trim())
-		.filter(Boolean) || [];
+const parseList = (value?: string | string[]) => {
+	if (!value) {
+		return [];
+	}
+
+	const values = Array.isArray(value) ? value : [value];
+	return values.map((item) => item.trim()).filter(Boolean);
+};
 
 export default async function OrganizationsPage({
 	searchParams,
@@ -17,8 +20,8 @@ export default async function OrganizationsPage({
 		page?: string;
 		pageSize?: string;
 		search?: string;
-		plans?: string;
-		statuses?: string;
+		plans?: string | string[];
+		statuses?: string | string[];
 		sort?: string;
 		order?: string;
 		from?: string;
@@ -29,8 +32,9 @@ export default async function OrganizationsPage({
 	const pageRaw = Number.parseInt(params.page || "1", 10);
 	const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
 	const pageSizeRaw = Number.parseInt(params.pageSize || String(PAGESIZE), 10);
-	const pageSize =
+	const pageSizeCandidate =
 		Number.isFinite(pageSizeRaw) && pageSizeRaw > 0 ? pageSizeRaw : PAGESIZE;
+	const pageSize = Math.min(100, pageSizeCandidate);
 	const search = params.search?.trim() || "";
 	const plans = parseList(params.plans);
 	const statuses = parseList(params.statuses);
@@ -48,8 +52,8 @@ export default async function OrganizationsPage({
 					page,
 					pageSize,
 					search,
-					plans: plans.join(","),
-					statuses: statuses.join(","),
+					plans: plans.length > 0 ? plans : undefined,
+					statuses: statuses.length > 0 ? statuses : undefined,
 					sort,
 					order,
 					from,
