@@ -1116,8 +1116,8 @@ export interface paths {
                     page?: number;
                     pageSize?: number;
                     search?: string;
-                    plans?: string;
-                    statuses?: string;
+                    plans?: ("free" | "pro")[];
+                    statuses?: ("active" | "inactive" | "deleted")[];
                     from?: string;
                     to?: string;
                     sort?: "name" | "billingEmail" | "credits" | "plan" | "status" | "createdAt";
@@ -1156,6 +1156,20 @@ export interface paths {
                             };
                         };
                     };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
