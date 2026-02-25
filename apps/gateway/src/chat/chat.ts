@@ -1706,7 +1706,6 @@ chat.openapi(completions, async (c) => {
 			providerKey?.options || undefined,
 			configIndex,
 			isImageGeneration,
-			isOAuth2,
 		);
 	} catch (error) {
 		throw new HTTPException(500, {
