@@ -133,21 +133,21 @@ export const providers = [
 		website: undefined,
 		announcement: undefined,
 	},
-	// {
-	// 	id: "groq",
-	// 	name: "Groq",
-	// 	description: "Groq's ultra-fast LPU inference with various models",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_GROQ_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#F55036",
-	// 	website: "https://groq.com",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "groq",
+		name: "Groq",
+		description: "Groq's ultra-fast LPU inference with various models",
+		env: {
+			required: {
+				apiKey: "LLM_GROQ_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#F55036",
+		website: "https://groq.com",
+		announcement: undefined,
+	},
 	// {
 	// 	id: "cerebras",
 	// 	name: "Cerebras",
@@ -179,22 +179,22 @@ export const providers = [
 		website: "https://x.ai",
 		announcement: undefined,
 	},
-	// {
-	// 	id: "deepseek",
-	// 	name: "DeepSeek",
-	// 	description:
-	// 		"DeepSeek's high-performance language models with OpenAI-compatible API",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_DEEPSEEK_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#FF6B00",
-	// 	website: "https://deepseek.com",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "deepseek",
+		name: "DeepSeek",
+		description:
+			"DeepSeek's high-performance language models with OpenAI-compatible API",
+		env: {
+			required: {
+				apiKey: "LLM_DEEPSEEK_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#FF6B00",
+		website: "https://deepseek.com",
+		announcement: undefined,
+	},
 	{
 		id: "elevenlabs",
 		name: "ElevenLabs",
@@ -351,21 +351,21 @@ export const providers = [
 	// 	website: "https://nebius.com",
 	// 	announcement: undefined,
 	// },
-	// {
-	// 	id: "mistral",
-	// 	name: "Mistral AI",
-	// 	description: "Mistral AI's large language models",
-	// 	env: {
-	// 		required: {
-	// 			apiKey: "LLM_MISTRAL_API_KEY",
-	// 		},
-	// 	},
-	// 	streaming: true,
-	// 	cancellation: true,
-	// 	color: "#FF7000",
-	// 	website: "https://mistral.ai",
-	// 	announcement: undefined,
-	// },
+	{
+		id: "mistral",
+		name: "Mistral AI",
+		description: "Mistral AI's large language models",
+		env: {
+			required: {
+				apiKey: "LLM_MISTRAL_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#FF7000",
+		website: "https://mistral.ai",
+		announcement: undefined,
+	},
 	{
 		id: "canopywave",
 		name: "CanopyWave",
@@ -380,6 +380,22 @@ export const providers = [
 		cancellation: true,
 		color: "#10b981",
 		website: "https://canopywave.io",
+		announcement: undefined,
+	},
+	{
+		id: "minimax",
+		name: "MiniMax",
+		description:
+			"MiniMax's large language models with advanced reasoning and coding capabilities",
+		env: {
+			required: {
+				apiKey: "LLM_MINIMAX_API_KEY",
+			},
+		},
+		streaming: true,
+		cancellation: true,
+		color: "#7C3AED",
+		website: "https://minimax.io",
 		announcement: undefined,
 	},
 	// {
