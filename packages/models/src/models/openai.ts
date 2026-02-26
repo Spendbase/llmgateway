@@ -1114,6 +1114,7 @@ export const openaiModels = [
 				webSearch: true,
 				webSearchPrice: 0.01, // $10 per 1000 searches for reasoning models
 				reasoning: true,
+				reasoningLevels: ["medium"],
 				reasoningOutput: "omit",
 				supportsResponsesApi: true,
 				jsonOutputSchema: true,
@@ -1129,6 +1130,7 @@ export const openaiModels = [
 			// {
 			// 	test: "skip",
 			// 	providerId: "azure",
+			// 	stability: "unstable" as const,
 			// 	modelName: "gpt-5.2",
 			// 	inputPrice: 1.75 / 1e6,
 			// 	outputPrice: 14.0 / 1e6,
@@ -1172,6 +1174,7 @@ export const openaiModels = [
 				maxOutput: 272000,
 				streaming: true,
 				reasoning: true,
+				reasoningLevels: ["medium"],
 				reasoningOutput: "omit",
 				vision: true,
 				tools: true,
@@ -1220,6 +1223,7 @@ export const openaiModels = [
 				maxOutput: 16400,
 				streaming: true,
 				reasoning: true,
+				reasoningLevels: ["medium"],
 				reasoningOutput: "omit",
 				vision: true,
 				tools: true,

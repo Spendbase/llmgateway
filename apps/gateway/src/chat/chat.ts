@@ -1406,7 +1406,7 @@ chat.openapi(completions, async (c) => {
 			// Determine the default reasoning_effort value based on model name
 			let defaultEffort: "minimal" | "low" | "medium" | "high";
 			if (baseModelName.startsWith("gpt-5")) {
-				defaultEffort = "minimal";
+				defaultEffort = "medium";
 			} else {
 				defaultEffort = "low";
 			}
