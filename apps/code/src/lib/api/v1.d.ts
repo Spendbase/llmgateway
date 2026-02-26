@@ -1116,8 +1116,8 @@ export interface paths {
                     page?: number;
                     pageSize?: number;
                     search?: string;
-                    plans?: ("free" | "pro")[];
-                    statuses?: ("active" | "inactive" | "deleted")[];
+                    plans?: string;
+                    statuses?: string;
                     from?: string;
                     to?: string;
                     sort?: "name" | "billingEmail" | "credits" | "plan" | "status" | "createdAt";
