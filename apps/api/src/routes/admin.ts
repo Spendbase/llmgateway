@@ -1,5 +1,4 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { trace } from "@opentelemetry/api";
 import { HTTPException } from "hono/http-exception";
 
 import {
@@ -144,8 +143,51 @@ function escapeLike(value: string): string {
 	return value.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&");
 }
 
-const organizationPlanSchema = z.enum(["free", "pro"]);
-const organizationStatusSchema = z.enum(["active", "inactive", "deleted"]);
+function parseCsvParam<T extends string>(
+	value: unknown,
+	allowed: readonly T[],
+): T[] {
+	const raw = Array.isArray(value)
+		? value.join(",")
+		: typeof value === "string"
+			? value
+			: "";
+
+	if (!raw) {
+		return [];
+	}
+
+	return raw
+		.split(",")
+		.map((v) => v.trim() as T)
+		.filter((v) => allowed.includes(v));
+}
+
+const organizationPlansCsvSchema = z
+	.preprocess(
+		(val) => parseCsvParam(val, ["free", "pro"]),
+		z.array(z.enum(["free", "pro"])),
+	)
+	.optional()
+	.openapi({
+		type: "array",
+		items: { type: "string", enum: ["free", "pro"] },
+		example: "free,pro",
+		description: "Comma-separated plans: free,pro",
+	});
+
+const organizationStatusesCsvSchema = z
+	.preprocess(
+		(val) => parseCsvParam(val, ["active", "inactive", "deleted"]),
+		z.array(z.enum(["active", "inactive", "deleted"])),
+	)
+	.optional()
+	.openapi({
+		type: "array",
+		items: { type: "string", enum: ["active", "inactive", "deleted"] },
+		example: ["active", "inactive"],
+		description: "Comma-separated statuses: active,inactive,deleted",
+	});
 
 const getMetrics = createRoute({
 	method: "get",
@@ -226,20 +268,8 @@ const getOrganizations = createRoute({
 				.default(25)
 				.openapi({ example: 25 }),
 			search: z.string().optional(),
-			plans: z
-				.array(organizationPlanSchema)
-				.optional()
-				.openapi({
-					example: ["free", "pro"],
-					description: "Organization plans filter",
-				}),
-			statuses: z
-				.array(organizationStatusSchema)
-				.optional()
-				.openapi({
-					example: ["active", "inactive"],
-					description: "Organization statuses filter",
-				}),
+			plans: organizationPlansCsvSchema,
+			statuses: organizationStatusesCsvSchema,
 			from: z.string().datetime().optional(),
 			to: z.string().datetime().optional(),
 			sort: z
@@ -888,44 +918,24 @@ admin.openapi(getOrganizations, async (c) => {
 		});
 	}
 
-	const activeSpan = trace.getActiveSpan();
-	if (activeSpan) {
-		activeSpan.setAttribute("user_id", user.id);
-	}
+	const query = c.req.valid("query");
 
 	const {
-		page,
-		pageSize,
 		search,
-		plans = [],
-		statuses = [],
+		plans: parsedPlans = [],
+		statuses: parsedStatuses = [],
 		from,
 		to,
 		sort: sortField = "createdAt",
 		order: sortOrder = "desc",
-	} = c.req.valid("query");
+	} = query;
 
 	const normalizedSearch = search?.trim();
 	const escapedSearch = normalizedSearch ? escapeLike(normalizedSearch) : "";
-	const filters = [
-		escapedSearch
-			? or(
-					ilike(tables.organization.name, `%${escapedSearch}%`),
-					ilike(tables.organization.billingEmail, `%${escapedSearch}%`),
-					ilike(tables.organization.billingCompany, `%${escapedSearch}%`),
-				)
-			: undefined,
-		plans.length > 0 ? inArray(tables.organization.plan, plans) : undefined,
-		statuses.length > 0
-			? inArray(tables.organization.status, statuses)
-			: undefined,
-		from ? gte(tables.organization.createdAt, new Date(from)) : undefined,
-		to ? lte(tables.organization.createdAt, new Date(to)) : undefined,
-	].filter((condition): condition is NonNullable<typeof condition> =>
-		Boolean(condition),
-	);
-
-	const whereClause = filters.length > 0 ? and(...filters) : undefined;
+	const page = query.page;
+	const pageSize = Math.min(100, query.pageSize);
+	const offset = (page - 1) * pageSize;
+	const conditions = [];
 
 	const sortColumnMap = {
 		name: tables.organization.name,
@@ -939,33 +949,58 @@ admin.openapi(getOrganizations, async (c) => {
 	const sortColumn = sortColumnMap[sortField] ?? tables.organization.createdAt;
 	const orderFn = sortOrder === "asc" ? asc : desc;
 
+	if (escapedSearch) {
+		conditions.push(
+			or(
+				ilike(tables.organization.name, `%${escapedSearch}%`),
+				ilike(tables.organization.billingEmail, `%${escapedSearch}%`),
+				ilike(tables.organization.billingCompany, `%${escapedSearch}%`),
+			),
+		);
+	}
+
+	if (parsedPlans.length) {
+		conditions.push(inArray(tables.organization.plan, parsedPlans));
+	}
+
+	if (parsedStatuses.length) {
+		conditions.push(inArray(tables.organization.status, parsedStatuses));
+	}
+
+	if (from) {
+		conditions.push(gte(tables.organization.createdAt, new Date(from)));
+	}
+
+	if (to) {
+		conditions.push(lte(tables.organization.createdAt, new Date(to)));
+	}
+
+	const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
 	const organizationsWithCount = await db
 		.select({
 			organization: tables.organization,
-			totalCount: sql<number>`count(*) over()::int`,
+			count: sql<number>`count(*) over()::int`,
 		})
 		.from(tables.organization)
-		.where(whereClause)
+		.where(whereCondition)
 		.orderBy(orderFn(sortColumn))
 		.limit(pageSize)
-		.offset((page - 1) * pageSize);
+		.offset(offset);
 
 	const organizations = organizationsWithCount.map((row) => row.organization);
-	const totalOrganizations = organizationsWithCount[0]?.totalCount || 0;
+	const totalOrganizations = organizationsWithCount[0]?.count || 0;
 	const totalPages = Math.max(1, Math.ceil(totalOrganizations / pageSize));
-
-	const isNonEmptyString = (value: string | null): value is string =>
-		Boolean(value);
 
 	const suggestions = Array.from(
 		new Set(
-			organizationsWithCount
-				.flatMap((row) => [
-					row.organization.name,
-					row.organization.billingEmail,
-					row.organization.billingCompany,
+			organizations
+				.flatMap((organization) => [
+					organization.name,
+					organization.billingEmail,
+					organization.billingCompany,
 				])
-				.filter(isNonEmptyString),
+				.filter((value) => Boolean(value)),
 		),
 	).slice(0, 20);
 
