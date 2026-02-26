@@ -61,6 +61,7 @@ export const user = pgTable("user", {
 	emailVerified: boolean().notNull().default(false),
 	image: text(),
 	onboardingCompleted: boolean().notNull().default(false),
+	referral: text("referral"),
 	status: text({
 		enum: ["active", "blocked"],
 	})

@@ -79,6 +79,14 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
 							/>
 						</th>
 						<th className="px-4 py-2 font-medium">
+							<UsersColumnHeader
+								title="Referral"
+								sortKey="referral"
+								filterKey="referral"
+								filterType="text"
+							/>
+						</th>
+						<th className="px-4 py-2 font-medium">
 							<span className="text-sm font-medium">Actions</span>
 						</th>
 					</tr>
@@ -86,7 +94,7 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
 				<tbody>
 					{users.length === 0 ? (
 						<tr>
-							<td colSpan={8} className="p-8 text-center text-muted-foreground">
+							<td colSpan={9} className="p-8 text-center text-muted-foreground">
 								No users found matching current filters.
 							</td>
 						</tr>
@@ -136,6 +144,7 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
 										<Badge className="bg-blue-600">Active</Badge>
 									)}
 								</td>
+								<td className="p-4">{user.referral || "-"}</td>
 								<td className="p-4">
 									<BlockUserButton user={user} />
 								</td>

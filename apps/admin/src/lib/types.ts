@@ -41,6 +41,7 @@ export interface AdminUser {
 	emailVerified: boolean;
 	createdAt: Date;
 	status: "active" | "blocked";
+	referral: string | null;
 	organizations: Array<{
 		organizationId: string;
 		organizationName: string;

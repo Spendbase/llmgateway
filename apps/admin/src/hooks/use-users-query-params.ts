@@ -7,7 +7,8 @@ export type SortBy =
 	| "email"
 	| "status"
 	| "emailVerified"
-	| "id";
+	| "id"
+	| "referral";
 export type SortOrder = "asc" | "desc";
 
 export interface UsersQueryParams {
@@ -18,6 +19,7 @@ export interface UsersQueryParams {
 	userId?: string;
 	name?: string;
 	email?: string;
+	referral?: string;
 	role?: "owner" | "admin" | "developer";
 	emailStatus?: "verified" | "unverified";
 	accountStatus?: "active" | "blocked";
@@ -46,7 +48,8 @@ export function useUsersQueryParams() {
 			sortBy === "email" ||
 			sortBy === "status" ||
 			sortBy === "emailVerified" ||
-			sortBy === "id"
+			sortBy === "id" ||
+			sortBy === "referral"
 		) {
 			q.sortBy = sortBy as SortBy;
 		}
@@ -69,6 +72,11 @@ export function useUsersQueryParams() {
 		const email = searchParams.get("email");
 		if (email) {
 			q.email = email.trim();
+		}
+
+		const referral = searchParams.get("referral");
+		if (referral) {
+			q.referral = referral.trim();
 		}
 
 		const role = searchParams.get("role");

@@ -20,6 +20,7 @@ export default async function UsersPage({
 		userId?: string;
 		name?: string;
 		email?: string;
+		referral?: string;
 		role?: string;
 		emailStatus?: string;
 		accountStatus?: string;
@@ -59,6 +60,9 @@ export default async function UsersPage({
 	}
 	if (params.email) {
 		queryProps.email = params.email;
+	}
+	if (params.referral) {
+		queryProps.referral = params.referral;
 	}
 
 	if (

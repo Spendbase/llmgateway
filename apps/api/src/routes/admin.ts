@@ -367,12 +367,21 @@ const getUsers = createRoute({
 				.default(20)
 				.openapi({ example: 20 }),
 			sortBy: z
-				.enum(["createdAt", "name", "email", "status", "emailVerified", "id"])
+				.enum([
+					"createdAt",
+					"name",
+					"email",
+					"status",
+					"emailVerified",
+					"id",
+					"referral",
+				])
 				.optional(),
 			order: z.enum(["asc", "desc"]).default("desc"),
 			userId: z.string().optional(),
 			name: z.string().optional(),
 			email: z.string().optional(),
+			referral: z.string().optional(),
 			role: z.enum(["owner", "admin", "developer"]).optional(),
 			emailStatus: z.enum(["verified", "unverified"]).optional(),
 			accountStatus: z.enum(["active", "blocked"]).optional(),
@@ -412,6 +421,7 @@ const getUsers = createRoute({
 									emailVerified: z.boolean(),
 									createdAt: z.date(),
 									status: z.enum(["active", "blocked"]),
+									referral: z.string().nullable(),
 									organizations: z.array(
 										z.object({
 											organizationId: z.string(),
@@ -1298,6 +1308,15 @@ admin.openapi(getUsers, async (c) => {
 		const search = `%${escaped}%`;
 		conditions.push(sql`${tables.user.email} ILIKE ${search} ESCAPE '\\'`);
 	}
+
+	if (query.referral) {
+		const escaped = escapeLike(query.referral);
+		const search = `%${escaped}%`;
+		conditions.push(
+			sql`COALESCE(${tables.user.referral}, '') ILIKE ${search} ESCAPE '\\'`,
+		);
+	}
+
 	if (query.role) {
 		conditions.push(
 			exists(
@@ -1348,6 +1367,7 @@ admin.openapi(getUsers, async (c) => {
 		status: tables.user.status,
 		emailVerified: tables.user.emailVerified,
 		id: tables.user.id,
+		referral: tables.user.referral,
 	} as const;
 
 	const validSortBy =
@@ -1373,6 +1393,7 @@ admin.openapi(getUsers, async (c) => {
 			emailVerified: tables.user.emailVerified,
 			createdAt: tables.user.createdAt,
 			status: tables.user.status,
+			referral: tables.user.referral,
 		})
 		.from(tables.user)
 		.where(whereCondition)
@@ -1417,6 +1438,7 @@ admin.openapi(getUsers, async (c) => {
 		emailVerified: user.emailVerified,
 		createdAt: user.createdAt,
 		status: user.status,
+		referral: user.referral,
 		organizations: userOrganizations
 			.filter((uo) => uo.userId === user.id)
 			.map((uo) => ({

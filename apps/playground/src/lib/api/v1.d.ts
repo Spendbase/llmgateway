@@ -1373,11 +1373,12 @@ export interface paths {
                 query?: {
                     page?: number;
                     pageSize?: number;
-                    sortBy?: "createdAt" | "name" | "email" | "status" | "emailVerified" | "id";
+                    sortBy?: "createdAt" | "name" | "email" | "status" | "emailVerified" | "id" | "referral";
                     order?: "asc" | "desc";
                     userId?: string;
                     name?: string;
                     email?: string;
+                    referral?: string;
                     role?: "owner" | "admin" | "developer";
                     emailStatus?: "verified" | "unverified";
                     accountStatus?: "active" | "blocked";
@@ -1405,6 +1406,7 @@ export interface paths {
                                 createdAt: string;
                                 /** @enum {string} */
                                 status: "active" | "blocked";
+                                referral: string | null;
                                 organizations: {
                                     organizationId: string;
                                     organizationName: string;

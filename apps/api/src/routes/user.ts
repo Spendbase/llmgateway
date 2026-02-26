@@ -597,6 +597,11 @@ user.openapi(submitHubSpotForm, async (c) => {
 		pageName: payload.pageName,
 	});
 
+	await db
+		.update(tables.user)
+		.set({ referral: payload.referral })
+		.where(eq(tables.user.id, authUser.id));
+
 	return c.json({
 		message: "HubSpot form submitted successfully.",
 	});
