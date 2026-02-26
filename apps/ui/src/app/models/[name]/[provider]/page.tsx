@@ -20,6 +20,7 @@ import { Badge } from "@/lib/components/badge";
 import { Button } from "@/lib/components/button";
 import { getConfig } from "@/lib/config-server";
 import { fetchModels } from "@/lib/fetch-models";
+import { isAudioModel } from "@/lib/model-utils";
 
 import {
 	models as modelDefinitions,
@@ -252,6 +253,7 @@ export default async function ModelProviderPage({ params }: PageProps) {
 								provider={providerMapping}
 								modelName={decodedName}
 								modelStability={modelStability}
+								isAudio={isAudioModel(apiModel)}
 							/>
 						</div>
 					</div>

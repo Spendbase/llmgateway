@@ -22,6 +22,7 @@ import {
 	TooltipTrigger,
 } from "@/lib/components/tooltip";
 import { useAppConfig } from "@/lib/config";
+import { isAudioModel } from "@/lib/model-utils";
 import { formatContextSize } from "@/lib/utils";
 
 import { getProviderIcon } from "@llmgateway/shared/components";
@@ -226,12 +227,18 @@ export function ModelCard({
 									<div className="grid grid-cols-2 gap-4">
 										<div>
 											<div className="text-xs text-muted-foreground mb-1">
-												Context Size
+												{isAudioModel(model)
+													? "Max Characters"
+													: "Context Size"}
 											</div>
 											<div className="text-lg font-bold text-foreground">
-												{provider.contextSize
-													? formatContextSize(provider.contextSize)
-													: "—"}
+												{isAudioModel(model)
+													? provider.audioConfig
+														? `${(provider.audioConfig.maxCharacters / 1000).toFixed(0)}K`
+														: "—"
+													: provider.contextSize
+														? formatContextSize(provider.contextSize)
+														: "—"}
 											</div>
 										</div>
 
@@ -249,115 +256,150 @@ export function ModelCard({
 										<div className="text-xs text-muted-foreground mb-2">
 											Pricing
 										</div>
-										<div className="grid grid-cols-3 gap-3">
-											<div className="space-y-1">
-												<div className="text-xs text-muted-foreground">
-													Input
+										{isAudioModel(model) ? (
+											<div className="grid grid-cols-2 gap-3">
+												<div className="space-y-1">
+													<div className="text-xs text-muted-foreground">
+														Per 1K chars
+													</div>
+													<div className="font-semibold text-foreground text-sm">
+														{provider.audioConfig
+															? `$${(provider.audioConfig.characterPrice * 1000).toFixed(4)}`
+															: "—"}
+													</div>
 												</div>
-												<div className="font-semibold text-foreground text-sm">
-													{typeof formatPrice(
-														provider.inputPrice,
-														provider.discount,
-													) === "string" ? (
-														<>
-															{formatPrice(
-																provider.inputPrice,
-																provider.discount,
-															)}
-															<span className="text-muted-foreground text-xs ml-1">
-																/M
-															</span>
-														</>
-													) : (
-														<span className="inline-flex items-baseline gap-1">
-															{formatPrice(
-																provider.inputPrice,
-																provider.discount,
-															)}
-															<span className="text-muted-foreground text-xs">
-																/M
-															</span>
-														</span>
-													)}
-												</div>
-											</div>
-											<div className="space-y-1">
-												<div className="text-xs text-muted-foreground">
-													Cached
-												</div>
-												<div className="font-semibold text-foreground text-sm">
-													{typeof formatPrice(
-														provider.cachedInputPrice,
-														provider.discount,
-													) === "string" ? (
-														<>
-															{formatPrice(
-																provider.cachedInputPrice,
-																provider.discount,
-															)}
-															<span className="text-muted-foreground text-xs ml-1">
-																/M
-															</span>
-														</>
-													) : (
-														<span className="inline-flex items-baseline gap-1">
-															{formatPrice(
-																provider.cachedInputPrice,
-																provider.discount,
-															)}
-															<span className="text-muted-foreground text-xs">
-																/M
-															</span>
-														</span>
-													)}
-												</div>
-											</div>
-											<div className="space-y-1">
-												<div className="text-xs text-muted-foreground">
-													Output
-												</div>
-												<div className="font-semibold text-foreground text-sm">
-													{typeof formatPrice(
-														provider.outputPrice,
-														provider.discount,
-													) === "string" ? (
-														<>
-															{formatPrice(
-																provider.outputPrice,
-																provider.discount,
-															)}
-															<span className="text-muted-foreground text-xs ml-1">
-																/M
-															</span>
-														</>
-													) : (
-														<span className="inline-flex items-baseline gap-1">
-															{formatPrice(
-																provider.outputPrice,
-																provider.discount,
-															)}
-															<span className="text-muted-foreground text-xs">
-																/M
-															</span>
-														</span>
-													)}
-												</div>
-											</div>
-											{provider.requestPrice !== undefined &&
-												provider.requestPrice > 0 && (
+												{provider.audioConfig?.languages && (
 													<div className="space-y-1">
 														<div className="text-xs text-muted-foreground">
-															Per Request
+															Languages
 														</div>
 														<div className="font-semibold text-foreground text-sm">
-															${provider.requestPrice.toFixed(3)}
-															<span className="text-muted-foreground text-xs ml-1">
-																/req
-															</span>
+															{provider.audioConfig.languages}
 														</div>
 													</div>
 												)}
-										</div>
+												{provider.audioConfig?.latencyMs && (
+													<div className="space-y-1">
+														<div className="text-xs text-muted-foreground">
+															Latency
+														</div>
+														<div className="font-semibold text-foreground text-sm">
+															~{provider.audioConfig.latencyMs}ms
+														</div>
+													</div>
+												)}
+											</div>
+										) : (
+											<div className="grid grid-cols-3 gap-3">
+												<div className="space-y-1">
+													<div className="text-xs text-muted-foreground">
+														Input
+													</div>
+													<div className="font-semibold text-foreground text-sm">
+														{typeof formatPrice(
+															provider.inputPrice,
+															provider.discount,
+														) === "string" ? (
+															<>
+																{formatPrice(
+																	provider.inputPrice,
+																	provider.discount,
+																)}
+																<span className="text-muted-foreground text-xs ml-1">
+																	/M
+																</span>
+															</>
+														) : (
+															<span className="inline-flex items-baseline gap-1">
+																{formatPrice(
+																	provider.inputPrice,
+																	provider.discount,
+																)}
+																<span className="text-muted-foreground text-xs">
+																	/M
+																</span>
+															</span>
+														)}
+													</div>
+												</div>
+												<div className="space-y-1">
+													<div className="text-xs text-muted-foreground">
+														Cached
+													</div>
+													<div className="font-semibold text-foreground text-sm">
+														{typeof formatPrice(
+															provider.cachedInputPrice,
+															provider.discount,
+														) === "string" ? (
+															<>
+																{formatPrice(
+																	provider.cachedInputPrice,
+																	provider.discount,
+																)}
+																<span className="text-muted-foreground text-xs ml-1">
+																	/M
+																</span>
+															</>
+														) : (
+															<span className="inline-flex items-baseline gap-1">
+																{formatPrice(
+																	provider.cachedInputPrice,
+																	provider.discount,
+																)}
+																<span className="text-muted-foreground text-xs">
+																	/M
+																</span>
+															</span>
+														)}
+													</div>
+												</div>
+												<div className="space-y-1">
+													<div className="text-xs text-muted-foreground">
+														Output
+													</div>
+													<div className="font-semibold text-foreground text-sm">
+														{typeof formatPrice(
+															provider.outputPrice,
+															provider.discount,
+														) === "string" ? (
+															<>
+																{formatPrice(
+																	provider.outputPrice,
+																	provider.discount,
+																)}
+																<span className="text-muted-foreground text-xs ml-1">
+																	/M
+																</span>
+															</>
+														) : (
+															<span className="inline-flex items-baseline gap-1">
+																{formatPrice(
+																	provider.outputPrice,
+																	provider.discount,
+																)}
+																<span className="text-muted-foreground text-xs">
+																	/M
+																</span>
+															</span>
+														)}
+													</div>
+												</div>
+												{provider.requestPrice !== undefined &&
+													provider.requestPrice > 0 && (
+														<div className="space-y-1">
+															<div className="text-xs text-muted-foreground">
+																Per Request
+															</div>
+															<div className="font-semibold text-foreground text-sm">
+																${provider.requestPrice.toFixed(3)}
+																<span className="text-muted-foreground text-xs ml-1">
+																	/req
+																</span>
+															</div>
+														</div>
+													)}
+											</div>
+										)}
 									</div>
 
 									<div>
@@ -390,22 +432,24 @@ export function ModelCard({
 										</div>
 									</div>
 
-									<Button
-										variant="default"
-										size="default"
-										className="w-full gap-2 font-semibold"
-										onClick={(e) => e.stopPropagation()}
-										asChild
-									>
-										<a
-											href={`${config.playgroundUrl}?model=${encodeURIComponent(providerModelId)}`}
-											target="_blank"
-											rel="noopener noreferrer"
+									{!isAudioModel(model) && (
+										<Button
+											variant="default"
+											size="default"
+											className="w-full gap-2 font-semibold"
+											onClick={(e) => e.stopPropagation()}
+											asChild
 										>
-											<Play className="h-4 w-4" />
-											Try in Playground
-										</a>
-									</Button>
+											<a
+												href={`${config.playgroundUrl}?model=${encodeURIComponent(providerModelId)}`}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												<Play className="h-4 w-4" />
+												Try in Playground
+											</a>
+										</Button>
+									)}
 								</div>
 							);
 						})}

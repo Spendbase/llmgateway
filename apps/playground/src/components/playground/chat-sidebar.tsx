@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -52,6 +52,7 @@ import { clearLastUsedProjectCookiesAction } from "@/lib/actions/project";
 import { useAuth } from "@/lib/auth-client";
 
 import { ChatSidebarSkeleton } from "./chat-sidebar-skeleton";
+import { PlaygroundNavLinks } from "./playground-nav-links";
 import { ProjectSwitcher } from "./project-switcher";
 
 import type { Organization, Project } from "@/lib/types";
@@ -96,6 +97,7 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
 	const queryClient = useQueryClient();
 	const router = useRouter();
+	const pathname = usePathname();
 	const posthog = usePostHog();
 	const { user, isLoading: isUserLoading } = useUser();
 	const { signOut } = useAuth();
@@ -336,6 +338,7 @@ export function ChatSidebar({
 							<h1 className="text-xl font-semibold">LLM API</h1>
 							<Badge>Chat</Badge>
 						</Link>
+						<PlaygroundNavLinks pathname={pathname} />
 						<div className="w-full rounded-md border p-4 text-sm">
 							<div className="font-medium mb-2">Sign in required</div>
 							<p className="text-muted-foreground mb-3">
@@ -379,6 +382,7 @@ export function ChatSidebar({
 						<h1 className="text-xl font-semibold">LLM API</h1>
 						<Badge>Chat</Badge>
 					</Link>
+					<PlaygroundNavLinks pathname={pathname} />
 					<Button
 						variant="outline"
 						className="w-full flex items-center gap-2"

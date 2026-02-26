@@ -4923,6 +4923,7 @@ export interface operations {
                 order?: "asc" | "desc";
                 /** @description Include all mapping statuses (for admin) */
                 includeAll?: string;
+                type?: "text" | "audio" | "image" | "video";
             };
             header?: never;
             path?: never;
@@ -4990,6 +4991,12 @@ export interface operations {
                                 deactivationReason: string | null;
                                 /** @enum {string} */
                                 status: "active" | "inactive" | "deactivated";
+                                audioConfig?: {
+                                    characterPrice: number;
+                                    maxCharacters: number;
+                                    languages?: number;
+                                    latencyMs?: number;
+                                } | null;
                                 providerInfo?: {
                                     id: string;
                                     createdAt: string | null;

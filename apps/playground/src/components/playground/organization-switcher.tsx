@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, Check, PlusCircle } from "lucide-react";
+import { Building2, Check, ChevronsUpDown, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -37,19 +37,19 @@ export function OrganizationSwitcher({
 		setMounted(true);
 	}, []);
 
+	const triggerClass =
+		"w-full flex items-center gap-2.5 rounded-lg border bg-background px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer justify-start h-auto";
+
 	if (!mounted) {
 		return (
-			<Button
-				variant="ghost"
-				disabled
-				className="flex min-w-[180px] items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background justify-start"
-			>
-				<span className="truncate">
+			<Button variant="ghost" disabled className={triggerClass}>
+				<Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+				<span className="truncate font-medium">
 					{selectedOrganization
 						? selectedOrganization.name
 						: "Select Organization"}
 				</span>
-				<ChevronsUpDown className="ml-auto h-4 w-4 flex-shrink-0 opacity-50" />
+				<ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-40" />
 			</Button>
 		);
 	}
@@ -58,16 +58,14 @@ export function OrganizationSwitcher({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						className="flex min-w-[180px] items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background justify-start"
-					>
-						<span className="truncate">
+					<Button variant="ghost" className={triggerClass}>
+						<Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+						<span className="truncate font-medium">
 							{selectedOrganization
 								? selectedOrganization.name
 								: "Select Organization"}
 						</span>
-						<ChevronsUpDown className="ml-auto h-4 w-4 flex-shrink-0 opacity-50" />
+						<ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-40" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="w-60 border-border bg-background text-foreground shadow-xl">
@@ -79,18 +77,18 @@ export function OrganizationSwitcher({
 						<DropdownMenuItem
 							key={org.id}
 							onSelect={() => onSelectOrganization(org)}
-							className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent focus:bg-accent data-[highlighted]:bg-accent"
+							className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent focus:bg-accent data-highlighted:bg-accent"
 						>
 							<span className="truncate">{org.name}</span>
 							{selectedOrganization?.id === org.id && (
-								<Check className="ml-auto h-4 w-4 flex-shrink-0" />
+								<Check className="ml-auto h-4 w-4 shrink-0" />
 							)}
 						</DropdownMenuItem>
 					))}
 					<DropdownMenuSeparator className="bg-border" />
 					<DropdownMenuItem
 						onSelect={() => setIsNewOrgDialogOpen(true)}
-						className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent focus:bg-accent data-[highlighted]:bg-accent"
+						className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent focus:bg-accent data-highlighted:bg-accent"
 					>
 						<PlusCircle className="mr-2 h-4 w-4" />
 						New Organization

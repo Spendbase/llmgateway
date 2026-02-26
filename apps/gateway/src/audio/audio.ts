@@ -1,19 +1,29 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 
+import { getModelMappingStatuses } from "@/lib/filter-model-mappings.js";
+import { insertLog } from "@/lib/logs.js";
+
 import { db as cdb, shortid } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
 import {
 	audioModels,
 	getAudioModel,
-	getProviderEndpoint,
+	getProviderEnvVar,
 	getProviderHeaders,
-	getVoiceId,
 } from "@llmgateway/models";
+
+import { toContentType, toElevenLabsFormat } from "./elevenlabs-formats.js";
+import {
+	handleVoiceNotFound,
+	resolveVoiceId,
+} from "./elevenlabs-voice-service.js";
 
 import type { ServerTypes } from "@/vars.js";
 
 export const audio = new OpenAPIHono<ServerTypes>();
+
+const ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech";
 
 const audioSpeechRequestSchema = z.object({
 	model: z.string().openapi({
@@ -49,9 +59,6 @@ const audioSpeechRequestSchema = z.object({
 		.openapi({
 			description: "The format of the audio output",
 		}),
-	speed: z.number().min(0.25).max(4.0).optional().default(1.0).openapi({
-		description: "Speed of the audio (0.25 to 4.0)",
-	}),
 });
 
 const audioSpeechRoute = createRoute({
@@ -114,13 +121,45 @@ const audioSpeechRoute = createRoute({
 	},
 });
 
+async function callElevenLabsTTS(
+	voiceId: string,
+	modelName: string,
+	text: string,
+	outputFormat: string,
+	providerToken: string,
+): Promise<Response> {
+	const url = `${ELEVENLABS_TTS_URL}/${voiceId}`;
+	const headers = getProviderHeaders("elevenlabs", providerToken);
+	headers["Content-Type"] = "application/json";
+
+	return await fetch(`${url}?output_format=${outputFormat}`, {
+		method: "POST",
+		headers,
+		body: JSON.stringify({
+			text,
+			model_id: modelName,
+			voice_settings: {
+				stability: 0.5,
+				similarity_boost: 0.75,
+			},
+		}),
+	});
+}
+
+function isVoiceNotFoundError(errorBody: unknown): boolean {
+	if (typeof errorBody !== "object" || errorBody === null) {
+		return false;
+	}
+	const detail = (errorBody as Record<string, any>).detail;
+	return detail?.code === "voice_not_found";
+}
+
 audio.openapi(audioSpeechRoute, async (c) => {
 	const requestId = c.req.header("x-request-id") || shortid(40);
 	c.header("x-request-id", requestId);
 
 	const { model, input, voice, response_format } = c.req.valid("json");
 
-	// Get API key
 	const auth = c.req.header("Authorization");
 	const xApiKey = c.req.header("x-api-key");
 
@@ -144,7 +183,6 @@ audio.openapi(audioSpeechRoute, async (c) => {
 		});
 	}
 
-	// Verify API key
 	const apiKey = await cdb.query.apiKey.findFirst({
 		where: {
 			token: {
@@ -201,6 +239,19 @@ audio.openapi(audioSpeechRoute, async (c) => {
 		});
 	}
 
+	const mappingStatuses = await getModelMappingStatuses(model);
+	const mappingStatus = mappingStatuses.get(`${model}:${provider}`);
+	if (mappingStatus === "inactive") {
+		throw new HTTPException(400, {
+			message: `TTS model ${model} is currently disabled`,
+		});
+	}
+	if (mappingStatus === "deactivated") {
+		throw new HTTPException(410, {
+			message: `TTS model ${model} has been deactivated and is no longer available`,
+		});
+	}
+
 	// Validate input length
 	const characterCount = input.length;
 	if (characterCount > providerMapping.maxCharacters) {
@@ -208,6 +259,8 @@ audio.openapi(audioSpeechRoute, async (c) => {
 			message: `Input text too long. Maximum ${providerMapping.maxCharacters} characters, got ${characterCount}`,
 		});
 	}
+
+	const requestStartTime = Date.now();
 
 	// Check if organization is active and get organization data
 	const organization = await cdb.query.organization.findFirst({
@@ -225,10 +278,10 @@ audio.openapi(audioSpeechRoute, async (c) => {
 		});
 	}
 
-	// Get provider API key
 	let providerToken: string | undefined;
+	let usedMode: "credits" | "api-keys" = "credits";
 
-	if (project.mode === "api-keys") {
+	if (project.mode === "api-keys" || project.mode === "hybrid") {
 		const providerKey = await cdb.query.providerKey.findFirst({
 			where: {
 				status: {
@@ -243,106 +296,110 @@ audio.openapi(audioSpeechRoute, async (c) => {
 			},
 		});
 
-		if (!providerKey) {
+		if (providerKey) {
+			providerToken = providerKey.token;
+			usedMode = "api-keys";
+		} else if (project.mode === "api-keys") {
 			throw new HTTPException(400, {
 				message: `No API key set for provider: ${provider}. Please add a provider key in your settings.`,
 			});
 		}
+	}
 
-		providerToken = providerKey.token;
-	} else if (project.mode === "credits" || project.mode === "hybrid") {
-		// Check credits (reuse organization from above)
+	if (!providerToken) {
+		const envVarName = getProviderEnvVar(provider as any);
+		const envToken = envVarName ? process.env[envVarName] : undefined;
+
+		if (!envToken) {
+			throw new HTTPException(400, {
+				message: `No API key set for provider: ${provider}. Please add a provider key in your settings or set the ${envVarName} environment variable.`,
+			});
+		}
+
 		if (parseFloat(organization.credits || "0") <= 0) {
 			throw new HTTPException(402, {
 				message: "Organization has insufficient credits",
 			});
 		}
 
-		throw new HTTPException(501, {
-			message:
-				"Credits mode not yet implemented for audio. Please use API keys mode.",
-		});
+		providerToken = envToken;
+		usedMode = "credits";
 	}
 
-	if (!providerToken) {
-		throw new HTTPException(500, {
-			message: "No provider token available",
-		});
-	}
-
-	// Map voice name to provider voice ID
-	const voiceId = getVoiceId(provider, voice);
-	if (!voiceId) {
-		throw new HTTPException(400, {
-			message: `Invalid voice: ${voice}`,
-		});
-	}
-
-	// Build ElevenLabs request
-	const elevenlabsRequestBody = {
-		text: input,
-		model_id: providerMapping.modelName,
-		voice_settings: {
-			stability: 0.5,
-			similarity_boost: 0.75,
-		},
-	};
-
-	// Get endpoint
-	const url = `${getProviderEndpoint(provider as any)}/v1/text-to-speech/${voiceId}`;
-
-	// Map response format to ElevenLabs format
-	const outputFormat = response_format || "mp3";
+	const outputFormat = toElevenLabsFormat(response_format);
 
 	try {
-		const headers = getProviderHeaders(provider as any, providerToken);
-		headers["Content-Type"] = "application/json";
+		let voiceId = await resolveVoiceId(voice, providerToken);
 
-		const res = await fetch(`${url}?output_format=${outputFormat}`, {
-			method: "POST",
-			headers,
-			body: JSON.stringify(elevenlabsRequestBody),
-		});
+		let res = await callElevenLabsTTS(
+			voiceId,
+			providerMapping.modelName,
+			input,
+			outputFormat,
+			providerToken,
+		);
 
 		if (!res.ok) {
-			const errorText = await res.text();
-			logger.error("ElevenLabs TTS error", {
-				status: res.status,
-				error: errorText,
-				model,
-				voiceId,
-			});
+			const errorBody = await res.json().catch(() => null);
 
-			throw new HTTPException(res.status as 400, {
-				message: `TTS provider error: ${errorText}`,
-			});
+			if (isVoiceNotFoundError(errorBody)) {
+				voiceId = await handleVoiceNotFound(voice, providerToken);
+				res = await callElevenLabsTTS(
+					voiceId,
+					providerMapping.modelName,
+					input,
+					outputFormat,
+					providerToken,
+				);
+			}
+
+			if (!res.ok) {
+				const errorText = await res.text().catch(() => String(res.status));
+				logger.error("ElevenLabs TTS error", {
+					status: res.status,
+					error: errorText,
+					model,
+					voiceId,
+				});
+				if (res.status === 403) {
+					throw new HTTPException(403, {
+						message: `The requested output format "${response_format}" requires a paid ElevenLabs plan. Use mp3 or opus instead, or provide your own ElevenLabs API key with the required plan.`,
+					});
+				}
+				throw new HTTPException(res.status as 400, {
+					message: `TTS provider error: ${errorText}`,
+				});
+			}
 		}
 
-		// Get audio data
 		const audioBuffer = await res.arrayBuffer();
+		const contentType = toContentType(outputFormat);
+		const duration = Date.now() - requestStartTime;
+		const cost = characterCount * providerMapping.characterPrice;
 
-		// Set character count header
-		c.header("x-character-count", characterCount.toString());
+		insertLog({
+			requestId,
+			organizationId: project.organizationId,
+			projectId: project.id,
+			apiKeyId: apiKey.id,
+			requestedModel: model,
+			usedModel: model,
+			usedProvider: provider,
+			mode: project.mode,
+			usedMode,
+			duration,
+			responseSize: audioBuffer.byteLength,
+			cost,
+			cached: false,
+			streamed: false,
+			content: input,
+			finishReason: "stop",
+			unifiedFinishReason: "completed",
+			userId: apiKey.createdBy,
+		}).catch((err: unknown) => {
+			logger.error("Failed to write TTS log entry", { error: err });
+		});
 
-		// Determine content type
-		const contentTypeMap: Record<string, string> = {
-			mp3: "audio/mpeg",
-			mp3_22050_32: "audio/mpeg",
-			mp3_44100_64: "audio/mpeg",
-			mp3_44100_128: "audio/mpeg",
-			opus: "audio/opus",
-			aac: "audio/aac",
-			flac: "audio/flac",
-			wav: "audio/wav",
-			pcm: "audio/pcm",
-			pcm_16000: "audio/pcm",
-			pcm_24000: "audio/pcm",
-			ulaw_8000: "audio/basic",
-		};
-
-		const contentType = contentTypeMap[outputFormat] || "audio/mpeg";
-
-		// Return audio
 		return new Response(audioBuffer, {
 			headers: {
 				"Content-Type": contentType,
