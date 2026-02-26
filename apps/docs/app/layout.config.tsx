@@ -22,7 +22,7 @@ export const baseOptions: BaseLayoutProps = {
 	links: [
 		{
 			text: "Dashboard",
-			url: "https://llmapi.ai/dashboard",
+			url: "https://app.llmapi.ai/dashboard",
 			active: "none",
 		},
 	],

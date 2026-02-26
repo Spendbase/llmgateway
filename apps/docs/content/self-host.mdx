@@ -20,7 +20,7 @@ This option uses a single Docker container that includes all services (UI, API, 
 ```bash
 # Run the container
 docker run -d \
-  --name llmgateway \
+  --name llmapi \
   --restart unless-stopped \
   -p 3002:3002 \
   -p 3003:3003 \
@@ -28,9 +28,9 @@ docker run -d \
   -p 3006:3006 \
   -p 4001:4001 \
   -p 4002:4002 \
-  -v ~/llmgateway_data:/var/lib/postgresql/data \
+  -v ~/llmapi_data:/var/lib/postgresql/data \
   -e AUTH_SECRET=your-secret-key-here \
-  ghcr.io/Spendbase/llmgateway-unified:latest
+  ghcr.io/Spendbase/llmapi-unified:latest
 ```
 
 Note: it is recommended to use the latest version tag from here instead of `latest`: https://github.com/Spendbase/llmgateway/releases
@@ -102,13 +102,13 @@ LLM_ANTHROPIC_API_KEY=sk-ant-...
 
 ```bash
 # View logs
-docker logs llmgateway
+docker logs llmapi
 
 # Restart container
-docker restart llmgateway
+docker restart llmapi
 
 # Stop container
-docker stop llmgateway
+docker stop llmapi
 ```
 
 ### For Docker Compose (Option 2)
