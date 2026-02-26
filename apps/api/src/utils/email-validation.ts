@@ -11,6 +11,7 @@ const BLACKLISTED_DOMAINS = [
 	"duckduckgo.com",
 	"keemail.me",
 	"15p.me",
+	"dollicons.com",
 ];
 
 export function validateEmail(email: string): EmailValidationResult {
