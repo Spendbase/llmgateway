@@ -380,12 +380,12 @@ const { text } = await generateText({
 ```ts title="vercel-ai-sdk.ts"
 import { createOpenAI } from "@ai-sdk/openai";
 
-const llmgateway = createOpenAI({
+const llmapi = createOpenAI({
 	baseURL: "https://internal.llmapi.ai/v1",
 	apiKey: process.env.LLM_API_KEY!,
 });
 
-const completion = await llmgateway.chat({
+const completion = await llmapi.chat({
 	model: "gpt-4o",
 	messages: [{ role: "user", content: "Hello, how are you?" }],
 });

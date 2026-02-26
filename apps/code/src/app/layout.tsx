@@ -22,26 +22,26 @@ const geistMono = Geist_Mono({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-	metadataBase: new URL("https://code.llmgateway.io"),
-	title: "LLM Gateway Code - Dev Plans for Developers",
+	metadataBase: new URL("https://code.llmapi.ai"),
+	title: "LLM API Code - Dev Plans for Developers",
 	description:
-		"Subscribe to LLM Gateway Dev Plans for AI-powered coding assistance. Access Claude, GPT-4, and other models.",
+		"Subscribe to LLM API Dev Plans for AI-powered coding assistance. Access Claude, GPT-4, and other models.",
 	icons: {
 		icon: "/favicon/favicon.svg?v=2",
 	},
 	openGraph: {
-		title: "LLM Gateway Code - Dev Plans for Developers",
+		title: "LLM API Code - Dev Plans for Developers",
 		description:
-			"Subscribe to LLM Gateway Dev Plans for AI-powered coding assistance. Access Claude, GPT-4, and other models.",
+			"Subscribe to LLM API Dev Plans for AI-powered coding assistance. Access Claude, GPT-4, and other models.",
 		images: ["/opengraph.png?v=1"],
 		type: "website",
-		url: "https://code.llmgateway.io",
+		url: "https://code.llmapi.ai",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "LLM Gateway Code - Dev Plans for Developers",
+		title: "LLM API Code - Dev Plans for Developers",
 		description:
-			"Subscribe to LLM Gateway Dev Plans for AI-powered coding assistance. Access Claude, GPT-4, and other models.",
+			"Subscribe to LLM API Dev Plans for AI-powered coding assistance. Access Claude, GPT-4, and other models.",
 		images: ["/opengraph.png?v=1"],
 	},
 };

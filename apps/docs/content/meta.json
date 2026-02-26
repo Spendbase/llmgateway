@@ -1,6 +1,6 @@
 {
-	"title": "LLM Gateway",
-	"description": "LLM Gateway Documentation",
+	"title": "LLM API",
+	"description": "LLM API Documentation",
 	"icon": "Building",
 	"root": true,
 	"pages": [

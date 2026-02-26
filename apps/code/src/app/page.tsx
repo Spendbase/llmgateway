@@ -51,7 +51,7 @@ export default function LandingPage() {
 				<div className="container mx-auto px-4 py-4 flex items-center justify-between">
 					<div className="flex items-center gap-2">
 						<Code className="h-6 w-6" />
-						<span className="font-semibold text-lg">LLM Gateway Code</span>
+						<span className="font-semibold text-lg">LLM API Code</span>
 					</div>
 					<div className="flex items-center gap-4">
 						<Button variant="ghost" asChild>
@@ -186,7 +186,7 @@ export default function LandingPage() {
 							Ready to supercharge your coding?
 						</h2>
 						<p className="text-muted-foreground mb-8">
-							Join thousands of developers using LLM Gateway for AI-assisted
+							Join thousands of developers using LLM API for AI-assisted
 							development.
 						</p>
 						<Button size="lg" asChild>
@@ -200,10 +200,10 @@ export default function LandingPage() {
 				<div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
 					<div className="flex items-center gap-2">
 						<Code className="h-5 w-5" />
-						<span className="font-medium">LLM Gateway Code</span>
+						<span className="font-medium">LLM API Code</span>
 					</div>
 					<p className="text-sm text-muted-foreground">
-						&copy; {new Date().getFullYear()} LLM Gateway. All rights reserved.
+						&copy; {new Date().getFullYear()} LLM API. All rights reserved.
 					</p>
 				</div>
 			</footer>
