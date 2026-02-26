@@ -1373,7 +1373,7 @@ export interface paths {
                 query?: {
                     page?: number;
                     pageSize?: number;
-                    sortBy?: "createdAt" | "name" | "email" | "status" | "emailVerified" | "id";
+                    sortBy?: "createdAt" | "name" | "email" | "status" | "emailVerified" | "id" | "referral";
                     order?: "asc" | "desc";
                     userId?: string;
                     name?: string;
@@ -1405,6 +1405,7 @@ export interface paths {
                                 createdAt: string;
                                 /** @enum {string} */
                                 status: "active" | "blocked";
+                                referral: string | null;
                                 organizations: {
                                     organizationId: string;
                                     organizationName: string;
