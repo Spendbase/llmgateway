@@ -12,6 +12,7 @@ import {
 	Play,
 	Share2,
 	Globe,
+	Volume2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -43,12 +44,14 @@ interface ModelProviderCardProps {
 	provider: ApiModelProviderMapping;
 	modelName: string;
 	modelStability?: StabilityLevel;
+	isAudio?: boolean;
 }
 
 export function ModelProviderCard({
 	provider,
 	modelName,
 	modelStability,
+	isAudio = false,
 }: ModelProviderCardProps) {
 	const config = useAppConfig();
 	const [copied, setCopied] = useState(false);
@@ -215,11 +218,15 @@ export function ModelProviderCard({
 
 				<div className="grid grid-cols-2 gap-4 text-sm mb-4">
 					<div>
-						<div className="text-muted-foreground mb-1">Context Size</div>
+						<div className="text-muted-foreground mb-1">
+							{provider.audioConfig ? "Max Characters" : "Context Size"}
+						</div>
 						<div className="font-mono text-lg font-bold">
-							{provider.contextSize
-								? formatContextSize(provider.contextSize)
-								: "—"}
+							{provider.audioConfig
+								? `${(provider.audioConfig.maxCharacters / 1000).toFixed(0)}K`
+								: provider.contextSize
+									? formatContextSize(provider.contextSize)
+									: "—"}
 						</div>
 					</div>
 					<div>
@@ -232,212 +239,262 @@ export function ModelProviderCard({
 
 				<div className="mb-4">
 					<div className="text-muted-foreground text-sm mb-2">Pricing</div>
-					<div className="grid grid-cols-3 gap-3">
-						<div>
-							<div className="text-muted-foreground text-xs mb-1">Input</div>
-							<div className="font-mono">
-								{provider.inputPrice ? (
-									<div className="space-y-1">
-										<div className="flex items-center gap-2">
-											{provider.discount ? (
-												<>
-													<span className="line-through text-muted-foreground text-xs">
-														{formatPrice(provider.inputPrice)}
-													</span>
-													<span className="text-green-600 font-semibold">
-														{formatPrice(
-															provider.inputPrice * (1 - provider.discount),
-														)}
-													</span>
-												</>
-											) : (
-												formatPrice(provider.inputPrice)
-											)}
-										</div>
-										<span className="text-muted-foreground text-xs">/M</span>
-									</div>
-								) : (
-									"—"
-								)}
-							</div>
-						</div>
-						<div>
-							<div className="text-muted-foreground text-xs mb-1">Cached</div>
-							<div className="font-mono">
-								{provider.cachedInputPrice ? (
-									<div className="space-y-1">
-										<div className="flex items-center gap-2">
-											{provider.discount ? (
-												<>
-													<span className="line-through text-muted-foreground text-xs">
-														{formatPrice(provider.cachedInputPrice)}
-													</span>
-													<span className="text-green-600 font-semibold">
-														{formatPrice(
-															provider.cachedInputPrice *
-																(1 - provider.discount),
-														)}
-													</span>
-												</>
-											) : (
-												formatPrice(provider.cachedInputPrice)
-											)}
-										</div>
-										<span className="text-muted-foreground text-xs">/M</span>
-									</div>
-								) : (
-									"—"
-								)}
-							</div>
-						</div>
-						<div>
-							<div className="text-muted-foreground text-xs mb-1">Output</div>
-							<div className="font-mono">
-								{provider.outputPrice ? (
-									<div className="space-y-1">
-										<div className="flex items-center gap-2">
-											{provider.discount ? (
-												<>
-													<span className="line-through text-muted-foreground text-xs">
-														{formatPrice(provider.outputPrice)}
-													</span>
-													<span className="text-green-600 font-semibold">
-														{formatPrice(
-															provider.outputPrice * (1 - provider.discount),
-														)}
-													</span>
-												</>
-											) : (
-												formatPrice(provider.outputPrice)
-											)}
-										</div>
-										<span className="text-muted-foreground text-xs">/M</span>
-									</div>
-								) : (
-									"—"
-								)}
-							</div>
-						</div>
-					</div>
-					{provider.imageInputPrice !== undefined && (
-						<div className="grid grid-cols-3 gap-3 mt-3">
-							<div className="col-span-3">
+					{provider.audioConfig ? (
+						<div className="grid grid-cols-2 gap-3">
+							<div>
 								<div className="text-muted-foreground text-xs mb-1">
-									Image Input
+									Per 1K chars
 								</div>
-								<div className="font-mono">
-									<div className="space-y-1">
-										<div className="flex items-center gap-2">
-											{provider.discount ? (
-												<>
-													<span className="line-through text-muted-foreground text-xs">
-														{formatPrice(provider.imageInputPrice)}
-													</span>
-													<span className="text-green-600 font-semibold">
-														{formatPrice(
-															provider.imageInputPrice! *
-																(1 - provider.discount),
-														)}
-													</span>
-												</>
-											) : (
-												formatPrice(provider.imageInputPrice)
-											)}
-										</div>
-										<span className="text-muted-foreground text-xs">/M</span>
-									</div>
+								<div className="font-mono font-semibold">
+									${(provider.audioConfig.characterPrice * 1000).toFixed(4)}
 								</div>
 							</div>
-						</div>
-					)}
-					{provider.requestPrice !== null &&
-						provider.requestPrice !== undefined && (
-							<div className="grid grid-cols-3 gap-3 mt-3">
-								<div className="col-span-3">
+							{provider.audioConfig.languages !== null && (
+								<div>
 									<div className="text-muted-foreground text-xs mb-1">
-										Per Request
+										Languages
+									</div>
+									<div className="font-mono font-semibold">
+										{provider.audioConfig.languages}
+									</div>
+								</div>
+							)}
+							{provider.audioConfig.latencyMs !== null && (
+								<div>
+									<div className="text-muted-foreground text-xs mb-1">
+										Latency
+									</div>
+									<div className="font-mono font-semibold">
+										~{provider.audioConfig.latencyMs}ms
+									</div>
+								</div>
+							)}
+						</div>
+					) : (
+						<>
+							<div className="grid grid-cols-3 gap-3">
+								<div>
+									<div className="text-muted-foreground text-xs mb-1">
+										Input
 									</div>
 									<div className="font-mono">
-										<div className="space-y-1">
-											<div className="flex items-center gap-2">
-												{provider.discount ? (
-													<>
-														<span className="line-through text-muted-foreground text-xs">
-															${provider.requestPrice.toFixed(3)}
-														</span>
-														<span className="text-green-600 font-semibold">
-															$
-															{(
-																provider.requestPrice *
-																(1 - provider.discount)
-															).toFixed(3)}
-														</span>
-													</>
-												) : (
-													<>${provider.requestPrice.toFixed(3)}</>
-												)}
+										{provider.inputPrice ? (
+											<div className="space-y-1">
+												<div className="flex items-center gap-2">
+													{provider.discount ? (
+														<>
+															<span className="line-through text-muted-foreground text-xs">
+																{formatPrice(provider.inputPrice)}
+															</span>
+															<span className="text-green-600 font-semibold">
+																{formatPrice(
+																	provider.inputPrice * (1 - provider.discount),
+																)}
+															</span>
+														</>
+													) : (
+														formatPrice(provider.inputPrice)
+													)}
+												</div>
+												<span className="text-muted-foreground text-xs">
+													/M
+												</span>
 											</div>
-											<span className="text-muted-foreground text-xs">
-												/req
-											</span>
-										</div>
+										) : (
+											"—"
+										)}
+									</div>
+								</div>
+								<div>
+									<div className="text-muted-foreground text-xs mb-1">
+										Cached
+									</div>
+									<div className="font-mono">
+										{provider.cachedInputPrice ? (
+											<div className="space-y-1">
+												<div className="flex items-center gap-2">
+													{provider.discount ? (
+														<>
+															<span className="line-through text-muted-foreground text-xs">
+																{formatPrice(provider.cachedInputPrice)}
+															</span>
+															<span className="text-green-600 font-semibold">
+																{formatPrice(
+																	provider.cachedInputPrice *
+																		(1 - provider.discount),
+																)}
+															</span>
+														</>
+													) : (
+														formatPrice(provider.cachedInputPrice)
+													)}
+												</div>
+												<span className="text-muted-foreground text-xs">
+													/M
+												</span>
+											</div>
+										) : (
+											"—"
+										)}
+									</div>
+								</div>
+								<div>
+									<div className="text-muted-foreground text-xs mb-1">
+										Output
+									</div>
+									<div className="font-mono">
+										{provider.outputPrice ? (
+											<div className="space-y-1">
+												<div className="flex items-center gap-2">
+													{provider.discount ? (
+														<>
+															<span className="line-through text-muted-foreground text-xs">
+																{formatPrice(provider.outputPrice)}
+															</span>
+															<span className="text-green-600 font-semibold">
+																{formatPrice(
+																	provider.outputPrice *
+																		(1 - provider.discount),
+																)}
+															</span>
+														</>
+													) : (
+														formatPrice(provider.outputPrice)
+													)}
+												</div>
+												<span className="text-muted-foreground text-xs">
+													/M
+												</span>
+											</div>
+										) : (
+											"—"
+										)}
 									</div>
 								</div>
 							</div>
-						)}
-					{Boolean(provider.discount && provider.discount > 0) && (
-						<div className="mt-2">
-							<Badge
-								variant="secondary"
-								className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 border-green-200"
-							>
-								-{(provider.discount! * 100).toFixed(0)}% off
-							</Badge>
-						</div>
-					)}
-					{provider.pricingTiers && provider.pricingTiers.length > 1 && (
-						<div className="mt-3 pt-3 border-t">
-							<div className="text-muted-foreground text-xs mb-2">
-								Tiered Pricing
-							</div>
-							<div className="space-y-2">
-								{provider.pricingTiers.map((tier, index) => (
-									<div
-										key={index}
-										className="flex justify-between items-center text-xs"
-									>
-										<span className="text-muted-foreground">
-											{tier.upToTokens === undefined
-												? `>${(provider.pricingTiers![index - 1]?.upToTokens || 0) / 1000}K tokens`
-												: `≤${tier.upToTokens / 1000}K tokens`}
-										</span>
-										{provider.discount ? (
-											<span className="font-mono">
-												<span className="line-through text-muted-foreground">
-													{formatPrice(tier.inputPrice)} in /{" "}
-													{formatPrice(tier.outputPrice)} out
+							{provider.imageInputPrice !== undefined && (
+								<div className="grid grid-cols-3 gap-3 mt-3">
+									<div className="col-span-3">
+										<div className="text-muted-foreground text-xs mb-1">
+											Image Input
+										</div>
+										<div className="font-mono">
+											<div className="space-y-1">
+												<div className="flex items-center gap-2">
+													{provider.discount ? (
+														<>
+															<span className="line-through text-muted-foreground text-xs">
+																{formatPrice(provider.imageInputPrice)}
+															</span>
+															<span className="text-green-600 font-semibold">
+																{formatPrice(
+																	provider.imageInputPrice! *
+																		(1 - provider.discount),
+																)}
+															</span>
+														</>
+													) : (
+														formatPrice(provider.imageInputPrice)
+													)}
+												</div>
+												<span className="text-muted-foreground text-xs">
+													/M
 												</span>
-												<span className="text-green-600 font-semibold ml-2">
-													{formatPrice(
-														tier.inputPrice * (1 - provider.discount),
-													)}{" "}
-													in /{" "}
-													{formatPrice(
-														tier.outputPrice * (1 - provider.discount),
-													)}{" "}
-													out
-												</span>
-											</span>
-										) : (
-											<span className="font-mono">
-												{formatPrice(tier.inputPrice)} in /{" "}
-												{formatPrice(tier.outputPrice)} out
-											</span>
-										)}
+											</div>
+										</div>
 									</div>
-								))}
-							</div>
-						</div>
+								</div>
+							)}
+							{provider.requestPrice !== null &&
+								provider.requestPrice !== undefined && (
+									<div className="grid grid-cols-3 gap-3 mt-3">
+										<div className="col-span-3">
+											<div className="text-muted-foreground text-xs mb-1">
+												Per Request
+											</div>
+											<div className="font-mono">
+												<div className="space-y-1">
+													<div className="flex items-center gap-2">
+														{provider.discount ? (
+															<>
+																<span className="line-through text-muted-foreground text-xs">
+																	${provider.requestPrice.toFixed(3)}
+																</span>
+																<span className="text-green-600 font-semibold">
+																	$
+																	{(
+																		provider.requestPrice *
+																		(1 - provider.discount)
+																	).toFixed(3)}
+																</span>
+															</>
+														) : (
+															<>${provider.requestPrice.toFixed(3)}</>
+														)}
+													</div>
+													<span className="text-muted-foreground text-xs">
+														/req
+													</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								)}
+							{Boolean(provider.discount && provider.discount > 0) && (
+								<div className="mt-2">
+									<Badge
+										variant="secondary"
+										className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 border-green-200"
+									>
+										-{(provider.discount! * 100).toFixed(0)}% off
+									</Badge>
+								</div>
+							)}
+							{provider.pricingTiers && provider.pricingTiers.length > 1 && (
+								<div className="mt-3 pt-3 border-t">
+									<div className="text-muted-foreground text-xs mb-2">
+										Tiered Pricing
+									</div>
+									<div className="space-y-2">
+										{provider.pricingTiers.map((tier, index) => (
+											<div
+												key={index}
+												className="flex justify-between items-center text-xs"
+											>
+												<span className="text-muted-foreground">
+													{tier.upToTokens === undefined
+														? `>${(provider.pricingTiers![index - 1]?.upToTokens || 0) / 1000}K tokens`
+														: `≤${tier.upToTokens / 1000}K tokens`}
+												</span>
+												{provider.discount ? (
+													<span className="font-mono">
+														<span className="line-through text-muted-foreground">
+															{formatPrice(tier.inputPrice)} in /{" "}
+															{formatPrice(tier.outputPrice)} out
+														</span>
+														<span className="text-green-600 font-semibold ml-2">
+															{formatPrice(
+																tier.inputPrice * (1 - provider.discount),
+															)}{" "}
+															in /{" "}
+															{formatPrice(
+																tier.outputPrice * (1 - provider.discount),
+															)}{" "}
+															out
+														</span>
+													</span>
+												) : (
+													<span className="font-mono">
+														{formatPrice(tier.inputPrice)} in /{" "}
+														{formatPrice(tier.outputPrice)} out
+													</span>
+												)}
+											</div>
+										))}
+									</div>
+								</div>
+							)}
+						</>
 					)}
 				</div>
 
@@ -445,6 +502,19 @@ export function ModelProviderCard({
 					<div className="text-muted-foreground text-sm mb-2">Capabilities</div>
 					<TooltipProvider delayDuration={300}>
 						<div className="flex flex-wrap gap-2">
+							{isAudio && (
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-xs">
+											<Volume2 className="h-3.5 w-3.5" />
+											<span>Text to Speech</span>
+										</div>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>Converts text to spoken audio</p>
+									</TooltipContent>
+								</Tooltip>
+							)}
 							{provider.streaming && (
 								<Tooltip>
 									<TooltipTrigger asChild>
@@ -532,21 +602,23 @@ export function ModelProviderCard({
 					</TooltipProvider>
 				</div>
 
-				<Button
-					variant="default"
-					size="default"
-					className="w-full gap-2 font-semibold"
-					asChild
-				>
-					<a
-						href={`${config.playgroundUrl}?model=${encodeURIComponent(providerModelName)}`}
-						target="_blank"
-						rel="noopener noreferrer"
+				{!isAudio && (
+					<Button
+						variant="default"
+						size="default"
+						className="w-full gap-2 font-semibold"
+						asChild
 					>
-						<Play className="h-4 w-4" />
-						Try in Playground
-					</a>
-				</Button>
+						<a
+							href={`${config.playgroundUrl}?model=${encodeURIComponent(providerModelName)}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<Play className="h-4 w-4" />
+							Try in Playground
+						</a>
+					</Button>
+				)}
 			</CardContent>
 		</Card>
 	);

@@ -778,6 +778,12 @@ export const modelProviderMapping = pgTable(
 		jsonOutputSchema: boolean().default(false).notNull(),
 		webSearch: boolean().default(false).notNull(),
 		webSearchPrice: numericDecimal(),
+		audioConfig: jsonb().$type<{
+			characterPrice: number;
+			maxCharacters: number;
+			languages?: number;
+			latencyMs?: number;
+		}>(),
 		discount: numericDecimal().default(0).notNull(),
 		reasoningLevels: json().$type<("minimal" | "low" | "medium" | "high")[]>(),
 		pricingTiers: json().$type<

@@ -7,11 +7,14 @@ import {
 	ArrowUp,
 	ArrowDown,
 	XCircle,
+	Volume2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CustomBadge as Badge } from "@/components/ui/custom-badge";
+
+import { isAudioModel } from "@llmgateway/models";
 
 import type { Model } from "@/lib/models";
 
@@ -340,14 +343,24 @@ export function ModelsTable({ models: initialModels }: ModelsTableProps) {
 											{model.output?.includes("image") && (
 												<Badge variant="purple">Image</Badge>
 											)}
-											{model.mappings?.some((m) => m.vision) && (
-												<Badge variant="default">Vision</Badge>
+											{isAudioModel(model) && (
+												<Badge variant="purple">
+													<Volume2 className="h-3 w-3" />
+													Audio
+												</Badge>
 											)}
-											{model.mappings?.some((m) => m.reasoning) && (
-												<Badge variant="default">Reasoning</Badge>
-											)}
-											{model.mappings?.some((m) => m.tools) && (
-												<Badge variant="default">Tools</Badge>
+											{!isAudioModel(model) && (
+												<>
+													{model.mappings?.some((m) => m.vision) && (
+														<Badge variant="default">Vision</Badge>
+													)}
+													{model.mappings?.some((m) => m.reasoning) && (
+														<Badge variant="default">Reasoning</Badge>
+													)}
+													{model.mappings?.some((m) => m.tools) && (
+														<Badge variant="default">Tools</Badge>
+													)}
+												</>
 											)}
 										</div>
 									</td>

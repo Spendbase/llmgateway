@@ -22,6 +22,13 @@ export interface PricingTier {
 	outputPrice: number;
 }
 
+export interface AudioConfig {
+	characterPrice: number;
+	maxCharacters: number;
+	languages?: number;
+	latencyMs?: number;
+}
+
 export interface ModelProviderMapping {
 	id: string;
 	createdAt: Date;
@@ -53,6 +60,7 @@ export interface ModelProviderMapping {
 	deactivatedAt?: Date;
 	deactivationReason?: string;
 	status: "active" | "inactive" | "deactivated";
+	audioConfig?: AudioConfig;
 	providerInfo?: Provider;
 }
 

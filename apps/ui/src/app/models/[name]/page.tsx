@@ -20,6 +20,7 @@ import { Badge } from "@/lib/components/badge";
 import { Button } from "@/lib/components/button";
 import { getConfig } from "@/lib/config-server";
 import { fetchModels } from "@/lib/fetch-models";
+import { isAudioModel } from "@/lib/model-utils";
 
 import {
 	models as modelDefinitions,
@@ -127,111 +128,156 @@ export default async function ModelPage({ params }: PageProps) {
 								);
 							})()}
 
-							<a
-								href={`${config.playgroundUrl}?model=${encodeURIComponent(`${modelProviders[0]?.providerId}/${model.id}`)}`}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<Button variant="outline" size="sm" className="gap-2">
-									<Play className="h-3 w-3" />
-									Try in Playground
-								</Button>
-							</a>
+							{!isAudioModel(model) && (
+								<a
+									href={`${config.playgroundUrl}?model=${encodeURIComponent(`${modelProviders[0]?.providerId}/${model.id}`)}`}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									<Button variant="outline" size="sm" className="gap-2">
+										<Play className="h-3 w-3" />
+										Try in Playground
+									</Button>
+								</a>
+							)}
 						</div>
 
 						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-sm text-muted-foreground mb-4">
-							<div>
-								{Math.max(
-									...modelProviders.map((p) => p.contextSize || 0),
-								).toLocaleString()}{" "}
-								context
-							</div>
-							<div>
-								Starting at{" "}
-								{(() => {
-									const inputPrices = modelProviders
-										.filter((p) => p.inputPrice)
-										.map((p) => {
-											const price = p.inputPrice!;
-											const discount = p.discount ?? 0;
-											return {
-												price: price * 1e6 * (discount ? 1 - discount : 1),
-												originalPrice: price * 1e6,
-												discount,
-											};
-										});
-									if (inputPrices.length === 0) {
-										return "Free";
-									}
-									const minPrice = Math.min(...inputPrices.map((p) => p.price));
-									const minPriceItem = inputPrices.find(
-										(p) => p.price === minPrice,
-									);
-									return minPriceItem?.discount
-										? `$${minPrice.toFixed(2)}/M (${(minPriceItem.discount * 100).toFixed(0)}% off)`
-										: `$${minPrice.toFixed(2)}/M`;
-								})()}{" "}
-								input tokens
-							</div>
-							<div>
-								Starting at{" "}
-								{(() => {
-									const outputPrices = modelProviders
-										.filter((p) => p.outputPrice)
-										.map((p) => {
-											const price = p.outputPrice!;
-											const discount = p.discount ?? 0;
-											return {
-												price: price * 1e6 * (discount ? 1 - discount : 1),
-												originalPrice: price * 1e6,
-												discount,
-											};
-										});
-									if (outputPrices.length === 0) {
-										return "Free";
-									}
-									const minPrice = Math.min(
-										...outputPrices.map((p) => p.price),
-									);
-									const minPriceItem = outputPrices.find(
-										(p) => p.price === minPrice,
-									);
-									return minPriceItem?.discount
-										? `$${minPrice.toFixed(2)}/M (${(minPriceItem.discount * 100).toFixed(0)}% off)`
-										: `$${minPrice.toFixed(2)}/M`;
-								})()}{" "}
-								output tokens
-							</div>
-							{modelProviders.some((p) => p.imageInputPrice) && (
-								<div>
-									Starting at{" "}
-									{(() => {
-										const imageInputPrices = modelProviders
-											.filter((p) => p.imageInputPrice)
-											.map((p) => {
-												const price = p.imageInputPrice!;
-												const discount = p.discount ?? 0;
-												return {
-													price: price * 1e6 * (discount ? 1 - discount : 1),
-													originalPrice: price * 1e6,
-													discount,
-												};
-											});
-										if (imageInputPrices.length === 0) {
-											return "Free";
-										}
-										const minPrice = Math.min(
-											...imageInputPrices.map((p) => p.price),
-										);
-										const minPriceItem = imageInputPrices.find(
-											(p) => p.price === minPrice,
-										);
-										return minPriceItem?.discount
-											? `$${minPrice.toFixed(2)}/M (${(minPriceItem.discount * 100).toFixed(0)}% off)`
-											: `$${minPrice.toFixed(2)}/M`;
-									})()}{" "}
-									image input tokens
-								</div>
+							{isAudioModel(model) ? (
+								<>
+									<div>
+										{Math.max(
+											...modelProviders.map(
+												(p) => p.audioConfig?.maxCharacters || 0,
+											),
+										).toLocaleString()}{" "}
+										max characters
+									</div>
+									<div>
+										Starting at $
+										{(
+											Math.min(
+												...modelProviders
+													.filter((p) => p.audioConfig?.characterPrice)
+													.map((p) => p.audioConfig!.characterPrice * 1000),
+											) || 0
+										).toFixed(4)}
+										/1K chars
+									</div>
+									{modelProviders.some(
+										(p) =>
+											p.audioConfig?.languages !== null &&
+											p.audioConfig?.languages !== undefined,
+									) && (
+										<div>
+											{Math.max(
+												...modelProviders.map(
+													(p) => p.audioConfig?.languages || 0,
+												),
+											)}{" "}
+											languages supported
+										</div>
+									)}
+								</>
+							) : (
+								<>
+									<div>
+										{Math.max(
+											...modelProviders.map((p) => p.contextSize || 0),
+										).toLocaleString()}{" "}
+										context
+									</div>
+									<div>
+										Starting at{" "}
+										{(() => {
+											const inputPrices = modelProviders
+												.filter((p) => p.inputPrice)
+												.map((p) => {
+													const price = p.inputPrice!;
+													const discount = p.discount ?? 0;
+													return {
+														price: price * 1e6 * (discount ? 1 - discount : 1),
+														originalPrice: price * 1e6,
+														discount,
+													};
+												});
+											if (inputPrices.length === 0) {
+												return "Free";
+											}
+											const minPrice = Math.min(
+												...inputPrices.map((p) => p.price),
+											);
+											const minPriceItem = inputPrices.find(
+												(p) => p.price === minPrice,
+											);
+											return minPriceItem?.discount
+												? `$${minPrice.toFixed(2)}/M (${(minPriceItem.discount * 100).toFixed(0)}% off)`
+												: `$${minPrice.toFixed(2)}/M`;
+										})()}{" "}
+										input tokens
+									</div>
+									<div>
+										Starting at{" "}
+										{(() => {
+											const outputPrices = modelProviders
+												.filter((p) => p.outputPrice)
+												.map((p) => {
+													const price = p.outputPrice!;
+													const discount = p.discount ?? 0;
+													return {
+														price: price * 1e6 * (discount ? 1 - discount : 1),
+														originalPrice: price * 1e6,
+														discount,
+													};
+												});
+											if (outputPrices.length === 0) {
+												return "Free";
+											}
+											const minPrice = Math.min(
+												...outputPrices.map((p) => p.price),
+											);
+											const minPriceItem = outputPrices.find(
+												(p) => p.price === minPrice,
+											);
+											return minPriceItem?.discount
+												? `$${minPrice.toFixed(2)}/M (${(minPriceItem.discount * 100).toFixed(0)}% off)`
+												: `$${minPrice.toFixed(2)}/M`;
+										})()}{" "}
+										output tokens
+									</div>
+									{modelProviders.some((p) => p.imageInputPrice) && (
+										<div>
+											Starting at{" "}
+											{(() => {
+												const imageInputPrices = modelProviders
+													.filter((p) => p.imageInputPrice)
+													.map((p) => {
+														const price = p.imageInputPrice!;
+														const discount = p.discount ?? 0;
+														return {
+															price:
+																price * 1e6 * (discount ? 1 - discount : 1),
+															originalPrice: price * 1e6,
+															discount,
+														};
+													});
+												if (imageInputPrices.length === 0) {
+													return "Free";
+												}
+												const minPrice = Math.min(
+													...imageInputPrices.map((p) => p.price),
+												);
+												const minPriceItem = imageInputPrices.find(
+													(p) => p.price === minPrice,
+												);
+												return minPriceItem?.discount
+													? `$${minPrice.toFixed(2)}/M (${(minPriceItem.discount * 100).toFixed(0)}% off)`
+													: `$${minPrice.toFixed(2)}/M`;
+											})()}{" "}
+											image input tokens
+										</div>
+									)}
+								</>
 							)}
 						</div>
 
@@ -347,6 +393,7 @@ export default async function ModelPage({ params }: PageProps) {
 									provider={provider}
 									modelName={decodedName}
 									modelStability={model.stability}
+									isAudio={isAudioModel(model)}
 								/>
 							))}
 						</div>
