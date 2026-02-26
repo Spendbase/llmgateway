@@ -143,34 +143,10 @@ function escapeLike(value: string): string {
 	return value.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&");
 }
 
-const organizationPlansCsvSchema = z
-	.preprocess(
-		(val) => parseCsvParam(val, ["free", "pro"]),
-		z.array(z.enum(["free", "pro"])),
-	)
-	.optional()
-	.openapi({
-		type: "string",
-		example: "free,pro",
-		description: "Comma-separated plans: free,pro",
-	});
-
-const organizationStatusesCsvSchema = z
-	.preprocess(
-		(val) => parseCsvParam(val, ["active", "inactive", "deleted"]),
-		z.array(z.enum(["active", "inactive", "deleted"])),
-	)
-	.optional()
-	.openapi({
-		type: "string",
-		example: "active,inactive",
-		description: "Comma-separated statuses: active,inactive,deleted",
-	});
-
-const parseCsvParam = <T extends string>(
+function parseCsvParam<T extends string>(
 	value: unknown,
 	allowed: readonly T[],
-): T[] => {
+): T[] {
 	const raw = Array.isArray(value)
 		? value.join(",")
 		: typeof value === "string"
@@ -185,7 +161,33 @@ const parseCsvParam = <T extends string>(
 		.split(",")
 		.map((v) => v.trim() as T)
 		.filter((v) => allowed.includes(v));
-};
+}
+
+const organizationPlansCsvSchema = z
+	.preprocess(
+		(val) => parseCsvParam(val, ["free", "pro"]),
+		z.array(z.enum(["free", "pro"])),
+	)
+	.optional()
+	.openapi({
+		type: "array",
+		items: { type: "string", enum: ["free", "pro"] },
+		example: "free,pro",
+		description: "Comma-separated plans: free,pro",
+	});
+
+const organizationStatusesCsvSchema = z
+	.preprocess(
+		(val) => parseCsvParam(val, ["active", "inactive", "deleted"]),
+		z.array(z.enum(["active", "inactive", "deleted"])),
+	)
+	.optional()
+	.openapi({
+		type: "array",
+		items: { type: "string", enum: ["active", "inactive", "deleted"] },
+		example: ["active", "inactive"],
+		description: "Comma-separated statuses: active,inactive,deleted",
+	});
 
 const getMetrics = createRoute({
 	method: "get",
