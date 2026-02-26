@@ -8,7 +8,7 @@ import { getConfig } from "@/lib/config-server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "AI Models for Coding - LLM Gateway Code",
+	title: "AI Models for Coding - LLM API Code",
 	description:
 		"High-performance AI models optimized for coding tasks with tool support, JSON output, streaming, and prompt caching.",
 };
@@ -24,7 +24,7 @@ export default function CodingModelsPage() {
 				<div className="container mx-auto px-4 py-4 flex items-center justify-between">
 					<Link href="/" className="flex items-center gap-2">
 						<Code className="h-6 w-6" />
-						<span className="font-semibold text-lg">LLM Gateway Code</span>
+						<span className="font-semibold text-lg">LLM API Code</span>
 					</Link>
 					<div className="flex items-center gap-4">
 						<Button variant="ghost" asChild>
