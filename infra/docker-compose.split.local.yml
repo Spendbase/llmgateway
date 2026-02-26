@@ -94,6 +94,7 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
       - CI=${CI}
+      - ADMIN_EMAILS=${ADMIN_EMAILS:-karen.behlarian@partner-way.com}
 
   # UI Service
   ui:
