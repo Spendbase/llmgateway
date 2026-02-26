@@ -10,6 +10,7 @@ import {
 	Megaphone,
 	Server,
 	Sparkles,
+	Ticket,
 	Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -52,6 +53,8 @@ export function AdminShell({ children }: AdminShellProps) {
 	const isOrganizations = pathname === "/organizations";
 	const isDeposits =
 		pathname === "/deposits" || pathname.startsWith("/deposits/");
+	const isVouchers =
+		pathname === "/vouchers" || pathname.startsWith("/vouchers/");
 	const isUsers = pathname === "/users";
 	const isProviders = pathname.startsWith("/providers");
 	const isModels = pathname.startsWith("/models");
@@ -121,6 +124,12 @@ export function AdminShell({ children }: AdminShellProps) {
 									<SidebarMenuButton isActive={isDeposits} size="lg">
 										<Banknote className="h-4 w-4" />
 										<span>Deposits</span>
+									</SidebarMenuButton>
+								</Link>
+								<Link href="/vouchers" className="block">
+									<SidebarMenuButton isActive={isVouchers} size="lg">
+										<Ticket className="h-4 w-4" />
+										<span>Vouchers</span>
 									</SidebarMenuButton>
 								</Link>
 							</SidebarMenuItem>

@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import {
 	and,
 	asc,
+	count,
 	db,
 	desc,
 	eq,
@@ -1737,6 +1738,377 @@ admin.openapi(updateModelMappingStatus, async (c) => {
 
 		throw new HTTPException(500, { message: "Internal Server Error" });
 	}
+});
+
+// ─────────────────────────────────────────────
+// Voucher schemas
+// ─────────────────────────────────────────────
+
+const voucherResponseSchema = z.object({
+	id: z.string(),
+	code: z.string(),
+	depositAmount: z.string(),
+	globalUsageLimit: z.number().int(),
+	orgUsageLimit: z.number().int(),
+	expiresAt: z.date().nullable(),
+	isActive: z.boolean(),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+});
+
+const voucherWithAggregatesSchema = voucherResponseSchema.extend({
+	totalRedemptionsAllOrgs: z.number().int(),
+});
+
+const createVoucherSchema = z.object({
+	code: z
+		.string()
+		.trim()
+		.toUpperCase()
+		.optional()
+		.openapi({ example: "PROMO2025" }),
+	depositAmount: z.number().min(0).optional().default(0),
+	globalUsageLimit: z.number().int().min(0).optional().default(1),
+	orgUsageLimit: z.number().int().min(0).optional().default(1),
+	expiresAt: z.string().nullable().optional(),
+	isActive: z.boolean().optional().default(true),
+});
+
+// ─────────────────────────────────────────────
+// Voucher createRoute definitions
+// ─────────────────────────────────────────────
+
+const createVoucherRoute = createRoute({
+	method: "post",
+	path: "/vouchers",
+	request: {
+		body: {
+			required: true,
+			content: {
+				"application/json": {
+					schema: createVoucherSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						voucher: voucherResponseSchema,
+					}),
+				},
+			},
+			description: "Voucher created successfully",
+		},
+		400: { description: "Validation error" },
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		500: { description: "Internal Server Error" },
+	},
+});
+
+const listVouchersRoute = createRoute({
+	method: "get",
+	path: "/vouchers",
+	request: {
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1).openapi({ example: 1 }),
+			pageSize: z.coerce
+				.number()
+				.int()
+				.min(1)
+				.max(100)
+				.default(20)
+				.openapi({ example: 20 }),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						items: z.array(voucherWithAggregatesSchema),
+						total: z.number().int(),
+						page: z.number().int(),
+						pageSize: z.number().int(),
+					}),
+				},
+			},
+			description: "Paginated list of vouchers with aggregates",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getVoucherRoute = createRoute({
+	method: "get",
+	path: "/vouchers/{id}",
+	request: {
+		params: z.object({
+			id: z.string().openapi({ example: "abc123" }),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						voucher: voucherWithAggregatesSchema,
+					}),
+				},
+			},
+			description: "Voucher details with aggregate usage stats",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Voucher not found" },
+	},
+});
+
+const deleteVoucherRoute = createRoute({
+	method: "delete",
+	path: "/vouchers/{id}",
+	request: {
+		params: z.object({
+			id: z.string().openapi({ example: "abc123" }),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						success: z.boolean(),
+					}),
+				},
+			},
+			description: "Voucher deleted successfully",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Voucher not found" },
+	},
+});
+
+// ─────────────────────────────────────────────
+// Voucher route handlers
+// ─────────────────────────────────────────────
+
+const VOUCHER_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const VOUCHER_CODE_LENGTH = 10;
+
+function generateVoucherCode(): string {
+	let code = "";
+	for (let i = 0; i < VOUCHER_CODE_LENGTH; i++) {
+		const idx = Math.floor(Math.random() * VOUCHER_CODE_ALPHABET.length);
+		code += VOUCHER_CODE_ALPHABET[idx];
+	}
+	return code;
+}
+
+admin.openapi(createVoucherRoute, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const body = c.req.valid("json");
+
+	const expiresAt =
+		body.expiresAt !== null && body.expiresAt !== undefined
+			? new Date(body.expiresAt)
+			: null;
+
+	// If code is provided, do a straight insert.
+	if (body.code) {
+		const [created] = await db
+			.insert(tables.voucher)
+			.values({
+				code: body.code,
+				depositAmount: String(body.depositAmount ?? 0),
+				globalUsageLimit: body.globalUsageLimit ?? 1,
+				orgUsageLimit: body.orgUsageLimit ?? 1,
+				expiresAt: expiresAt ?? undefined,
+				isActive: body.isActive ?? true,
+			})
+			.returning();
+
+		return c.json({ voucher: created });
+	}
+
+	// Auto-generate unique code, retry up to 5 times.
+	const MAX_ATTEMPTS = 5;
+	let lastError: unknown;
+
+	for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+		const code = generateVoucherCode();
+
+		try {
+			const [created] = await db
+				.insert(tables.voucher)
+				.values({
+					code,
+					depositAmount: String(body.depositAmount ?? 0),
+					globalUsageLimit: body.globalUsageLimit ?? 1,
+					orgUsageLimit: body.orgUsageLimit ?? 1,
+					expiresAt: expiresAt ?? undefined,
+					isActive: body.isActive ?? true,
+				})
+				.returning();
+
+			return c.json({ voucher: created });
+		} catch (err: any) {
+			// Postgres unique violation
+			if (err?.code === "23505") {
+				lastError = err;
+				continue;
+			}
+			throw err;
+		}
+	}
+
+	logger.error("Failed to generate unique voucher code after max attempts", {
+		lastError,
+	});
+	throw new HTTPException(500, {
+		message: "Failed to generate a unique voucher code. Please try again.",
+	});
+});
+
+admin.openapi(listVouchersRoute, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { page, pageSize } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	// Total count (separate query to avoid GROUP BY side-effects)
+	const [{ total }] = await db.select({ total: count() }).from(tables.voucher);
+
+	// List with aggregates
+	const rows = await db
+		.select({
+			id: tables.voucher.id,
+			code: tables.voucher.code,
+			depositAmount: tables.voucher.depositAmount,
+			globalUsageLimit: tables.voucher.globalUsageLimit,
+			orgUsageLimit: tables.voucher.orgUsageLimit,
+			expiresAt: tables.voucher.expiresAt,
+			isActive: tables.voucher.isActive,
+			createdAt: tables.voucher.createdAt,
+			updatedAt: tables.voucher.updatedAt,
+			totalRedemptionsAllOrgs:
+				sql<number>`COUNT(DISTINCT ${tables.voucherLog.id})`.as(
+					"totalRedemptionsAllOrgs",
+				),
+		})
+		.from(tables.voucher)
+		.leftJoin(
+			tables.voucherLog,
+			eq(tables.voucherLog.voucherId, tables.voucher.id),
+		)
+		.groupBy(tables.voucher.id)
+		.orderBy(desc(tables.voucher.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	const items = rows.map((r) => ({
+		...r,
+		totalRedemptionsAllOrgs: Number(r.totalRedemptionsAllOrgs),
+	}));
+
+	return c.json({ items, total: Number(total), page, pageSize });
+});
+
+admin.openapi(getVoucherRoute, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+
+	const [row] = await db
+		.select({
+			id: tables.voucher.id,
+			code: tables.voucher.code,
+			depositAmount: tables.voucher.depositAmount,
+			globalUsageLimit: tables.voucher.globalUsageLimit,
+			orgUsageLimit: tables.voucher.orgUsageLimit,
+			expiresAt: tables.voucher.expiresAt,
+			isActive: tables.voucher.isActive,
+			createdAt: tables.voucher.createdAt,
+			updatedAt: tables.voucher.updatedAt,
+			totalRedemptionsAllOrgs:
+				sql<number>`COUNT(DISTINCT ${tables.voucherLog.id})`.as(
+					"totalRedemptionsAllOrgs",
+				),
+		})
+		.from(tables.voucher)
+		.leftJoin(
+			tables.voucherLog,
+			eq(tables.voucherLog.voucherId, tables.voucher.id),
+		)
+		.where(eq(tables.voucher.id, id))
+		.groupBy(tables.voucher.id);
+
+	if (!row) {
+		throw new HTTPException(404, { message: "Voucher not found" });
+	}
+
+	return c.json({
+		voucher: {
+			...row,
+			totalRedemptionsAllOrgs: Number(row.totalRedemptionsAllOrgs),
+		},
+	});
+});
+
+admin.openapi(deleteVoucherRoute, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+
+	const existing = await db.query.voucher.findFirst({
+		where: { id },
+		columns: { id: true },
+	});
+
+	if (!existing) {
+		throw new HTTPException(404, { message: "Voucher not found" });
+	}
+
+	await db.delete(tables.voucher).where(eq(tables.voucher.id, id));
+
+	return c.json({ success: true });
 });
 
 export default admin;
