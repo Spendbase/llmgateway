@@ -150,9 +150,8 @@ const organizationPlansCsvSchema = z
 	)
 	.optional()
 	.openapi({
-		type: "array",
-		items: { type: "string", enum: ["free", "pro"] },
-		example: ["free", "pro"],
+		type: "string",
+		example: "free,pro",
 		description: "Comma-separated plans: free,pro",
 	});
 
@@ -163,9 +162,8 @@ const organizationStatusesCsvSchema = z
 	)
 	.optional()
 	.openapi({
-		type: "array",
-		items: { type: "string", enum: ["active", "inactive", "deleted"] },
-		example: ["active", "inactive"],
+		type: "string",
+		example: "active,inactive",
 		description: "Comma-separated statuses: active,inactive,deleted",
 	});
 
@@ -173,14 +171,20 @@ const parseCsvParam = <T extends string>(
 	value: unknown,
 	allowed: readonly T[],
 ): T[] => {
-	if (typeof value !== "string" || !value) {
+	const raw = Array.isArray(value)
+		? value.join(",")
+		: typeof value === "string"
+			? value
+			: "";
+
+	if (!raw) {
 		return [];
 	}
-	const allowedSet = new Set<string>(allowed);
-	return value
+
+	return raw
 		.split(",")
 		.map((v) => v.trim() as T)
-		.filter((v) => allowedSet.has(v));
+		.filter((v) => allowed.includes(v));
 };
 
 const getMetrics = createRoute({
@@ -929,7 +933,6 @@ admin.openapi(getOrganizations, async (c) => {
 	const page = query.page;
 	const pageSize = Math.min(100, query.pageSize);
 	const offset = (page - 1) * pageSize;
-	const orderFn = sortOrder === "asc" ? asc : desc;
 	const conditions = [];
 
 	const sortColumnMap = {
@@ -940,6 +943,9 @@ admin.openapi(getOrganizations, async (c) => {
 		status: tables.organization.status,
 		createdAt: tables.organization.createdAt,
 	} as const;
+
+	const sortColumn = sortColumnMap[sortField] ?? tables.organization.createdAt;
+	const orderFn = sortOrder === "asc" ? asc : desc;
 
 	if (escapedSearch) {
 		conditions.push(
@@ -969,21 +975,20 @@ admin.openapi(getOrganizations, async (c) => {
 
 	const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
 
-	const [totalOrganizationsResult] = await db
-		.select({ count: sql<number>`COUNT(*)`.as("count") })
-		.from(tables.organization)
-		.where(whereCondition);
-
-	const totalOrganizations = Number(totalOrganizationsResult?.count ?? 0);
-	const totalPages = Math.ceil(totalOrganizations / pageSize);
-
-	const organizations = await db
-		.select()
+	const organizationsWithCount = await db
+		.select({
+			organization: tables.organization,
+			count: sql<number>`count(*) over()::int`,
+		})
 		.from(tables.organization)
 		.where(whereCondition)
-		.orderBy(orderFn(sortColumnMap[sortField] ?? tables.organization.createdAt))
+		.orderBy(orderFn(sortColumn))
 		.limit(pageSize)
 		.offset(offset);
+
+	const organizations = organizationsWithCount.map((row) => row.organization);
+	const totalOrganizations = organizationsWithCount[0]?.count || 0;
+	const totalPages = Math.max(1, Math.ceil(totalOrganizations / pageSize));
 
 	const suggestions = Array.from(
 		new Set(

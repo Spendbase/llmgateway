@@ -4,11 +4,15 @@ import { fetchServerData } from "@/lib/server-api";
 
 import type { OrganizationsPaginationResponse } from "@/lib/types";
 
-const parseList = (value?: string) =>
-	value
-		?.split(",")
-		.map((item) => item.trim())
-		.filter(Boolean) || [];
+const parseList = (value?: string | string[]) => {
+	const raw = Array.isArray(value) ? value.join(",") : value;
+	return (
+		raw
+			?.split(",")
+			.map((item) => item.trim())
+			.filter(Boolean) || []
+	);
+};
 
 export default async function OrganizationsPage({
 	searchParams,
@@ -17,8 +21,8 @@ export default async function OrganizationsPage({
 		page?: string;
 		pageSize?: string;
 		search?: string;
-		plans?: string;
-		statuses?: string;
+		plans?: string | string[];
+		statuses?: string | string[];
 		sort?: string;
 		order?: string;
 		from?: string;
