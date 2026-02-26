@@ -143,17 +143,29 @@ function escapeLike(value: string): string {
 	return value.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&");
 }
 
-const organizationPlansCsvSchema = z.string().optional().openapi({
-	type: "string",
-	example: "free,pro",
-	description: "Comma-separated plans: free,pro",
-});
+const organizationPlansCsvSchema = z
+	.preprocess(
+		(val) => parseCsvParam(val, ["free", "pro"]),
+		z.array(z.enum(["free", "pro"])),
+	)
+	.optional()
+	.openapi({
+		type: "string",
+		example: "free,pro",
+		description: "Comma-separated plans: free,pro",
+	});
 
-const organizationStatusesCsvSchema = z.string().optional().openapi({
-	type: "string",
-	example: "active,inactive,deleted",
-	description: "Comma-separated statuses: active,inactive,deleted",
-});
+const organizationStatusesCsvSchema = z
+	.preprocess(
+		(val) => parseCsvParam(val, ["active", "inactive", "deleted"]),
+		z.array(z.enum(["active", "inactive", "deleted"])),
+	)
+	.optional()
+	.openapi({
+		type: "string",
+		example: "active,inactive",
+		description: "Comma-separated statuses: active,inactive,deleted",
+	});
 
 const parseCsvParam = <T extends string>(
 	value: unknown,
