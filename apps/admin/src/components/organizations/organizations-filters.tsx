@@ -22,16 +22,7 @@ import { getStatusVariant, getStatusIcon } from "./organizations-table";
 const PLAN_OPTIONS = ["free", "pro"] as const;
 const STATUS_OPTIONS = ["active", "inactive", "deleted"] as const;
 
-const setMultiParam = (
-	params: URLSearchParams,
-	key: "plans" | "statuses",
-	values: string[],
-) => {
-	params.delete(key);
-	values.forEach((value) => {
-		params.append(key, value);
-	});
-};
+const serializeMultiValue = (value: string[]) => value.join(",");
 
 const toInputDate = (iso: string) => {
 	if (!iso) {
@@ -87,7 +78,11 @@ export const OrganizationsFilters = ({
 			? currentValues.filter((value) => value !== nextValue)
 			: [...currentValues, nextValue];
 
-		setMultiParam(params, key, nextValues);
+		if (nextValues.length) {
+			params.set(key, serializeMultiValue(nextValues));
+		} else {
+			params.delete(key);
+		}
 
 		params.set("page", "1");
 		pushParams(params);
