@@ -626,11 +626,25 @@
       "breakpoints": true
     },
     {
-			"idx": 89,
-			"version": "8",
-			"when": 1771520579378,
-			"tag": "1771520579_bitter_freak",
-			"breakpoints": true
-		}
+      "idx": 89,
+      "version": "8",
+      "when": 1771520579378,
+      "tag": "1771520579_bitter_freak",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "8",
+      "when": 1772054876067,
+      "tag": "1772054876_shocking_boomer",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "8",
+      "when": 1772113966083,
+      "tag": "1772113966_round_hobgoblin",
+      "breakpoints": true
+    }
   ]
 }
