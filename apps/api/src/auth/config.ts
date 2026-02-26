@@ -20,7 +20,7 @@ const uiUrl = process.env.UI_URL || "http://localhost:3002";
 const originUrls =
 	process.env.ORIGIN_URLS ||
 	"http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:4002,http://localhost:3006";
-const isHosted = true;
+const isHosted = process.env.HOSTED === "true";
 
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
