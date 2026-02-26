@@ -1378,6 +1378,7 @@ export interface paths {
                     userId?: string;
                     name?: string;
                     email?: string;
+                    referral?: string;
                     role?: "owner" | "admin" | "developer";
                     emailStatus?: "verified" | "unverified";
                     accountStatus?: "active" | "blocked";
