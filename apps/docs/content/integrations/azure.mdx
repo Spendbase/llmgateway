@@ -118,7 +118,7 @@ Test your integration with a simple API call:
 
 ```bash
 curl -X POST https://internal.llmapi.ai/v1/chat/completions \
-  -H "Authorization: Bearer YOUR_LLMAPI_API_KEY" \
+  -H "Authorization: Bearer YOUR_LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "azure/gpt-4o-mini",
@@ -131,7 +131,7 @@ curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   }'
 ```
 
-Replace `YOUR_LLMAPI_API_KEY` with your LLM API API key.
+Replace `YOUR_LLM_API_KEY` with your LLM API key.
 
 </Step>
 </Steps>
@@ -142,7 +142,7 @@ Once configured, you can access your Azure deployments through LLM API:
 
 - **GPT-4o**: `azure/gpt-4o`
 - **GPT-4o Mini**: `azure/gpt-4o-mini`
-- **GPT-3.5 Turbo**: `azure/gpt-3.5-turbo` (note: use gpt-3.5-turbo as llmapi model name instead of gpt-35-turbo)
+- **GPT-3.5 Turbo**: `azure/gpt-3.5-turbo` (note: use gpt-3.5-turbo as LLM API model name instead of gpt-35-turbo)
 
 **Note**: Only models you have deployed in Azure Studio will be available. Ensure your deployment names match the expected model identifiers.
 
