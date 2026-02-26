@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Copy, CheckCircle, Plus } from "lucide-react";
+import { Copy, CheckCircle, Plus, Share } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -80,12 +80,16 @@ export function ApiKeyStep() {
 		status: "active" | "inactive" | "deleted" | null;
 		projectId: string;
 		maskedToken: string;
+		token?: string;
 	}
 
-	const existingKeys =
-		apiKeysData?.apiKeys?.filter(
-			(key: ApiKeyType) => key.status !== "deleted",
-		) || [];
+	const existingKeys: ApiKeyType[] =
+		apiKeysData?.apiKeys
+			?.filter((key) => (key as ApiKeyType).status !== "deleted")
+			.map((key) => ({
+				...key,
+				token: (key as ApiKeyType).token,
+			})) || [];
 	const hasExistingKeys = existingKeys.length > 0;
 
 	async function onSubmit(values: FormValues) {
@@ -126,6 +130,89 @@ export function ApiKeyStep() {
 			toast({
 				title: "Copied to clipboard",
 				description: "API key copied to clipboard",
+			});
+		}
+	}
+
+	async function shareApiKey() {
+		if (!apiKey || !defaultProject) {
+			return;
+		}
+
+		const gatewayUrl = "https://api.llmapi.ai";
+		const shareText = `🔗 LLM API Connection Details
+
+API URL: ${gatewayUrl}/v1
+API Key: ${apiKey}
+
+Project: ${defaultProject.name}
+
+Example cURL:
+curl ${gatewayUrl}/v1/chat/completions \\
+  -H "Authorization: Bearer ${apiKey}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'`;
+
+		if (navigator.share) {
+			try {
+				await navigator.share({
+					title: "LLM API Connection Details",
+					text: shareText,
+				});
+			} catch {
+				// User cancelled or share failed, copy to clipboard instead
+				navigator.clipboard.writeText(shareText);
+				toast({
+					title: "Copied to clipboard",
+					description: "Connection details copied to clipboard",
+				});
+			}
+		} else {
+			navigator.clipboard.writeText(shareText);
+			toast({
+				title: "Copied to clipboard",
+				description: "Connection details copied to clipboard",
+			});
+		}
+	}
+
+	async function shareExistingApiKey(key: ApiKeyType) {
+		if (!key.token || !defaultProject) {
+			return;
+		}
+
+		const gatewayUrl = "https://api.llmapi.ai";
+		const shareText = `🔗 LLM API Connection Details
+
+API URL: ${gatewayUrl}/v1
+API Key: ${key.token}
+
+Project: ${defaultProject.name}
+
+Example cURL:
+curl ${gatewayUrl}/v1/chat/completions \\
+  -H "Authorization: Bearer ${key.token}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'`;
+
+		if (navigator.share) {
+			try {
+				await navigator.share({
+					title: "LLM API Connection Details",
+					text: shareText,
+				});
+			} catch {
+				navigator.clipboard.writeText(shareText);
+				toast({
+					title: "Copied to clipboard",
+					description: "Connection details copied to clipboard",
+				});
+			}
+		} else {
+			navigator.clipboard.writeText(shareText);
+			toast({
+				title: "Copied to clipboard",
+				description: "Connection details copied to clipboard",
 			});
 		}
 	}
@@ -181,16 +268,28 @@ export function ApiKeyStep() {
 											<p className="text-sm font-medium truncate text-ellipsis max-w-[200px]">
 												{apiKey}
 											</p>
-											<Button
-												variant="ghost"
-												size="sm"
-												onClick={copyToClipboard}
-												type="button"
-												className="h-8 w-8 p-0"
-											>
-												<Copy className="h-4 w-4" />
-												<span className="sr-only">Copy API key</span>
-											</Button>
+											<div className="flex items-center gap-1">
+												<Button
+													variant="ghost"
+													size="sm"
+													onClick={shareApiKey}
+													type="button"
+													className="h-8 w-8 p-0"
+												>
+													<Share className="h-4 w-4" />
+													<span className="sr-only">Share API key</span>
+												</Button>
+												<Button
+													variant="ghost"
+													size="sm"
+													onClick={copyToClipboard}
+													type="button"
+													className="h-8 w-8 p-0"
+												>
+													<Copy className="h-4 w-4" />
+													<span className="sr-only">Copy API key</span>
+												</Button>
+											</div>
 										</div>
 									</div>
 									<div className="text-sm text-muted-foreground">
@@ -235,6 +334,20 @@ export function ApiKeyStep() {
 																	<span className="font-mono text-xs truncate">
 																		{key.maskedToken}
 																	</span>
+																	{key.token && (
+																		<Button
+																			variant="ghost"
+																			size="sm"
+																			onClick={() => shareExistingApiKey(key)}
+																			type="button"
+																			className="h-6 w-6 p-0"
+																		>
+																			<Share className="h-3 w-3" />
+																			<span className="sr-only">
+																				Share API key
+																			</span>
+																		</Button>
+																	)}
 																</div>
 															</TableCell>
 															<TableCell>
@@ -308,8 +421,20 @@ export function ApiKeyStep() {
 													</div>
 												</div>
 												<div className="pt-2 border-t">
-													<div className="text-xs text-muted-foreground mb-1">
-														API Key
+													<div className="text-xs text-muted-foreground mb-1 flex items-center justify-between">
+														<span>API Key</span>
+														{key.token && (
+															<Button
+																variant="ghost"
+																size="sm"
+																onClick={() => shareExistingApiKey(key)}
+																type="button"
+																className="h-6 w-6 p-0"
+															>
+																<Share className="h-3 w-3" />
+																<span className="sr-only">Share</span>
+															</Button>
+														)}
 													</div>
 													<div className="font-mono text-xs break-all">
 														{key.maskedToken}

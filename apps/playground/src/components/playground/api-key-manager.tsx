@@ -1,5 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Key, AlertCircle, Eye, EyeOff, Trash2, Copy } from "lucide-react";
+import {
+	Key,
+	AlertCircle,
+	Eye,
+	EyeOff,
+	Trash2,
+	Copy,
+	Share,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -73,6 +81,39 @@ function CreateNewKeyForm({
 		});
 	};
 
+	const shareApiKey = async () => {
+		const gatewayUrl = "https://api.llmapi.ai";
+		const shareText = `🔗 LLM API Connection Details
+
+API URL: ${gatewayUrl}/v1
+API Key: ${newApiKey}
+
+Example cURL:
+curl ${gatewayUrl}/v1/chat/completions \\
+  -H "Authorization: Bearer ${newApiKey}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'`;
+
+		if (navigator.share) {
+			try {
+				await navigator.share({
+					title: "LLM API Connection Details",
+					text: shareText,
+				});
+			} catch {
+				navigator.clipboard.writeText(shareText);
+				toast.success("Copied to clipboard", {
+					description: "Connection details copied to clipboard",
+				});
+			}
+		} else {
+			navigator.clipboard.writeText(shareText);
+			toast.success("Copied to clipboard", {
+				description: "Connection details copied to clipboard",
+			});
+		}
+	};
+
 	return (
 		<div className="space-y-4 py-4">
 			{newApiKey ? (
@@ -93,6 +134,10 @@ function CreateNewKeyForm({
 								readOnly
 								className="font-mono text-xs"
 							/>
+							<Button variant="outline" size="icon" onClick={shareApiKey}>
+								<Share className="h-4 w-4" />
+								<span className="sr-only">Share API key</span>
+							</Button>
 							<Button variant="outline" size="icon" onClick={copyToClipboard}>
 								<Copy className="h-4 w-4" />
 								<span className="sr-only">Copy API key</span>
