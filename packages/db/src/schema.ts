@@ -954,38 +954,13 @@ export const voucher = pgTable("voucher", {
 	code: text().notNull().unique(),
 	depositAmount: decimal().notNull().default("0"),
 	globalUsageLimit: integer().notNull().default(1),
-	perAccountUsageLimit: integer().notNull().default(1),
+	orgUsageLimit: integer().notNull().default(1),
 	expiresAt: timestamp(),
 	isActive: boolean().notNull().default(true),
 });
 
-export const organizationVoucher = pgTable(
-	"organization_voucher",
-	{
-		id: text().primaryKey().$defaultFn(shortid),
-		createdAt: timestamp().notNull().defaultNow(),
-		updatedAt: timestamp()
-			.notNull()
-			.defaultNow()
-			.$onUpdate(() => new Date()),
-		organizationId: text()
-			.notNull()
-			.references(() => organization.id, { onDelete: "cascade" }),
-		voucherId: text()
-			.notNull()
-			.references(() => voucher.id, { onDelete: "cascade" }),
-		orgUsageLimit: integer().notNull().default(1),
-		isActive: boolean().notNull().default(true),
-	},
-	(table) => [
-		unique().on(table.organizationId, table.voucherId),
-		index("organization_voucher_voucher_id_idx").on(table.voucherId),
-		index("organization_voucher_organization_id_idx").on(table.organizationId),
-	],
-);
-
-export const voucherRedemption = pgTable(
-	"voucher_redemption",
+export const voucherLog = pgTable(
+	"voucher_log",
 	{
 		id: text().primaryKey().$defaultFn(shortid),
 		createdAt: timestamp().notNull().defaultNow(),
@@ -998,25 +973,16 @@ export const voucherRedemption = pgTable(
 			.references(() => voucher.id, { onDelete: "cascade" }),
 		organizationId: text()
 			.notNull()
-			.references(() => organization.id, { onDelete: "cascade" }),
-		userId: text()
-			.notNull()
-			.references(() => user.id, { onDelete: "cascade" }),
-		transactionId: text()
-			.notNull()
-			.references(() => transaction.id, { onDelete: "cascade" }),
+			.references(() => organization.id),
+		userId: text().references(() => user.id),
+		transactionId: text().references(() => transaction.id),
 		redeemedAt: timestamp().notNull().defaultNow(),
 	},
 	(table) => [
-		index("voucher_redemption_voucher_id_idx").on(table.voucherId),
-		index("voucher_redemption_voucher_id_organization_id_idx").on(
+		index("voucher_log_voucher_id_idx").on(table.voucherId),
+		index("voucher_log_voucher_id_organization_id_idx").on(
 			table.voucherId,
 			table.organizationId,
-		),
-		index("voucher_redemption_voucher_id_organization_id_user_id_idx").on(
-			table.voucherId,
-			table.organizationId,
-			table.userId,
 		),
 	],
 );
