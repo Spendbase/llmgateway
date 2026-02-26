@@ -47,7 +47,7 @@ export function getVerifyEmail({ url }: VerifyEmailProps): string {
 											
 											<div style="text-align:center; margin: 32px 0;">
 												<a href="${url}" 
-												style="display: inline-block; padding: 12px 36px; border-radius: 6px; background-color: #1D61DB; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none;">
+												style="display: inline-block; padding: 12px 36px; border-radius: 6px; background-color: #3F35FF; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none;">
 													Verify email
 												</a>
 											</div>
@@ -58,7 +58,7 @@ export function getVerifyEmail({ url }: VerifyEmailProps): string {
 											<p style="margin: 0 0 40px 0; font-size: 13px;line-height: 1.4; color: #666666;">
 												<a
 													href="${url}"
-													style="color: #1D61DB; text-decoration: none; word-break: break-all; display: inline-block;"
+													style="color: #3F35FF; text-decoration: none; word-break: break-all; display: inline-block;"
 												>
 													${url}
 												</a>
