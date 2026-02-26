@@ -18,6 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { CreateApiKeyDialog } from "@/components/api-keys/create-api-key-dialog";
+import { RedeemVoucherButton } from "@/components/credits/redeem-voucher-dialog";
 import { TopUpCreditsButton } from "@/components/credits/top-up-credits-dialog";
 import { CostBreakdownCard } from "@/components/dashboard/cost-breakdown-card";
 import { ErrorsReliabilityCard } from "@/components/dashboard/errors-reliability-card";
@@ -306,9 +307,15 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 									</Button>
 								</CreateApiKeyDialog>
 								<TopUpCreditsButton />
+								<RedeemVoucherButton />
 							</>
 						)}
-						{selectedOrganization && !selectedProject && <TopUpCreditsButton />}
+						{selectedOrganization && !selectedProject && (
+							<>
+								<TopUpCreditsButton />
+								<RedeemVoucherButton />
+							</>
+						)}
 					</div>
 				</div>
 
@@ -367,6 +374,7 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 												</Button>
 											</CreateApiKeyDialog>
 											<TopUpCreditsButton />
+											<RedeemVoucherButton />
 										</>
 									)}
 								</div>

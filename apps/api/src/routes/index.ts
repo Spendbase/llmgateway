@@ -18,6 +18,7 @@ import projects from "./projects.js";
 import { publicRoutes } from "./public.js";
 import team from "./team.js";
 import { user } from "./user.js";
+import { vouchers } from "./vouchers.js";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -59,3 +60,4 @@ routes.route("/chat", chat);
 routes.route("/chats", chats);
 routes.route("/banners", banners);
 routes.route("/audio", audio);
+routes.route("/vouchers", vouchers);
