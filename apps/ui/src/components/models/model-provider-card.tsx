@@ -164,7 +164,10 @@ export function ModelProviderCard({
 										)}
 									</Button>
 									<div className="hidden sm:block">
-										<ModelCodeExampleDialog modelId={providerModelName} />
+										<ModelCodeExampleDialog
+											modelId={providerModelName}
+											isAudio={isAudio}
+										/>
 									</div>
 								</div>
 							</div>

@@ -149,7 +149,10 @@ export function ModelsAudioTable({
 														onClick={(e) => e.stopPropagation()}
 														onMouseDown={(e) => e.stopPropagation()}
 													>
-														<ModelCodeExampleDialog modelId={model.id} />
+														<ModelCodeExampleDialog
+															modelId={model.id}
+															isAudio
+														/>
 													</div>
 												</div>
 											</div>
