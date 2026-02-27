@@ -1,0 +1,90 @@
+---
+title: Gradio Integration
+description: Connect Gradio to LLM API for AI-powered capabilities
+icon: Gradio
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Gradio is a Python library for building ML demos and web interfaces. It provides pre-built components for creating chat interfaces, image classifiers, and other AI-powered UIs with minimal code.
+
+Gradio apps can integrate LLM API through the OpenAI Python SDK for chat and text generation features.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Gradio installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Use LLM API in Gradio Apps
+
+1. Install dependencies:
+
+```bash
+pip install gradio openai
+```
+
+2. Build a Gradio chat interface with LLM API:
+
+```python
+import gradio as gr
+from openai import OpenAI
+client = OpenAI(
+api_key="your-llm-api-key-here",
+base_url="https://api.llmapi.ai/v1"
+)
+def chat(message, history):
+response = client.chat.completions.create(
+model="openai/gpt-4o",
+messages=[{"role":"user","content":message}]
+)
+return response.choices[0].message.content
+gr.ChatInterface(chat).launch()
+```
+
+3. Run: python app.py
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Gradio can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Gradio's ChatInterface component works out of the box with LLM API for rapid
+	prototyping.
+</Callout>
+
+## Benefits of Using LLM API with Gradio
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

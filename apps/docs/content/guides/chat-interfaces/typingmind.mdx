@@ -1,0 +1,74 @@
+---
+title: TypingMind Integration
+description: Connect TypingMind to LLM API for AI-powered capabilities
+icon: TypingMind
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+TypingMind is a polished web-based chat interface for AI models. It supports OpenAI, Anthropic Claude, Google Gemini, and custom OpenAI-compatible providers, with features like chat folders, prompt library, plugins, and the ability to bring your own API keys.
+
+TypingMind's custom model feature lets you add any OpenAI-compatible endpoint, including LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- TypingMind installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in TypingMind
+
+1. Open TypingMind in your browser.
+2. Click your Profile (bottom left) → "API Keys" button.
+3. Under the OpenAI section, enter your LLM API key (this will be used for OpenAI-compatible routing).
+4. Open the Model settings in the left panel and click "Add Custom Models".
+5. Enter the following details:
+   - **API Endpoint**: https://api.llmapi.ai/v1/chat/completions
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Model Name**: the model ID you wish to use (e.g., openai/gpt-4o)
+6. Click "Save" --- the model will appear in your model selector.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that TypingMind can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	TypingMind stores API keys locally in your browser. Your key is never sent to
+	TypingMind's servers.
+</Callout>
+
+## Benefits of Using LLM API with TypingMind
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

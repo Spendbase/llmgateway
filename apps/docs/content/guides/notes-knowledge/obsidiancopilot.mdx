@@ -1,0 +1,73 @@
+---
+title: Obsidian Copilot Integration
+description: Connect Obsidian Copilot to LLM API for AI-powered capabilities
+icon: Obsidian
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Obsidian CoPilot is a plugin for the Obsidian knowledge management app that adds AI-powered features including chat, text generation, summarization, and semantic search across your notes vault.
+
+Obsidian CoPilot supports custom OpenAI-compatible endpoints in its plugin settings.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Obsidian Copilot installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Obsidian CoPilot
+
+1. Open Obsidian and navigate to Settings → Community Plugins → CoPilot.
+2. In the CoPilot settings, find the LLM Provider section.
+3. Select "OpenAI" or "Custom" as the provider.
+4. Enter:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+5. Set the model name.
+6. Close settings and use CoPilot in your vault.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Obsidian Copilot can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	CoPilot can search and summarize your entire Obsidian vault using LLM API's
+	models.
+</Callout>
+
+## Benefits of Using LLM API with Obsidian Copilot
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

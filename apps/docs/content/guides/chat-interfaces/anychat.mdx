@@ -1,0 +1,74 @@
+---
+title: AnyChat Integration
+description: Connect AnyChat to LLM API for AI-powered capabilities
+icon: AnyChat
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+AnyChat is a multi-model AI chat platform that provides a unified interface for interacting with various language models. It supports quick setup with bring-your-own-API-key functionality, letting users connect their preferred AI providers.
+
+AnyChat supports OpenAI-compatible endpoints, making it simple to add LLM API as a provider.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- AnyChat installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in AnyChat
+
+1. Open AnyChat and navigate to Settings.
+2. Find the "API Keys" or "Provider" configuration section.
+3. Select "OpenAI Compatible" or "Custom" as the provider.
+4. Enter the following details:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+5. Enter the model ID you wish to use (e.g., openai/gpt-4o).
+6. Click "Save" to apply the settings.
+7. Start a new chat --- messages will be routed through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that AnyChat can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	AnyChat's quick setup works seamlessly with LLM API. You can switch between
+	models at any time.
+</Callout>
+
+## Benefits of Using LLM API with AnyChat
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

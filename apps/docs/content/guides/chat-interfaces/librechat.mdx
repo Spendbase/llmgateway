@@ -1,0 +1,85 @@
+---
+title: LibreChat Integration
+description: Connect LibreChat to LLM API for AI-powered capabilities
+icon: LibreChat
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+LibreChat is an open-source, self-hosted AI chat platform that supports multiple providers including OpenAI, Anthropic, Google, and any OpenAI-compatible endpoint. It features multi-model conversations, plugins, and file handling.
+
+LibreChat's configuration file supports custom OpenAI-compatible endpoints, making it easy to add LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- LibreChat installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in LibreChat
+
+1. Open the librechat.yaml configuration file.
+2. Add LLM API as a custom endpoint:
+
+```
+endpoints:
+custom:
+\- name: "LLM API"
+apiKey: "\${LLM_API_KEY}"
+baseURL: "https://api.llmapi.ai/v1"
+models:
+default: ["openai/gpt-4o", "anthropic/claude-3-5-sonnet"]
+```
+
+3. Set the environment variable:
+
+```bash
+export LLM_API_KEY="your-llm-api-key-here"
+```
+
+4. Restart LibreChat --- LLM API will appear as a provider in the UI.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that LibreChat can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	LibreChat can show multiple providers side by side, letting you compare LLM
+	API models with other services.
+</Callout>
+
+## Benefits of Using LLM API with LibreChat
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

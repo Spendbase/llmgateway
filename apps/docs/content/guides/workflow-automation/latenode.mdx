@@ -1,0 +1,72 @@
+---
+title: Latenode Integration
+description: Connect Latenode to LLM API for AI-powered capabilities
+icon: Latenode
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Latenode is a low-code automation platform that combines visual workflow building with code capabilities. It supports AI nodes for integrating language model functionality.
+
+Latenode supports custom LLM connections for its AI nodes.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Latenode installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Latenode
+
+1. Open Latenode and create or edit a scenario.
+2. Add an "AI" or "Custom LLM" node.
+3. Configure:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+   - **Model**: the model ID you wish to use
+4. Save and run.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Latenode can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Latenode's code blocks let you write custom logic around LLM API calls for
+	advanced workflows.
+</Callout>
+
+## Benefits of Using LLM API with Latenode
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>
