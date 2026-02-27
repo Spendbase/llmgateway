@@ -37,7 +37,7 @@ function detectConfiguredProviders(): string[] {
  * Sends installation beacon data to the tracking endpoint
  */
 async function sendBeacon(data: BeaconData): Promise<void> {
-	const response = await fetch("https://internal.llmapi.ai/beacon", {
+	const response = await fetch("https://api.llmapi.ai/beacon", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

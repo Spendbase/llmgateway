@@ -68,7 +68,7 @@ Both models come with comprehensive capabilities:
 Use these models just like any other model in our gateway:
 
 ```bash
-curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

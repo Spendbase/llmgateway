@@ -136,19 +136,14 @@ export function ApiKeyStep() {
 		}
 	}
 
-	function generateShareText(token: string, projectName: string) {
-		return `🔗 LLM API Connection Details
+	function generateShareText(token: string) {
+		return `Hey, you have to check this out! I just found a free LLM API with over 200 models. And they even gave me free credits to try it!
 
-API URL: ${gatewayUrl}/v1
+URL Endpoint: ${gatewayUrl}
 API Key: ${token}
+Model: claude-sonnet-4-6
 
-Project: ${projectName}
-
-Example cURL:
-curl ${gatewayUrl}/v1/chat/completions \\
-  -H "Authorization: Bearer ${token}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'`;
+Docs: https://docs.llmapi.ai/`;
 	}
 
 	async function shareConnectionDetails(token: string) {
@@ -156,7 +151,7 @@ curl ${gatewayUrl}/v1/chat/completions \\
 			return;
 		}
 
-		const shareText = generateShareText(token, defaultProject.name);
+		const shareText = generateShareText(token);
 
 		if (navigator.share) {
 			try {

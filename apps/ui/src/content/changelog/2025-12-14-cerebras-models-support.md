@@ -24,7 +24,7 @@ Cerebras is available via the LLM Gateway with the provider ID `cerebras`. Learn
 All Cerebras models are available via the OpenAI-compatible chat completions API:
 
 ```bash
-curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

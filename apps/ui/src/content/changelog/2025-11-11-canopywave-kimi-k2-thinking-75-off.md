@@ -30,7 +30,7 @@ Enhanced reasoning and tool calling capabilities
 All models support streaming, tool calling, and JSON output mode:
 
 ```bash
-curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

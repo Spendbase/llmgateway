@@ -2,7 +2,11 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
+import { getCreditDepositLayout } from "@/emails/templates/credit-deposit.js";
+import { sendTransactionalEmail } from "@/utils/email.js";
+
 import { db, eq, sql, tables } from "@llmgateway/db";
+import { logger } from "@llmgateway/logger";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -158,12 +162,16 @@ vouchers.openapi(redeemVoucher, async (c) => {
 			.returning();
 
 		// Step 4: Credit the organisation balance
-		await tx
+		const [updatedOrg] = await tx
 			.update(tables.organization)
 			.set({
 				credits: sql`${tables.organization.credits} + ${voucher.depositAmount}`,
 			})
-			.where(eq(tables.organization.id, organizationId));
+			.where(eq(tables.organization.id, organizationId))
+			.returning({
+				credits: tables.organization.credits,
+				billingEmail: tables.organization.billingEmail,
+			});
 
 		// Step 5: Record the redemption (transactionId NOT NULL — must be after step 3)
 		await tx.insert(tables.voucherLog).values({
@@ -174,8 +182,26 @@ vouchers.openapi(redeemVoucher, async (c) => {
 			redeemedAt: new Date(),
 		});
 
-		return { transactionId: newTx.id };
+		return { transactionId: newTx.id, organization: updatedOrg };
 	});
+
+	if (result.organization?.billingEmail) {
+		const newBalance = Number(result.organization.credits);
+		const creditsAdded = Number(voucher.depositAmount);
+
+		void sendTransactionalEmail({
+			to: result.organization.billingEmail,
+			subject: "Credits added to your account",
+			html: getCreditDepositLayout({
+				newBalanceFormatted: newBalance.toFixed(2),
+				creditsAddedFormatted: creditsAdded.toFixed(2),
+			}),
+		}).catch((emailError) => {
+			logger.error("Failed to send credit deposit email (best effort)", {
+				err: emailError,
+			});
+		});
+	}
 
 	return c.json({
 		success: true,
