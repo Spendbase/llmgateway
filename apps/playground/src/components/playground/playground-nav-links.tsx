@@ -21,18 +21,18 @@ function NavItem({
 	comingSoon,
 }: NavItemProps) {
 	const base =
-		"group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full";
-	const activeClass = "bg-accent text-foreground";
+		"group relative flex flex-col items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors flex-1";
+	const activeClass = "bg-background text-foreground shadow-sm";
 	const inactiveClass =
-		"text-muted-foreground hover:bg-accent/60 hover:text-foreground";
-	const disabledClass = "opacity-50 cursor-not-allowed pointer-events-none";
+		"text-muted-foreground hover:text-foreground hover:bg-background/60";
+	const disabledClass = "opacity-35 cursor-not-allowed pointer-events-none";
 
 	const inner = (
 		<>
 			<Icon className="h-4 w-4 shrink-0" />
-			<span className="flex-1">{label}</span>
+			<span className="leading-none">{label}</span>
 			{comingSoon && (
-				<span className="text-[10px] font-medium bg-muted text-muted-foreground rounded px-1.5 py-0.5 leading-none">
+				<span className="absolute -top-1 -right-1 text-[8px] font-medium bg-muted text-muted-foreground rounded px-1 py-0.5 leading-none">
 					Soon
 				</span>
 			)}
@@ -61,10 +61,12 @@ export function PlaygroundNavLinks({ pathname }: { pathname: string }) {
 	const isSpeech = pathname === "/tts";
 
 	return (
-		<nav className="w-full space-y-0.5 px-1">
-			<NavItem href="/" icon={MessageSquare} label="Chat" active={isChat} />
-			<NavItem href="/tts" icon={Volume2} label="Speech" active={isSpeech} />
-			<NavItem href="/video" icon={Video} label="Video" disabled comingSoon />
+		<nav className="w-full px-1">
+			<div className="flex items-stretch gap-0.5 rounded-lg bg-muted p-1">
+				<NavItem href="/" icon={MessageSquare} label="Chat" active={isChat} />
+				<NavItem href="/tts" icon={Volume2} label="Speech" active={isSpeech} />
+				<NavItem href="/video" icon={Video} label="Video" disabled comingSoon />
+			</div>
 		</nav>
 	);
 }
