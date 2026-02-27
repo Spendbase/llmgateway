@@ -2118,6 +2118,7 @@ export interface paths {
                                 id: string;
                                 createdAt: string;
                                 updatedAt: string;
+                                token: string;
                                 description: string;
                                 /** @enum {string|null} */
                                 status: "active" | "inactive" | "deleted" | null;
