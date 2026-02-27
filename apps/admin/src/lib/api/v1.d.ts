@@ -2010,6 +2010,12 @@ export interface paths {
                                 updatedAt: string;
                                 totalRedemptionsAllOrgs: number;
                             };
+                            usedByOrganizations: {
+                                orgId: string;
+                                orgName: string;
+                                usageCount: number;
+                                lastUsedAt: string;
+                            }[];
                         };
                     };
                 };

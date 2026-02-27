@@ -11,9 +11,9 @@ type VoucherDetailResponse =
 export default async function VoucherDetailPage({
 	params,
 }: {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }) {
-	const { id } = params;
+	const { id } = await params;
 
 	const data = await fetchServerData<VoucherDetailResponse>(
 		"GET",

@@ -1879,6 +1879,14 @@ const getVoucherRoute = createRoute({
 				"application/json": {
 					schema: z.object({
 						voucher: voucherWithAggregatesSchema,
+						usedByOrganizations: z.array(
+							z.object({
+								orgId: z.string(),
+								orgName: z.string(),
+								usageCount: z.number(),
+								lastUsedAt: z.date(),
+							}),
+						),
 					}),
 				},
 			},
@@ -2120,11 +2128,29 @@ admin.openapi(getVoucherRoute, async (c) => {
 		throw new HTTPException(404, { message: "Voucher not found" });
 	}
 
+	const usedByOrganizations = await db
+		.select({
+			orgId: tables.organization.id,
+			orgName: tables.organization.name,
+			usageCount: sql<number>`count(${tables.voucherLog.id})::int`,
+			lastUsedAt: sql<Date>`max(${tables.voucherLog.redeemedAt})`,
+		})
+		.from(tables.voucherLog)
+		.innerJoin(
+			tables.organization,
+			eq(tables.organization.id, tables.voucherLog.organizationId),
+		)
+		.where(eq(tables.voucherLog.voucherId, id))
+		.groupBy(tables.organization.id, tables.organization.name)
+		.orderBy(desc(sql`max(${tables.voucherLog.redeemedAt})`))
+		.limit(50);
+
 	return c.json({
 		voucher: {
 			...row,
 			totalRedemptionsAllOrgs: Number(row.totalRedemptionsAllOrgs),
 		},
+		usedByOrganizations,
 	});
 });
 

@@ -10,12 +10,12 @@ type VouchersResponse =
 export default async function VouchersPage({
 	searchParams,
 }: {
-	searchParams: {
+	searchParams: Promise<{
 		page?: string;
 		pageSize?: string;
-	};
+	}>;
 }) {
-	const params = searchParams;
+	const params = await searchParams;
 	const page = parseInt(params.page || "1", 10);
 	const pageSize = parseInt(params.pageSize || String(PAGESIZE), 10);
 
