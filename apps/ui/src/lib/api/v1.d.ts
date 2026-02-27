@@ -4814,7 +4814,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             success: boolean;
-                            creditAmount: number;
+                            creditAmount: string;
                             transactionId: string;
                         };
                     };

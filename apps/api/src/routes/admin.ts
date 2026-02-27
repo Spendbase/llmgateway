@@ -1944,26 +1944,43 @@ admin.openapi(createVoucherRoute, async (c) => {
 
 	const body = c.req.valid("json");
 
-	const expiresAt =
-		body.expiresAt !== null && body.expiresAt !== undefined
-			? new Date(body.expiresAt)
-			: null;
+	const expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;
+
+	if (expiresAt && Number.isNaN(expiresAt.getTime())) {
+		throw new HTTPException(400, {
+			message: "expiresAt must be a valid datetime",
+		});
+	}
 
 	// If code is provided, do a straight insert.
 	if (body.code) {
-		const [created] = await db
-			.insert(tables.voucher)
-			.values({
-				code: body.code,
-				depositAmount: String(body.depositAmount ?? 0),
-				globalUsageLimit: body.globalUsageLimit ?? 1,
-				orgUsageLimit: body.orgUsageLimit ?? 1,
-				expiresAt: expiresAt ?? undefined,
-				isActive: body.isActive ?? true,
-			})
-			.returning();
+		try {
+			const [created] = await db
+				.insert(tables.voucher)
+				.values({
+					code: body.code,
+					depositAmount: String(body.depositAmount ?? 0),
+					globalUsageLimit: body.globalUsageLimit ?? 1,
+					orgUsageLimit: body.orgUsageLimit ?? 1,
+					expiresAt: expiresAt ?? undefined,
+					isActive: body.isActive ?? true,
+				})
+				.returning();
 
-		return c.json({ voucher: created });
+			return c.json({ voucher: created });
+		} catch (err: unknown) {
+			if (
+				typeof err === "object" &&
+				err !== null &&
+				"code" in err &&
+				err.code === "23505"
+			) {
+				throw new HTTPException(409, {
+					message: "Voucher code already exists",
+				});
+			}
+			throw err;
+		}
 	}
 
 	// Auto-generate unique code, retry up to 5 times.
@@ -1987,9 +2004,14 @@ admin.openapi(createVoucherRoute, async (c) => {
 				.returning();
 
 			return c.json({ voucher: created });
-		} catch (err: any) {
+		} catch (err: unknown) {
 			// Postgres unique violation
-			if (err?.code === "23505") {
+			if (
+				typeof err === "object" &&
+				err !== null &&
+				"code" in err &&
+				err.code === "23505"
+			) {
 				lastError = err;
 				continue;
 			}
