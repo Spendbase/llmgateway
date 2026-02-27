@@ -993,3 +993,26 @@ export const voucherLog = pgTable(
 		),
 	],
 );
+
+export const ttsGeneration = pgTable(
+	"tts_generation",
+	{
+		id: text().primaryKey().notNull().$defaultFn(shortid),
+		createdAt: timestamp().notNull().defaultNow(),
+		updatedAt: timestamp()
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+		userId: text()
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		model: text().notNull(),
+		voice: text().notNull(),
+		format: text().notNull(),
+		text: text().notNull(),
+		chars: integer(),
+		cost: numericDecimal(),
+		file: text().notNull(),
+	},
+	(table) => [index("tts_generation_user_id_idx").on(table.userId)],
+);
