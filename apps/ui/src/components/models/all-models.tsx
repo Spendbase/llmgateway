@@ -1551,7 +1551,7 @@ export function AllModels({ children, models, providers }: AllModelsProps) {
 				{children}
 				<div
 					className={cn("container mx-auto px-4 pb-8 space-y-6", {
-						"pt-40": children,
+						"pt-2": children,
 					})}
 				>
 					<TooltipProvider delayDuration={300} skipDelayDuration={100}>
