@@ -13,17 +13,7 @@ type VoucherDetailResponse =
 	paths["/admin/vouchers/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 
 export function VoucherDetailIndex({ data }: { data: VoucherDetailResponse }) {
-	const { voucher } = data;
-	const usedByOrganizations = (
-		data as VoucherDetailResponse & {
-			usedByOrganizations?: {
-				orgId: string;
-				orgName: string;
-				usageCount: number;
-				lastUsedAt: string;
-			}[];
-		}
-	).usedByOrganizations;
+	const { voucher, usedByOrganizations } = data;
 
 	return (
 		<div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 md:px-8">
