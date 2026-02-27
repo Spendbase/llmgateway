@@ -265,9 +265,7 @@ export default function TtsPageClient({
 					{/* Header */}
 					<div className="shrink-0 border-b px-4 py-3 flex items-center gap-3">
 						<SidebarTrigger />
-						<div className="flex items-center justify-center h-7 w-7 rounded-lg bg-primary/10">
-							<Volume2 className="h-4 w-4 text-primary" />
-						</div>
+
 						<div className="flex-1 min-w-0">
 							<h1 className="text-sm font-semibold leading-none">
 								Text to Speech
