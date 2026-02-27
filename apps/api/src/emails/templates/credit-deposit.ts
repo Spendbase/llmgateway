@@ -48,7 +48,7 @@ export function getCreditDepositLayout({
 												<tr>
 													<td style="font-size: 13px; color: #666666; padding-bottom: 12px;">Credits added</td>
 													<td align="right" style="font-size: 13px; font-weight: 600; color: #3F35FF; padding-bottom: 12px;">
-														+${creditsAddedFormatted}
+                                                        +$${creditsAddedFormatted}
 													</td>
 												</tr>
 												<tr>
