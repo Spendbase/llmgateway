@@ -142,10 +142,10 @@ export function ApiKeysClient({ initialData }: { initialData: ApiKey[] }) {
 														? planLimits.currentCount >= planLimits.maxKeys
 														: false)
 												}
-												className="cursor-pointer w-full md:w-1/5 disabled:opacity-50 disabled:cursor-not-allowed"
+												className="cursor-pointer w-fit disabled:opacity-50 disabled:cursor-not-allowed"
 											>
 												<Plus className="h-4 w-4" />
-												Create Key to Start
+												<span>Create Key to Start</span>
 											</Button>
 										</CreateApiKeyDialog>
 									)}
