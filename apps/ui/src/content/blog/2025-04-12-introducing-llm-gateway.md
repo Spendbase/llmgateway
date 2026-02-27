@@ -30,7 +30,7 @@ Operating across multiple LLM providers quickly becomes complex credentials, SDK
 LLM Gateway uses an OpenAI-compatible API format, so migrating is seamless:
 
 ```bash
-curl -X POST https://internal.llmapi.ai/v1/chat/completions \
+curl -X POST https://api.llmapi.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $LLM_API_KEY" \
   -d '{

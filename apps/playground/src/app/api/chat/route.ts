@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 		process.env.GATEWAY_URL ||
 		(process.env.NODE_ENV === "development"
 			? "http://localhost:4001/v1"
-			: "https://internal.llmapi.ai/v1");
+			: "https://api.llmapi.ai/v1");
 
 	const llmgateway = createLLMGateway({
 		apiKey: finalApiKey,

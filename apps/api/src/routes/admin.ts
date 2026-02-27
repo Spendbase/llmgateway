@@ -1,6 +1,9 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 
+import { getCreditDepositLayout } from "@/emails/templates/credit-deposit.js";
+import { sendTransactionalEmail } from "@/utils/email.js";
+
 import {
 	and,
 	asc,
@@ -1052,6 +1055,7 @@ admin.openapi(depositCredits, async (c) => {
 			columns: {
 				id: true,
 				credits: true,
+				billingEmail: true,
 			},
 		});
 
@@ -1112,6 +1116,21 @@ admin.openapi(depositCredits, async (c) => {
 					err: logError,
 				});
 			});
+
+		if (targetOrg?.billingEmail) {
+			void sendTransactionalEmail({
+				to: targetOrg.billingEmail,
+				subject: "Credits added to your account",
+				html: getCreditDepositLayout({
+					newBalanceFormatted: result.newBalance.toFixed(2),
+					creditsAddedFormatted: amount.toFixed(2),
+				}),
+			}).catch((emailError) => {
+				logger.error("Failed to send credit deposit email (best effort)", {
+					err: emailError,
+				});
+			});
+		}
 
 		revenueCounter.add(result.transaction.creditAmount, {
 			org_id: organizationId,

@@ -1604,7 +1604,7 @@ async function handleSubscriptionDeleted(
 		// Send dev plan cancelled email
 		await sendTransactionalEmail({
 			to: organization.billingEmail,
-			subject: "Your LLMGateway Dev Plan Has Been Cancelled",
+			subject: "Your LLM API Dev Plan Has Been Cancelled",
 			html: generateSubscriptionCancelledEmailHtml(organization.name),
 		});
 
@@ -1665,7 +1665,7 @@ async function handleSubscriptionDeleted(
 		// Send subscription cancelled email
 		await sendTransactionalEmail({
 			to: organization.billingEmail,
-			subject: "Your LLMGateway Subscription Has Been Cancelled",
+			subject: "Your LLM API Subscription Has Been Cancelled",
 			html: generateSubscriptionCancelledEmailHtml(organization.name),
 		});
 

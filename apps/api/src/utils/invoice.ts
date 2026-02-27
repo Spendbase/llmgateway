@@ -256,7 +256,7 @@ export async function generateAndEmailInvoice(
 									If you have any questions about this invoice, please contact us at <a href="mailto:contact@llmapi.ai" style="color: #000000; text-decoration: none;">contact@llmapi.ai</a>
 								</p>
 								<p style="margin: 0; color: #999999; font-size: 12px;">
-									© 2025 LLM Gateway. All rights reserved.
+									© 2025 LLM API. All rights reserved.
 								</p>
 							</td>
 						</tr>
