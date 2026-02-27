@@ -44,6 +44,8 @@ interface DepositCreditsDialogProps {
 	organization: Organization;
 }
 
+const DEFAULT_DEPOSIT_AMOUNT = 10;
+
 export function DepositCreditsDialog({
 	children,
 	organization,
@@ -52,12 +54,12 @@ export function DepositCreditsDialog({
 
 	const [open, setOpen] = useState(false);
 
-	const [amount, setAmount] = useState<number>(50);
-	const [description, setDescription] = useState<string>("");
+	const [amount, setAmount] = useState<number>(DEFAULT_DEPOSIT_AMOUNT);
+	const [description, setDescription] = useState<string>("Credits for test");
 
 	const [loading, setLoading] = useState(false);
 
-	const presetAmounts = [10, 25, 50, 100];
+	const presetAmounts = [10, 20, 50, 100];
 
 	const api = useApi();
 
