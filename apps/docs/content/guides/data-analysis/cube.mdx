@@ -1,0 +1,75 @@
+---
+title: Cube Integration
+description: Connect Cube to LLM API for AI-powered capabilities
+icon: Cube
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Cube is a semantic layer and headless BI platform that provides a universal API for accessing data. It includes AI capabilities for natural language queries and data exploration.
+
+Cube's AI API supports custom LLM providers.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Cube installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Cube
+
+1. Open your Cube project configuration.
+2. Configure the AI API settings:
+
+```
+\# cube.py or environment variables
+CUBEJS_LLM_API_KEY=your-llm-api-key-here
+CUBEJS_LLM_API_URL=https://api.llmapi.ai/v1
+```
+
+3. Restart Cube to apply.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Cube can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Cube's AI API translates natural language questions into SQL using LLM API
+	models.
+</Callout>
+
+## Benefits of Using LLM API with Cube
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

@@ -1,0 +1,76 @@
+---
+title: SillyTavern Integration
+description: Connect SillyTavern to LLM API for AI-powered capabilities
+icon: SillyTavern
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+SillyTavern is an open-source, locally-installed frontend for interacting with large language models. It supports a wide range of AI APIs --- both local and cloud-based --- and provides a rich chat interface with character cards, group chats, and advanced prompt management.
+
+SillyTavern's Chat Completion mode supports OpenAI-compatible APIs, which means you can connect it directly to LLM API to use any model available through your subscription.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- SillyTavern installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in SillyTavern
+
+1. Open SillyTavern in your browser (typically at http://localhost:8000).
+2. Click the plug icon to open the API Connections panel.
+3. From the API dropdown at the top, select "Chat Completion".
+4. In the Chat Completion Source dropdown, select "Custom (OpenAI-compatible)".
+5. Fill in the following fields:
+   - **Custom Endpoint (Base URL)**: https://api.llmapi.ai/v1
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+6. Enter the model name you want to use in the "Model" field (e.g., openai/gpt-4o, anthropic/claude-3-5-sonnet).
+7. Click "Connect" to test the connection.
+8. Once connected, start or continue a chat --- all requests will now be routed through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that SillyTavern can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	SillyTavern's Chat Completion mode sends messages in the OpenAI format. LLM
+	API is fully compatible, so all features including streaming, token counting,
+	and model switching work seamlessly.
+</Callout>
+
+## Benefits of Using LLM API with SillyTavern
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

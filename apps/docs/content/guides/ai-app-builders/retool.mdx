@@ -1,0 +1,73 @@
+---
+title: Retool Integration
+description: Connect Retool to LLM API for AI-powered capabilities
+icon: Retool
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Retool is a low-code platform for building internal tools, dashboards, and admin panels. It supports connecting to hundreds of data sources and APIs, with built-in AI capabilities that can be powered by custom LLM providers.
+
+Retool's resource configuration supports custom API authentication, allowing you to connect LLM API as an AI data source.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Retool installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API as a Resource in Retool
+
+1. Log in to your Retool instance.
+2. Navigate to Resources → "Create New" → "REST API".
+3. Configure the resource with the following details:
+   - **Base URL**: https://api.llmapi.ai/v1
+   - **Headers**: Add \"Authorization\" header with value \"Bearer your-llm-api-key-here\"
+4. Name the resource (e.g., "LLM API") and click "Save".
+5. In your Retool app, add a query using the LLM API resource.
+6. Use POST requests to /chat/completions with your desired model and messages.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Retool can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Retool's query builder makes it easy to create reusable AI-powered components
+	across all your internal tools.
+</Callout>
+
+## Benefits of Using LLM API with Retool
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

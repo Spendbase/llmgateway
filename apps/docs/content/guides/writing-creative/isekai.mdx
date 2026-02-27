@@ -1,0 +1,74 @@
+---
+title: Isekai Integration
+description: Connect Isekai to LLM API for AI-powered capabilities
+icon: Isekai
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Isekai is an AI-powered interactive fiction and roleplay platform where users can create and explore immersive story worlds with AI characters. It supports custom API connections, giving users full control over which AI models power their experiences.
+
+By connecting LLM API as your provider, you can access a wide range of models through Isekai's interface using a single API key and endpoint.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Isekai installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Isekai
+
+1. Go to isekai.world and log in to your account.
+2. Navigate to Settings (click the gear icon or your profile).
+3. Find the API or Model Provider section and select "Custom" or "OpenAI Compatible" as the provider.
+4. Enter the following details:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **API Base URL**: https://api.llmapi.ai/v1
+5. Select or type the model ID you wish to use (e.g., openai/gpt-4o).
+6. Click "Save" to store the configuration.
+7. Start a new story or chat session --- requests will now be routed through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Isekai can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	LLM API supports all major model families. You can switch models at any time
+	without changing your API key.
+</Callout>
+
+## Benefits of Using LLM API with Isekai
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

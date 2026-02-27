@@ -1,0 +1,82 @@
+---
+title: Langfuse Integration
+description: Connect Langfuse to LLM API for AI-powered capabilities
+icon: Langfuse
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Langfuse is an open-source LLM engineering platform for tracing, evaluation, prompt management, and monitoring. It integrates with popular frameworks and supports custom LLM providers.
+
+Langfuse traces LLM calls through its SDK wrappers. Configure the underlying provider to use LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Langfuse installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Use LLM API with Langfuse
+
+1. Install Langfuse:
+
+```bash
+pip install langfuse openai
+```
+
+2. Configure:
+
+```python
+from langfuse.openai import openai
+import os
+os.environ["OPENAI_API_KEY"] = "your-llm-api-key-here"
+os.environ["OPENAI_BASE_URL"] = "https://api.llmapi.ai/v1"
+os.environ["LANGFUSE_SECRET_KEY"] = "your-langfuse-key"
+os.environ["LANGFUSE_PUBLIC_KEY"] = "your-langfuse-public-key"
+```
+
+3. Langfuse will trace all LLM API calls automatically.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Langfuse can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Langfuse's drop-in OpenAI wrapper captures every LLM API request for analysis.
+</Callout>
+
+## Benefits of Using LLM API with Langfuse
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

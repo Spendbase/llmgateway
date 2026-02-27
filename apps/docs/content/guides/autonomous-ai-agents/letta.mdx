@@ -1,0 +1,83 @@
+---
+title: Letta Integration
+description: Connect Letta to LLM API for AI-powered capabilities
+icon: Letta
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Letta (formerly MemGPT) is a framework for building stateful AI agents with long-term memory. It manages context windows intelligently, allowing agents to maintain persistent conversations and knowledge across sessions.
+
+Letta supports custom LLM endpoints, letting you connect LLM API for agent intelligence.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Letta installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Letta
+
+1. Set environment variables:
+
+```bash
+export OPENAI_API_KEY="your-llm-api-key-here"
+export OPENAI_API_BASE="https://api.llmapi.ai/v1"
+```
+
+2. Or configure in Letta's config:
+
+```
+letta configure
+\# When prompted:
+\# LLM Provider: openai
+\# Base URL: https://api.llmapi.ai/v1
+\# API Key: your-llm-api-key-here
+```
+
+3. Create and run agents --- they will use LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Letta can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Letta's memory management works best with models that have strong instruction
+	following. LLM API gives you access to the best options.
+</Callout>
+
+## Benefits of Using LLM API with Letta
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

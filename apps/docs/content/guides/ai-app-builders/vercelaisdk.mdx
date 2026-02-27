@@ -1,0 +1,87 @@
+---
+title: Vercel AI SDK Integration
+description: Connect Vercel AI SDK to LLM API for AI-powered capabilities
+icon: Vercel
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+The Vercel AI SDK is an open-source TypeScript toolkit for building AI-powered applications. It provides React hooks and server-side utilities for streaming AI responses, with support for multiple model providers.
+
+The AI SDK supports custom OpenAI-compatible providers through its createOpenAI function.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Vercel AI SDK installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API with Vercel AI SDK
+
+1. Install the AI SDK:
+
+```bash
+npm install ai \@ai-sdk/openai
+```
+
+2. Configure the OpenAI-compatible provider in your code:
+
+```python
+import { createOpenAI } from "\@ai-sdk/openai";
+const llmapi = createOpenAI({
+apiKey: "your-llm-api-key-here",
+baseURL: "https://api.llmapi.ai/v1",
+});
+// Use in your application
+const result = await generateText({
+model: llmapi("openai/gpt-4o"),
+prompt: "Hello!",
+});
+```
+
+3. Deploy your application --- it will use LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Vercel AI SDK can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	The AI SDK's streaming support works seamlessly with LLM API for real-time
+	response display.
+</Callout>
+
+## Benefits of Using LLM API with Vercel AI SDK
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

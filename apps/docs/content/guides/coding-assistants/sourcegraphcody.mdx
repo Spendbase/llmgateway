@@ -1,0 +1,99 @@
+---
+title: Sourcegraph Cody Integration
+description: Connect Sourcegraph Cody to LLM API for AI-powered capabilities
+icon: Sourcegraph
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Sourcegraph Cody is an enterprise AI coding assistant that understands your entire codebase. It provides context-aware code generation, explanations, and refactoring powered by large language models, with support for custom model providers through the site configuration.
+
+Cody Enterprise supports custom OpenAI-compatible providers through provider overrides in the site config, letting you connect LLM API for your organization.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Sourcegraph Cody installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Sourcegraph Cody (Enterprise)
+
+1. Open your Sourcegraph instance's Site Configuration.
+2. Add a provider override in the modelConfiguration section:
+
+```json
+"modelConfiguration": {
+"providerOverrides": [{
+"id": "llm-api",
+"displayName": "LLM API",
+"serverSideConfig": {
+"type": "openaicompatible",
+"endpoints": [{
+"url": "https://api.llmapi.ai/v1/",
+"accessToken": "your-llm-api-key-here"
+}]
+}
+}]
+}
+```
+
+3. Add a model override to register specific models:
+
+```json
+"modelOverrides": [{
+"modelRef": "llm-api::v1::openai/gpt-4o",
+"modelName": "openai/gpt-4o",
+"displayName": "GPT-4o via LLM API",
+"contextWindow": {
+"maxInputTokens": 128000,
+"maxOutputTokens": 4096
+},
+"capabilities": ["chat"]
+}]
+```
+
+4. Save the site configuration. Cody will now offer LLM API models to users.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Sourcegraph Cody can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	You can validate the configuration by checking the supported models endpoint: \${INSTANCE\_URL}/.api/modelconfig/supported-models.json
+</Callout>
+
+## Benefits of Using LLM API with Sourcegraph Cody
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>
