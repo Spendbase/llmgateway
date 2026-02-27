@@ -139,16 +139,19 @@ export function ApiKeyStep() {
 	function generateShareText(token: string, projectName: string) {
 		return `🔗 LLM API Connection Details
 
-API URL: ${gatewayUrl}/v1
-API Key: ${token}
+*API URL*: ${gatewayUrl}
+*API Key*: ${token}
 
-Project: ${projectName}
+*Project*: ${projectName}
 
 Example cURL:
-curl ${gatewayUrl}/v1/chat/completions \\
+\`\`\`
+curl ${gatewayUrl}/chat/completions \\
   -H "Authorization: Bearer ${token}" \\
   -H "Content-Type: application/json" \\
-  -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'`;
+  -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'
+\`\`\`
+`;
 	}
 
 	async function shareConnectionDetails(token: string) {
