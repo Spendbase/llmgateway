@@ -519,6 +519,9 @@ export const log = pgTable(
 				healingMethod?: string;
 			};
 		}>(),
+		ttsChars: integer(),
+		ttsVoice: text(),
+		ttsFormat: text(),
 	},
 	(table) => [
 		index("log_project_id_created_at_idx").on(table.projectId, table.createdAt),
@@ -778,6 +781,12 @@ export const modelProviderMapping = pgTable(
 		jsonOutputSchema: boolean().default(false).notNull(),
 		webSearch: boolean().default(false).notNull(),
 		webSearchPrice: numericDecimal(),
+		audioConfig: jsonb().$type<{
+			characterPrice: number;
+			maxCharacters: number;
+			languages?: number;
+			latencyMs?: number;
+		}>(),
 		discount: numericDecimal().default(0).notNull(),
 		reasoningLevels: json().$type<("minimal" | "low" | "medium" | "high")[]>(),
 		pricingTiers: json().$type<
@@ -850,6 +859,7 @@ export const modelProviderMappingHistory = pgTable(
 		totalDuration: integer().notNull().default(0),
 		totalTimeToFirstToken: integer().notNull().default(0),
 		totalTimeToFirstReasoningToken: integer().notNull().default(0),
+		totalTtsChars: integer().notNull().default(0),
 	},
 	(table) => [
 		// Unique constraint ensures one record per mapping-minute combination
@@ -897,6 +907,7 @@ export const modelHistory = pgTable(
 		totalDuration: integer().notNull().default(0),
 		totalTimeToFirstToken: integer().notNull().default(0),
 		totalTimeToFirstReasoningToken: integer().notNull().default(0),
+		totalTtsChars: integer().notNull().default(0),
 	},
 	(table) => [
 		// Unique constraint ensures one record per model-minute combination
@@ -986,4 +997,27 @@ export const voucherLog = pgTable(
 			table.organizationId,
 		),
 	],
+);
+
+export const ttsGeneration = pgTable(
+	"tts_generation",
+	{
+		id: text().primaryKey().notNull().$defaultFn(shortid),
+		createdAt: timestamp().notNull().defaultNow(),
+		updatedAt: timestamp()
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+		userId: text()
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		model: text().notNull(),
+		voice: text().notNull(),
+		format: text().notNull(),
+		text: text().notNull(),
+		chars: integer(),
+		cost: numericDecimal(),
+		file: text().notNull(),
+	},
+	(table) => [index("tts_generation_user_id_idx").on(table.userId)],
 );

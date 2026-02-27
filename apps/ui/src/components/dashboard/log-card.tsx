@@ -38,6 +38,7 @@ export function LogCard({ log }: { log: Partial<Log> }) {
 		log.dataStorageCost !== null &&
 		log.dataStorageCost !== undefined &&
 		Number(log.dataStorageCost) > 0;
+	const isTts = log.ttsChars !== null;
 	const [isExpanded, setIsExpanded] = useState(false);
 
 	const formattedTime = formatDistanceToNow(new Date(log?.createdAt ?? ""), {
@@ -176,12 +177,16 @@ export function LogCard({ log }: { log: Partial<Log> }) {
 						</div>
 						<div className="flex items-center gap-1">
 							<Clock className="h-3.5 w-3.5" />
-							<span>
-								{log.totalTokens} tokens
-								{log.cachedTokens && Number(log.cachedTokens) > 0 && (
-									<span className="ml-1">({log.cachedTokens} cached)</span>
-								)}
-							</span>
+							{isTts ? (
+								<span>{log.ttsChars?.toLocaleString()} chars</span>
+							) : (
+								<span>
+									{log.totalTokens} tokens
+									{log.cachedTokens && Number(log.cachedTokens) > 0 && (
+										<span className="ml-1">({log.cachedTokens} cached)</span>
+									)}
+								</span>
+							)}
 						</div>
 						<div className="flex items-center gap-1">
 							<Clock className="h-3.5 w-3.5" />
@@ -347,9 +352,13 @@ export function LogCard({ log }: { log: Partial<Log> }) {
 								<div>{formatDuration(log.duration ?? 0)}</div>
 								<div className="text-muted-foreground">Throughput</div>
 								<div>
-									{log.duration && log.totalTokens
-										? `${(Number(log.totalTokens) / (log.duration / 1000)).toFixed(1)}t/s`
-										: "-"}
+									{isTts
+										? log.duration && log.ttsChars
+											? `${(log.ttsChars / (log.duration / 1000)).toFixed(0)} chars/s`
+											: "-"
+										: log.duration && log.totalTokens
+											? `${(Number(log.totalTokens) / (log.duration / 1000)).toFixed(1)}t/s`
+											: "-"}
 								</div>
 								{log.timeToFirstToken && (
 									<>
@@ -377,26 +386,51 @@ export function LogCard({ log }: { log: Partial<Log> }) {
 										"Unknown"
 									)}
 								</div>
-								<div className="text-muted-foreground">Prompt Tokens</div>
-								<div>{log.promptTokens}</div>
-								<div className="text-muted-foreground">Completion Tokens</div>
-								<div>{log.completionTokens}</div>
-								<div className="text-muted-foreground">Total Tokens</div>
-								<div className="font-medium">{log.totalTokens}</div>
-								{log.cachedTokens && Number(log.cachedTokens) > 0 && (
+								{isTts ? (
 									<>
-										<div className="text-muted-foreground">
-											Cached Input Tokens
+										<div className="text-muted-foreground">Characters</div>
+										<div className="font-medium">
+											{log.ttsChars?.toLocaleString()}
 										</div>
-										<div className="font-medium">{log.cachedTokens}</div>
+										{log.ttsVoice && (
+											<>
+												<div className="text-muted-foreground">Voice</div>
+												<div>{log.ttsVoice}</div>
+											</>
+										)}
+										{log.ttsFormat && (
+											<>
+												<div className="text-muted-foreground">Format</div>
+												<div>{log.ttsFormat}</div>
+											</>
+										)}
 									</>
-								)}
-								{log.reasoningTokens && (
+								) : (
 									<>
+										<div className="text-muted-foreground">Prompt Tokens</div>
+										<div>{log.promptTokens}</div>
 										<div className="text-muted-foreground">
-											Reasoning Tokens
+											Completion Tokens
 										</div>
-										<div>{log.reasoningTokens}</div>
+										<div>{log.completionTokens}</div>
+										<div className="text-muted-foreground">Total Tokens</div>
+										<div className="font-medium">{log.totalTokens}</div>
+										{log.cachedTokens && Number(log.cachedTokens) > 0 && (
+											<>
+												<div className="text-muted-foreground">
+													Cached Input Tokens
+												</div>
+												<div className="font-medium">{log.cachedTokens}</div>
+											</>
+										)}
+										{log.reasoningTokens && (
+											<>
+												<div className="text-muted-foreground">
+													Reasoning Tokens
+												</div>
+												<div>{log.reasoningTokens}</div>
+											</>
+										)}
 									</>
 								)}
 								<div className="text-muted-foreground">
@@ -568,116 +602,144 @@ export function LogCard({ log }: { log: Partial<Log> }) {
 						<h4 className="text-sm font-medium">Model Parameters</h4>
 						<div className="grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-2 md:grid-cols-4">
 							<TooltipProvider>
-								<div className="flex items-center justify-between gap-2">
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<span className="text-muted-foreground">Temperature</span>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p className="max-w-xs text-xs">
-												Controls randomness: higher values produce more random
-												outputs
-											</p>
-										</TooltipContent>
-									</Tooltip>
-									<span>{log.temperature}</span>
-								</div>
-								<div className="flex items-center justify-between gap-2">
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<span className="text-muted-foreground">Max Tokens</span>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p className="max-w-xs text-xs">
-												Maximum number of tokens to generate
-											</p>
-										</TooltipContent>
-									</Tooltip>
-									<span>{log.maxTokens}</span>
-								</div>
-								<div className="flex items-center justify-between gap-2">
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<span className="text-muted-foreground">Top P</span>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p className="max-w-xs text-xs">
-												Alternative to temperature, controls diversity via
-												nucleus sampling
-											</p>
-										</TooltipContent>
-									</Tooltip>
-									<span>{log.topP}</span>
-								</div>
-								<div className="flex items-center justify-between gap-2">
-									<Tooltip>
-										<TooltipTrigger asChild>
+								{isTts ? (
+									<>
+										<div className="flex items-center justify-between gap-2">
+											<span className="text-muted-foreground">Voice ID</span>
+											<span>{log.ttsVoice || "-"}</span>
+										</div>
+										<div className="flex items-center justify-between gap-2">
 											<span className="text-muted-foreground">
-												Frequency Penalty
+												Output Format
 											</span>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p className="max-w-xs text-xs">
-												Decreases the likelihood of repeating the same tokens
-											</p>
-										</TooltipContent>
-									</Tooltip>
-									<span>{log.frequencyPenalty}</span>
-								</div>
-								<div className="flex items-center justify-between gap-2">
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<span className="text-muted-foreground">
-												Reasoning Effort
+											<span>{log.ttsFormat || "-"}</span>
+										</div>
+										<div className="flex items-center justify-between gap-2">
+											<span className="text-muted-foreground">Characters</span>
+											<span>{log.ttsChars?.toLocaleString() ?? "-"}</span>
+										</div>
+									</>
+								) : (
+									<>
+										<div className="flex items-center justify-between gap-2">
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<span className="text-muted-foreground">
+														Temperature
+													</span>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p className="max-w-xs text-xs">
+														Controls randomness: higher values produce more
+														random outputs
+													</p>
+												</TooltipContent>
+											</Tooltip>
+											<span>{log.temperature}</span>
+										</div>
+										<div className="flex items-center justify-between gap-2">
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<span className="text-muted-foreground">
+														Max Tokens
+													</span>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p className="max-w-xs text-xs">
+														Maximum number of tokens to generate
+													</p>
+												</TooltipContent>
+											</Tooltip>
+											<span>{log.maxTokens}</span>
+										</div>
+										<div className="flex items-center justify-between gap-2">
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<span className="text-muted-foreground">Top P</span>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p className="max-w-xs text-xs">
+														Alternative to temperature, controls diversity via
+														nucleus sampling
+													</p>
+												</TooltipContent>
+											</Tooltip>
+											<span>{log.topP}</span>
+										</div>
+										<div className="flex items-center justify-between gap-2">
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<span className="text-muted-foreground">
+														Frequency Penalty
+													</span>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p className="max-w-xs text-xs">
+														Decreases the likelihood of repeating the same
+														tokens
+													</p>
+												</TooltipContent>
+											</Tooltip>
+											<span>{log.frequencyPenalty}</span>
+										</div>
+										<div className="flex items-center justify-between gap-2">
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<span className="text-muted-foreground">
+														Reasoning Effort
+													</span>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p className="max-w-xs text-xs">
+														Requested chain-of-thought effort for
+														reasoning-capable models
+													</p>
+												</TooltipContent>
+											</Tooltip>
+											<span>{log.reasoningEffort || "-"}</span>
+										</div>
+										{log.effort && (
+											<div className="flex items-center justify-between gap-2">
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<span className="text-muted-foreground">
+															Effort
+														</span>
+													</TooltipTrigger>
+													<TooltipContent>
+														<p className="max-w-xs text-xs">
+															Controls the computational effort for supported
+															models (e.g., claude-opus-4-5)
+														</p>
+													</TooltipContent>
+												</Tooltip>
+												<span>{log.effort}</span>
+											</div>
+										)}
+										<div className="flex items-center justify-between gap-2">
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<span className="text-muted-foreground">
+														Response Format
+													</span>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p className="max-w-xs text-xs">
+														Requested output format (text, json_object, or
+														json_schema)
+													</p>
+												</TooltipContent>
+											</Tooltip>
+											<span>
+												{log.responseFormat
+													? typeof log.responseFormat === "object"
+														? (log.responseFormat as any).type || "-"
+														: "-"
+													: "-"}
 											</span>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p className="max-w-xs text-xs">
-												Requested chain-of-thought effort for reasoning-capable
-												models
-											</p>
-										</TooltipContent>
-									</Tooltip>
-									<span>{log.reasoningEffort || "-"}</span>
-								</div>
-								{log.effort && (
-									<div className="flex items-center justify-between gap-2">
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<span className="text-muted-foreground">Effort</span>
-											</TooltipTrigger>
-											<TooltipContent>
-												<p className="max-w-xs text-xs">
-													Controls the computational effort for supported models
-													(e.g., claude-opus-4-5)
-												</p>
-											</TooltipContent>
-										</Tooltip>
-										<span>{log.effort}</span>
-									</div>
+										</div>
+									</>
 								)}
-								<div className="flex items-center justify-between gap-2">
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<span className="text-muted-foreground">
-												Response Format
-											</span>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p className="max-w-xs text-xs">
-												Requested output format (text, json_object, or
-												json_schema)
-											</p>
-										</TooltipContent>
-									</Tooltip>
-									<span>
-										{log.responseFormat
-											? typeof log.responseFormat === "object"
-												? (log.responseFormat as any).type || "-"
-												: "-"
-											: "-"}
-									</span>
-								</div>
 							</TooltipProvider>
 						</div>
 					</div>

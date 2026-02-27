@@ -11,9 +11,13 @@ export type { ApiModel, ApiModelProviderMapping, ApiProvider };
 const API_URL =
 	process.env.API_BACKEND_URL || process.env.API_URL || "http://localhost:4002";
 
-export const fetchModels = cache(async (): Promise<ApiModel[]> => {
+export const fetchModels = cache(async (type?: string): Promise<ApiModel[]> => {
 	try {
-		const response = await fetch(`${API_URL}/internal/models`, {
+		const url = new URL(`${API_URL}/internal/models`);
+		if (type) {
+			url.searchParams.set("type", type);
+		}
+		const response = await fetch(url, {
 			next: { revalidate: 60 },
 		});
 		if (!response.ok) {

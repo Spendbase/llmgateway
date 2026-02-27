@@ -1179,6 +1179,24 @@ export const CerebrasIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
 	</svg>
 );
 
+// ElevenLabs Icon
+export const ElevenLabsIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
+	props,
+) => (
+	<svg
+		{...props}
+		width="876"
+		height="876"
+		viewBox="0 0 876 876"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		className={props.className}
+	>
+		<path d="M468 292H528V584H468V292Z" fill="currentColor" />
+		<path d="M348 292H408V584H348V292Z" fill="currentColor" />
+	</svg>
+);
+
 // Export all icons as a map for easy access
 export const ProviderIcons = {
 	anthropic: AnthropicIcon,
@@ -1204,6 +1222,7 @@ export const ProviderIcons = {
 	azure: AzureIcon,
 	canopywave: CanopyWaveIcon,
 	cerebras: CerebrasIcon,
+	elevenlabs: ElevenLabsIcon,
 } as const;
 
 // Type for provider icon keys

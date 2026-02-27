@@ -17,6 +17,7 @@ import playground from "./playground.js";
 import projects from "./projects.js";
 import { publicRoutes } from "./public.js";
 import team from "./team.js";
+import { ttsGenerations } from "./tts-generations.js";
 import { user } from "./user.js";
 import { vouchers } from "./vouchers.js";
 
@@ -61,3 +62,4 @@ routes.route("/chats", chats);
 routes.route("/banners", banners);
 routes.route("/audio", audio);
 routes.route("/vouchers", vouchers);
+routes.route("/tts-generations", ttsGenerations);

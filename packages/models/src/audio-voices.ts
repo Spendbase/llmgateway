@@ -13,38 +13,38 @@ export const elevenlabsVoiceMapping: VoiceMapping[] = [
 	{
 		openaiName: "alloy",
 		providerId: "elevenlabs",
-		voiceId: "21m00Tcm4TlLG7UPJNkT", // Rachel - clear, versatile female voice
-		displayName: "Rachel",
+		voiceId: "EXAVITQu4vr4xnSDxMaL", // Sarah - mature, reassuring, confident
+		displayName: "Sarah",
 	},
 	{
 		openaiName: "echo",
 		providerId: "elevenlabs",
-		voiceId: "TxGEqnHWrfWFTfGW9XjX", // Josh - warm male voice
-		displayName: "Josh",
+		voiceId: "JBFqnCBsd6RMkjVDRZzb", // George - warm, captivating storyteller
+		displayName: "George",
 	},
 	{
 		openaiName: "fable",
 		providerId: "elevenlabs",
-		voiceId: "VR6AewLTigWG4xSOukaG", // Arnold - strong male voice with British accent
-		displayName: "Arnold",
+		voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie - deep, confident, energetic
+		displayName: "Charlie",
 	},
 	{
 		openaiName: "onyx",
 		providerId: "elevenlabs",
-		voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - deep male voice
+		voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - dominant, firm
 		displayName: "Adam",
 	},
 	{
 		openaiName: "nova",
 		providerId: "elevenlabs",
-		voiceId: "jBpfuIE2acCO8z3wKNLl", // Elli - young female voice
-		displayName: "Elli",
+		voiceId: "FGY2WhTYpPnrIDTdsKH5", // Laura - enthusiast, quirky attitude
+		displayName: "Laura",
 	},
 	{
 		openaiName: "shimmer",
 		providerId: "elevenlabs",
-		voiceId: "EXAVITQu4vr4xnSDxMaL", // Charlotte - professional female voice
-		displayName: "Charlotte",
+		voiceId: "XrExE9yKIg1WjnnlVkGX", // Matilda - knowledgable, professional
+		displayName: "Matilda",
 	},
 ];
 

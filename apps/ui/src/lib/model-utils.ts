@@ -1,5 +1,7 @@
 import type { ModelDefinition, ProviderDefinition } from "@llmgateway/models";
 
+export { isAudioModel } from "@llmgateway/models";
+
 export function formatPrice(price: number | undefined): string {
 	if (!price) {
 		return "Free";
@@ -11,6 +13,13 @@ export function formatPrice(price: number | undefined): string {
 		return `$${(price * 1000).toFixed(2)}/1K tokens`;
 	}
 	return `$${price.toFixed(4)}/token`;
+}
+
+export function formatCharacterPrice(pricePerChar: number | undefined): string {
+	if (!pricePerChar) {
+		return "Free";
+	}
+	return `$${(pricePerChar * 1000).toFixed(4)}/1K chars`;
 }
 
 export function formatContextSize(size: number | undefined): string {

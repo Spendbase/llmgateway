@@ -8,6 +8,7 @@ export interface AdminTokenMetrics {
 	endDate: string;
 	totalRequests: number;
 	totalTokens: number;
+	totalTtsChars: number;
 	totalCost: number;
 	inputTokens: number;
 	inputCost: number;

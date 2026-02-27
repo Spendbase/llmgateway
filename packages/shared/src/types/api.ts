@@ -49,6 +49,12 @@ export interface ApiModelProviderMapping {
 	deactivatedAt?: string;
 	deactivationReason?: string;
 	status: "active" | "inactive" | "deactivated";
+	audioConfig?: {
+		characterPrice: number;
+		maxCharacters: number;
+		languages?: number;
+		latencyMs?: number;
+	};
 	providerInfo?: ApiProvider;
 }
 
