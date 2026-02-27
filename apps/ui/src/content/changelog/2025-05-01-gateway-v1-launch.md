@@ -166,7 +166,7 @@ Migrate existing applications effortlessly:
 ```javascript
 // Just change the base URL - everything else stays the same
 const openai = new OpenAI({
-  baseURL: "https://internal.llmapi.ai/v1",
+  baseURL: "https://api.llmapi.ai/v1",
   apiKey: "your-llmgateway-key",
 });
 ```

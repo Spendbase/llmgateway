@@ -89,7 +89,7 @@ export ANTHROPIC_SMALL_FAST_MODEL=gpt-5-nano
 If you want to test the endpoint directly, you can make manual requests:
 
 ```bash
-curl -X POST "https://internal.llmapi.ai/v1/messages" \
+curl -X POST "https://api.llmapi.ai/v1/messages" \
   -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
