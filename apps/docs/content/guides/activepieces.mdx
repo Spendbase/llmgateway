@@ -1,0 +1,73 @@
+---
+title: Activepieces Integration
+description: Connect Activepieces to LLM API for AI-powered capabilities
+icon: Activepieces
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Activepieces is an open-source workflow automation platform with a user-friendly interface. It supports AI pieces (modules) for integrating language models into automation flows.
+
+Activepieces' AI pieces support custom OpenAI-compatible endpoints.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Activepieces installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Activepieces
+
+1. Open Activepieces and navigate to your flow.
+2. Add an AI piece (e.g., "Ask AI" or "OpenAI").
+3. Click "New Connection" for the AI piece.
+4. Enter:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+5. Select the model and configure the prompt.
+6. Save and run the flow.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Activepieces can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Activepieces is open-source and self-hostable, giving you full control over
+	your automation and AI pipeline.
+</Callout>
+
+## Benefits of Using LLM API with Activepieces
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>
