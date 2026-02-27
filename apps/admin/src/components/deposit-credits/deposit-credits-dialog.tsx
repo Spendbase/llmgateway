@@ -54,8 +54,8 @@ export function DepositCreditsDialog({
 
 	const [open, setOpen] = useState(false);
 
-	const [amount, setAmount] = useState<number>(DEFAULT_DEPOSIT_AMOUNT);
-	const [description, setDescription] = useState<string>("Credits for test");
+	const [amount, setAmount] = useState<number>(0);
+	const [description, setDescription] = useState<string>("");
 
 	const [loading, setLoading] = useState(false);
 
@@ -70,8 +70,8 @@ export function DepositCreditsDialog({
 
 	const handleOpen = () => {
 		setOpen(!open);
-		setDescription("");
-		setAmount(50);
+		setDescription("Credits for test");
+		setAmount(DEFAULT_DEPOSIT_AMOUNT);
 	};
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -155,6 +155,7 @@ export function DepositCreditsDialog({
 							min={5}
 							value={amount}
 							onChange={(e) => setAmount(Number(e.target.value))}
+							onFocus={(e) => e.target.select()}
 							required
 						/>
 					</div>

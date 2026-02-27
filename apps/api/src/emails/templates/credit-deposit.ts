@@ -1,0 +1,89 @@
+import { getEmailLayout } from "@/emails/base-layout.js";
+
+export interface CreditDepositEmailProps {
+	newBalanceFormatted: string;
+	creditsAddedFormatted: string;
+}
+
+const uiUrl = process.env.UI_URL || "http://localhost:3002";
+
+export function getCreditDepositLayout({
+	newBalanceFormatted,
+	creditsAddedFormatted,
+}: CreditDepositEmailProps): string {
+	const content = `
+		<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; padding: 40px 20px;">
+			<tr>
+				<td align="center">
+					<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 500px; background-color: #ffffff;">
+						<tr>
+							<td style="padding-bottom: 32px;" align="left">
+								<table role="presentation" border="0" cellpadding="0" cellspacing="0">
+									<tr>
+										<td style="vertical-align: middle;">
+											<img src="${uiUrl}/llmapi-logo.png" alt="Logo" width="27" height="27" style="display: block; border: 0; border-radius: 4px;" />
+										</td>
+										<td style="vertical-align: middle; padding-left: 6px;">
+											<span style="font-weight: 700; font-size: 20px; color: #1a1a1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 27px;">
+												LLM API
+											</span>
+										</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<td align="left">
+								<p style="margin: 0 0 8px 0; font-size: 14px; color: #333333;">
+									<strong>Your balance is topped up!</strong>
+								</p>
+								<p style="margin: 0 0 16px 0; font-size: 14px; color: #333333;">
+									${creditsAddedFormatted} has been successfully added to your account. Your credits are ready to use.
+								</p>
+
+								<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f5f7fb; border-radius: 8px; margin: 24px 0;">
+									<tr>
+										<td style="padding: 20px 24px;">
+											<table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+												<tr>
+													<td style="font-size: 13px; color: #666666; padding-bottom: 12px;">Credits added</td>
+													<td align="right" style="font-size: 13px; font-weight: 600; color: #3F35FF; padding-bottom: 12px;">
+														+${creditsAddedFormatted}
+													</td>
+												</tr>
+												<tr>
+													<td style="font-size: 1px; background-color: #e2e8f0; padding: 0;" colspan="2">
+														<div style="font-size: 1px; line-height: 1px;">&nbsp;</div>
+													</td>
+												</tr>
+												<tr>
+													<td style="font-size: 13px; color: #666666; padding-top: 12px;">New balance</td>
+													<td align="right" style="font-size: 13px; font-weight: 600; color: #333333; padding-top: 12px;">
+														$${newBalanceFormatted}
+													</td>
+												</tr>
+											</table>
+										</td>
+									</tr>
+								</table>
+
+								<div style="text-align:center; margin: 32px 0;">
+									<a href="${uiUrl}"
+									style="display: inline-block; padding: 12px 36px; border-radius: 6px; background-color: #3F35FF; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none;">
+										Go to App
+									</a>
+								</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+`.trim();
+
+	return getEmailLayout({
+		title: "Credits added to your account",
+		content,
+		preview: "Credits added to your account",
+	});
+}

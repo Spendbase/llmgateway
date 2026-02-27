@@ -8,14 +8,6 @@ const uiUrl = process.env.UI_URL || "http://localhost:3002";
 
 export function getVerifyEmail({ url }: VerifyEmailProps): string {
 	const content = `
-		<!DOCTYPE html>
-			<html>
-				<head>
-					<meta charset="utf-8">
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title>Verify your email</title>
-				</head>
-				<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #444444; background-color: #ffffff; margin: 0; padding: 0;">
 					<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; padding: 40px 20px;">
 						<tr>
 							<td align="center">
@@ -44,14 +36,14 @@ export function getVerifyEmail({ url }: VerifyEmailProps): string {
 											<p style="margin: 0 0 24px 0; font-size: 14px; color: #333333;">
 												Click the button below to confirm your email:
 											</p>
-											
+
 											<div style="text-align:center; margin: 32px 0;">
-												<a href="${url}" 
+												<a href="${url}"
 												style="display: inline-block; padding: 12px 36px; border-radius: 6px; background-color: #3F35FF; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none;">
 													Verify email
 												</a>
 											</div>
-				
+
 											<p style="margin: 32px 0 8px 0; font-size: 13px; color: #666666;">
 												If that button doesn't work, copy and paste this link into your browser:
 											</p>
@@ -63,21 +55,12 @@ export function getVerifyEmail({ url }: VerifyEmailProps): string {
 													${url}
 												</a>
 											</p>
-				
-											<p style="margin: 0; font-size: 14px; color: #333333;">
-												<strong>
-													Thanks,<br>
-													The LLM API team
-												</strong>
-											</p>
 										</td>
 									</tr>
 								</table>
 							</td>
 						</tr>
 					</table>
-				</body>
-			</html>
 		`.trim();
 
 	return getEmailLayout({

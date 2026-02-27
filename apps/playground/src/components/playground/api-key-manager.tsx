@@ -84,16 +84,13 @@ function CreateNewKeyForm({
 	};
 
 	const shareApiKey = async () => {
-		const shareText = `🔗 LLM API Connection Details
+		const shareText = `Hey, you have to check this out! I just found a free LLM API with over 200 models. And they even gave me free credits to try it!
 
-API URL: ${gatewayUrl}/v1
+URL Endpoint: ${gatewayUrl}
 API Key: ${newApiKey}
+Model: claude-sonnet-4-6
 
-Example cURL:
-curl ${gatewayUrl}/v1/chat/completions \\
-  -H "Authorization: Bearer ${newApiKey}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'`;
+Docs: https://docs.llmapi.ai/`;
 
 		if (navigator.share) {
 			try {
