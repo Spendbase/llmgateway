@@ -38,7 +38,7 @@ export function getCreditDepositLayout({
 									<strong>Your balance is topped up!</strong>
 								</p>
 								<p style="margin: 0 0 16px 0; font-size: 14px; color: #333333;">
-									${creditsAddedFormatted} has been successfully added to your account. Your credits are ready to use.
+                                    $${creditsAddedFormatted} has been successfully added to your account. Your credits are ready to use.
 								</p>
 
 								<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f5f7fb; border-radius: 8px; margin: 24px 0;">
