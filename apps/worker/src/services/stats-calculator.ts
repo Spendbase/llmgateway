@@ -113,6 +113,9 @@ async function calculateModelHistoryForMinute(targetMinute: Date) {
 				sql<number>`coalesce(sum(${log.timeToFirstReasoningToken}), 0)::int`.as(
 					"totalTimeToFirstReasoningToken",
 				),
+			totalTtsChars: sql<number>`coalesce(sum(${log.ttsChars}), 0)::int`.as(
+				"totalTtsChars",
+			),
 		})
 		.from(log)
 		.where(
@@ -166,6 +169,7 @@ async function calculateModelHistoryForMinute(targetMinute: Date) {
 		const totalTimeToFirstToken = stat?.totalTimeToFirstToken || 0;
 		const totalTimeToFirstReasoningToken =
 			stat?.totalTimeToFirstReasoningToken || 0;
+		const totalTtsChars = stat?.totalTtsChars || 0;
 
 		// Insert or update a history record for this minute
 		await database
@@ -187,6 +191,7 @@ async function calculateModelHistoryForMinute(targetMinute: Date) {
 				totalDuration,
 				totalTimeToFirstToken,
 				totalTimeToFirstReasoningToken,
+				totalTtsChars,
 			})
 			.onConflictDoUpdate({
 				target: [modelHistory.modelId, modelHistory.minuteTimestamp],
@@ -205,6 +210,7 @@ async function calculateModelHistoryForMinute(targetMinute: Date) {
 					totalDuration,
 					totalTimeToFirstToken,
 					totalTimeToFirstReasoningToken,
+					totalTtsChars,
 					updatedAt: new Date(),
 				},
 			});
@@ -285,6 +291,9 @@ async function calculateHistoryForMinute(targetMinute: Date) {
 				sql<number>`coalesce(sum(${log.timeToFirstReasoningToken}), 0)::int`.as(
 					"totalTimeToFirstReasoningToken",
 				),
+			totalTtsChars: sql<number>`coalesce(sum(${log.ttsChars}), 0)::int`.as(
+				"totalTtsChars",
+			),
 		})
 		.from(log)
 		.where(
@@ -343,6 +352,7 @@ async function calculateHistoryForMinute(targetMinute: Date) {
 		const totalTimeToFirstToken = stat?.totalTimeToFirstToken || 0;
 		const totalTimeToFirstReasoningToken =
 			stat?.totalTimeToFirstReasoningToken || 0;
+		const totalTtsChars = stat?.totalTtsChars || 0;
 
 		// Insert or update a history record for this minute
 		await database
@@ -366,6 +376,7 @@ async function calculateHistoryForMinute(targetMinute: Date) {
 				totalDuration,
 				totalTimeToFirstToken,
 				totalTimeToFirstReasoningToken,
+				totalTtsChars,
 			})
 			.onConflictDoUpdate({
 				target: [
@@ -387,6 +398,7 @@ async function calculateHistoryForMinute(targetMinute: Date) {
 					totalDuration,
 					totalTimeToFirstToken,
 					totalTimeToFirstReasoningToken,
+					totalTtsChars,
 					updatedAt: new Date(),
 				},
 			});

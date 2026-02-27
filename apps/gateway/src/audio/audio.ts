@@ -401,7 +401,9 @@ audio.openapi(audioSpeechRoute, async (c) => {
 			projectId: project.id,
 			apiKeyId: apiKey.id,
 			requestedModel: model,
-			usedModel: model,
+			requestedProvider: provider,
+			usedModel: `${provider}/${model}`,
+			usedModelMapping: providerMapping.modelName,
 			usedProvider: provider,
 			mode: project.mode,
 			usedMode,
@@ -414,6 +416,10 @@ audio.openapi(audioSpeechRoute, async (c) => {
 			finishReason: "stop",
 			unifiedFinishReason: "completed",
 			userId: apiKey.createdBy,
+			source: c.req.header("x-source") || "",
+			ttsChars: characterCount,
+			ttsVoice: voiceId,
+			ttsFormat: outputFormat,
 		}).catch((err: unknown) => {
 			logger.error("Failed to write TTS log entry", { error: err });
 		});
