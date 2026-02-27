@@ -18,7 +18,12 @@ import { useApi } from "@/lib/fetch-client";
 
 import type { ActivityModelUsage, ActivitT } from "@/types/activity";
 
-type SortColumn = "id" | "provider" | "requestCount" | "totalTokens";
+type SortColumn =
+	| "id"
+	| "provider"
+	| "requestCount"
+	| "totalTokens"
+	| "ttsChars";
 type SortDirection = "asc" | "desc";
 
 interface ModelUsageTableProps {
@@ -33,7 +38,7 @@ export function ModelUsageTable({
 	apiKeyId,
 }: ModelUsageTableProps) {
 	const searchParams = useSearchParams();
-	const [sortColumn, setSortColumn] = useState<SortColumn>("totalTokens");
+	const [sortColumn, setSortColumn] = useState<SortColumn>("requestCount");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 	const { selectedProject } = useDashboardState();
 
@@ -134,6 +139,7 @@ export function ModelUsageTable({
 				existing.inputTokens += model.inputTokens;
 				existing.outputTokens += model.outputTokens;
 				existing.totalTokens += model.totalTokens;
+				existing.ttsChars += model.ttsChars;
 				existing.cost += model.cost;
 			} else {
 				modelMap.set(key, { ...model });
@@ -158,6 +164,10 @@ export function ModelUsageTable({
 
 	const totalTokens = sortedModels.reduce(
 		(sum, model) => sum + model.totalTokens,
+		0,
+	);
+	const totalTtsChars = sortedModels.reduce(
+		(sum, model) => sum + model.ttsChars,
 		0,
 	);
 
@@ -206,13 +216,27 @@ export function ModelUsageTable({
 								{getSortIcon("totalTokens")}
 							</Button>
 						</TableHead>
+						<TableHead>
+							<Button
+								variant="ghost"
+								onClick={() => handleSort("ttsChars")}
+								className="flex items-center p-0 h-auto font-semibold"
+							>
+								TTS Chars
+								{getSortIcon("ttsChars")}
+							</Button>
+						</TableHead>
 						<TableHead>Usage</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
 					{sortedModels.map((model, index) => {
-						const percentage =
-							totalTokens === 0
+						const isAudio = model.ttsChars > 0;
+						const percentage = isAudio
+							? totalTtsChars === 0
+								? 0
+								: Math.round((model.ttsChars / totalTtsChars) * 100)
+							: totalTokens === 0
 								? 0
 								: Math.round((model.totalTokens / totalTokens) * 100);
 						return (
@@ -220,7 +244,12 @@ export function ModelUsageTable({
 								<TableCell className="font-medium">{model.id}</TableCell>
 								<TableCell>{model.provider}</TableCell>
 								<TableCell>{model.requestCount.toLocaleString()}</TableCell>
-								<TableCell>{model.totalTokens.toLocaleString()}</TableCell>
+								<TableCell className="text-muted-foreground">
+									{isAudio ? "-" : model.totalTokens.toLocaleString()}
+								</TableCell>
+								<TableCell>
+									{isAudio ? model.ttsChars.toLocaleString() : "-"}
+								</TableCell>
 								<TableCell className="w-[200px]">
 									<div className="flex items-center gap-2">
 										<Progress value={percentage} className="h-2" />

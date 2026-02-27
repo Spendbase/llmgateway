@@ -971,6 +971,7 @@ export interface paths {
                                 inputTokens: number;
                                 outputTokens: number;
                                 totalTokens: number;
+                                ttsChars: number;
                                 cost: number;
                                 inputCost: number;
                                 outputCost: number;
@@ -988,6 +989,7 @@ export interface paths {
                                     inputTokens: number;
                                     outputTokens: number;
                                     totalTokens: number;
+                                    ttsChars: number;
                                     cost: number;
                                 }[];
                             }[];
@@ -1080,6 +1082,7 @@ export interface paths {
                             endDate: string;
                             totalRequests: number;
                             totalTokens: number;
+                            totalTtsChars: number;
                             totalCost: number;
                             inputTokens: number;
                             inputCost: number;

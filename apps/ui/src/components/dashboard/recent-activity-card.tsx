@@ -76,7 +76,11 @@ export function RecentActivityCard({
 								</p>
 								<p className="text-xs text-muted-foreground">
 									{day.requestCount.toLocaleString()} requests •{" "}
-									{day.totalTokens.toLocaleString()} tokens
+									{day.totalTokens > 0
+										? `${day.totalTokens.toLocaleString()} tokens`
+										: day.ttsChars > 0
+											? `${day.ttsChars.toLocaleString()} TTS chars`
+											: "0 tokens"}
 								</p>
 							</div>
 							<div className="text-right">

@@ -45,6 +45,7 @@ const adminTokenMetricsSchema = z.object({
 	endDate: z.string(),
 	totalRequests: z.number(),
 	totalTokens: z.number(),
+	totalTtsChars: z.number(),
 	totalCost: z.number(),
 	inputTokens: z.number(),
 	inputCost: z.number(),
@@ -843,6 +844,9 @@ admin.openapi(getTokenMetrics, async (c) => {
 				sql<number>`COALESCE(SUM(CAST(${tables.log.totalTokens} AS INTEGER)), 0)`.as(
 					"totalTokens",
 				),
+			totalTtsChars: sql<number>`COALESCE(SUM(${tables.log.ttsChars}), 0)`.as(
+				"totalTtsChars",
+			),
 			totalCost: sql<number>`COALESCE(SUM(${tables.log.cost}), 0)`.as(
 				"totalCost",
 			),
@@ -865,6 +869,7 @@ admin.openapi(getTokenMetrics, async (c) => {
 
 	let totalRequests = 0;
 	let totalTokens = 0;
+	let totalTtsChars = 0;
 	let totalCost = 0;
 	let inputTokens = 0;
 	let inputCost = 0;
@@ -880,6 +885,7 @@ admin.openapi(getTokenMetrics, async (c) => {
 	for (const row of rows) {
 		totalRequests += row.requestsCount;
 		totalTokens += row.totalTokens;
+		totalTtsChars += row.totalTtsChars;
 		totalCost += row.totalCost;
 		inputTokens += row.inputTokens;
 		inputCost += row.inputCost;
@@ -901,6 +907,7 @@ admin.openapi(getTokenMetrics, async (c) => {
 		endDate: now.toISOString(),
 		totalRequests,
 		totalTokens,
+		totalTtsChars,
 		totalCost,
 		inputTokens,
 		inputCost,

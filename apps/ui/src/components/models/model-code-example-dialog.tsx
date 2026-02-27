@@ -22,10 +22,12 @@ import type { CSSProperties } from "react";
 
 interface ModelCodeExampleDialogProps {
 	modelId: string;
+	isAudio?: boolean;
 }
 
 export function ModelCodeExampleDialog({
 	modelId,
+	isAudio = false,
 }: ModelCodeExampleDialogProps) {
 	const [activeTab, setActiveTab] = useState<"curl" | "openai" | "ai-sdk">(
 		"curl",
@@ -43,11 +45,53 @@ export function ModelCodeExampleDialog({
 			language: Language;
 			code: string;
 		};
-	} = {
-		curl: {
-			label: "cURL",
-			language: "bash",
-			code: `curl -X POST https://internal.llmapi.ai/v1/chat/completions \\
+	} = isAudio
+		? {
+				curl: {
+					label: "cURL",
+					language: "bash",
+					code: `curl -X POST https://internal.llmapi.ai/v1/audio/speech \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $LLM_API_KEY" \\
+  --output speech.mp3 \\
+  -d '{
+  "model": "${modelId}",
+  "input": "Hello, how are you?",
+  "voice": "alloy"
+}'`,
+				},
+				openai: {
+					label: "OpenAI SDK",
+					language: "typescript",
+					code: `import OpenAI from "openai";
+import fs from "fs";
+
+const client = new OpenAI({
+  apiKey: process.env.LLM_API_KEY,
+  baseURL: "https://internal.llmapi.ai/v1/"
+});
+
+const response = await client.audio.speech.create({
+  model: "${modelId}",
+  input: "Hello, how are you?",
+  voice: "alloy",
+});
+
+const buffer = Buffer.from(await response.arrayBuffer());
+fs.writeFileSync("speech.mp3", buffer);`,
+				},
+				"ai-sdk": {
+					label: "AI SDK",
+					language: "typescript",
+					code: `// TTS is not yet supported by the AI SDK provider.
+// Use the OpenAI SDK or cURL example instead.`,
+				},
+			}
+		: {
+				curl: {
+					label: "cURL",
+					language: "bash",
+					code: `curl -X POST https://internal.llmapi.ai/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $LLM_API_KEY" \\
   -d '{
@@ -56,11 +100,11 @@ export function ModelCodeExampleDialog({
     {"role": "user", "content": "Hello, how are you?"}
   ]
 }'`,
-		},
-		openai: {
-			label: "OpenAI SDK",
-			language: "typescript",
-			code: `import OpenAI from "openai";
+				},
+				openai: {
+					label: "OpenAI SDK",
+					language: "typescript",
+					code: `import OpenAI from "openai";
 
 const client = new OpenAI({
   apiKey: process.env.LLM_API_KEY, // or your API key string
@@ -75,11 +119,11 @@ const response = await client.chat.completions.create({
 });
 
 console.log(response.choices[0].message.content);`,
-		},
-		"ai-sdk": {
-			label: "AI SDK",
-			language: "typescript",
-			code: `import { createLLMGateway } from "@llmgateway/ai-sdk-provider";
+				},
+				"ai-sdk": {
+					label: "AI SDK",
+					language: "typescript",
+					code: `import { createLLMGateway } from "@llmgateway/ai-sdk-provider";
 import { generateText } from "ai";
 
 const llmgateway = createLLMGateway({ apiKey: process.env.LLM_API_KEY });
@@ -88,8 +132,8 @@ const { text } = await generateText({
   model: llmgateway("${modelId}"),
   prompt: "Write a vegetarian lasagna recipe for 4 people.",
 });`,
-		},
-	};
+				},
+			};
 
 	const currentExample = codeExamples[activeTab];
 

@@ -96,7 +96,10 @@ export function ModelCard({
 								onClick={(e) => e.stopPropagation()}
 								onMouseDown={(e) => e.stopPropagation()}
 							>
-								<ModelCodeExampleDialog modelId={model.id} />
+								<ModelCodeExampleDialog
+									modelId={model.id}
+									isAudio={isAudioModel(model)}
+								/>
 							</div>
 							{shouldShowStabilityWarning(model.stability) && (
 								<AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
@@ -219,7 +222,10 @@ export function ModelCard({
 												onClick={(e) => e.stopPropagation()}
 												onMouseDown={(e) => e.stopPropagation()}
 											>
-												<ModelCodeExampleDialog modelId={providerModelId} />
+												<ModelCodeExampleDialog
+													modelId={providerModelId}
+													isAudio={isAudioModel(model)}
+												/>
 											</div>
 										</div>
 									</div>
