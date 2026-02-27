@@ -1,22 +1,20 @@
 "use client";
 
-import { Download, Pause, Play } from "lucide-react";
-import { useCallback } from "react";
+import { Download, Loader2, Pause, Play } from "lucide-react";
+import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-import { formatBytes, formatTime } from "@/lib/format";
+import { formatTime } from "@/lib/format";
 
 interface TtsAudioPlayerProps {
 	audioUrl: string;
-	audioBlob: Blob;
 	format: string;
 	characterCount: number | null;
 }
 
 export function TtsAudioPlayer({
 	audioUrl,
-	audioBlob,
 	format,
 	characterCount,
 }: TtsAudioPlayerProps) {
@@ -31,13 +29,31 @@ export function TtsAudioPlayer({
 		handleTrackMouseDown,
 	} = useAudioPlayer(audioUrl);
 
-	const handleDownload = useCallback(() => {
-		const ext = format.startsWith("mp3") ? "mp3" : format.split("_")[0];
-		const a = document.createElement("a");
-		a.href = audioUrl;
-		a.download = `speech.${ext}`;
-		a.click();
-	}, [audioUrl, format]);
+	const [isDownloading, setIsDownloading] = useState(false);
+
+	const handleDownload = useCallback(async () => {
+		if (isDownloading) {
+			return;
+		}
+		setIsDownloading(true);
+		try {
+			const ext = format.startsWith("mp3") ? "mp3" : format.split("_")[0];
+			const filename = `speech.${ext}`;
+			const downloadUrl = audioUrl.includes("?")
+				? `${audioUrl}&download=true`
+				: `${audioUrl}?download=true`;
+			const res = await fetch(downloadUrl);
+			const blob = await res.blob();
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = filename;
+			a.click();
+			URL.revokeObjectURL(url);
+		} finally {
+			setIsDownloading(false);
+		}
+	}, [audioUrl, format, isDownloading]);
 
 	return (
 		<div className="animate-in fade-in slide-in-from-bottom-2 duration-300 rounded-xl border bg-card p-4 space-y-3">
@@ -48,7 +64,7 @@ export function TtsAudioPlayer({
 				<Button
 					size="icon"
 					variant="default"
-					className="h-10 w-10 shrink-0 rounded-full shadow-sm"
+					className="h-10 w-10 shrink-0 rounded-full shadow-sm cursor-pointer"
 					onClick={togglePlayPause}
 					aria-label={isPlaying ? "Pause" : "Play"}
 				>
@@ -74,11 +90,16 @@ export function TtsAudioPlayer({
 				<Button
 					size="icon"
 					variant="ghost"
-					className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+					className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
 					onClick={handleDownload}
+					disabled={isDownloading}
 					title="Download"
 				>
-					<Download className="h-4 w-4" />
+					{isDownloading ? (
+						<Loader2 className="h-4 w-4 animate-spin" />
+					) : (
+						<Download className="h-4 w-4" />
+					)}
 				</Button>
 			</div>
 
@@ -104,8 +125,6 @@ export function TtsAudioPlayer({
 				<span className="uppercase font-semibold tracking-wide text-foreground/60">
 					{format.split("_")[0]}
 				</span>
-				<span className="opacity-40">·</span>
-				<span>{formatBytes(audioBlob.size)}</span>
 				{characterCount !== null && (
 					<>
 						<span className="opacity-40">·</span>

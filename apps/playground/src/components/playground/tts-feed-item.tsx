@@ -58,7 +58,6 @@ export function TtsFeedItem({ item, voice }: TtsFeedItemProps) {
 			{/* Audio player */}
 			<TtsAudioPlayer
 				audioUrl={item.audioUrl}
-				audioBlob={item.audioBlob}
 				format={item.format}
 				characterCount={item.characterCount}
 			/>

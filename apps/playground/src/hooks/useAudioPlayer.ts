@@ -46,18 +46,13 @@ export function useAudioPlayer(audioUrl: string): UseAudioPlayerReturn {
 		rafRef.current = requestAnimationFrame(tick);
 	}, [stopRaf]);
 
-	// Reset + autoplay when URL changes
+	// Reset when URL changes
 	useEffect(() => {
 		setCurrentTime(0);
 		setDuration(0);
 		setIsPlaying(false);
 		stopRaf();
-		const audio = audioRef.current;
-		if (!audio) {
-			return;
-		}
-		audio.load();
-		audio.play().catch(() => {});
+		audioRef.current?.load();
 	}, [audioUrl, stopRaf]);
 
 	// Wire up audio events

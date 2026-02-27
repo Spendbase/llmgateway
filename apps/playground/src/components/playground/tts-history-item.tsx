@@ -8,7 +8,6 @@ export interface TtsHistoryItem {
 	id: string;
 	text: string;
 	audioUrl: string;
-	audioBlob: Blob;
 	format: string;
 	characterCount: number | null;
 	createdAt: Date;

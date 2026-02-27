@@ -7,20 +7,14 @@ import {
 	MessageSquare,
 	Edit2,
 	Trash2,
-	LogOutIcon,
-	MoreVerticalIcon,
 	Loader2,
+	MoreVerticalIcon,
 } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
-import { toast } from "sonner";
 
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import { CreditsDisplay } from "@/components/credits/credits-display";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +28,6 @@ import { Logo } from "@/components/ui/logo";
 import {
 	Sidebar,
 	SidebarContent,
-	SidebarFooter,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuAction,
@@ -52,15 +45,9 @@ import { clearLastUsedProjectCookiesAction } from "@/lib/actions/project";
 import { useAuth } from "@/lib/auth-client";
 
 import { ChatSidebarSkeleton } from "./chat-sidebar-skeleton";
-import { PlaygroundNavLinks } from "./playground-nav-links";
-import { ProjectSwitcher } from "./project-switcher";
+import { PlaygroundSidebarLayout } from "./playground-sidebar-layout";
 
 import type { Organization, Project } from "@/lib/types";
-
-const OrganizationSwitcher = dynamic(
-	() => import("./organization-switcher").then((m) => m.OrganizationSwitcher),
-	{ ssr: false },
-);
 
 interface ChatSidebarProps {
 	currentChatId?: string;
@@ -97,12 +84,10 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
 	const queryClient = useQueryClient();
 	const router = useRouter();
-	const pathname = usePathname();
 	const posthog = usePostHog();
-	const { user, isLoading: isUserLoading } = useUser();
+	const { isLoading: isUserLoading } = useUser();
 	const { signOut } = useAuth();
 
-	// Use real chat data from API
 	const { data: chatsData, isLoading: isChatsLoading } = useChats();
 	const deleteChat = useDeleteChat();
 	const updateChat = useUpdateChat();
@@ -114,14 +99,9 @@ export function ChatSidebar({
 
 	const logout = async () => {
 		posthog.reset();
-
-		// Clear last used project cookies before signing out
 		try {
 			await clearLastUsedProjectCookiesAction();
-		} catch {
-			toast.error("Failed to clear last used project cookies");
-		}
-
+		} catch {}
 		await signOut({
 			fetchOptions: {
 				onSuccess: () => {
@@ -144,9 +124,7 @@ export function ChatSidebar({
 	const saveTitle = (chatId: string) => {
 		if (editTitle.trim()) {
 			updateChat.mutate({
-				params: {
-					path: { id: chatId },
-				},
+				params: { path: { id: chatId } },
 				body: { title: editTitle.trim() },
 			});
 		}
@@ -155,11 +133,7 @@ export function ChatSidebar({
 	};
 
 	const handleDeleteChat = (chatId: string) => {
-		deleteChat.mutate({
-			params: {
-				path: { id: chatId },
-			},
-		});
+		deleteChat.mutate({ params: { path: { id: chatId } } });
 		if (currentChatId === chatId) {
 			clearMessages();
 			onChatSelect?.("");
@@ -170,16 +144,16 @@ export function ChatSidebar({
 		const date = new Date(dateString);
 		const now = new Date();
 		const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-
 		if (diffInHours < 1) {
 			return "Just now";
-		} else if (diffInHours < 24) {
-			return `${Math.floor(diffInHours)}h ago`;
-		} else if (diffInHours < 48) {
-			return "Yesterday";
-		} else {
-			return format(date, "MMM d");
 		}
+		if (diffInHours < 24) {
+			return `${Math.floor(diffInHours)}h ago`;
+		}
+		if (diffInHours < 48) {
+			return "Yesterday";
+		}
+		return format(date, "MMM d");
 	};
 
 	const groupChatsByDate = (chats: Chat[]) => {
@@ -219,19 +193,17 @@ export function ChatSidebar({
 		),
 	);
 
-	const renderChatGroup = (title: string, chats: Chat[]) => {
-		if (chats.length === 0) {
+	const renderChatGroup = (title: string, groupChats: Chat[]) => {
+		if (groupChats.length === 0) {
 			return null;
 		}
-
 		return (
 			<div key={title} className="mb-4">
 				<div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
 					{title}
 				</div>
-
 				<div className="space-y-1">
-					{chats.map((chat) => (
+					{groupChats.map((chat) => (
 						<SidebarMenuItem key={chat.id} className="relative">
 							<SidebarMenuButton
 								isActive={currentChatId === chat.id}
@@ -270,16 +242,13 @@ export function ChatSidebar({
 									</div>
 								)}
 							</SidebarMenuButton>
-							{/* Action buttons */}
 							{currentChatId === chat.id && editingId !== chat.id && (
 								<div className="absolute right-0 top-2 bottom-0">
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
 											<SidebarMenuAction
 												type="button"
-												onClick={(e) => {
-													e.stopPropagation();
-												}}
+												onClick={(e) => e.stopPropagation()}
 												className="h-7 w-7 cursor-pointer"
 											>
 												<MoreVerticalIcon className="h-3.5 w-3.5" />
@@ -317,45 +286,22 @@ export function ChatSidebar({
 		);
 	};
 
-	const isAuthenticated = !!user;
-
 	if (isUserLoading) {
-		return <ChatSidebarSkeleton organization={null} isOrgLoading={true} />;
-	}
-
-	// Unauthenticated → show CTA instead of org/project/chats UI
-	if (!isAuthenticated) {
 		return (
 			<Sidebar className={className}>
 				<SidebarHeader>
-					<div className="flex flex-col items-center gap-4">
-						<Link
-							href="/"
-							className="flex self-start items-center gap-2 my-2"
-							prefetch={true}
-						>
-							<Logo className="h-10 w-10" />
-							<h1 className="text-xl font-semibold">LLM API</h1>
-							<Badge>Chat</Badge>
-						</Link>
-						<PlaygroundNavLinks pathname={pathname} />
-						<div className="w-full rounded-md border p-4 text-sm">
-							<div className="font-medium mb-2">Sign in required</div>
-							<p className="text-muted-foreground mb-3">
-								Please sign in to view organizations, projects, and chats.
-							</p>
-							<div className="flex flex-col gap-2">
-								<GoogleSignInButton />
-								<Button size="sm" variant="outline" className="w-full" asChild>
-									<Link href="/login">Email Login</Link>
-								</Button>
-								<Button size="sm" variant="outline" className="w-full" asChild>
-									<Link href="/signup">Sign up</Link>
-								</Button>
-							</div>
-						</div>
-					</div>
+					<Link href="/" className="flex items-center gap-2 my-2" prefetch>
+						<Logo className="h-10 w-10" />
+						<h1 className="text-xl font-semibold">LLM API</h1>
+						<Badge>Chat</Badge>
+					</Link>
 				</SidebarHeader>
+				<SidebarContent className="px-2 py-4">
+					<div className="flex items-center justify-center py-8 gap-2 text-sm text-muted-foreground">
+						<Loader2 className="h-4 w-4 animate-spin" />
+						Loading…
+					</div>
+				</SidebarContent>
 			</Sidebar>
 		);
 	}
@@ -370,108 +316,51 @@ export function ChatSidebar({
 	}
 
 	return (
-		<Sidebar className={className + " max-md:hidden overflow-hidden"}>
-			<SidebarHeader>
-				<div className="flex flex-col items-center gap-4">
-					<Link
-						href="/"
-						className="flex self-start items-center gap-2 my-2"
-						prefetch={true}
-					>
-						<Logo className="h-10 w-10" />
-						<h1 className="text-xl font-semibold">LLM API</h1>
-						<Badge>Chat</Badge>
-					</Link>
-					<PlaygroundNavLinks pathname={pathname} />
-					<Button
-						variant="outline"
-						className="w-full flex items-center gap-2"
-						onClick={onNewChat}
-						disabled={isPageLoading}
-					>
-						{isPageLoading ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
-						) : (
-							<Plus className="h-4 w-4" />
-						)}
-						New Chat
-					</Button>
-				</div>
-			</SidebarHeader>
-
-			<SidebarContent className="px-2 overflow-x-hidden">
-				<SidebarMenu>
-					<SidebarMenuItem>
-						<OrganizationSwitcher
-							organizations={organizations}
-							selectedOrganization={selectedOrganization}
-							onSelectOrganization={onSelectOrganization}
-							onOrganizationCreated={onOrganizationCreated}
-						/>
-					</SidebarMenuItem>
-				</SidebarMenu>
-				<SidebarMenu>
-					<SidebarMenuItem>
-						{selectedOrganization && (
-							<ProjectSwitcher
-								projects={projects}
-								selectedProject={selectedProject}
-								onSelectProject={onSelectProject}
-								currentOrganization={selectedOrganization}
-								onProjectCreated={onProjectCreated}
-							/>
-						)}
-					</SidebarMenuItem>
-				</SidebarMenu>
-				<SidebarMenu>
-					{renderChatGroup("Today", chatGroups.today)}
-					{renderChatGroup("Yesterday", chatGroups.yesterday)}
-					{renderChatGroup("Last 7 days", chatGroups.lastWeek)}
-					{renderChatGroup("Older", chatGroups.older)}
-
-					{chats.length === 0 && !isChatsLoading && (
-						<div className="flex flex-col items-center justify-center py-8 text-center">
-							<MessageSquare className="h-12 w-12 text-muted-foreground/50 mb-4" />
-							<p className="text-sm text-muted-foreground mb-2">
-								No chat history
-							</p>
-							<p className="text-xs text-muted-foreground">
-								Start a new conversation to see it here
-							</p>
-						</div>
+		<PlaygroundSidebarLayout
+			badge="Chat"
+			className={className}
+			organizations={organizations}
+			selectedOrganization={selectedOrganization}
+			onSelectOrganization={onSelectOrganization}
+			onOrganizationCreated={onOrganizationCreated}
+			projects={projects}
+			selectedProject={selectedProject}
+			onSelectProject={onSelectProject}
+			onProjectCreated={onProjectCreated}
+			onLogout={logout}
+			headerExtra={
+				<Button
+					variant="outline"
+					className="w-full flex items-center gap-2 cursor-pointer"
+					onClick={onNewChat}
+					disabled={isPageLoading}
+				>
+					{isPageLoading ? (
+						<Loader2 className="h-4 w-4 animate-spin" />
+					) : (
+						<Plus className="h-4 w-4" />
 					)}
-				</SidebarMenu>
-			</SidebarContent>
-
-			<SidebarFooter className="border-t">
-				<CreditsDisplay organization={selectedOrganization} />
-				<div className="flex items-center justify-between p-4 gap-3">
-					<div className="flex items-center gap-3 flex-1 min-w-0">
-						<Avatar className="border-border h-9 w-9 border">
-							<AvatarFallback className="bg-muted">
-								{user?.name?.slice(0, 2) || "AU"}
-							</AvatarFallback>
-						</Avatar>
-						<div className="text-sm flex-1 min-w-0">
-							<div className="flex items-center gap-2 font-medium truncate">
-								{user?.name}
-							</div>
-							<div className="text-xs text-muted-foreground truncate">
-								{user?.email}
-							</div>
-						</div>
+					New Chat
+				</Button>
+			}
+		>
+			<SidebarMenu>
+				{renderChatGroup("Today", chatGroups.today)}
+				{renderChatGroup("Yesterday", chatGroups.yesterday)}
+				{renderChatGroup("Last 7 days", chatGroups.lastWeek)}
+				{renderChatGroup("Older", chatGroups.older)}
+				{chats.length === 0 && (
+					<div className="flex flex-col items-center justify-center py-8 text-center">
+						<MessageSquare className="h-12 w-12 text-muted-foreground/50 mb-4" />
+						<p className="text-sm text-muted-foreground mb-2">
+							No chat history
+						</p>
+						<p className="text-xs text-muted-foreground">
+							Start a new conversation to see it here
+						</p>
 					</div>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={logout}
-						className="p-2 h-auto ml-2 shrink-0"
-						title="Sign out"
-					>
-						<LogOutIcon className="h-4 w-4" />
-					</Button>
-				</div>
-			</SidebarFooter>
-		</Sidebar>
+				)}
+			</SidebarMenu>
+		</PlaygroundSidebarLayout>
 	);
 }

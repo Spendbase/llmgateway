@@ -44,7 +44,6 @@ const audioSpeechRequestSchema = z.object({
 			"mp3",
 			"opus",
 			"aac",
-			"flac",
 			"wav",
 			"pcm",
 			"mp3_22050_32",
@@ -59,6 +58,10 @@ const audioSpeechRequestSchema = z.object({
 		.openapi({
 			description: "The format of the audio output",
 		}),
+	speed: z.number().min(0.7).max(1.2).optional().default(1.0).openapi({
+		description:
+			"Speech speed multiplier. 1.0 is normal speed, 0.7 is slowest, 1.2 is fastest.",
+	}),
 });
 
 const audioSpeechRoute = createRoute({
@@ -127,6 +130,7 @@ async function callElevenLabsTTS(
 	text: string,
 	outputFormat: string,
 	providerToken: string,
+	speed = 1.0,
 ): Promise<Response> {
 	const url = `${ELEVENLABS_TTS_URL}/${voiceId}`;
 	const headers = getProviderHeaders("elevenlabs", providerToken);
@@ -141,6 +145,7 @@ async function callElevenLabsTTS(
 			voice_settings: {
 				stability: 0.5,
 				similarity_boost: 0.75,
+				speed,
 			},
 		}),
 	});
@@ -158,7 +163,7 @@ audio.openapi(audioSpeechRoute, async (c) => {
 	const requestId = c.req.header("x-request-id") || shortid(40);
 	c.header("x-request-id", requestId);
 
-	const { model, input, voice, response_format } = c.req.valid("json");
+	const { model, input, voice, response_format, speed } = c.req.valid("json");
 
 	const auth = c.req.header("Authorization");
 	const xApiKey = c.req.header("x-api-key");
@@ -337,10 +342,17 @@ audio.openapi(audioSpeechRoute, async (c) => {
 			input,
 			outputFormat,
 			providerToken,
+			speed,
 		);
 
 		if (!res.ok) {
-			const errorBody = await res.json().catch(() => null);
+			const rawText = await res.text().catch(() => String(res.status));
+			let errorBody: unknown = null;
+			try {
+				errorBody = JSON.parse(rawText);
+			} catch {
+				/* not JSON */
+			}
 
 			if (isVoiceNotFoundError(errorBody)) {
 				voiceId = await handleVoiceNotFound(voice, providerToken);
@@ -350,11 +362,12 @@ audio.openapi(audioSpeechRoute, async (c) => {
 					input,
 					outputFormat,
 					providerToken,
+					speed,
 				);
 			}
 
 			if (!res.ok) {
-				const errorText = await res.text().catch(() => String(res.status));
+				const errorText = rawText || String(res.status);
 				logger.error("ElevenLabs TTS error", {
 					status: res.status,
 					error: errorText,
@@ -364,6 +377,11 @@ audio.openapi(audioSpeechRoute, async (c) => {
 				if (res.status === 403) {
 					throw new HTTPException(403, {
 						message: `The requested output format "${response_format}" requires a paid ElevenLabs plan. Use mp3 or opus instead, or provide your own ElevenLabs API key with the required plan.`,
+					});
+				}
+				if (res.status === 401) {
+					throw new HTTPException(401, {
+						message: `ElevenLabs API key is invalid or expired. Please update your ElevenLabs provider key.`,
 					});
 				}
 				throw new HTTPException(res.status as 400, {

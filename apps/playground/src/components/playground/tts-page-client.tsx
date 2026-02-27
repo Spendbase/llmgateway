@@ -2,17 +2,24 @@
 
 import { Loader2, Volume2, Wand2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { ThemeToggle } from "@/components/landing/theme-toggle";
 import { AuthDialog } from "@/components/playground/auth-dialog";
 import { TtsFeedItem } from "@/components/playground/tts-feed-item";
 import { TtsSidebar } from "@/components/playground/tts-sidebar";
 import { Button } from "@/components/ui/button";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEnsurePlaygroundKey } from "@/hooks/useEnsurePlaygroundKey";
 import { useTts } from "@/hooks/useTts";
+import { useTtsGenerations } from "@/hooks/useTtsGenerations";
 import { useUser } from "@/hooks/useUser";
 import { cn } from "@/lib/utils";
 
@@ -61,14 +68,41 @@ export default function TtsPageClient({
 	const [model, setModel] = useState(audioModels[0]?.id ?? "");
 	const [voice, setVoice] = useState(DEFAULT_VOICE);
 	const [format, setFormat] = useState(DEFAULT_FORMAT);
-	const [feed, setFeed] = useState<TtsFeedEntry[]>([]);
-
-	const feedEndRef = useRef<HTMLDivElement>(null);
+	const [speed, setSpeed] = useState(1.0);
+	const [isSaving, setIsSaving] = useState(false);
+	const sentinelRef = useRef<HTMLDivElement>(null);
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
 	const isAuthenticated = !isUserLoading && !!user;
 
-	const { generate, audioUrl, audioBlob, isGenerating, error, characterCount } =
-		useTts();
+	const { generate, audioUrl, isGenerating, error } = useTts();
+
+	const {
+		data: historyData,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+		refetch: refetchGenerations,
+	} = useTtsGenerations();
+
+	const historyEntries = useMemo<TtsFeedEntry[]>(() => {
+		if (!historyData) {
+			return [];
+		}
+		return historyData.pages
+			.flatMap((page) => page.generations)
+			.map((gen) => ({
+				id: gen.id,
+				text: gen.text,
+				audioUrl: `/api/tts-generations/${gen.id}/audio`,
+				format: gen.format,
+				characterCount: gen.chars,
+				createdAt: new Date(gen.createdAt),
+				voice: gen.voice,
+			}));
+	}, [historyData]);
+
+	const isEmpty = historyEntries.length === 0 && !isGenerating && !isSaving;
 
 	useEnsurePlaygroundKey({
 		isAuthenticated,
@@ -82,31 +116,48 @@ export default function TtsPageClient({
 		}
 	}, [error]);
 
-	// Append new generation to feed and auto-scroll
+	// Keep a ref so the observer callback always reads the latest value
+	// without being recreated on every isFetchingNextPage change.
+	const isFetchingNextPageRef = useRef(isFetchingNextPage);
 	useEffect(() => {
-		if (!audioUrl || !audioBlob) {
+		isFetchingNextPageRef.current = isFetchingNextPage;
+	}, [isFetchingNextPage]);
+
+	useEffect(() => {
+		const sentinel = sentinelRef.current;
+		const container = scrollContainerRef.current;
+		if (!sentinel || !container) {
 			return;
 		}
-		const entry: TtsFeedEntry = {
-			id: crypto.randomUUID(),
-			text,
-			audioUrl,
-			audioBlob,
-			format,
-			characterCount,
-			createdAt: new Date(),
-			voice,
-		};
-		setFeed((prev) => [...prev, entry].slice(-50));
-		setText("");
-		// Intentionally excludes reactive state — snapshot at generation time.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [audioUrl, audioBlob]);
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (
+					entries[0].isIntersecting &&
+					hasNextPage &&
+					!isFetchingNextPageRef.current
+				) {
+					void fetchNextPage();
+				}
+			},
+			{ root: container, rootMargin: "200px 0px 0px 0px", threshold: 0 },
+		);
+		observer.observe(sentinel);
+		return () => observer.disconnect();
+	}, [hasNextPage, fetchNextPage]);
 
-	// Scroll to bottom when feed updates
+	// After generation completes, wait for S3 save then refetch history
 	useEffect(() => {
-		feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [feed]);
+		if (!audioUrl) {
+			return;
+		}
+		setText("");
+		setIsSaving(true);
+		const timer = setTimeout(() => {
+			void refetchGenerations().then(() => setIsSaving(false));
+		}, 3000);
+		return () => clearTimeout(timer);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [audioUrl]);
 
 	// Character limit
 	const selectedAudioModel = audioModels.find((m) => m.id === model);
@@ -138,8 +189,9 @@ export default function TtsPageClient({
 			input: text,
 			voice,
 			response_format: format,
+			speed,
 		});
-	}, [generate, text, model, voice, format, isOverLimit, maxChars]);
+	}, [generate, text, model, voice, format, speed, isOverLimit, maxChars]);
 
 	// ⌘+Enter shortcut
 	useEffect(() => {
@@ -201,19 +253,22 @@ export default function TtsPageClient({
 					model={model}
 					voice={voice}
 					format={format}
+					speed={speed}
 					onModelChange={setModel}
 					onVoiceChange={setVoice}
 					onFormatChange={setFormat}
+					onSpeedChange={setSpeed}
 					disabled={isGenerating}
 				/>
 
 				<div className="flex flex-1 flex-col min-h-0 overflow-hidden">
 					{/* Header */}
-					<div className="shrink-0 border-b px-6 py-3 flex items-center gap-3">
+					<div className="shrink-0 border-b px-4 py-3 flex items-center gap-3">
+						<SidebarTrigger />
 						<div className="flex items-center justify-center h-7 w-7 rounded-lg bg-primary/10">
 							<Volume2 className="h-4 w-4 text-primary" />
 						</div>
-						<div>
+						<div className="flex-1 min-w-0">
 							<h1 className="text-sm font-semibold leading-none">
 								Text to Speech
 							</h1>
@@ -221,12 +276,15 @@ export default function TtsPageClient({
 								Convert text into natural-sounding audio
 							</p>
 						</div>
+						<ThemeToggle />
 					</div>
 
-					{/* Feed */}
-					<div className="flex-1 min-h-0 overflow-y-auto">
-						{feed.length === 0 ? (
-							<div className="h-full flex flex-col items-center justify-center gap-3 text-center px-6">
+					<div
+						ref={scrollContainerRef}
+						className="flex-1 min-h-0 overflow-y-auto flex flex-col-reverse"
+					>
+						{isEmpty ? (
+							<div className="flex flex-col items-center justify-center gap-3 text-center px-6 py-20">
 								<div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
 									<Volume2 className="h-6 w-6 text-primary/60" />
 								</div>
@@ -240,27 +298,37 @@ export default function TtsPageClient({
 								</div>
 							</div>
 						) : (
-							<div className="mx-auto max-w-2xl px-6 py-6 space-y-6">
-								{feed.map((entry) => (
-									<TtsFeedItem
-										key={entry.id}
-										item={entry}
-										voice={entry.voice}
-									/>
-								))}
-								{/* Loading indicator */}
-								{isGenerating && (
-									<div className="flex justify-start">
+							<>
+								{/* DOM first = visual bottom */}
+								{(isGenerating || isSaving) && (
+									<div className="mx-auto max-w-2xl w-full px-6 pb-6">
 										<div className="flex items-center gap-2 rounded-2xl rounded-bl-sm bg-muted px-4 py-3">
 											<Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
 											<span className="text-sm text-muted-foreground">
-												Generating audio…
+												{isGenerating ? "Generating audio…" : "Saving…"}
 											</span>
 										</div>
 									</div>
 								)}
-								<div ref={feedEndRef} />
-							</div>
+
+								{historyEntries.map((entry) => (
+									<div
+										key={entry.id}
+										className="mx-auto max-w-2xl w-full px-6 pb-6"
+									>
+										<TtsFeedItem item={entry} voice={entry.voice} />
+									</div>
+								))}
+
+								<div
+									ref={sentinelRef}
+									className="mx-auto max-w-2xl w-full px-6 py-4 flex justify-center"
+								>
+									{isFetchingNextPage && (
+										<Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+									)}
+								</div>
+							</>
 						)}
 					</div>
 
@@ -305,28 +373,34 @@ export default function TtsPageClient({
 										</div>
 									</div>
 									<div className="flex items-center gap-2">
-										<kbd className="hidden sm:inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 font-mono">
-											<span className="text-xs">⌘</span>
-											<span>↵</span>
-										</kbd>
-										<Button
-											size="sm"
-											onClick={handleGenerate}
-											disabled={
-												isGenerating ||
-												!text.trim() ||
-												isOverLimit ||
-												!isAuthenticated
-											}
-											className="gap-1.5 rounded-xl"
-										>
-											{isGenerating ? (
-												<Loader2 className="h-3.5 w-3.5 animate-spin" />
-											) : (
-												<Wand2 className="h-3.5 w-3.5" />
-											)}
-											Generate
-										</Button>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Button
+													size="sm"
+													onClick={handleGenerate}
+													disabled={
+														isGenerating ||
+														!text.trim() ||
+														isOverLimit ||
+														!isAuthenticated
+													}
+													className="gap-1.5 rounded-xl cursor-pointer"
+												>
+													{isGenerating ? (
+														<Loader2 className="h-3.5 w-3.5 animate-spin" />
+													) : (
+														<Wand2 className="h-3.5 w-3.5" />
+													)}
+													Generate
+												</Button>
+											</TooltipTrigger>
+											<TooltipContent side="top">
+												<p className="flex items-center gap-1">
+													<kbd className="font-mono">⌘</kbd>
+													<kbd className="font-mono">↵</kbd>
+												</p>
+											</TooltipContent>
+										</Tooltip>
 									</div>
 								</div>
 							</div>
