@@ -267,8 +267,8 @@ const list = createRoute({
 					schema: z.object({
 						apiKeys: z
 							.array(
-								apiKeySchema.omit({ token: true }).extend({
-									// Only return a masked version of the token
+								apiKeySchema.extend({
+									// Return both full token and masked version
 									maskedToken: z.string(),
 								}),
 							)
@@ -409,7 +409,6 @@ keysApi.openapi(list, async (c) => {
 		apiKeys: apiKeys.map((key) => ({
 			...key,
 			maskedToken: maskToken(key.token),
-			token: undefined,
 		})),
 		planLimits: projectId
 			? {
