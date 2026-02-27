@@ -18,7 +18,7 @@ const redeemVoucherSchema = z.object({
 
 const redeemVoucherResponseSchema = z.object({
 	success: z.boolean(),
-	creditAmount: z.number(),
+	creditAmount: z.string(),
 	transactionId: z.string(),
 });
 
@@ -179,7 +179,7 @@ vouchers.openapi(redeemVoucher, async (c) => {
 
 	return c.json({
 		success: true,
-		creditAmount: Number(voucher.depositAmount),
+		creditAmount: voucher.depositAmount,
 		transactionId: result.transactionId,
 	});
 });

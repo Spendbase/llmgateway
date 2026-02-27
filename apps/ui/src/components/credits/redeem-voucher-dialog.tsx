@@ -59,7 +59,7 @@ export function RedeemVoucherButton() {
 				onSuccess: (data) => {
 					toast({
 						title: "Voucher redeemed",
-						description: `$${data.creditAmount.toFixed(2)} credits added to your account.`,
+						description: `$${Number(data.creditAmount).toFixed(2)} credits added to your account.`,
 					});
 
 					const orgsQueryKey = api.queryOptions("get", "/orgs", {}).queryKey;
