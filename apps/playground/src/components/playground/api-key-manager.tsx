@@ -55,8 +55,10 @@ interface ApiKeyManagerProps {
 
 function CreateNewKeyForm({
 	onKeyCreated,
+	gatewayUrl,
 }: {
 	onKeyCreated: (key: string) => void;
+	gatewayUrl: string;
 }) {
 	const [name, setName] = useState("");
 	const [newApiKey, setNewApiKey] = useState("");
@@ -82,7 +84,6 @@ function CreateNewKeyForm({
 	};
 
 	const shareApiKey = async () => {
-		const gatewayUrl = "https://api.llmapi.ai";
 		const shareText = `🔗 LLM API Connection Details
 
 API URL: ${gatewayUrl}/v1
@@ -389,7 +390,10 @@ export function ApiKeyManager({
 					</Form>
 				</TabsContent>
 				<TabsContent value="create">
-					<CreateNewKeyForm onKeyCreated={handleKeyCreatedAndSave} />
+					<CreateNewKeyForm
+						onKeyCreated={handleKeyCreatedAndSave}
+						gatewayUrl={config.gatewayUrl}
+					/>
 				</TabsContent>
 			</Tabs>
 		);

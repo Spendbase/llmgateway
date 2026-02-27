@@ -34,6 +34,7 @@ import {
 	TooltipTrigger,
 } from "@/lib/components/tooltip";
 import { toast } from "@/lib/components/use-toast";
+import { useAppConfig } from "@/lib/config";
 import { useApi } from "@/lib/fetch-client";
 
 const formSchema = z.object({
@@ -48,6 +49,7 @@ export function ApiKeyStep() {
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const { data: defaultProject, isError } = useDefaultProject();
 	const api = useApi();
+	const { gatewayUrl } = useAppConfig();
 
 	// Fetch existing API keys
 	const { data: apiKeysData, isLoading: isLoadingKeys } = api.useQuery(
@@ -134,66 +136,27 @@ export function ApiKeyStep() {
 		}
 	}
 
-	async function shareApiKey() {
-		if (!apiKey || !defaultProject) {
-			return;
-		}
-
-		const gatewayUrl = "https://api.llmapi.ai";
-		const shareText = `🔗 LLM API Connection Details
+	function generateShareText(token: string, projectName: string) {
+		return `🔗 LLM API Connection Details
 
 API URL: ${gatewayUrl}/v1
-API Key: ${apiKey}
+API Key: ${token}
 
-Project: ${defaultProject.name}
+Project: ${projectName}
 
 Example cURL:
 curl ${gatewayUrl}/v1/chat/completions \\
-  -H "Authorization: Bearer ${apiKey}" \\
+  -H "Authorization: Bearer ${token}" \\
   -H "Content-Type: application/json" \\
   -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'`;
-
-		if (navigator.share) {
-			try {
-				await navigator.share({
-					title: "LLM API Connection Details",
-					text: shareText,
-				});
-			} catch {
-				// User cancelled or share failed, copy to clipboard instead
-				navigator.clipboard.writeText(shareText);
-				toast({
-					title: "Copied to clipboard",
-					description: "Connection details copied to clipboard",
-				});
-			}
-		} else {
-			navigator.clipboard.writeText(shareText);
-			toast({
-				title: "Copied to clipboard",
-				description: "Connection details copied to clipboard",
-			});
-		}
 	}
 
-	async function shareExistingApiKey(key: ApiKeyType) {
-		if (!key.token || !defaultProject) {
+	async function shareConnectionDetails(token: string) {
+		if (!defaultProject) {
 			return;
 		}
 
-		const gatewayUrl = "https://api.llmapi.ai";
-		const shareText = `🔗 LLM API Connection Details
-
-API URL: ${gatewayUrl}/v1
-API Key: ${key.token}
-
-Project: ${defaultProject.name}
-
-Example cURL:
-curl ${gatewayUrl}/v1/chat/completions \\
-  -H "Authorization: Bearer ${key.token}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hello"}]}'`;
+		const shareText = generateShareText(token, defaultProject.name);
 
 		if (navigator.share) {
 			try {
@@ -272,7 +235,9 @@ curl ${gatewayUrl}/v1/chat/completions \\
 												<Button
 													variant="ghost"
 													size="sm"
-													onClick={shareApiKey}
+													onClick={() =>
+														apiKey && shareConnectionDetails(apiKey)
+													}
 													type="button"
 													className="h-8 w-8 p-0"
 												>
@@ -338,7 +303,10 @@ curl ${gatewayUrl}/v1/chat/completions \\
 																		<Button
 																			variant="ghost"
 																			size="sm"
-																			onClick={() => shareExistingApiKey(key)}
+																			onClick={() =>
+																				key.token &&
+																				shareConnectionDetails(key.token)
+																			}
 																			type="button"
 																			className="h-6 w-6 p-0"
 																		>
@@ -427,7 +395,9 @@ curl ${gatewayUrl}/v1/chat/completions \\
 															<Button
 																variant="ghost"
 																size="sm"
-																onClick={() => shareExistingApiKey(key)}
+																onClick={() =>
+																	key.token && shareConnectionDetails(key.token)
+																}
 																type="button"
 																className="h-6 w-6 p-0"
 															>

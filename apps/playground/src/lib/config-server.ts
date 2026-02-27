@@ -2,6 +2,7 @@ export interface AppConfig {
 	hosted: boolean;
 	apiUrl: string;
 	apiBackendUrl: string;
+	gatewayUrl: string;
 	githubUrl: string;
 	discordUrl: string;
 	twitterUrl: string;
@@ -16,10 +17,12 @@ export interface AppConfig {
 
 export function getConfig(): AppConfig {
 	const apiUrl = process.env.API_URL || "http://localhost:4002";
+	const gatewayUrl = process.env.GATEWAY_URL || "http://localhost:4001";
 	return {
 		hosted: process.env.HOSTED === "true",
 		apiUrl,
 		apiBackendUrl: process.env.API_BACKEND_URL || apiUrl,
+		gatewayUrl,
 		githubUrl:
 			process.env.GITHUB_URL || "https://github.com/Spendbase/llmgateway",
 		discordUrl: process.env.DISCORD_URL || "https://discord.gg/gcqcZeYWEz",
