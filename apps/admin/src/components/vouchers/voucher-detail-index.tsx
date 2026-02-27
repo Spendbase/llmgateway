@@ -13,7 +13,7 @@ type VoucherDetailResponse =
 	paths["/admin/vouchers/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 
 export function VoucherDetailIndex({ data }: { data: VoucherDetailResponse }) {
-	const { voucher } = data;
+	const { voucher, usedByOrganizations } = data;
 
 	return (
 		<div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 md:px-8">
@@ -117,6 +117,51 @@ export function VoucherDetailIndex({ data }: { data: VoucherDetailResponse }) {
 						</div>
 					</dl>
 				</div>
+			</div>
+
+			<div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+				<h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground mb-4">
+					Used by organizations
+				</h2>
+				{!usedByOrganizations || usedByOrganizations.length === 0 ? (
+					<p className="text-sm text-muted-foreground italic">
+						This voucher has not been used yet.
+					</p>
+				) : (
+					<div className="overflow-x-auto">
+						<table className="w-full text-sm text-left">
+							<thead className="text-xs text-muted-foreground uppercase bg-muted/50">
+								<tr>
+									<th className="px-4 py-2">Organization</th>
+									<th className="px-4 py-2">Usage Count</th>
+									<th className="px-4 py-2">Last Used</th>
+								</tr>
+							</thead>
+							<tbody className="divide-y divide-border/50">
+								{usedByOrganizations.map((org) => (
+									<tr key={org.orgId} className="hover:bg-muted/30">
+										<td className="px-4 py-3">
+											<div className="flex flex-col">
+												<span className="font-medium text-foreground">
+													{org.orgName}
+												</span>
+												<span className="text-xs text-muted-foreground font-mono">
+													{org.orgId}
+												</span>
+											</div>
+										</td>
+										<td className="px-4 py-3">
+											<Badge variant="secondary">{org.usageCount}</Badge>
+										</td>
+										<td className="px-4 py-3 text-muted-foreground">
+											{new Date(org.lastUsedAt).toLocaleString()}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				)}
 			</div>
 
 			<div className="flex items-center gap-4 pt-4 border-t">

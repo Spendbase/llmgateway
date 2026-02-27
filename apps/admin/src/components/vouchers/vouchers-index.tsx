@@ -32,15 +32,15 @@ export default function VouchersIndex({
 					No vouchers found
 				</div>
 			) : (
-				<>
-					<VouchersTable vouchers={items} />
-					<VouchersPagination
-						currentPage={page}
-						totalPages={totalPages}
-						pageSize={pageSize}
-						totalVouchers={total}
-					/>
-				</>
+				<VouchersTable vouchers={items} />
+			)}
+			{total > 0 && (
+				<VouchersPagination
+					currentPage={page}
+					totalPages={totalPages}
+					pageSize={pageSize}
+					totalVouchers={total}
+				/>
 			)}
 		</div>
 	);

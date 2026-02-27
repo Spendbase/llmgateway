@@ -2010,6 +2010,12 @@ export interface paths {
                                 updatedAt: string;
                                 totalRedemptionsAllOrgs: number;
                             };
+                            usedByOrganizations: {
+                                orgId: string;
+                                orgName: string;
+                                usageCount: number;
+                                lastUsedAt: string;
+                            }[];
                         };
                     };
                 };
@@ -4815,7 +4821,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             success: boolean;
-                            creditAmount: number;
+                            creditAmount: string;
                             transactionId: string;
                         };
                     };

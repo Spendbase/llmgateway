@@ -1879,6 +1879,14 @@ const getVoucherRoute = createRoute({
 				"application/json": {
 					schema: z.object({
 						voucher: voucherWithAggregatesSchema,
+						usedByOrganizations: z.array(
+							z.object({
+								orgId: z.string(),
+								orgName: z.string(),
+								usageCount: z.number(),
+								lastUsedAt: z.date(),
+							}),
+						),
 					}),
 				},
 			},
@@ -1944,26 +1952,43 @@ admin.openapi(createVoucherRoute, async (c) => {
 
 	const body = c.req.valid("json");
 
-	const expiresAt =
-		body.expiresAt !== null && body.expiresAt !== undefined
-			? new Date(body.expiresAt)
-			: null;
+	const expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;
+
+	if (expiresAt && Number.isNaN(expiresAt.getTime())) {
+		throw new HTTPException(400, {
+			message: "expiresAt must be a valid datetime",
+		});
+	}
 
 	// If code is provided, do a straight insert.
 	if (body.code) {
-		const [created] = await db
-			.insert(tables.voucher)
-			.values({
-				code: body.code,
-				depositAmount: String(body.depositAmount ?? 0),
-				globalUsageLimit: body.globalUsageLimit ?? 1,
-				orgUsageLimit: body.orgUsageLimit ?? 1,
-				expiresAt: expiresAt ?? undefined,
-				isActive: body.isActive ?? true,
-			})
-			.returning();
+		try {
+			const [created] = await db
+				.insert(tables.voucher)
+				.values({
+					code: body.code,
+					depositAmount: String(body.depositAmount ?? 0),
+					globalUsageLimit: body.globalUsageLimit ?? 1,
+					orgUsageLimit: body.orgUsageLimit ?? 1,
+					expiresAt: expiresAt ?? undefined,
+					isActive: body.isActive ?? true,
+				})
+				.returning();
 
-		return c.json({ voucher: created });
+			return c.json({ voucher: created });
+		} catch (err: unknown) {
+			if (
+				typeof err === "object" &&
+				err !== null &&
+				"code" in err &&
+				err.code === "23505"
+			) {
+				throw new HTTPException(409, {
+					message: "Voucher code already exists",
+				});
+			}
+			throw err;
+		}
 	}
 
 	// Auto-generate unique code, retry up to 5 times.
@@ -1987,9 +2012,14 @@ admin.openapi(createVoucherRoute, async (c) => {
 				.returning();
 
 			return c.json({ voucher: created });
-		} catch (err: any) {
+		} catch (err: unknown) {
 			// Postgres unique violation
-			if (err?.code === "23505") {
+			if (
+				typeof err === "object" &&
+				err !== null &&
+				"code" in err &&
+				err.code === "23505"
+			) {
 				lastError = err;
 				continue;
 			}
@@ -2098,11 +2128,29 @@ admin.openapi(getVoucherRoute, async (c) => {
 		throw new HTTPException(404, { message: "Voucher not found" });
 	}
 
+	const usedByOrganizations = await db
+		.select({
+			orgId: tables.organization.id,
+			orgName: tables.organization.name,
+			usageCount: sql<number>`count(${tables.voucherLog.id})::int`,
+			lastUsedAt: sql<Date>`max(${tables.voucherLog.redeemedAt})`,
+		})
+		.from(tables.voucherLog)
+		.innerJoin(
+			tables.organization,
+			eq(tables.organization.id, tables.voucherLog.organizationId),
+		)
+		.where(eq(tables.voucherLog.voucherId, id))
+		.groupBy(tables.organization.id, tables.organization.name)
+		.orderBy(desc(sql`max(${tables.voucherLog.redeemedAt})`))
+		.limit(50);
+
 	return c.json({
 		voucher: {
 			...row,
 			totalRedemptionsAllOrgs: Number(row.totalRedemptionsAllOrgs),
 		},
+		usedByOrganizations,
 	});
 });
 
