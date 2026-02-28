@@ -907,7 +907,7 @@ export const modelHistory = pgTable(
 );
 
 export const banner = pgTable("banner", {
-	id: text().primaryKey(),
+	id: text().primaryKey().$defaultFn(shortid),
 	createdAt: timestamp().notNull().defaultNow(),
 	updatedAt: timestamp()
 		.notNull()
@@ -915,9 +915,7 @@ export const banner = pgTable("banner", {
 		.$onUpdate(() => new Date()),
 	name: text().notNull(),
 	description: text(),
-	enabled: boolean().notNull().default(true),
-	type: text().notNull(),
-	priority: integer().notNull().default(0),
+	enabled: boolean().notNull().default(false),
 });
 
 export const transactionEvent = pgTable(
