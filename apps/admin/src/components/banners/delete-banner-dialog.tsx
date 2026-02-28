@@ -16,7 +16,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { useApi } from "@/lib/fetch-client";
-import { getErrorMessage } from "@/lib/utils";
+import { showErrorToast } from "@/lib/utils";
 
 import type React from "react";
 
@@ -44,44 +44,33 @@ export function DeleteBannerDialog({
 	const [open, setOpen] = useState(false);
 	const api = useApi();
 	const queryClient = useQueryClient();
-	const [loading, setLoading] = useState(false);
-	const { mutateAsync: deleteBanner } = api.useMutation(
+	const { mutate: deleteBanner, isPending: loading } = api.useMutation(
 		"delete",
 		"/admin/banners/{id}",
 		{
 			onSuccess: () => {
-				setOpen(false);
-				setLoading(false);
 				toast.success("Banner deleted", {
 					description: "The banner has been deleted successfully.",
 				});
 				queryClient.invalidateQueries({ queryKey: ["get", "/admin/banners"] });
+				setOpen(false);
 			},
 			onError: (error: unknown) => {
-				setOpen(false);
-				setLoading(false);
-				toast.error("Failed to delete banner", {
-					description: getErrorMessage(error),
-					style: {
-						backgroundColor: "var(--destructive)",
-						color: "var(--destructive-foreground)",
-					},
-				});
+				showErrorToast("Failed to delete banner", error);
 			},
 		},
 	);
 
-	const handleOpen = () => {
-		setOpen(!open);
+	const handleOpenChange = (newOpen: boolean) => {
+		setOpen(newOpen);
 	};
 
-	const handleDelete = async () => {
-		setLoading(true);
-		await deleteBanner({ params: { path: { id: bannerId } } });
+	const handleDelete = () => {
+		deleteBanner({ params: { path: { id: bannerId } } });
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={handleOpen}>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
@@ -96,7 +85,7 @@ export function DeleteBannerDialog({
 						disabled={loading}
 						className="cursor-pointer"
 						type="button"
-						onClick={handleOpen}
+						onClick={() => handleOpenChange(false)}
 						variant="outline"
 					>
 						Cancel

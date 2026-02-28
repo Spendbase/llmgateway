@@ -1507,7 +1507,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name: string;
-                        description: string;
+                        description: string | null;
                     };
                 };
             };
@@ -1519,9 +1519,26 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            success: boolean;
+                            id: string;
+                            name: string;
+                            description: string | null;
+                            enabled: boolean;
                         };
                     };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -1572,6 +1589,13 @@ export interface paths {
                 };
                 /** @description Forbidden */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Banner not found */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };

@@ -31,7 +31,7 @@ export const Banner = ({ banner, onToggle, isPending }: BannerProps) => {
 		<Card>
 			<CardHeader>
 				<div className="flex items-center justify-between">
-					<div>
+					<div className="space-y-0.5">
 						<CardTitle>{banner.name}</CardTitle>
 						{banner.description && (
 							<CardDescription>{banner.description}</CardDescription>

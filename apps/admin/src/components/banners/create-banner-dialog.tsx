@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/lib/fetch-client";
 import Spinner from "@/lib/icons/Spinner";
-import { getErrorMessage } from "@/lib/utils";
+import { showErrorToast } from "@/lib/utils";
 
 import type React from "react";
 
@@ -45,12 +45,10 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 	const [name, setName] = useState<string>("");
 	const [description, setDescription] = useState<string>("");
 
-	const [loading, setLoading] = useState(false);
-
 	const api = useApi();
 	const queryClient = useQueryClient();
 
-	const { mutateAsync: createBanner } = api.useMutation(
+	const { mutateAsync: createBanner, isPending: loading } = api.useMutation(
 		"post",
 		"/admin/banners",
 		{
@@ -59,44 +57,34 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 					description: "The banner has been created successfully.",
 				});
 				queryClient.invalidateQueries({ queryKey: ["get", "/admin/banners"] });
-			},
-			onError: (error: unknown) => {
-				toast.error("Failed to create banner", {
-					description: getErrorMessage(error),
-					style: {
-						backgroundColor: "var(--destructive)",
-						color: "var(--destructive-foreground)",
-					},
-				});
-			},
-			onSettled: () => {
 				setOpen(false);
-				setLoading(false);
 				setName("");
 				setDescription("");
+			},
+			onError: (error: unknown) => {
+				showErrorToast("Failed to create banner", error);
 			},
 		},
 	);
 
-	const handleOpen = () => {
-		setOpen(!open);
-		setName("");
-		setDescription("");
+	const handleOpenChange = (newOpen: boolean) => {
+		setOpen(newOpen);
+		if (newOpen) {
+			setName("");
+			setDescription("");
+		}
 	};
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		setLoading(true);
-
-		if (!name.trim() || !description.trim()) {
+		if (!name.trim()) {
 			toast.error("Please enter a name and description", {
 				style: {
 					backgroundColor: "var(--destructive)",
 					color: "var(--destructive-foreground)",
 				},
 			});
-			setLoading(false);
 			return;
 		}
 
@@ -109,7 +97,7 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={handleOpen}>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
@@ -137,25 +125,25 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 						required
 					/>
 
-					<Label htmlFor="description">Description</Label>
+					<Label htmlFor="description">Description (optional)</Label>
 					<Textarea
 						id="description"
 						value={description}
 						onChange={(e) => setDescription(e.target.value)}
 						placeholder="Banner description"
-						required
 					/>
 					<DialogFooter>
 						<Button
 							className="cursor-pointer"
 							type="button"
-							onClick={handleOpen}
+							onClick={() => handleOpenChange(false)}
 							variant="outline"
+							disabled={loading}
 						>
 							Cancel
 						</Button>
 						<Button className="cursor-pointer" type="submit" disabled={loading}>
-							{loading ? "Processing..." : "Confirm"}
+							{loading ? "Submitting..." : "Confirm"}
 						</Button>
 					</DialogFooter>
 				</form>

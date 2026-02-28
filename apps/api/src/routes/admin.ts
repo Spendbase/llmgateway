@@ -2206,7 +2206,7 @@ const createBannerRoute = createRoute({
 				"application/json": {
 					schema: z.object({
 						name: z.string(),
-						description: z.string(),
+						description: z.string().nullable(),
 					}),
 				},
 			},
@@ -2216,16 +2216,14 @@ const createBannerRoute = createRoute({
 		200: {
 			content: {
 				"application/json": {
-					schema: z.object({
-						success: z.boolean(),
-					}),
+					schema: bannerSchema,
 				},
 			},
 			description: "Banner created successfully",
 		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
 	},
-	401: { description: "Unauthorized" },
-	403: { description: "Forbidden" },
 });
 
 const deleteBannerRoute = createRoute({
@@ -2247,6 +2245,7 @@ const deleteBannerRoute = createRoute({
 		},
 		401: { description: "Unauthorized" },
 		403: { description: "Forbidden" },
+		404: { description: "Banner not found" },
 	},
 });
 
@@ -2283,6 +2282,14 @@ admin.openapi(deleteBannerRoute, async (c) => {
 	}
 
 	const { id } = c.req.valid("param");
+
+	const existing = await db.query.banner.findFirst({
+		where: { id },
+	});
+
+	if (!existing) {
+		throw new HTTPException(404, { message: "Banner not found" });
+	}
 
 	await db.delete(tables.banner).where(eq(tables.banner.id, id));
 
