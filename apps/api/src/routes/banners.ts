@@ -13,8 +13,6 @@ const bannerSchema = z.object({
 	name: z.string(),
 	description: z.string().nullable(),
 	enabled: z.boolean(),
-	type: z.string(),
-	priority: z.number(),
 });
 
 const getBanners = createRoute({
@@ -50,7 +48,6 @@ banners.openapi(getBanners, async (c) => {
 				eq: true,
 			},
 		},
-		orderBy: (banner, { desc }) => [desc(banner.priority)],
 	});
 
 	return c.json({
