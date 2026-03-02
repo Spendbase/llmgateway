@@ -323,6 +323,14 @@ export const apiKey = pgTable(
 		}).default("active"),
 		usageLimit: decimal(),
 		usage: decimal().notNull().default("0"),
+		resetPeriod: text({
+			enum: ["daily", "weekly", "monthly", "none"],
+		})
+			.notNull()
+			.default("none"),
+		lastResetAt: timestamp(),
+		nextResetAt: timestamp(),
+		expiresAt: timestamp(),
 		projectId: text()
 			.notNull()
 			.references(() => project.id, { onDelete: "cascade" }),
@@ -333,6 +341,8 @@ export const apiKey = pgTable(
 	(table) => [
 		index("api_key_project_id_idx").on(table.projectId),
 		index("api_key_created_by_idx").on(table.createdBy),
+		index("api_key_next_reset_at_idx").on(table.nextResetAt),
+		index("api_key_expires_at_idx").on(table.expiresAt),
 	],
 );
 
