@@ -140,7 +140,7 @@ const { text } = await generateText({
 import { createLLMGateway } from "@llmgateway/ai-sdk-provider";
 
 const llmapi = createLLMGateway({
-  apiKey: process.env.LLMAPI_API_KEY,
+  apiKey: process.env.LLMAPI_KEY,
 });
 
 const { text } = await generateText({

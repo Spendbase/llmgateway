@@ -129,7 +129,7 @@ response = litellm.completion(
 response = litellm.completion(
     model="gpt-4",  # or "openai/gpt-4" to target a specific provider
     messages=[{"role": "user", "content": "Hello!"}],
-    api_base="https://api.llmapi.api/v1",
+    api_base="https://api.llmapi.ai/v1",
     api_key=os.environ["LLM_API_KEY"]
 )
 ```
@@ -234,7 +234,7 @@ LLM API supports function calling:
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://api.llmapi.io/v1",
+    base_url="https://api.llmapi.ai/v1",
     api_key=os.environ["LLM_API_KEY"]
 )
 
