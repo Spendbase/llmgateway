@@ -11,6 +11,27 @@ import type { ServerTypes } from "@/vars.js";
 
 export const keysApi = new OpenAPIHono<ServerTypes>();
 
+// Helper to compute the next reset date strictly based on UTC boundaries
+function computeNextResetAt(
+	period: "daily" | "weekly" | "monthly" | "none",
+	now: Date = new Date(),
+): Date | null {
+	if (period === "none") {
+		return null;
+	}
+	const next = new Date(now);
+
+	if (period === "daily") {
+		next.setUTCDate(next.getUTCDate() + 1);
+	} else if (period === "weekly") {
+		next.setUTCDate(next.getUTCDate() + 7);
+	} else if (period === "monthly") {
+		next.setUTCMonth(next.getUTCMonth() + 1);
+	}
+
+	return next;
+}
+
 // Create a schema for API key responses
 // Using z.object directly instead of createSelectSchema due to compatibility issues
 const apiKeySchema = z.object({
@@ -22,6 +43,10 @@ const apiKeySchema = z.object({
 	status: z.enum(["active", "inactive", "deleted"]).nullable(),
 	usageLimit: z.string().nullable(),
 	usage: z.string(),
+	resetPeriod: z.enum(["daily", "weekly", "monthly", "none"]),
+	lastResetAt: z.date().nullable(),
+	nextResetAt: z.date().nullable(),
+	expiresAt: z.date().nullable(),
 	projectId: z.string(),
 	createdBy: z.string(),
 	creator: z
@@ -63,7 +88,9 @@ const apiKeySchema = z.object({
 const createApiKeySchema = z.object({
 	description: z.string().min(1).max(255),
 	projectId: z.string().min(1),
-	usageLimit: z.string().nullable(),
+	usageLimit: z.string().nullable().optional(),
+	resetPeriod: z.enum(["daily", "weekly", "monthly", "none"]).optional(),
+	expiresAt: z.coerce.date().nullable().optional(),
 });
 
 // Schema for listing API keys
@@ -84,7 +111,9 @@ const updateApiKeyStatusSchema = z.object({
 
 // Schema for updating an API key usage limit
 const updateApiKeyUsageLimitSchema = z.object({
-	usageLimit: z.string().nullable(),
+	usageLimit: z.string().nullable().optional(),
+	resetPeriod: z.enum(["daily", "weekly", "monthly", "none"]).optional(),
+	expiresAt: z.coerce.date().nullable().optional(),
 });
 
 // Schema for IAM rule
@@ -171,7 +200,14 @@ keysApi.openapi(create, async (c) => {
 		});
 	}
 
-	const { description, projectId, usageLimit } = c.req.valid("json");
+	const { description, projectId, usageLimit, resetPeriod, expiresAt } =
+		c.req.valid("json");
+
+	// Compute state based on usageLimit rules
+	const finalResetPeriod = usageLimit && resetPeriod ? resetPeriod : "none";
+	const now = new Date();
+	const lastResetAt = finalResetPeriod !== "none" ? now : null;
+	const nextResetAt = computeNextResetAt(finalResetPeriod, now);
 
 	// Check if user has access to the project
 	const projectIds = await getUserProjectIds(user.id);
@@ -241,6 +277,10 @@ keysApi.openapi(create, async (c) => {
 			projectId,
 			description,
 			usageLimit,
+			resetPeriod: finalResetPeriod,
+			lastResetAt,
+			nextResetAt,
+			expiresAt: expiresAt ?? null,
 			createdBy: user.id,
 		})
 		.returning();
@@ -763,7 +803,7 @@ keysApi.openapi(updateUsageLimit, async (c) => {
 	}
 
 	const { id } = c.req.param();
-	const { usageLimit } = c.req.valid("json");
+	const { usageLimit, resetPeriod, expiresAt } = c.req.valid("json");
 
 	// Get the user's projects
 	const userOrgs = await db.query.userOrganization.findMany({
@@ -828,12 +868,47 @@ keysApi.openapi(updateUsageLimit, async (c) => {
 		});
 	}
 
-	// Update the API key usage limit
+	// Build update payload
+	const updates: Partial<typeof tables.apiKey.$inferInsert> = {};
+	const finalUsageLimit =
+		usageLimit !== undefined ? usageLimit : apiKey.usageLimit;
+
+	if (usageLimit !== undefined) {
+		updates.usageLimit = usageLimit;
+	}
+	if (expiresAt !== undefined) {
+		updates.expiresAt = expiresAt;
+	}
+
+	// Recalculate Period Logic ONLY if usageLimit or resetPeriod is provided
+	if (usageLimit !== undefined || resetPeriod !== undefined) {
+		const targetPeriod =
+			(finalUsageLimit && (resetPeriod ?? apiKey.resetPeriod)) || "none";
+
+		updates.resetPeriod = targetPeriod;
+
+		if (targetPeriod === "none") {
+			updates.lastResetAt = null;
+			updates.nextResetAt = null;
+		} else {
+			// If it transitioned from none -> active, OR if the period changes shape:
+			const periodChanged =
+				apiKey.resetPeriod !== targetPeriod || apiKey.lastResetAt === null;
+
+			if (periodChanged) {
+				// Safe reset: we completely reset the timer bounds and reset usage to 0.
+				const now = new Date();
+				updates.lastResetAt = now;
+				updates.nextResetAt = computeNextResetAt(targetPeriod, now);
+				updates.usage = "0";
+			}
+		}
+	}
+
+	// Update the API key
 	const [updatedApiKey] = await db
 		.update(tables.apiKey)
-		.set({
-			usageLimit,
-		})
+		.set(updates)
 		.where(eq(tables.apiKey.id, id))
 		.returning();
 
