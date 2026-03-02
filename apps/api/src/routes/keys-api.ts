@@ -44,9 +44,9 @@ const apiKeySchema = z.object({
 	usageLimit: z.string().nullable(),
 	usage: z.string(),
 	resetPeriod: z.enum(["daily", "weekly", "monthly", "none"]),
-	lastResetAt: z.date().nullable(),
-	nextResetAt: z.date().nullable(),
-	expiresAt: z.date().nullable(),
+	lastResetAt: z.string().datetime().nullable(),
+	nextResetAt: z.string().datetime().nullable(),
+	expiresAt: z.string().datetime().nullable(),
 	projectId: z.string(),
 	createdBy: z.string(),
 	creator: z
