@@ -62,7 +62,7 @@ NOTE: these commands can only be run in the root directory of the repository, no
 
 ## Architecture Overview
 
-**LLMGateway** is a monorepo containing a full-stack LLM API gateway with multiple services:
+**LLMAPI** is a monorepo containing a full-stack LLM API gateway with multiple services:
 
 ### Core Services
 
@@ -143,7 +143,7 @@ NOTE: these commands can only be run in the root directory of the repository, no
 
 ## Key Features
 
-### LLM Gateway
+### LLM API
 
 - Multi-provider support (OpenAI, Anthropic, Google Vertex AI, etc.)
 - OpenAI-compatible API interface

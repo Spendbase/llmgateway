@@ -1,18 +1,18 @@
 ---
-id: blog-introducing-llmgateway-playground
-slug: introducing-llmgateway-playground
+id: blog-introducing-llmapi-playground
+slug: introducing-llmapi-playground
 date: 2025-10-14
-title: Introducing LLM Gateway Chat - A Modern Chat Interface for Every LLM model we support
+title: Introducing LLM API Chat - A Modern Chat Interface for Every LLM model we support
 summary: Try any LLM model instantly with our new AI-powered playground featuring image generation, advanced filtering, and seamless model switching.
 categories: ["Announcements"]
 image:
-  src: "/blog/introducing-chat-llmgateway.png"
-  alt: "LLMGateway Playground"
+  src: "/blog/introducing-chat-llmapi.png"
+  alt: "LLMAPI Playground"
   width: 2282
   height: 1198
 ---
 
-We're excited to announce the launch of [**LLM Gateway Chat**](https://chat.llmapi.ai) - a powerful, modern chat interface that lets you interact with any LLM model in our ecosystem. Built with the latest AI technologies, it's the fastest way to explore, compare, and build with cutting-edge language models.
+We're excited to announce the launch of [**LLM API Chat**](https://chat.llmapi.ai) - a powerful, modern chat interface that lets you interact with any LLM model in our ecosystem. Built with the latest AI technologies, it's the fastest way to explore, compare, and build with cutting-edge language models.
 
 ## A Playground Built on Modern AI Stack
 
@@ -20,7 +20,7 @@ The playground is powered by:
 
 - **Vercel AI SDK v5** - The latest AI SDK for seamless streaming and multi-modal support
 - **AI Elements** - Beautiful, accessible UI components designed specifically for AI interactions
-- **LLMGateway AI SDK Provider** - Native integration with our unified API gateway
+- **LLMAPI AI SDK Provider** - Native integration with our unified API gateway
 
 This tech stack ensures you get a smooth, responsive experience whether you're generating text, creating images, or experimenting with different models.
 
@@ -61,15 +61,15 @@ We're not stopping here. These features are already in progress:
 
 ## Try It Now
 
-The playground is available to all LLMGateway users at [chat.llmapi.ai](https://chat.llmapi.ai).
+The playground is available to all LLMAPI users at [chat.llmapi.ai](https://chat.llmapi.ai).
 
 ### Getting Started
 
-1. Sign in with your LLMGateway account
+1. Sign in with your LLMAPI account
 2. Choose a model from any provider
 3. Start chatting!
 
-New to LLMGateway? [Sign up for free](https://llmapi.ai/signup) and get instant access to the playground along with comprehensive analytics, cost tracking, and multi-provider routing.
+New to LLMAPI? [Sign up for free](https://llmapi.ai/signup) and get instant access to the playground along with comprehensive analytics, cost tracking, and multi-provider routing.
 
 ## Built for Developers
 
@@ -84,7 +84,7 @@ All usage in the playground is tracked in your analytics dashboard, so you can m
 
 ## Open Source Foundation
 
-Like LLMGateway itself, the playground is built on open-source principles. The code leverages proven technologies and follows best practices for AI application development. Check out our [documentation](https://docs.llmapi.ai) to learn how to build similar experiences in your own applications.
+Like LLMAPI itself, the playground is built on open-source principles. The code leverages proven technologies and follows best practices for AI application development. Check out our [documentation](https://docs.llmapi.ai) to learn how to build similar experiences in your own applications.
 
 ---
 

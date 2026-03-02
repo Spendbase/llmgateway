@@ -18,20 +18,18 @@ import { Card, CardContent } from "@/lib/components/card";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Referral Program | LLM Gateway",
+	title: "Referral Program | LLM API",
 	description:
-		"Earn credits by referring new users to LLM Gateway. Get 1% of all LLM spending from users you refer, added directly to your account balance.",
+		"Earn credits by referring new users to LLM API. Get 1% of all LLM spending from users you refer, added directly to your account balance.",
 	openGraph: {
-		title: "Referral Program | LLM Gateway",
-		description:
-			"Earn 1% of all LLM spending from users you refer to LLM Gateway.",
+		title: "Referral Program | LLM API",
+		description: "Earn 1% of all LLM spending from users you refer to LLM API.",
 		type: "website",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Referral Program | LLM Gateway",
-		description:
-			"Earn 1% of all LLM spending from users you refer to LLM Gateway.",
+		title: "Referral Program | LLM API",
+		description: "Earn 1% of all LLM spending from users you refer to LLM API.",
 	},
 };
 

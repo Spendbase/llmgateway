@@ -3,7 +3,7 @@ id: "21"
 slug: "claude-code-50-percent-off"
 date: "2025-09-19"
 title: "50% Off Claude Code - Limited Time Offer"
-summary: "Get 50% off Claude Code for a limited time. Use any model via LLMGateway's unified API."
+summary: "Get 50% off Claude Code for a limited time. Use any model via LLMAPI's unified API."
 image:
   src: "/changelog/claude-code-50-percent-off.png"
   alt: "Claude Code 50% off limited time offer"
@@ -30,7 +30,7 @@ claude
 ### Optional Variable
 
 ```shell
-# optionally, choose your model, otherwise it will use the default Claude model via LLMGateway
+# optionally, choose your model, otherwise it will use the default Claude model via LLMAPI
 export ANTHROPIC_MODEL=gpt-5
 
 # now run claude!

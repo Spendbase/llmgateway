@@ -1,18 +1,18 @@
 ---
 id: blog-black-friday-credits-promo
-slug: black-friday-llmgateway-credits
+slug: black-friday-llmapi-credits
 date: 2025-11-28
-title: Black Friday at LLM Gateway – 50% Off Credits & Pro Plan
+title: Black Friday at LLM API – 50% Off Credits & Pro Plan
 summary: Use the BLACKFRIDAY promo code to get 50% off credits and the Pro plan for a limited time.
 categories: ["Announcements"]
 image:
-  src: "/blog/black-friday-llmgateway.png"
-  alt: "LLM Gateway Black Friday Credits Promotion"
+  src: "/blog/black-friday-llmapi.png"
+  alt: "LLM API Black Friday Credits Promotion"
   width: 2282
   height: 1198
 ---
 
-We're excited to launch our **Black Friday credits promotion** – a simple way to cut your LLM costs in half while keeping the same unified LLM Gateway experience.
+We're excited to launch our **Black Friday credits promotion** – a simple way to cut your LLM costs in half while keeping the same unified LLM API experience.
 
 For a limited time, you can **get 50% off both credits and the Pro plan** by using the promo code:
 

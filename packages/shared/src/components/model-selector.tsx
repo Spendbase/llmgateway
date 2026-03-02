@@ -421,7 +421,7 @@ export function ModelSelector({
 		}[] = [];
 		const now = new Date();
 
-		// Sort models by createdAt (when added to LLM Gateway), newest first
+		// Sort models by createdAt (when added to LLM API), newest first
 		// Falls back to releasedAt if createdAt is not available
 		// Note: createdAt comes from API response, releasedAt is in the models package
 		const sortedModels = [...models].sort((a, b) => {
@@ -1171,9 +1171,9 @@ export function ModelSelector({
 										{!previewEntry.provider ? (
 											<>
 												<p className="text-xs text-muted-foreground leading-relaxed">
-													This is a root model ID. The Gateway will
-													automatically select the best provider for this model
-													based on availability, performance, and cost. Specific
+													This is a root model ID. The API will automatically
+													select the best provider for this model based on
+													availability, performance, and cost. Specific
 													capabilities and pricing will depend on the selected
 													provider.
 												</p>
@@ -1678,10 +1678,10 @@ export function ModelSelector({
 								{!selectedDetails.provider ? (
 									<div className="space-y-4">
 										<p className="text-sm text-muted-foreground leading-relaxed">
-											This is a root model ID. The Gateway will automatically
-											select the best provider for this model based on
-											availability, performance, and cost. Specific capabilities
-											and pricing will depend on the selected provider.
+											This is a root model ID. The API will automatically select
+											the best provider for this model based on availability,
+											performance, and cost. Specific capabilities and pricing
+											will depend on the selected provider.
 										</p>
 
 										{(() => {
