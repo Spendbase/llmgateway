@@ -10,13 +10,11 @@ import {
 	Loader2,
 	MoreVerticalIcon,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -25,11 +23,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Logo } from "@/components/ui/logo";
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuAction,
 	SidebarMenuButton,
@@ -41,7 +35,6 @@ import {
 	useUpdateChat,
 	type Chat,
 } from "@/hooks/useChats";
-import { useUser } from "@/hooks/useUser";
 import { clearLastUsedProjectCookiesAction } from "@/lib/actions/project";
 import { useAuth } from "@/lib/auth-client";
 
@@ -86,7 +79,6 @@ export function ChatSidebar({
 	const queryClient = useQueryClient();
 	const router = useRouter();
 	const posthog = usePostHog();
-	const { isLoading: isUserLoading } = useUser();
 	const { signOut } = useAuth();
 
 	const { data: chatsData, isLoading: isChatsLoading } = useChats();
@@ -289,26 +281,6 @@ export function ChatSidebar({
 			</div>
 		);
 	};
-
-	if (isUserLoading) {
-		return (
-			<Sidebar className={className}>
-				<SidebarHeader>
-					<Link href="/" className="flex items-center gap-2 my-2" prefetch>
-						<Logo className="h-10 w-10" />
-						<h1 className="text-xl font-semibold">LLM API</h1>
-						<Badge>Chat</Badge>
-					</Link>
-				</SidebarHeader>
-				<SidebarContent className="px-2 py-4">
-					<div className="flex items-center justify-center py-8 gap-2 text-sm text-muted-foreground">
-						<Loader2 className="h-4 w-4 animate-spin" />
-						Loading…
-					</div>
-				</SidebarContent>
-			</Sidebar>
-		);
-	}
 
 	if (isChatsLoading) {
 		return (

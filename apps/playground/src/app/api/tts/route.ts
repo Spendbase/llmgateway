@@ -133,6 +133,7 @@ export async function POST(req: Request) {
 			: "";
 
 	await saveTtsGeneration(audioBuffer, {
+		userId: user.id,
 		model,
 		input,
 		voice,
@@ -151,6 +152,7 @@ export async function POST(req: Request) {
 }
 
 interface SaveParams {
+	userId: string;
 	model: string;
 	input: string;
 	voice: string;
@@ -166,7 +168,7 @@ async function saveTtsGeneration(
 	try {
 		const storage = getStorageService();
 		const ext = params.format === "mp3" ? "mp3" : params.format;
-		const key = storage.generateKey("tts", ext);
+		const key = storage.generateKey(`tts/${params.userId}`, ext);
 
 		await storage.upload(Buffer.from(audioBuffer), key, params.contentType);
 

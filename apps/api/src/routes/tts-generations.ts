@@ -25,7 +25,7 @@ const createTtsGenerationSchema = z.object({
 	voice: z.string().min(1),
 	format: z.string().min(1),
 	text: z.string().min(1),
-	file: z.string().regex(/^tts\/[0-9a-f-]{36}\.[a-z0-9]+$/),
+	file: z.string().regex(/^tts\/[^/]+\/[0-9a-f-]{36}\.[a-z0-9]+$/),
 });
 
 async function computeTtsCost(
@@ -157,6 +157,10 @@ ttsGenerations.openapi(createTtsGeneration, async (c) => {
 	}
 
 	const body = c.req.valid("json");
+
+	if (!body.file.startsWith(`tts/${user.id}/`)) {
+		throw new HTTPException(403, { message: "Forbidden" });
+	}
 
 	const chars = body.text.length;
 	const cost = await computeTtsCost(body.model, chars);

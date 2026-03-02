@@ -170,8 +170,6 @@ export function ModelUsageTable({
 		(sum, model) => sum + model.ttsChars,
 		0,
 	);
-	const grandTotal = totalTokens + totalTtsChars;
-
 	return (
 		<div>
 			<Table>
@@ -233,14 +231,12 @@ export function ModelUsageTable({
 				<TableBody>
 					{sortedModels.map((model, index) => {
 						const isAudio = model.ttsChars > 0;
+						const denominator = isAudio ? totalTtsChars : totalTokens;
+						const numerator = isAudio ? model.ttsChars : model.totalTokens;
 						const percentage =
-							grandTotal === 0
+							denominator === 0
 								? 0
-								: Math.round(
-										((isAudio ? model.ttsChars : model.totalTokens) /
-											grandTotal) *
-											100,
-									);
+								: Math.round((numerator / denominator) * 100);
 						return (
 							<TableRow key={`${model.provider}-${model.id}-${index}`}>
 								<TableCell className="font-medium">{model.id}</TableCell>

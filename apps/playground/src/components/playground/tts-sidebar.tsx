@@ -1,17 +1,13 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
+import { toast } from "sonner";
 
 import { TtsSettingsPanel } from "@/components/playground/tts-settings-panel";
-import { Badge } from "@/components/ui/badge";
-import { Logo } from "@/components/ui/logo";
-import {
-	Sidebar,
-	SidebarContent,
-	SidebarHeader,
-} from "@/components/ui/sidebar";
-import { useUser } from "@/hooks/useUser";
+import { clearLastUsedProjectCookiesAction } from "@/lib/actions/project";
+import { useAuth } from "@/lib/auth-client";
 
 import { PlaygroundSidebarLayout } from "./playground-sidebar-layout";
 
@@ -59,27 +55,32 @@ export function TtsSidebar({
 	onSpeedChange,
 	disabled = false,
 }: TtsSidebarProps) {
-	const { isLoading: isUserLoading } = useUser();
+	const queryClient = useQueryClient();
+	const router = useRouter();
+	const posthog = usePostHog();
+	const { signOut } = useAuth();
 
-	if (isUserLoading) {
-		return (
-			<Sidebar>
-				<SidebarHeader>
-					<Link href="/" className="flex items-center gap-2 my-2" prefetch>
-						<Logo className="h-10 w-10" />
-						<h1 className="text-xl font-semibold">LLM API</h1>
-						<Badge>Speech</Badge>
-					</Link>
-				</SidebarHeader>
-				<SidebarContent className="px-2 py-4">
-					<div className="flex items-center justify-center py-8 gap-2 text-sm text-muted-foreground">
-						<Loader2 className="h-4 w-4 animate-spin" />
-						Loading…
-					</div>
-				</SidebarContent>
-			</Sidebar>
-		);
-	}
+	const logout = async () => {
+		posthog.reset();
+		try {
+			await clearLastUsedProjectCookiesAction();
+		} catch (error) {
+			console.error("Failed to clear last used project cookies:", error);
+			toast.error("Failed to clear last used project cookies");
+		}
+		await signOut({
+			fetchOptions: {
+				onSuccess: () => {
+					queryClient.clear();
+					router.push(
+						process.env.NODE_ENV === "development"
+							? "http://localhost:3003/login"
+							: "https://chat.llmapi.ai/login",
+					);
+				},
+			},
+		});
+	};
 
 	return (
 		<PlaygroundSidebarLayout
@@ -92,6 +93,7 @@ export function TtsSidebar({
 			selectedProject={selectedProject}
 			onSelectProject={onSelectProject}
 			onProjectCreated={onProjectCreated}
+			onLogout={logout}
 		>
 			<div className="py-2">
 				<TtsSettingsPanel

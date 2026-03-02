@@ -282,40 +282,17 @@ export async function syncProvidersAndModels() {
 						description: audioDef.description ?? "(empty)",
 						family: audioDef.family,
 						output: ["audio"],
+						free: false,
+						stability: "stable",
+						status: "active",
 						updatedAt: new Date(),
 					},
 				});
 
 			for (const mapping of audioDef.providers) {
-				const existing = await database
-					.select()
-					.from(modelProviderMapping)
-					.where(
-						and(
-							eq(modelProviderMapping.modelId, audioDef.id),
-							eq(modelProviderMapping.providerId, mapping.providerId),
-						),
-					)
-					.limit(1);
-
-				if (existing[0]) {
-					await database
-						.update(modelProviderMapping)
-						.set({
-							modelName: mapping.modelName,
-							streaming: mapping.streaming,
-							audioConfig: {
-								characterPrice: mapping.characterPrice,
-								maxCharacters: mapping.maxCharacters,
-								languages: mapping.languages,
-								latencyMs: mapping.latencyMs,
-							},
-							status: "active",
-							updatedAt: new Date(),
-						})
-						.where(eq(modelProviderMapping.id, existing[0].id));
-				} else {
-					await database.insert(modelProviderMapping).values({
+				await database
+					.insert(modelProviderMapping)
+					.values({
 						modelId: audioDef.id,
 						providerId: mapping.providerId,
 						modelName: mapping.modelName,
@@ -327,8 +304,25 @@ export async function syncProvidersAndModels() {
 							latencyMs: mapping.latencyMs,
 						},
 						status: "active",
+					})
+					.onConflictDoUpdate({
+						target: [
+							modelProviderMapping.modelId,
+							modelProviderMapping.providerId,
+						],
+						set: {
+							modelName: mapping.modelName,
+							streaming: mapping.streaming,
+							audioConfig: {
+								characterPrice: mapping.characterPrice,
+								maxCharacters: mapping.maxCharacters,
+								languages: mapping.languages,
+								latencyMs: mapping.latencyMs,
+							},
+							status: "active",
+							updatedAt: new Date(),
+						},
 					});
-				}
 			}
 		}
 

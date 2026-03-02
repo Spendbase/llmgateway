@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, LogOutIcon } from "lucide-react";
+import { CreditCard, Loader2, LogOutIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -96,6 +96,26 @@ export function PlaygroundSidebarLayout({
 			<Badge>{badge}</Badge>
 		</Link>
 	);
+
+	if (isUserLoading) {
+		return (
+			<Sidebar className={className}>
+				<SidebarHeader>
+					<Link href="/" className="flex items-center gap-2 my-2" prefetch>
+						<Logo className="h-10 w-10" />
+						<h1 className="text-xl font-semibold">LLM API</h1>
+						<Badge>Chat</Badge>
+					</Link>
+				</SidebarHeader>
+				<SidebarContent className="px-2 py-4">
+					<div className="flex items-center justify-center py-8 gap-2 text-sm text-muted-foreground">
+						<Loader2 className="h-4 w-4 animate-spin" />
+						Loading…
+					</div>
+				</SidebarContent>
+			</Sidebar>
+		);
+	}
 
 	if (!isAuthenticated) {
 		return (
