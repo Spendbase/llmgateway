@@ -95,6 +95,14 @@ export function ModelsAudioTable({
 									key={model.id}
 									className="cursor-pointer hover:bg-muted/50 transition-colors"
 									onClick={() => onNavigate(model.id)}
+									tabIndex={0}
+									role="button"
+									onKeyDown={(e) => {
+										if (e.key === "Enter" || e.key === " ") {
+											e.preventDefault();
+											onNavigate(model.id);
+										}
+									}}
 								>
 									<TableCell className="font-medium">
 										<div className="space-y-1">
@@ -246,8 +254,8 @@ export function ModelsAudioTable({
 													key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 													className="text-sm font-mono"
 												>
-													{provider.audioConfig !== undefined &&
-													provider.audioConfig.languages !== null
+													{provider.audioConfig?.languages !== null &&
+													provider.audioConfig?.languages !== undefined
 														? `${provider.audioConfig.languages} langs`
 														: "—"}
 												</div>
@@ -262,8 +270,8 @@ export function ModelsAudioTable({
 													key={`${provider.providerId}-${provider.modelName}-${model.id}`}
 													className="text-sm font-mono"
 												>
-													{provider.audioConfig !== undefined &&
-													provider.audioConfig.latencyMs !== null
+													{provider.audioConfig?.latencyMs !== null &&
+													provider.audioConfig?.latencyMs !== undefined
 														? `~${provider.audioConfig.latencyMs}ms`
 														: "—"}
 												</div>

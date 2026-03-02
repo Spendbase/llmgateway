@@ -9,7 +9,9 @@ export function createS3Client(config: StorageConfig): S3Client {
 			accessKeyId: config.accessKeyId,
 			secretAccessKey: config.secretAccessKey,
 		},
-		...(config.endpoint ? { endpoint: config.endpoint, forcePathStyle: true } : {}),
+		...(config.endpoint
+			? { endpoint: config.endpoint, forcePathStyle: true }
+			: {}),
 	});
 }
 

@@ -1,9 +1,18 @@
 import { cookies } from "next/headers";
+import { z } from "zod";
 
 import { getConfig } from "@/lib/config-server";
 import { getUser } from "@/lib/getUser";
 
-import { StorageService } from "@llmgateway/storage";
+import { getStorageService } from "@llmgateway/storage";
+
+const ttsRequestSchema = z.object({
+	model: z.string().min(1),
+	input: z.string().min(1),
+	voice: z.string().min(1),
+	response_format: z.string().optional(),
+	speed: z.number().optional(),
+});
 
 export async function POST(req: Request) {
 	const user = await getUser();
@@ -27,18 +36,27 @@ export async function POST(req: Request) {
 		});
 	}
 
-	const body = await req.json();
-	const { model, input, voice, response_format, speed } = body;
+	let rawBody: unknown;
+	try {
+		rawBody = await req.json();
+	} catch {
+		return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
 
-	if (!model || !input || !voice) {
+	const parsed = ttsRequestSchema.safeParse(rawBody);
+	if (!parsed.success) {
 		return new Response(
-			JSON.stringify({ error: "Missing required fields: model, input, voice" }),
-			{
-				status: 400,
-				headers: { "Content-Type": "application/json" },
-			},
+			JSON.stringify({
+				error: parsed.error.issues[0]?.message ?? "Invalid request body",
+			}),
+			{ status: 400, headers: { "Content-Type": "application/json" } },
 		);
 	}
+
+	const { model, input, voice, response_format, speed } = parsed.data;
 
 	const gatewayUrl =
 		process.env.GATEWAY_URL ||
@@ -114,13 +132,11 @@ export async function POST(req: Request) {
 			? `${sessionKey}=${sessionCookie.value}`
 			: "";
 
-	// Fire-and-forget: upload to S3 + save metadata
-	void saveTtsGeneration(audioBuffer, {
+	await saveTtsGeneration(audioBuffer, {
 		model,
 		input,
 		voice,
 		format,
-		chars: parseInt(characterCount, 10),
 		contentType,
 		cookieHeader,
 	});
@@ -139,7 +155,6 @@ interface SaveParams {
 	input: string;
 	voice: string;
 	format: string;
-	chars: number;
 	contentType: string;
 	cookieHeader: string;
 }
@@ -149,14 +164,14 @@ async function saveTtsGeneration(
 	params: SaveParams,
 ): Promise<void> {
 	try {
-		const storage = new StorageService();
+		const storage = getStorageService();
 		const ext = params.format === "mp3" ? "mp3" : params.format;
 		const key = storage.generateKey("tts", ext);
 
 		await storage.upload(Buffer.from(audioBuffer), key, params.contentType);
 
 		const config = getConfig();
-		await fetch(`${config.apiBackendUrl}/tts-generations`, {
+		const saveRes = await fetch(`${config.apiBackendUrl}/tts-generations`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -167,11 +182,17 @@ async function saveTtsGeneration(
 				voice: params.voice,
 				format: params.format,
 				text: params.input,
-				chars: params.chars,
 				file: key,
 			}),
 		});
+
+		if (!saveRes.ok) {
+			throw new Error(
+				`Failed to save TTS generation metadata: ${saveRes.status}`,
+			);
+		}
 	} catch (err) {
-		console.error("[tts] fire-and-forget save failed:", err);
+		console.error("[tts] save failed:", err);
+		throw err;
 	}
 }

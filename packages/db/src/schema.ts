@@ -1019,5 +1019,11 @@ export const ttsGeneration = pgTable(
 		cost: numericDecimal(),
 		file: text().notNull(),
 	},
-	(table) => [index("tts_generation_user_id_idx").on(table.userId)],
+	(table) => [
+		index("tts_generation_user_id_idx").on(table.userId),
+		index("tts_generation_user_id_created_at_idx").on(
+			table.userId,
+			table.createdAt,
+		),
+	],
 );

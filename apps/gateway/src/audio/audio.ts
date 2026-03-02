@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 
 import { getModelMappingStatuses } from "@/lib/filter-model-mappings.js";
 import { insertLog } from "@/lib/logs.js";
+import { createTimeoutSignal } from "@/lib/timeout-config.js";
 
 import { db as cdb, shortid } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
@@ -139,6 +140,7 @@ async function callElevenLabsTTS(
 	return await fetch(`${url}?output_format=${outputFormat}`, {
 		method: "POST",
 		headers,
+		signal: createTimeoutSignal(),
 		body: JSON.stringify({
 			text,
 			model_id: modelName,

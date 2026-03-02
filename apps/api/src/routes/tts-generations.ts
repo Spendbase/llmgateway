@@ -2,7 +2,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 
 import { db, tables, desc, eq, and, lt } from "@llmgateway/db";
-import { StorageService } from "@llmgateway/storage";
+import { getStorageService } from "@llmgateway/storage";
 
 import type { ServerTypes } from "@/vars.js";
 
@@ -25,10 +25,26 @@ const createTtsGenerationSchema = z.object({
 	voice: z.string().min(1),
 	format: z.string().min(1),
 	text: z.string().min(1),
-	chars: z.number().optional(),
-	cost: z.number().optional(),
-	file: z.string().min(1),
+	file: z.string().regex(/^tts\/[0-9a-f-]{36}\.[a-z0-9]+$/),
 });
+
+async function computeTtsCost(
+	modelId: string,
+	charCount: number,
+): Promise<number | null> {
+	const id = modelId.includes("/")
+		? modelId.split("/").slice(1).join("/")
+		: modelId;
+	const mapping = await db.query.modelProviderMapping.findFirst({
+		where: { modelId: id },
+		columns: { audioConfig: true },
+	});
+	const characterPrice = mapping?.audioConfig?.characterPrice;
+	if (!characterPrice) {
+		return null;
+	}
+	return charCount * characterPrice;
+}
 
 const listTtsGenerations = createRoute({
 	method: "get",
@@ -142,6 +158,9 @@ ttsGenerations.openapi(createTtsGeneration, async (c) => {
 
 	const body = c.req.valid("json");
 
+	const chars = body.text.length;
+	const cost = await computeTtsCost(body.model, chars);
+
 	const [row] = await db
 		.insert(tables.ttsGeneration)
 		.values({
@@ -150,8 +169,8 @@ ttsGenerations.openapi(createTtsGeneration, async (c) => {
 			voice: body.voice,
 			format: body.format,
 			text: body.text,
-			chars: body.chars ?? null,
-			cost: body.cost ?? null,
+			chars,
+			cost,
 			file: body.file,
 		})
 		.returning();
@@ -203,21 +222,16 @@ ttsGenerations.openapi(getTtsGenerationAudio, async (c) => {
 
 	const { id } = c.req.valid("param");
 
-	const [row] = await db
-		.select({ file: tables.ttsGeneration.file })
-		.from(tables.ttsGeneration)
-		.where(
-			and(
-				eq(tables.ttsGeneration.id, id),
-				eq(tables.ttsGeneration.userId, user.id),
-			),
-		);
+	const row = await db.query.ttsGeneration.findFirst({
+		where: { id, userId: user.id },
+		columns: { file: true },
+	});
 
 	if (!row) {
 		return c.json({ message: "Generation not found" }, 404);
 	}
 
-	const storage = new StorageService();
+	const storage = getStorageService();
 	const signedUrl = await storage.getSignedUrl(row.file, 3600);
 
 	return c.redirect(signedUrl, 302);
@@ -257,21 +271,16 @@ ttsGenerations.openapi(deleteTtsGeneration, async (c) => {
 
 	const { id } = c.req.valid("param");
 
-	const [row] = await db
-		.select({ file: tables.ttsGeneration.file })
-		.from(tables.ttsGeneration)
-		.where(
-			and(
-				eq(tables.ttsGeneration.id, id),
-				eq(tables.ttsGeneration.userId, user.id),
-			),
-		);
+	const row = await db.query.ttsGeneration.findFirst({
+		where: { id, userId: user.id },
+		columns: { file: true },
+	});
 
 	if (!row) {
 		return c.json({ message: "Generation not found" }, 404);
 	}
 
-	const storage = new StorageService();
+	const storage = getStorageService();
 	await storage.delete(row.file);
 
 	await db.delete(tables.ttsGeneration).where(eq(tables.ttsGeneration.id, id));

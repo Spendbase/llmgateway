@@ -4927,8 +4927,6 @@ export interface paths {
                         voice: string;
                         format: string;
                         text: string;
-                        chars?: number;
-                        cost?: number;
                         file: string;
                     };
                 };

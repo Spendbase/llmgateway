@@ -438,14 +438,23 @@ export function ModelCard({
 										</div>
 									</div>
 
-									{!isAudioModel(model) && (
-										<Button
-											variant="default"
-											size="default"
-											className="w-full gap-2 font-semibold"
-											onClick={(e) => e.stopPropagation()}
-											asChild
-										>
+									<Button
+										variant="default"
+										size="default"
+										className="w-full gap-2 font-semibold"
+										onClick={(e) => e.stopPropagation()}
+										asChild
+									>
+										{isAudioModel(model) ? (
+											<a
+												href={`${config.playgroundUrl}/tts?model=${encodeURIComponent(model.id)}`}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												<Play className="h-4 w-4" />
+												Try in TTS Playground
+											</a>
+										) : (
 											<a
 												href={`${config.playgroundUrl}?model=${encodeURIComponent(providerModelId)}`}
 												target="_blank"
@@ -454,8 +463,8 @@ export function ModelCard({
 												<Play className="h-4 w-4" />
 												Try in Playground
 											</a>
-										</Button>
-									)}
+										)}
+									</Button>
 								</div>
 							);
 						})}

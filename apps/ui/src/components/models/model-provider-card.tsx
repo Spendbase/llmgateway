@@ -605,13 +605,22 @@ export function ModelProviderCard({
 					</TooltipProvider>
 				</div>
 
-				{!isAudio && (
-					<Button
-						variant="default"
-						size="default"
-						className="w-full gap-2 font-semibold"
-						asChild
-					>
+				<Button
+					variant="default"
+					size="default"
+					className="w-full gap-2 font-semibold"
+					asChild
+				>
+					{isAudio ? (
+						<a
+							href={`${config.playgroundUrl}/tts?model=${encodeURIComponent(modelName)}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<Play className="h-4 w-4" />
+							Try in TTS Playground
+						</a>
+					) : (
 						<a
 							href={`${config.playgroundUrl}?model=${encodeURIComponent(providerModelName)}`}
 							target="_blank"
@@ -620,8 +629,8 @@ export function ModelProviderCard({
 							<Play className="h-4 w-4" />
 							Try in Playground
 						</a>
-					</Button>
-				)}
+					)}
+				</Button>
 			</CardContent>
 		</Card>
 	);

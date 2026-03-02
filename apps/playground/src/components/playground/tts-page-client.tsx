@@ -47,6 +47,7 @@ interface TtsPageClientProps {
 	projects: Project[];
 	selectedProject: Project | null;
 	audioModels: ApiModel[];
+	initialModel?: string;
 }
 
 interface TtsFeedEntry extends TtsHistoryItem {
@@ -59,13 +60,29 @@ export default function TtsPageClient({
 	projects,
 	selectedProject,
 	audioModels,
+	initialModel,
 }: TtsPageClientProps) {
 	const { user, isLoading: isUserLoading } = useUser();
 	const router = useRouter();
 	const pathname = usePathname();
 
 	const [text, setText] = useState("");
-	const [model, setModel] = useState(audioModels[0]?.id ?? "");
+	const [model, setModel] = useState(() => {
+		if (initialModel) {
+			const found = audioModels.find((m) => m.id === initialModel);
+			if (found) {
+				return found.id;
+			}
+		}
+		return audioModels[0]?.id ?? "";
+	});
+
+	useEffect(() => {
+		if (initialModel) {
+			router.replace(pathname, { scroll: false });
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 	const [voice, setVoice] = useState(DEFAULT_VOICE);
 	const [format, setFormat] = useState(DEFAULT_FORMAT);
 	const [speed, setSpeed] = useState(1.0);
@@ -145,19 +162,14 @@ export default function TtsPageClient({
 		return () => observer.disconnect();
 	}, [hasNextPage, fetchNextPage]);
 
-	// After generation completes, wait for S3 save then refetch history
 	useEffect(() => {
 		if (!audioUrl) {
 			return;
 		}
 		setText("");
 		setIsSaving(true);
-		const timer = setTimeout(() => {
-			void refetchGenerations().then(() => setIsSaving(false));
-		}, 3000);
-		return () => clearTimeout(timer);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [audioUrl]);
+		void refetchGenerations().finally(() => setIsSaving(false));
+	}, [audioUrl, refetchGenerations]);
 
 	// Character limit
 	const selectedAudioModel = audioModels.find((m) => m.id === model);
@@ -174,6 +186,9 @@ export default function TtsPageClient({
 				: "bg-primary";
 
 	const handleGenerate = useCallback(async () => {
+		if (!model) {
+			return;
+		}
 		if (!text.trim()) {
 			toast.error("Please enter some text to convert to speech.");
 			return;
@@ -378,6 +393,7 @@ export default function TtsPageClient({
 													onClick={handleGenerate}
 													disabled={
 														isGenerating ||
+														!model ||
 														!text.trim() ||
 														isOverLimit ||
 														!isAuthenticated

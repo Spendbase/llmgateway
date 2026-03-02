@@ -1,7 +1,6 @@
 "use client";
 
 import { CreditCard, LogOutIcon } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -24,16 +23,12 @@ import { useUser } from "@/hooks/useUser";
 import { clearLastUsedProjectCookiesAction } from "@/lib/actions/project";
 import { useAuth } from "@/lib/auth-client";
 
+import { OrganizationSwitcher } from "./organization-switcher";
 import { PlaygroundNavLinks } from "./playground-nav-links";
 import { ProjectSwitcher } from "./project-switcher";
 
 import type { Organization, Project } from "@/lib/types";
 import type { ReactNode } from "react";
-
-const OrganizationSwitcher = dynamic(
-	() => import("./organization-switcher").then((m) => m.OrganizationSwitcher),
-	{ ssr: false },
-);
 
 interface PlaygroundSidebarLayoutProps {
 	badge: string;
@@ -82,11 +77,7 @@ export function PlaygroundSidebarLayout({
 		await signOut({
 			fetchOptions: {
 				onSuccess: () => {
-					router.push(
-						process.env.NODE_ENV === "development"
-							? "http://localhost:3003/login"
-							: "https://chat.llmapi.ai/login",
-					);
+					router.push("/login");
 				},
 			},
 		});

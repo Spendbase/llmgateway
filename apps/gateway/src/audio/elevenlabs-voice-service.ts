@@ -1,3 +1,5 @@
+import { isCancellationError, isTimeoutError } from "@/lib/timeout-config.js";
+
 import { getCache, setCache } from "@llmgateway/cache";
 import { logger } from "@llmgateway/logger";
 import { elevenlabsVoiceMapping, getVoiceId } from "@llmgateway/models";
@@ -12,10 +14,13 @@ interface ElevenLabsVoice {
 	name: string;
 }
 
+const VOICES_FETCH_TIMEOUT_MS = 5_000;
+
 async function fetchVoicesFromApi(apiKey: string): Promise<ElevenLabsVoice[]> {
 	try {
 		const res = await fetch("https://api.elevenlabs.io/v1/voices", {
 			headers: { "xi-api-key": apiKey },
+			signal: AbortSignal.timeout(VOICES_FETCH_TIMEOUT_MS),
 		});
 		if (!res.ok) {
 			logger.warn("Failed to fetch ElevenLabs voices", { status: res.status });
@@ -24,9 +29,13 @@ async function fetchVoicesFromApi(apiKey: string): Promise<ElevenLabsVoice[]> {
 		const data = (await res.json()) as { voices?: ElevenLabsVoice[] };
 		return data.voices ?? [];
 	} catch (error) {
-		logger.error("Error fetching ElevenLabs voices", {
-			error: error instanceof Error ? error.message : String(error),
-		});
+		if (isTimeoutError(error) || isCancellationError(error)) {
+			logger.warn("ElevenLabs voices fetch timed out");
+		} else {
+			logger.error("Error fetching ElevenLabs voices", {
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
 		return [];
 	}
 }

@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,7 +102,10 @@ export function ChatSidebar({
 		posthog.reset();
 		try {
 			await clearLastUsedProjectCookiesAction();
-		} catch {}
+		} catch (error) {
+			console.error("Failed to clear last used project cookies:", error);
+			toast.error("Failed to clear last used project cookies");
+		}
 		await signOut({
 			fetchOptions: {
 				onSuccess: () => {

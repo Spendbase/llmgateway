@@ -40,7 +40,7 @@ export async function GET(
 		},
 	);
 
-	if (res.status === 302 || res.status === 301) {
+	if (res.status >= 300 && res.status < 400) {
 		const location = res.headers.get("location");
 		if (!location) {
 			return new Response(JSON.stringify({ error: "Missing redirect" }), {
@@ -54,6 +54,16 @@ export async function GET(
 		}
 
 		const s3Res = await fetch(location);
+		if (!s3Res.ok) {
+			return new Response(
+				JSON.stringify({ error: `Failed to fetch audio: ${s3Res.status}` }),
+				{
+					status: s3Res.status,
+					headers: { "Content-Type": "application/json" },
+				},
+			);
+		}
+
 		const contentType = s3Res.headers.get("Content-Type") ?? "audio/mpeg";
 		const ext = contentType.includes("mpeg")
 			? "mp3"

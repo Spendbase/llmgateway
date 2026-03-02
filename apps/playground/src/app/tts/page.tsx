@@ -12,10 +12,10 @@ export const dynamic = "force-dynamic";
 export default async function TtsPage({
 	searchParams,
 }: {
-	searchParams: Promise<{ orgId?: string; projectId?: string }>;
+	searchParams: Promise<{ orgId?: string; projectId?: string; model?: string }>;
 }) {
 	const params = await searchParams;
-	const { orgId, projectId } = params;
+	const { orgId, projectId, model } = params;
 
 	const audioModels: ApiModel[] = await fetchModels("audio");
 
@@ -77,6 +77,7 @@ export default async function TtsPage({
 			projects={projects}
 			selectedProject={selectedProject}
 			audioModels={audioModels}
+			initialModel={model}
 		/>
 	);
 }

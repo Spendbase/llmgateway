@@ -38,7 +38,7 @@ export function LogCard({ log }: { log: Partial<Log> }) {
 		log.dataStorageCost !== null &&
 		log.dataStorageCost !== undefined &&
 		Number(log.dataStorageCost) > 0;
-	const isTts = log.ttsChars !== null;
+	const isTts = log.ttsChars !== null && log.ttsChars !== undefined;
 	const [isExpanded, setIsExpanded] = useState(false);
 
 	const formattedTime = formatDistanceToNow(new Date(log?.createdAt ?? ""), {

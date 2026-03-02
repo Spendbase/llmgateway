@@ -316,6 +316,14 @@ export function ModelsTextTable({
 								key={model.id}
 								className="cursor-pointer hover:bg-muted/50 transition-colors"
 								onClick={() => onNavigate(model.id)}
+								tabIndex={0}
+								role="button"
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										onNavigate(model.id);
+									}
+								}}
 							>
 								<ModelCell
 									model={model}

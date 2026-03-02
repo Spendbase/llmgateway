@@ -96,7 +96,11 @@ function AudioMappingsTable({
 
 export function AudioModelDetail({ model }: { model: Model }) {
 	const modelName = model.name || model.id;
-	const cfg = model.mappings[0]?.audioConfig;
+	const preferredMapping =
+		model.mappings.find(
+			(m) => m.audioConfig !== null && m.audioConfig !== undefined,
+		) ?? model.mappings[0];
+	const cfg = preferredMapping?.audioConfig;
 
 	return (
 		<>

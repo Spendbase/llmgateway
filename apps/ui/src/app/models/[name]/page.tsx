@@ -128,7 +128,18 @@ export default async function ModelPage({ params }: PageProps) {
 								);
 							})()}
 
-							{!isAudioModel(model) && (
+							{isAudioModel(model) ? (
+								<a
+									href={`${config.playgroundUrl}/tts?model=${encodeURIComponent(model.id)}`}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									<Button variant="outline" size="sm" className="gap-2">
+										<Play className="h-3 w-3" />
+										Try in TTS Playground
+									</Button>
+								</a>
+							) : (
 								<a
 									href={`${config.playgroundUrl}?model=${encodeURIComponent(`${modelProviders[0]?.providerId}/${model.id}`)}`}
 									target="_blank"
@@ -155,13 +166,14 @@ export default async function ModelPage({ params }: PageProps) {
 									</div>
 									<div>
 										Starting at $
-										{(
-											Math.min(
-												...modelProviders
-													.filter((p) => p.audioConfig?.characterPrice)
-													.map((p) => p.audioConfig!.characterPrice * 1000),
-											) || 0
-										).toFixed(4)}
+										{(() => {
+											const prices = modelProviders
+												.filter((p) => p.audioConfig?.characterPrice !== null)
+												.map((p) => p.audioConfig!.characterPrice * 1000);
+											return (
+												prices.length > 0 ? Math.min(...prices) : 0
+											).toFixed(4);
+										})()}
 										/1K chars
 									</div>
 									{modelProviders.some(

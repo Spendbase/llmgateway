@@ -26,14 +26,31 @@ export function useEnsurePlaygroundKey({
 			return;
 		}
 
+		const controller = new AbortController();
+		const projectId = selectedProject.id;
+
 		fetch("/api/ensure-playground-key", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ projectId: selectedProject.id }),
+			body: JSON.stringify({ projectId }),
+			signal: controller.signal,
 		})
-			.then(() => {
-				ensuredProjectRef.current = selectedProject.id;
+			.then((res) => {
+				if (!res.ok) {
+					throw new Error(`ensure-playground-key failed: ${res.status}`);
+				}
+				if (ensuredProjectRef.current !== projectId) {
+					ensuredProjectRef.current = projectId;
+				}
 			})
-			.catch(() => {});
+			.catch((err) => {
+				if (err instanceof Error && err.name !== "AbortError") {
+					console.error("[useEnsurePlaygroundKey]", err);
+				}
+			});
+
+		return () => {
+			controller.abort();
+		};
 	}, [isAuthenticated, selectedOrganization, selectedProject]);
 }

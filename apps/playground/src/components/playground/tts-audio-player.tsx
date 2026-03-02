@@ -2,6 +2,7 @@
 
 import { Download, Loader2, Pause, Play } from "lucide-react";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
@@ -43,6 +44,10 @@ export function TtsAudioPlayer({
 				? `${audioUrl}&download=true`
 				: `${audioUrl}?download=true`;
 			const res = await fetch(downloadUrl);
+			if (!res.ok) {
+				const errText = await res.text().catch(() => res.statusText);
+				throw new Error(`Download failed (${res.status}): ${errText}`);
+			}
 			const blob = await res.blob();
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement("a");
@@ -50,6 +55,10 @@ export function TtsAudioPlayer({
 			a.download = filename;
 			a.click();
 			URL.revokeObjectURL(url);
+		} catch (err) {
+			toast.error(
+				err instanceof Error ? err.message : "Failed to download audio",
+			);
 		} finally {
 			setIsDownloading(false);
 		}
