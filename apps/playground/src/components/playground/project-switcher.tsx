@@ -1,4 +1,4 @@
-import { ChevronsUpDown, Check, PlusCircle } from "lucide-react";
+import { Check, ChevronsUpDown, FolderOpen, PlusCircle } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -39,12 +39,13 @@ export function ProjectSwitcher({
 				<DropdownMenuTrigger asChild disabled={!currentOrganization}>
 					<Button
 						variant="ghost"
-						className="flex min-w-[180px] items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 justify-start"
+						className="w-full flex items-center gap-2.5 rounded-lg border bg-background px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer justify-start h-auto disabled:opacity-50"
 					>
-						<span className="truncate">
+						<FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+						<span className="truncate font-medium">
 							{selectedProject ? selectedProject.name : "Select Project"}
 						</span>
-						<ChevronsUpDown className="ml-auto h-4 w-4 flex-shrink-0 opacity-50" />
+						<ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-40" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="w-64 border-border bg-background text-foreground shadow-xl">
@@ -58,11 +59,11 @@ export function ProjectSwitcher({
 								<DropdownMenuItem
 									key={project.id}
 									onSelect={() => onSelectProject(project)}
-									className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent focus:bg-accent data-[highlighted]:bg-accent"
+									className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent focus:bg-accent data-highlighted:bg-accent"
 								>
 									<span className="truncate">{project.name}</span>
 									{selectedProject?.id === project.id && (
-										<Check className="ml-auto h-4 w-4 flex-shrink-0" />
+										<Check className="ml-auto h-4 w-4 shrink-0" />
 									)}
 								</DropdownMenuItem>
 							))
@@ -78,7 +79,7 @@ export function ProjectSwitcher({
 					<DropdownMenuSeparator className="bg-border" />
 					<DropdownMenuItem
 						onSelect={() => setIsNewProjectDialogOpen(true)}
-						className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent focus:bg-accent data-[highlighted]:bg-accent"
+						className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent focus:bg-accent data-highlighted:bg-accent"
 					>
 						<PlusCircle className="mr-2 h-4 w-4" />
 						New Project

@@ -220,17 +220,6 @@ export function TeamClient() {
 											</SelectContent>
 										</Select>
 									</div>
-
-									<Alert>
-										<AlertDescription>
-											3 seats are included; any additional members will incur a
-											cost of{" "}
-											<span className="inline font-semibold">
-												$10/seat/month
-											</span>
-											The charge will be prorated based on your billing cycle.
-										</AlertDescription>
-									</Alert>
 								</div>
 								<DialogFooter>
 									<Button

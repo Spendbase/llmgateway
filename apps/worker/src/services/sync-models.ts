@@ -2,7 +2,7 @@ import { eq, and, sql, isNotNull } from "drizzle-orm";
 
 import { db, provider, model, modelProviderMapping, log } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
-import { providers, models } from "@llmgateway/models";
+import { providers, models, audioModels } from "@llmgateway/models";
 
 import type { StabilityLevel } from "@llmgateway/models";
 
@@ -261,6 +261,72 @@ export async function syncProvidersAndModels() {
 		}
 
 		logger.info(`Synced ${models.length} models`);
+
+		for (const audioDef of audioModels) {
+			await database
+				.insert(model)
+				.values({
+					id: audioDef.id,
+					name: audioDef.name,
+					description: audioDef.description ?? "(empty)",
+					family: audioDef.family,
+					output: ["audio"],
+					free: false,
+					stability: "stable",
+					status: "active",
+				})
+				.onConflictDoUpdate({
+					target: model.id,
+					set: {
+						name: audioDef.name,
+						description: audioDef.description ?? "(empty)",
+						family: audioDef.family,
+						output: ["audio"],
+						free: false,
+						stability: "stable",
+						status: "active",
+						updatedAt: new Date(),
+					},
+				});
+
+			for (const mapping of audioDef.providers) {
+				await database
+					.insert(modelProviderMapping)
+					.values({
+						modelId: audioDef.id,
+						providerId: mapping.providerId,
+						modelName: mapping.modelName,
+						streaming: mapping.streaming,
+						audioConfig: {
+							characterPrice: mapping.characterPrice,
+							maxCharacters: mapping.maxCharacters,
+							languages: mapping.languages,
+							latencyMs: mapping.latencyMs,
+						},
+						status: "active",
+					})
+					.onConflictDoUpdate({
+						target: [
+							modelProviderMapping.modelId,
+							modelProviderMapping.providerId,
+						],
+						set: {
+							modelName: mapping.modelName,
+							streaming: mapping.streaming,
+							audioConfig: {
+								characterPrice: mapping.characterPrice,
+								maxCharacters: mapping.maxCharacters,
+								languages: mapping.languages,
+								latencyMs: mapping.latencyMs,
+							},
+							status: "active",
+							updatedAt: new Date(),
+						},
+					});
+			}
+		}
+
+		logger.info(`Synced ${audioModels.length} audio models`);
 
 		const mappingCount = await database.select().from(modelProviderMapping);
 		logger.info(`Total model-provider mappings: ${mappingCount.length}`);

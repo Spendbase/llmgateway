@@ -17,6 +17,10 @@ export const relations = defineRelations(schema, (r) => ({
 			from: r.user.id,
 			to: r.apiKey.createdBy,
 		}),
+		ttsGenerations: r.many.ttsGeneration({
+			from: r.user.id,
+			to: r.ttsGeneration.userId,
+		}),
 	},
 	organization: {
 		userOrganizations: r.many.userOrganization(),

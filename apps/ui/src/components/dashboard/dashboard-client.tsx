@@ -152,6 +152,8 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 		activityData.reduce((sum, day) => sum + day.requestCount, 0) || 0;
 	const totalTokens =
 		activityData.reduce((sum, day) => sum + day.totalTokens, 0) || 0;
+	const totalTtsChars =
+		activityData.reduce((sum, day) => sum + (day.ttsChars || 0), 0) || 0;
 	const totalCost = activityData.reduce((sum, day) => sum + day.cost, 0) || 0;
 	const totalInputCost =
 		activityData.reduce((sum, day) => sum + day.inputCost, 0) || 0;
@@ -421,7 +423,13 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 						<MetricCard
 							label="Tokens Used"
 							value={isLoading ? "Loading..." : formatTokens(totalTokens)}
-							subtitle={isLoading ? "–" : `Last ${days} days`}
+							subtitle={
+								isLoading
+									? "–"
+									: totalTtsChars > 0
+										? `Last ${days} days • ${totalTtsChars.toLocaleString()} TTS chars`
+										: `Last ${days} days`
+							}
 							icon={<Coins className="h-4 w-4" />}
 							accent="blue"
 						/>
@@ -456,9 +464,19 @@ export function DashboardClient({ initialActivityData }: DashboardClientProps) {
 						<MetricCard
 							label="Avg cost / 1K tokens"
 							value={
-								isLoading ? "Loading..." : `$${avgCostPer1kTokens.toFixed(4)}`
+								isLoading
+									? "Loading..."
+									: totalTokens > 0
+										? `$${avgCostPer1kTokens.toFixed(4)}`
+										: "—"
 							}
-							subtitle={isLoading ? "–" : `Last ${days} days`}
+							subtitle={
+								isLoading
+									? "–"
+									: totalTokens === 0 && totalTtsChars > 0
+										? "N/A for TTS-only usage"
+										: `Last ${days} days`
+							}
 							icon={<CircleDollarSign className="h-4 w-4" />}
 							accent="blue"
 						/>
