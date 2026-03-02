@@ -104,7 +104,7 @@ async function seed() {
 
 	// Insert banners
 	await upsert(tables.banner, {
-		id: "free-credits",
+		bannerId: "free-credits",
 		name: "Free Credits Banner",
 		description: "Promotional banner for free credits on API Keys page",
 		enabled: true,

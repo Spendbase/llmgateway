@@ -1,0 +1,1 @@
+ALTER TABLE "banner" ADD COLUMN "banner_id" text NOT NULL;
