@@ -42,6 +42,7 @@ interface CreateBannerDialogProps {
 export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 	const [open, setOpen] = useState(false);
 
+	const [bannerId, setBannerId] = useState<string>("");
 	const [name, setName] = useState<string>("");
 	const [description, setDescription] = useState<string>("");
 
@@ -58,6 +59,7 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 				});
 				queryClient.invalidateQueries({ queryKey: ["get", "/admin/banners"] });
 				setOpen(false);
+				setBannerId("");
 				setName("");
 				setDescription("");
 			},
@@ -70,6 +72,7 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 	const handleOpenChange = (newOpen: boolean) => {
 		setOpen(newOpen);
 		if (newOpen) {
+			setBannerId("");
 			setName("");
 			setDescription("");
 		}
@@ -78,8 +81,8 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		if (!name.trim()) {
-			toast.error("Please enter a name and description", {
+		if (!name.trim() || !bannerId.trim()) {
+			toast.error("Please enter a name and banner id", {
 				style: {
 					backgroundColor: "var(--destructive)",
 					color: "var(--destructive-foreground)",
@@ -90,6 +93,7 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 
 		await createBanner({
 			body: {
+				bannerId: bannerId.trim(),
 				name: name.trim(),
 				description: description.trim(),
 			},
@@ -115,6 +119,16 @@ export function CreateBannerDialog({ children }: CreateBannerDialogProps) {
 							</span>
 						</div>
 					)}
+
+					<Label htmlFor="bannerId">Banner Id</Label>
+					<Input
+						id="bannerId"
+						type="text"
+						value={bannerId}
+						onChange={(e) => setBannerId(e.target.value)}
+						placeholder="banner-id"
+						required
+					/>
 
 					<Label htmlFor="name">Name</Label>
 					<Input

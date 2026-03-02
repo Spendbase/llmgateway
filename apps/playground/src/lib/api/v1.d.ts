@@ -1472,6 +1472,7 @@ export interface paths {
                         "application/json": {
                             banners: {
                                 id: string;
+                                bannerId: string;
                                 name: string;
                                 description: string | null;
                                 enabled: boolean;
@@ -1506,6 +1507,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        bannerId: string;
                         name: string;
                         description: string | null;
                     };
@@ -1520,6 +1522,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             id: string;
+                            bannerId: string;
                             name: string;
                             description: string | null;
                             enabled: boolean;
@@ -1630,6 +1633,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             id: string;
+                            bannerId: string;
                             name: string;
                             description: string | null;
                             enabled: boolean;
@@ -4827,10 +4831,63 @@ export interface paths {
                         "application/json": {
                             banners: {
                                 id: string;
+                                bannerId: string;
                                 name: string;
                                 description: string | null;
                                 enabled: boolean;
                             }[];
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/banners/{bannerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    bannerId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Get banner by bannerId */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            banner: {
+                                id: string;
+                                bannerId: string;
+                                name: string;
+                                description: string | null;
+                                enabled: boolean;
+                            };
                         };
                     };
                 };

@@ -56,14 +56,17 @@ export function DashboardLayoutClient({
 		localStorage.setItem("isFreeCreditsBannerHidden", "true");
 	}, []);
 
-	const { data: bannersData } = api.useQuery("get", "/banners", undefined, {
+	const { data: bannerData } = api.useQuery("get", "/banners/{bannerId}", {
+		params: {
+			path: {
+				bannerId: "free-credits",
+			},
+		},
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
 	});
 
-	const freeCreditsBanner = bannersData?.banners?.find(
-		(b) => b.id === "free-credits",
-	);
+	const freeCreditsBanner = bannerData?.banner;
 
 	const shouldShowBanner =
 		freeCreditsBanner?.enabled &&

@@ -95,6 +95,7 @@ const organizationSchema = z.object({
 
 const bannerSchema = z.object({
 	id: z.string(),
+	bannerId: z.string(),
 	name: z.string(),
 	description: z.string().nullable(),
 	enabled: z.boolean(),
@@ -1491,7 +1492,11 @@ admin.openapi(getBannerSettings, async (c) => {
 		});
 	}
 
-	const banners = await db.query.banner.findMany();
+	const banners = await db.query.banner.findMany({
+		orderBy: {
+			enabled: "desc",
+		},
+	});
 
 	return c.json({
 		banners,
@@ -2205,6 +2210,7 @@ const createBannerRoute = createRoute({
 			content: {
 				"application/json": {
 					schema: z.object({
+						bannerId: z.string(),
 						name: z.string(),
 						description: z.string().nullable(),
 					}),
@@ -2263,6 +2269,7 @@ admin.openapi(createBannerRoute, async (c) => {
 	const body = c.req.valid("json");
 
 	await db.insert(tables.banner).values({
+		bannerId: body.bannerId,
 		name: body.name,
 		description: body.description,
 	});

@@ -908,6 +908,7 @@ export const modelHistory = pgTable(
 
 export const banner = pgTable("banner", {
 	id: text().primaryKey().$defaultFn(shortid),
+	bannerId: text().notNull(),
 	createdAt: timestamp().notNull().defaultNow(),
 	updatedAt: timestamp()
 		.notNull()
