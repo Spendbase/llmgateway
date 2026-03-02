@@ -18,6 +18,7 @@ const modelUsageSchema = z.object({
 	inputTokens: z.number(),
 	outputTokens: z.number(),
 	totalTokens: z.number(),
+	ttsChars: z.number(),
 	cost: z.number(),
 });
 
@@ -28,6 +29,7 @@ const dailyActivitySchema = z.object({
 	inputTokens: z.number(),
 	outputTokens: z.number(),
 	totalTokens: z.number(),
+	ttsChars: z.number(),
 	cost: z.number(),
 	inputCost: z.number(),
 	outputCost: z.number(),
@@ -162,15 +164,18 @@ activity.openapi(getActivity, async (c) => {
 					"cacheCount",
 				),
 			discountSavings: sql<number>`COALESCE(
-				SUM(
-					CASE
-						WHEN ${tables.log.discount} > 0 AND ${tables.log.discount} < 1
-						THEN ${tables.log.cost} * ${tables.log.discount} / (1 - ${tables.log.discount})
-						ELSE 0
-					END
-				),
-				0
-			)`.as("discountSavings"),
+			SUM(
+				CASE
+					WHEN ${tables.log.discount} > 0 AND ${tables.log.discount} < 1
+					THEN ${tables.log.cost} * ${tables.log.discount} / (1 - ${tables.log.discount})
+					ELSE 0
+				END
+			),
+			0
+		)`.as("discountSavings"),
+			ttsChars: sql<number>`COALESCE(SUM(${tables.log.ttsChars}), 0)`.as(
+				"ttsChars",
+			),
 		})
 		.from(tables.log)
 		.where(
@@ -203,6 +208,9 @@ activity.openapi(getActivity, async (c) => {
 				sql<number>`COALESCE(SUM(CAST(${tables.log.totalTokens} AS NUMERIC)), 0)`.as(
 					"totalTokens",
 				),
+			ttsChars: sql<number>`COALESCE(SUM(${tables.log.ttsChars}), 0)`.as(
+				"ttsChars",
+			),
 			cost: sql<number>`COALESCE(SUM(${tables.log.cost}), 0)`.as("cost"),
 		})
 		.from(tables.log)
@@ -237,6 +245,7 @@ activity.openapi(getActivity, async (c) => {
 			inputTokens: Number(breakdown.inputTokens),
 			outputTokens: Number(breakdown.outputTokens),
 			totalTokens: Number(breakdown.totalTokens),
+			ttsChars: Number(breakdown.ttsChars),
 			cost: Number(breakdown.cost),
 		});
 	}
@@ -256,6 +265,7 @@ activity.openapi(getActivity, async (c) => {
 		const errorCount = Number(day.errorCount);
 		const cacheCount = Number(day.cacheCount);
 		const discountSavings = Number(day.discountSavings);
+		const ttsChars = Number(day.ttsChars);
 
 		const errorRate = requestCount > 0 ? (errorCount / requestCount) * 100 : 0;
 		const cacheRate = requestCount > 0 ? (cacheCount / requestCount) * 100 : 0;
@@ -266,6 +276,7 @@ activity.openapi(getActivity, async (c) => {
 			inputTokens,
 			outputTokens,
 			totalTokens,
+			ttsChars,
 			cost,
 			inputCost,
 			outputCost,

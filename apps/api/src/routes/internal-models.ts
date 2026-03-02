@@ -71,6 +71,16 @@ const modelProviderMappingSchema = z.object({
 	deactivatedAt: nullableToOptional(z.coerce.date()),
 	deactivationReason: nullableToOptional(z.string()),
 	status: z.enum(["active", "inactive", "deactivated"]),
+	audioConfig: z
+		.object({
+			characterPrice: z.number(),
+			maxCharacters: z.number(),
+			languages: z.number().optional(),
+			latencyMs: z.number().optional(),
+		})
+		.nullable()
+		.transform((v) => v ?? undefined)
+		.optional(),
 	providerInfo: providerSchema.optional(),
 });
 
@@ -125,6 +135,10 @@ const getModelsRoute = createRoute({
 				.transform((val) => val === "true")
 				.describe("Include all mapping statuses (for admin)")
 				.openapi({ example: "false" }),
+			type: z
+				.enum(["text", "audio", "image", "video"])
+				.optional()
+				.openapi({ example: "text" }),
 		}),
 	},
 	responses: {
@@ -147,6 +161,7 @@ internalModels.openapi(getModelsRoute, async (c) => {
 		status,
 		search,
 		family,
+		type,
 		sort = "createdAt",
 		order = "desc",
 		includeAll = false,
@@ -185,6 +200,10 @@ internalModels.openapi(getModelsRoute, async (c) => {
 				model.id.toLowerCase().includes(searchLower) ||
 				model.name?.toLowerCase().includes(searchLower),
 		);
+	}
+
+	if (type) {
+		models = models.filter((model) => model.output?.includes(type));
 	}
 
 	// Enrich with data from models package (e.g., reasoningLevels) and filter mappings
