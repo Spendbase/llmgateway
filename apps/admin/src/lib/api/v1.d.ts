@@ -2133,6 +2133,14 @@ export interface paths {
                                 status: "active" | "inactive" | "deleted" | null;
                                 usageLimit: string | null;
                                 usage: string;
+                                /** @enum {string} */
+                                resetPeriod: "daily" | "weekly" | "monthly" | "none";
+                                /** Format: date-time */
+                                lastResetAt: string | null;
+                                /** Format: date-time */
+                                nextResetAt: string | null;
+                                /** Format: date-time */
+                                expiresAt: string | null;
                                 projectId: string;
                                 createdBy: string;
                                 creator?: {
@@ -2185,7 +2193,10 @@ export interface paths {
                     "application/json": {
                         description: string;
                         projectId: string;
-                        usageLimit: string | null;
+                        usageLimit?: string | null;
+                        /** @enum {string} */
+                        resetPeriod?: "daily" | "weekly" | "monthly" | "none";
+                        expiresAt?: string | null;
                     };
                 };
             };
@@ -2206,6 +2217,14 @@ export interface paths {
                                 status: "active" | "inactive" | "deleted" | null;
                                 usageLimit: string | null;
                                 usage: string;
+                                /** @enum {string} */
+                                resetPeriod: "daily" | "weekly" | "monthly" | "none";
+                                /** Format: date-time */
+                                lastResetAt: string | null;
+                                /** Format: date-time */
+                                nextResetAt: string | null;
+                                /** Format: date-time */
+                                expiresAt: string | null;
                                 projectId: string;
                                 createdBy: string;
                                 creator?: {
@@ -2336,6 +2355,14 @@ export interface paths {
                                 status: "active" | "inactive" | "deleted" | null;
                                 usageLimit: string | null;
                                 usage: string;
+                                /** @enum {string} */
+                                resetPeriod: "daily" | "weekly" | "monthly" | "none";
+                                /** Format: date-time */
+                                lastResetAt: string | null;
+                                /** Format: date-time */
+                                nextResetAt: string | null;
+                                /** Format: date-time */
+                                expiresAt: string | null;
                                 projectId: string;
                                 createdBy: string;
                                 creator?: {
@@ -2416,7 +2443,10 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        usageLimit: string | null;
+                        usageLimit?: string | null;
+                        /** @enum {string} */
+                        resetPeriod?: "daily" | "weekly" | "monthly" | "none";
+                        expiresAt?: string | null;
                     };
                 };
             };
@@ -2438,6 +2468,14 @@ export interface paths {
                                 status: "active" | "inactive" | "deleted" | null;
                                 usageLimit: string | null;
                                 usage: string;
+                                /** @enum {string} */
+                                resetPeriod: "daily" | "weekly" | "monthly" | "none";
+                                /** Format: date-time */
+                                lastResetAt: string | null;
+                                /** Format: date-time */
+                                nextResetAt: string | null;
+                                /** Format: date-time */
+                                expiresAt: string | null;
                                 projectId: string;
                                 createdBy: string;
                                 creator?: {
