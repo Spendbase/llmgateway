@@ -892,28 +892,24 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						createdBy: userId,
 					});
 
-					// Handle referral if cookie is present
+					// Handle referral if cookie is present (ref = referrer organization id)
 					const cookieHeader = ctx.request?.headers.get("cookie") || "";
 					const referralMatch = cookieHeader.match(
 						/llmgateway_referral=([^;]+)/,
 					);
 					if (referralMatch) {
 						const referrerOrgId = decodeURIComponent(referralMatch[1]);
-						// Verify the referrer organization exists and is active
 						const referrerOrg = await tx.query.organization.findFirst({
 							where: {
 								id: { eq: referrerOrgId },
 								status: { eq: "active" },
 							},
 						});
-
 						if (referrerOrg) {
-							// Create the referral record
 							await tx.insert(tables.referral).values({
 								referrerOrganizationId: referrerOrgId,
 								referredOrganizationId: organization.id,
 							});
-
 							logger.info("Created referral record", {
 								referrerOrgId,
 								referredOrgId: organization.id,

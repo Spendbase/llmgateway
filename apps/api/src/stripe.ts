@@ -7,6 +7,7 @@ import { logger } from "@llmgateway/logger";
 import { getDevPlanCreditsLimit, type DevPlanTier } from "@llmgateway/shared";
 
 import { posthog } from "./posthog.js";
+import { grantReferralReward } from "./referral-reward.js";
 import { stripe } from "./routes/payments.js";
 import {
 	generatePaymentFailureEmailHtml,
@@ -778,6 +779,8 @@ async function handlePaymentIntentSucceeded(
 	logger.info(
 		`Added ${creditAmount} credits to organization ${organizationId} (paid ${totalAmountInDollars} including fees)`,
 	);
+
+	await grantReferralReward(organizationId);
 }
 
 async function handlePaymentIntentFailed(
