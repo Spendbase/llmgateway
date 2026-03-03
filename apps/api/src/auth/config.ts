@@ -894,9 +894,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 					// Handle referral if cookie is present (ref = referrer organization id)
 					const cookieHeader = ctx.request?.headers.get("cookie") || "";
-					const referralMatch = cookieHeader.match(
-						/llmgateway_referral=([^;]+)/,
-					);
+					const referralMatch = cookieHeader.match(/llmapi_referral=([^;]+)/);
 					if (referralMatch) {
 						const referrerOrgId = decodeURIComponent(referralMatch[1]);
 						const referrerOrg = await tx.query.organization.findFirst({

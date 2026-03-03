@@ -492,7 +492,7 @@ user.openapi(completeOnboarding, async (c) => {
 		);
 
 		if (activeProject) {
-			redirectTo = `/${activeOrg.organization.id}/${activeProject.id}/api-keys?openCreateDialog=true`;
+			redirectTo = `/${activeOrg.organization.id}/${activeProject.id}/api-keys`;
 		}
 	}
 
