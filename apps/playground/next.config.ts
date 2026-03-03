@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
 	typescript: {
 		ignoreBuildErrors: true,
 	},
+	env: {
+		NEXT_PUBLIC_STRIPE_PUB_KEY: process.env.STRIPE_PUB_KEY,
+	},
 };
 
 export default nextConfig;
