@@ -118,7 +118,8 @@ export function ReferralsClient({ referredCount }: ReferralsClientProps) {
 										<Link2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
 										<span>
 											Copy your personalized referral link from the dashboard
-											and share it with users who could benefit from LLM API.
+											and share it with users and teams who could benefit from
+											LLM API.
 										</span>
 									</li>
 									<li className="flex items-start gap-2">

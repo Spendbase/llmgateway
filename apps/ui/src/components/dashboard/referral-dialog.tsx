@@ -104,7 +104,8 @@ export function ReferralDialog({
 									<Link2 className="mt-[2px] h-3.5 w-3.5 shrink-0 text-primary" />
 									<span>
 										Copy your personalized referral link from the dashboard and
-										share it with users who could benefit from LLM API.
+										share it with users and teams who could benefit from LLM
+										API.
 									</span>
 								</li>
 								<li className="flex items-start gap-2">
