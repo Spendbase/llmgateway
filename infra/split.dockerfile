@@ -32,6 +32,9 @@ RUN ARCH=$(uname -m) && \
 # Create app directory
 WORKDIR /app
 
+ARG STRIPE_PUB_KEY
+ENV STRIPE_PUB_KEY=$STRIPE_PUB_KEY
+
 COPY .tool-versions ./
 
 # Install asdf plugins and tools
@@ -144,9 +147,7 @@ ENV PATH="${ASDF_DIR}:${ASDF_DIR}/shims:$PATH"
 ENTRYPOINT ["/tini", "--"]
 
 ARG APP_VERSION
-ARG STRIPE_PUB_KEY
 ENV APP_VERSION=$APP_VERSION
-ENV STRIPE_PUB_KEY=$STRIPE_PUB_KEY
 
 # API preparation stage
 FROM api-builder AS api-prep
