@@ -6,31 +6,11 @@ import { maskToken } from "@/lib/maskToken.js";
 import { getUserProjectIds } from "@/utils/authorization.js";
 
 import { eq, db, shortid, tables } from "@llmgateway/db";
+import { computeNextResetAt } from "@llmgateway/shared";
 
 import type { ServerTypes } from "@/vars.js";
 
 export const keysApi = new OpenAPIHono<ServerTypes>();
-
-// Helper to compute the next reset date strictly based on UTC boundaries
-function computeNextResetAt(
-	period: "daily" | "weekly" | "monthly" | "none",
-	now: Date = new Date(),
-): Date | null {
-	if (period === "none") {
-		return null;
-	}
-	const next = new Date(now);
-
-	if (period === "daily") {
-		next.setUTCDate(next.getUTCDate() + 1);
-	} else if (period === "weekly") {
-		next.setUTCDate(next.getUTCDate() + 7);
-	} else if (period === "monthly") {
-		next.setUTCMonth(next.getUTCMonth() + 1);
-	}
-
-	return next;
-}
 
 // Create a schema for API key responses
 // Using z.object directly instead of createSelectSchema due to compatibility issues
