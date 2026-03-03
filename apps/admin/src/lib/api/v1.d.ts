@@ -971,7 +971,6 @@ export interface paths {
                                 inputTokens: number;
                                 outputTokens: number;
                                 totalTokens: number;
-                                ttsChars: number;
                                 cost: number;
                                 inputCost: number;
                                 outputCost: number;
@@ -989,7 +988,6 @@ export interface paths {
                                     inputTokens: number;
                                     outputTokens: number;
                                     totalTokens: number;
-                                    ttsChars: number;
                                     cost: number;
                                 }[];
                             }[];
@@ -1082,7 +1080,6 @@ export interface paths {
                             endDate: string;
                             totalRequests: number;
                             totalTokens: number;
-                            totalTtsChars: number;
                             totalCost: number;
                             inputTokens: number;
                             inputCost: number;
@@ -2127,20 +2124,11 @@ export interface paths {
                                 id: string;
                                 createdAt: string;
                                 updatedAt: string;
-                                token: string;
                                 description: string;
                                 /** @enum {string|null} */
                                 status: "active" | "inactive" | "deleted" | null;
                                 usageLimit: string | null;
                                 usage: string;
-                                /** @enum {string} */
-                                resetPeriod: "daily" | "weekly" | "monthly" | "none";
-                                /** Format: date-time */
-                                lastResetAt: string | null;
-                                /** Format: date-time */
-                                nextResetAt: string | null;
-                                /** Format: date-time */
-                                expiresAt: string | null;
                                 projectId: string;
                                 createdBy: string;
                                 creator?: {
@@ -2193,10 +2181,7 @@ export interface paths {
                     "application/json": {
                         description: string;
                         projectId: string;
-                        usageLimit?: string | null;
-                        /** @enum {string} */
-                        resetPeriod?: "daily" | "weekly" | "monthly" | "none";
-                        expiresAt?: string | null;
+                        usageLimit: string | null;
                     };
                 };
             };
@@ -2217,14 +2202,6 @@ export interface paths {
                                 status: "active" | "inactive" | "deleted" | null;
                                 usageLimit: string | null;
                                 usage: string;
-                                /** @enum {string} */
-                                resetPeriod: "daily" | "weekly" | "monthly" | "none";
-                                /** Format: date-time */
-                                lastResetAt: string | null;
-                                /** Format: date-time */
-                                nextResetAt: string | null;
-                                /** Format: date-time */
-                                expiresAt: string | null;
                                 projectId: string;
                                 createdBy: string;
                                 creator?: {
@@ -2355,14 +2332,6 @@ export interface paths {
                                 status: "active" | "inactive" | "deleted" | null;
                                 usageLimit: string | null;
                                 usage: string;
-                                /** @enum {string} */
-                                resetPeriod: "daily" | "weekly" | "monthly" | "none";
-                                /** Format: date-time */
-                                lastResetAt: string | null;
-                                /** Format: date-time */
-                                nextResetAt: string | null;
-                                /** Format: date-time */
-                                expiresAt: string | null;
                                 projectId: string;
                                 createdBy: string;
                                 creator?: {
@@ -2443,10 +2412,7 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        usageLimit?: string | null;
-                        /** @enum {string} */
-                        resetPeriod?: "daily" | "weekly" | "monthly" | "none";
-                        expiresAt?: string | null;
+                        usageLimit: string | null;
                     };
                 };
             };
@@ -2468,14 +2434,6 @@ export interface paths {
                                 status: "active" | "inactive" | "deleted" | null;
                                 usageLimit: string | null;
                                 usage: string;
-                                /** @enum {string} */
-                                resetPeriod: "daily" | "weekly" | "monthly" | "none";
-                                /** Format: date-time */
-                                lastResetAt: string | null;
-                                /** Format: date-time */
-                                nextResetAt: string | null;
-                                /** Format: date-time */
-                                expiresAt: string | null;
                                 projectId: string;
                                 createdBy: string;
                                 creator?: {
@@ -4903,200 +4861,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tts-generations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    limit?: number;
-                    cursor?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of TTS generations (metadata only, no audio) */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            generations: {
-                                id: string;
-                                model: string;
-                                voice: string;
-                                format: string;
-                                text: string;
-                                chars: number | null;
-                                cost: number | null;
-                                /** Format: date-time */
-                                createdAt: string;
-                                /** Format: date-time */
-                                updatedAt: string;
-                            }[];
-                            hasMore: boolean;
-                            /** Format: date-time */
-                            nextCursor: string | null;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        model: string;
-                        voice: string;
-                        format: string;
-                        text: string;
-                        file: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description TTS generation created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            generation: {
-                                id: string;
-                                model: string;
-                                voice: string;
-                                format: string;
-                                text: string;
-                                chars: number | null;
-                                cost: number | null;
-                                /** Format: date-time */
-                                createdAt: string;
-                                /** Format: date-time */
-                                updatedAt: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tts-generations/{id}/audio": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Redirect to pre-signed S3 audio URL */
-                302: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Generation not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tts-generations/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Generation deleted */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Generation not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/google-workspace/callback": {
         parameters: {
             query?: never;
@@ -5158,7 +4922,6 @@ export interface operations {
                 order?: "asc" | "desc";
                 /** @description Include all mapping statuses (for admin) */
                 includeAll?: string;
-                type?: "text" | "audio" | "image" | "video";
             };
             header?: never;
             path?: never;
@@ -5226,12 +4989,6 @@ export interface operations {
                                 deactivationReason: string | null;
                                 /** @enum {string} */
                                 status: "active" | "inactive" | "deactivated";
-                                audioConfig?: {
-                                    characterPrice: number;
-                                    maxCharacters: number;
-                                    languages?: number;
-                                    latencyMs?: number;
-                                } | null;
                                 providerInfo?: {
                                     id: string;
                                     createdAt: string | null;
