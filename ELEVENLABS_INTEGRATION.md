@@ -1,6 +1,6 @@
 # ElevenLabs Text-to-Speech Integration
 
-This document explains how ElevenLabs TTS has been integrated into LLMGateway, providing an OpenAI-compatible `/v1/audio/speech` endpoint.
+This document explains how ElevenLabs TTS has been integrated into LLMAPI, providing an OpenAI-compatible `/v1/audio/speech` endpoint.
 
 ## Overview
 
@@ -63,7 +63,7 @@ POST https://api.llmapi.ai/v1/audio/speech
 ### Request Headers
 
 ```
-Authorization: Bearer YOUR_LLMGATEWAY_API_KEY
+Authorization: Bearer YOUR_LLM_API_KEY
 Content-Type: application/json
 ```
 
@@ -81,13 +81,13 @@ Content-Type: application/json
 
 ### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `model` | string | Yes | TTS model ID (e.g., `eleven_multilingual_v2`) |
-| `input` | string | Yes | Text to convert to speech (max length varies by model) |
-| `voice` | string | Yes | Voice name (OpenAI names or ElevenLabs voice IDs) |
-| `response_format` | string | No | Audio format (default: `mp3`) |
-| `speed` | number | No | Playback speed 0.25-4.0 (default: 1.0) |
+| Parameter         | Type   | Required | Description                                            |
+| ----------------- | ------ | -------- | ------------------------------------------------------ |
+| `model`           | string | Yes      | TTS model ID (e.g., `eleven_multilingual_v2`)          |
+| `input`           | string | Yes      | Text to convert to speech (max length varies by model) |
+| `voice`           | string | Yes      | Voice name (OpenAI names or ElevenLabs voice IDs)      |
+| `response_format` | string | No       | Audio format (default: `mp3`)                          |
+| `speed`           | number | No       | Playback speed 0.25-4.0 (default: 1.0)                 |
 
 ### Supported Formats
 
@@ -100,6 +100,7 @@ Content-Type: application/json
 ### Response
 
 Returns audio binary data with:
+
 - Content-Type: `audio/mpeg` (or appropriate type)
 - `x-character-count` header: Number of characters processed
 - `x-request-id` header: Unique request identifier
@@ -112,7 +113,7 @@ curl -X POST https://api.llmapi.ai/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "model": "eleven_flash_v2_5",
-    "input": "Welcome to LLMGateway text-to-speech!",
+    "input": "Welcome to LLMAPI text-to-speech!",
     "voice": "nova",
     "response_format": "mp3"
   }' \
@@ -146,15 +147,17 @@ with open("output.mp3", "wb") as f:
 ### 1. Add ElevenLabs API Key
 
 For API keys mode:
+
 1. Sign up at [ElevenLabs](https://elevenlabs.io)
 2. Get your API key from the ElevenLabs dashboard
-3. Add it to LLMGateway:
+3. Add it to LLMAPI:
    - UI: Settings → Provider Keys → Add Provider Key → Select ElevenLabs
    - Or set environment variable: `LLM_ELEVENLABS_API_KEY=your_key_here`
 
-### 2. Create LLMGateway API Key
+### 2. Create LLMAPI API Key
 
-In the LLMGateway dashboard:
+In the LLMAPI dashboard:
+
 1. Navigate to your project
 2. Create a new API key
 3. Use this key in the `Authorization` header
@@ -165,12 +168,12 @@ Use the API key to make requests to `/v1/audio/speech` as shown in the examples 
 
 ## Models & Pricing
 
-| Model | Languages | Latency | Price per 1K chars | Max Characters |
-|-------|-----------|---------|-------------------|----------------|
-| `eleven_multilingual_v2` | 29 | 400ms | $0.30 | 10,000 |
-| `eleven_turbo_v2_5` | 32 | 250ms | $0.15 | 40,000 |
-| `eleven_flash_v2_5` | 32 | 75ms | $0.15 | 40,000 |
-| `eleven_v3` | 70+ | 300ms | $0.30 | 5,000 |
+| Model                    | Languages | Latency | Price per 1K chars | Max Characters |
+| ------------------------ | --------- | ------- | ------------------ | -------------- |
+| `eleven_multilingual_v2` | 29        | 400ms   | $0.30              | 10,000         |
+| `eleven_turbo_v2_5`      | 32        | 250ms   | $0.15              | 40,000         |
+| `eleven_flash_v2_5`      | 32        | 75ms    | $0.15              | 40,000         |
+| `eleven_v3`              | 70+       | 300ms   | $0.30              | 5,000          |
 
 ### Model Selection Guide
 
@@ -184,6 +187,7 @@ Use the API key to make requests to `/v1/audio/speech` as shown in the examples 
 ### OpenAI-Compatible Voices
 
 These work the same as OpenAI's TTS API:
+
 - `alloy` - Clear, versatile female voice (Rachel)
 - `echo` - Warm male voice (Josh)
 - `fable` - Strong male voice with British accent (Arnold)
@@ -194,6 +198,7 @@ These work the same as OpenAI's TTS API:
 ### Custom ElevenLabs Voices
 
 You can also use ElevenLabs voice IDs directly:
+
 - Pre-made voices from ElevenLabs library
 - Your own cloned voices
 
@@ -223,7 +228,7 @@ apps/gateway/src/
 ### How It Works
 
 1. **Request Validation**
-   - Authenticates the LLMGateway API key
+   - Authenticates the LLMAPI API key
    - Validates the project and organization
    - Checks model availability and input length
 
@@ -298,6 +303,7 @@ http://localhost:4001/docs
 ```
 
 Navigate to the `/v1/audio/speech` endpoint to see:
+
 - Full request/response schemas
 - Example requests
 - Parameter descriptions

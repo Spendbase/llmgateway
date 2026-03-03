@@ -3,7 +3,7 @@ id: "1"
 slug: "terms"
 date: "2025-10-21"
 title: "Terms Of Use"
-description: "Review the Terms of Use for LLM Gateway. Learn about account eligibility, billing, data usage, AI provider policies, and user responsibilities when accessing our multi-provider AI gateway platform."
+description: "Review the Terms of Use for LLM API. Learn about account eligibility, billing, data usage, AI provider policies, and user responsibilities when accessing our multi-provider AI gateway platform."
 ---
 
 # Terms of Use
@@ -11,7 +11,7 @@ description: "Review the Terms of Use for LLM Gateway. Learn about account eligi
 **Effective Date:** October 21, 2025  
 **Last Updated:** October 21, 2025
 
-Welcome to **LLM Gateway** (“we”, “our”, or “us”). These Terms of Use (“Terms”) govern your access to and use of the LLM Gateway platform, including our website **https://llmapi.ai**, APIs, SDKs, and any related products or services (collectively, the “Service”).
+Welcome to **LLM API** (“we”, “our”, or “us”). These Terms of Use (“Terms”) govern your access to and use of the LLM API platform, including our website **https://llmapi.ai**, APIs, SDKs, and any related products or services (collectively, the “Service”).
 
 By accessing or using the Service, you agree to be bound by these Terms. If you do not agree, please discontinue use immediately.
 
@@ -19,7 +19,7 @@ By accessing or using the Service, you agree to be bound by these Terms. If you 
 
 ## 1. Overview
 
-LLM Gateway provides an API gateway and management platform for connecting to multiple AI model providers.  
+LLM API provides an API gateway and management platform for connecting to multiple AI model providers.  
 The Service allows users to:
 
 - Route and monitor API requests to AI providers
@@ -54,7 +54,7 @@ You agree to notify us immediately of any unauthorized access to your account.
 
 ## 4. Plans and Billing
 
-LLM Gateway offers free and paid plans:
+LLM API offers free and paid plans:
 
 - **Free Plan:** Basic features and limited usage
 - **Pro Plan:** Advanced features, including team management and extended data retention
@@ -93,14 +93,14 @@ We reserve the right to suspend or terminate accounts engaging in abuse, fraud, 
 
 ## 7. AI Provider Usage
 
-When using AI models through LLM Gateway, you are also subject to the **terms and policies** of the respective model providers (e.g., OpenAI, Anthropic, Mistral, Google, etc.).  
-LLM Gateway acts as a router and analytics layer — we do not control or assume responsibility for provider responses.
+When using AI models through LLM API, you are also subject to the **terms and policies** of the respective model providers (e.g., OpenAI, Anthropic, Mistral, Google, etc.).  
+LLM API acts as a router and analytics layer — we do not control or assume responsibility for provider responses.
 
 ---
 
 ## 8. Intellectual Property
 
-All rights, titles, and interests in and to the Service (including software, design, and branding) are owned by **LLM Gateway** or its licensors.
+All rights, titles, and interests in and to the Service (including software, design, and branding) are owned by **LLM API** or its licensors.
 
 You retain ownership of your own data and prompts.  
 You grant us a limited license to process and analyze your data for the purpose of providing the Service.
@@ -150,14 +150,14 @@ Use of the Service and AI outputs is at your own discretion and risk.
 
 To the fullest extent permitted by law:
 
-- LLM Gateway is **not liable** for indirect, incidental, or consequential damages
+- LLM API is **not liable** for indirect, incidental, or consequential damages
 - Our total liability for any claim arising from these Terms shall not exceed the amount you paid (if any) in the preceding **three (3) months**
 
 ---
 
 ## 13. Indemnification
 
-You agree to indemnify and hold harmless **LLM Gateway**, its founders, employees, and partners from any claims, damages, or expenses resulting from:
+You agree to indemnify and hold harmless **LLM API**, its founders, employees, and partners from any claims, damages, or expenses resulting from:
 
 - Your use or misuse of the Service
 - Your violation of these Terms or third-party rights
@@ -187,4 +187,4 @@ If you have questions about these Terms, contact us at:
 
 ---
 
-© 2025 LLM Gateway. All rights reserved.
+© 2025 LLM API. All rights reserved.

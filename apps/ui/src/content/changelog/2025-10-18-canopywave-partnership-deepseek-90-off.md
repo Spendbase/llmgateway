@@ -37,11 +37,11 @@ canopywave/deepseek-v3.1
 
 ## 🚀 Getting Started
 
-**Immediate Access**: The CanopyWave provider is available now through LLM Gateway with the promotional pricing applied automatically.
+**Immediate Access**: The CanopyWave provider is available now through LLM API with the promotional pricing applied automatically.
 
 **Simple Integration**: Use model identifier `canopywave/deepseek-v3.1` in your API calls to access DeepSeek v3.1 at the discounted rate.
 
-**No Additional Setup**: Your existing LLM Gateway API key works seamlessly with the CanopyWave provider.
+**No Additional Setup**: Your existing LLM API API key works seamlessly with the CanopyWave provider.
 
 ```javascript
 import { llmgateway } from "@llmgateway/ai-sdk-provider";

@@ -201,7 +201,7 @@ audio.openapi(audioSpeechRoute, async (c) => {
 	if (!apiKey || apiKey.status !== "active") {
 		throw new HTTPException(401, {
 			message:
-				"Unauthorized: Invalid LLMGateway API token. Please make sure the token is not deleted or disabled.",
+				"Unauthorized: Invalid LLMAPI API token. Please make sure the token is not deleted or disabled.",
 		});
 	}
 
