@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -52,3 +53,13 @@ export function getErrorMessage(error: any): string {
 
 	return "An unknown error occurred";
 }
+
+export const showErrorToast = (title: string, error: unknown) => {
+	toast.error(title, {
+		description: getErrorMessage(error),
+		style: {
+			backgroundColor: "var(--destructive)",
+			color: "var(--destructive-foreground)",
+		},
+	});
+};

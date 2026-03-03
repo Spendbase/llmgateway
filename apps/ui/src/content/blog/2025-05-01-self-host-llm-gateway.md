@@ -1,13 +1,13 @@
 ---
-id: blog-self-host-llm-gateway
-slug: how-to-self-host-llm-gateway
+id: blog-self-host-llm-api
+slug: how-to-self-host-llm-api
 date: 2025-05-01
-title: How to Self-Host LLM Gateway
-summary: Deploy LLM Gateway locally or in the cloud using our unified Docker image or split services.
+title: How to Self-Host LLM API
+summary: Deploy LLM API locally or in the cloud using our unified Docker image or split services.
 categories: ["Guides"]
 image:
-  src: "/blog/how-to-self-host-llm-gateway.png"
-  alt: "LLM Gateway"
+  src: "/blog/how-to-self-host-llm-api.png"
+  alt: "LLM API"
   width: 2282
   height: 1198
 ---
@@ -16,12 +16,12 @@ image:
 
 ```bash
 docker run -d \
-  --name llmgateway \
+  --name llmapi \
   --restart unless-stopped \
   -p 3002:3002 -p 3003:3003 -p 3005:3005 -p 3006:3006 -p 4001:4001 -p 4002:4002 \
-  -v ~/llmgateway_data:/var/lib/postgresql/data \
+  -v ~/llmapi:/var/lib/postgresql/data \
   -e AUTH_SECRET=your-secret-key-here \
-  ghcr.io/Spendbase/llmgateway-unified:latest
+  ghcr.io/Spendbase/llmapi-unified:latest
 ```
 
 Prefer pinning the image to the latest release tag. You can also run it via Docker Compose.

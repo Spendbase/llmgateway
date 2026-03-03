@@ -6,12 +6,12 @@ title: "Introducing Our First Image Generation Model: Gemini 2.5 Flash Image Pre
 summary: "Generate stunning images with Google's Gemini 2.5 Flash Image Preview - our first image generation model with 32.8k context window and competitive pricing."
 image:
   src: "/changelog/gemini-2-5-flash-image-preview.png"
-  alt: "Gemini 2.5 Flash Image Preview - First image generation model on LLM Gateway"
+  alt: "Gemini 2.5 Flash Image Preview - First image generation model on LLM API"
   width: 1768
   height: 677
 ---
 
-We're thrilled to announce the addition of **Gemini 2.5 Flash Image Preview** - our **first image generation model** on LLM Gateway! This marks a significant milestone as we expand beyond text generation to visual AI capabilities.
+We're thrilled to announce the addition of **Gemini 2.5 Flash Image Preview** - our **first image generation model** on LLM API! This marks a significant milestone as we expand beyond text generation to visual AI capabilities.
 
 **[Try it now in the Chat Playground](https://chat.llmapi.ai/?model=google-ai-studio/gemini-2.5-flash-image-preview)** 🎨
 

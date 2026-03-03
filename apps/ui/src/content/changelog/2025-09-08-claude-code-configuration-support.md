@@ -3,24 +3,24 @@ id: "19"
 slug: "claude-code-configuration-support"
 date: "2025-09-08"
 title: "Claude Code Configuration Now Supported"
-summary: "Configure Claude Code to use any LLM model through LLMGateway's unified API with simple environment variable setup."
+summary: "Configure Claude Code to use any LLM model through LLMAPI's unified API with simple environment variable setup."
 image:
   src: "/changelog/claude-code-configuration-support.png"
-  alt: "Claude Code configuration support on LLM Gateway"
+  alt: "Claude Code configuration support on LLM API"
   width: 2282
   height: 1198
 ---
 
-You can now configure **Claude Code** to work with any LLM model available through LLMGateway! Access models from OpenAI, Google, Anthropic, and more using Claude's powerful CLI interface.
+You can now configure **Claude Code** to work with any LLM model available through LLMAPI! Access models from OpenAI, Google, Anthropic, and more using Claude's powerful CLI interface.
 
 ## 🔧 Simple Configuration
 
-Set up Claude Code with LLMGateway using three environment variables:
+Set up Claude Code with LLMAPI using three environment variables:
 
 ```bash
 export ANTHROPIC_BASE_URL=https://api.llmapi.ai
 export ANTHROPIC_AUTH_TOKEN=llmgtwy_.... # your llmapi.ai api key here
-# optionally, choose your model, otherwise it will use the default Claude model via LLMGateway
+# optionally, choose your model, otherwise it will use the default Claude model via LLMAPI
 export ANTHROPIC_MODEL=gpt-5 # choose your model with tool support
 
 # now run claude!
@@ -51,7 +51,7 @@ claude
 
 ## 📚 Complete Guide
 
-Read our comprehensive guide: **[Configure Claude Code to Use Any Model via LLMGateway](/blog/how-to-configure-claude-code-with-llmgateway)**
+Read our comprehensive guide: **[Configure Claude Code to Use Any Model via LLMAPI](/blog/how-to-configure-claude-code-with-llmapi)**
 
 The guide covers:
 

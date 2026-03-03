@@ -308,7 +308,7 @@ async function calculateHistoryForMinute(targetMinute: Date) {
 	const allMappings = await database
 		.select({
 			id: modelProviderMapping.id, // The mapping ID
-			modelId: modelProviderMapping.modelId, // LLMGateway model name
+			modelId: modelProviderMapping.modelId, // LLMAPI model name
 			providerId: modelProviderMapping.providerId,
 		})
 		.from(modelProviderMapping)
@@ -358,7 +358,7 @@ async function calculateHistoryForMinute(targetMinute: Date) {
 		await database
 			.insert(modelProviderMappingHistory)
 			.values({
-				modelId: mapping.modelId, // LLMGateway model name
+				modelId: mapping.modelId, // LLMAPI model name
 				providerId: mapping.providerId,
 				modelProviderMappingId: mapping.id, // Exact model_provider_mapping.id
 				minuteTimestamp: roundedTargetMinute,

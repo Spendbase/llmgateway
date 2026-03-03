@@ -2,7 +2,7 @@ import initSqlJs, { type Database } from "sql.js";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 
 const DB_PATH = "api-responses.db";
-const API_URL = "https://api.llmgateway.io";
+const API_URL = "https://api.llmapi.ai";
 const INTERVAL_MS = 1000;
 
 let db: Database;
