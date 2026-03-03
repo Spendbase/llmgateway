@@ -62,7 +62,7 @@ export async function grantReferralReward(
 			amount: "0",
 			creditAmount: String(REFERRAL_REWARD_AMOUNT),
 			status: "completed",
-			description: `Referral reward: referred user deposited $${totalDeposited.toFixed(0)}+`,
+			description: `Referral reward: referred user deposited $${totalDeposited.toFixed(2)}+`,
 			currency: "USD",
 		});
 
