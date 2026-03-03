@@ -25,7 +25,7 @@ import {
 } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
 import { hasErrorCode } from "@llmgateway/models";
-import { calculateFees } from "@llmgateway/shared";
+import { calculateFees, computeNextResetAt } from "@llmgateway/shared";
 
 import {
 	calculateMinutelyHistory,
@@ -46,6 +46,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_123", {
 const AUTO_TOPUP_LOCK_KEY = "auto_topup_check";
 const CREDIT_PROCESSING_LOCK_KEY = "credit_processing";
 const DATA_RETENTION_LOCK_KEY = "data_retention_cleanup";
+const API_KEY_RESET_LOCK_KEY = "api_key_usage_reset";
 const LOCK_DURATION_MINUTES = 5;
 
 // Configuration for batch processing
@@ -1036,6 +1037,107 @@ async function runDataRetentionLoop() {
 	}
 }
 
+const API_KEY_RESET_BATCH_SIZE = 1000;
+
+export async function resetApiKeyUsage(): Promise<void> {
+	const lockAcquired = await acquireLock(API_KEY_RESET_LOCK_KEY);
+	if (!lockAcquired) {
+		return;
+	}
+
+	try {
+		const now = new Date();
+
+		await db.transaction(async (tx) => {
+			// Fetch eligible keys with row-level locking
+			const eligibleKeys = await tx
+				.select({
+					id: apiKey.id,
+					resetPeriod: apiKey.resetPeriod,
+				})
+				.from(apiKey)
+				.where(
+					and(
+						sql`${apiKey.resetPeriod} != 'none'`,
+						sql`${apiKey.nextResetAt} IS NOT NULL`,
+						sql`${apiKey.nextResetAt} <= ${now}`,
+					),
+				)
+				.limit(API_KEY_RESET_BATCH_SIZE)
+				.for("update", { skipLocked: true });
+
+			if (eligibleKeys.length === 0) {
+				return;
+			}
+
+			logger.info(`Resetting usage for ${eligibleKeys.length} API keys`);
+
+			for (const key of eligibleKeys) {
+				const nextReset = computeNextResetAt(
+					key.resetPeriod as "daily" | "weekly" | "monthly",
+					now,
+				);
+
+				await tx
+					.update(apiKey)
+					.set({
+						usage: "0",
+						lastResetAt: now,
+						nextResetAt: nextReset,
+					})
+					.where(eq(apiKey.id, key.id));
+			}
+
+			logger.info(
+				`Successfully reset usage for ${eligibleKeys.length} API keys`,
+			);
+		});
+	} catch (error) {
+		logger.error(
+			"Error resetting API key usage",
+			error instanceof Error ? error : new Error(String(error)),
+		);
+	} finally {
+		await releaseLock(API_KEY_RESET_LOCK_KEY);
+	}
+}
+
+async function runApiKeyResetLoop() {
+	activeLoops++;
+	const interval = 60 * 1000; // 60 seconds
+	logger.info(
+		`Starting API key reset loop (interval: ${interval / 1000} seconds)...`,
+	);
+
+	try {
+		// eslint-disable-next-line no-unmodified-loop-condition
+		while (!shouldStop) {
+			try {
+				await resetApiKeyUsage();
+
+				if (!shouldStop) {
+					await new Promise((resolve) => {
+						setTimeout(resolve, interval);
+					});
+				}
+			} catch (error) {
+				logger.error(
+					"Error in API key reset loop",
+					error instanceof Error ? error : new Error(String(error)),
+				);
+				if (!shouldStop) {
+					await new Promise((resolve) => {
+						setTimeout(resolve, 5000);
+					});
+				}
+			}
+		}
+	} finally {
+		activeLoops--;
+		logger.info("API key reset loop stopped");
+	}
+}
+
 export async function startWorker() {
 	if (isWorkerRunning) {
 		logger.error("Worker is already running");
@@ -1216,6 +1318,7 @@ export async function startWorker() {
 	void runAutoTopUpLoop();
 	void runBatchProcessLoop();
 	void runDataRetentionLoop();
+	void runApiKeyResetLoop();
 }
 
 export async function stopWorker(): Promise<boolean> {

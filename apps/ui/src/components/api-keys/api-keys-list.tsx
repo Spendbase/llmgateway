@@ -44,6 +44,13 @@ import {
 } from "@/lib/components/dropdown-menu";
 import { Input } from "@/lib/components/input";
 import { Label } from "@/lib/components/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/lib/components/select";
 import { StatusBadge } from "@/lib/components/status-badge";
 import {
 	Table,
@@ -67,6 +74,65 @@ import { CreateApiKeyDialog } from "./create-api-key-dialog";
 
 import type { ApiKey, Project } from "@/lib/types";
 import type { Route } from "next";
+
+type ExpirationDuration =
+	| "none"
+	| "1h"
+	| "1d"
+	| "7d"
+	| "30d"
+	| "90d"
+	| "180d"
+	| "1y";
+type EditExpirationDuration = "keep" | ExpirationDuration;
+
+const resetPeriodLabels: Record<string, string> = {
+	none: "None",
+	daily: "Daily",
+	weekly: "Weekly",
+	monthly: "Monthly",
+};
+
+const expirationLabels: Record<ExpirationDuration, string> = {
+	none: "No expiration",
+	"1h": "1 hour",
+	"1d": "1 day",
+	"7d": "7 days",
+	"30d": "30 days",
+	"90d": "90 days",
+	"180d": "180 days",
+	"1y": "1 year",
+};
+
+function computeExpiresAt(duration: ExpirationDuration): Date | null {
+	if (duration === "none") {
+		return null;
+	}
+	const now = new Date();
+	const durations: Record<Exclude<ExpirationDuration, "none">, number> = {
+		"1h": 60 * 60 * 1000,
+		"1d": 24 * 60 * 60 * 1000,
+		"7d": 7 * 24 * 60 * 60 * 1000,
+		"30d": 30 * 24 * 60 * 60 * 1000,
+		"90d": 90 * 24 * 60 * 60 * 1000,
+		"180d": 180 * 24 * 60 * 60 * 1000,
+		"1y": 365 * 24 * 60 * 60 * 1000,
+	};
+	return new Date(now.getTime() + durations[duration]);
+}
+
+function formatDate(dateStr: string | null | undefined) {
+	if (!dateStr) {
+		return null;
+	}
+	return Intl.DateTimeFormat(undefined, {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	}).format(new Date(dateStr));
+}
 
 interface ApiKeysListProps {
 	selectedProject: Project | null;
@@ -275,15 +341,35 @@ export function ApiKeysList({
 		);
 	};
 
-	const updateKeyUsageLimit = (id: string, newUsageLimit: string | null) => {
+	const updateKeySettings = (
+		id: string,
+		newUsageLimit: string | null,
+		newResetPeriod?: string,
+		newExpiresAt?: string | null,
+	) => {
+		const body: {
+			usageLimit?: string | null;
+			resetPeriod?: "daily" | "weekly" | "monthly" | "none";
+			expiresAt?: string | null;
+		} = {
+			usageLimit: newUsageLimit,
+		};
+		if (newResetPeriod !== undefined) {
+			body.resetPeriod = (newUsageLimit ? newResetPeriod : "none") as
+				| "daily"
+				| "weekly"
+				| "monthly"
+				| "none";
+		}
+		if (newExpiresAt !== undefined) {
+			body.expiresAt = newExpiresAt;
+		}
 		updateKeyUsageLimitMutation(
 			{
 				params: {
 					path: { id },
 				},
-				body: {
-					usageLimit: newUsageLimit,
-				},
+				body,
 			},
 			{
 				onSuccess: () => {
@@ -296,8 +382,8 @@ export function ApiKeysList({
 					queryClient.invalidateQueries({ queryKey });
 
 					toast({
-						title: "API Key Usage Limit Updated",
-						description: "The API key usage limit has been updated.",
+						title: "API Key Settings Updated",
+						description: "The API key settings have been updated.",
 					});
 				},
 			},
@@ -424,6 +510,8 @@ export function ApiKeysList({
 							<TableHead>Created By</TableHead>
 							<TableHead>Usage</TableHead>
 							<TableHead>Usage Limit</TableHead>
+							<TableHead>Reset</TableHead>
+							<TableHead>Expires</TableHead>
 							<TableHead>IAM Rules</TableHead>
 							<TableHead className="text-right">Actions</TableHead>
 						</TableRow>
@@ -487,81 +575,42 @@ export function ApiKeysList({
 								</TableCell>
 								<TableCell>${Number(key.usage).toFixed(2)}</TableCell>
 								<TableCell>
-									<Dialog>
-										<DialogTrigger asChild>
-											<Button
-												variant="outline"
-												size="sm"
-												className="min-w-28 flex justify-between"
-											>
-												{key.usageLimit
-													? `$${Number(key.usageLimit).toFixed(2)}`
-													: "No limit"}
-												<EditIcon />
-											</Button>
-										</DialogTrigger>
-										<DialogContent>
-											<form
-												onSubmit={(e) => {
-													e.preventDefault();
-													const formData = new FormData(
-														e.target as HTMLFormElement,
-													);
-													const newUsageLimit = formData.get("limit") as
-														| string
-														| null;
-													if (newUsageLimit === key.usageLimit) {
-														return;
-													}
-													if (newUsageLimit === "") {
-														updateKeyUsageLimit(key.id, null);
-													} else {
-														updateKeyUsageLimit(key.id, newUsageLimit);
-													}
-												}}
-											>
-												<DialogHeader>
-													<DialogTitle>Edit key credit limit</DialogTitle>
-													<DialogDescription>
-														Set a credit limit for this key. When key usage is
-														past this limit, requests using this key will return
-														an error.
-													</DialogDescription>
-												</DialogHeader>
-												<div className="grid gap-3 pt-8">
-													<Label htmlFor="limit">
-														Usage Limit (leave empty for no limit)
-													</Label>
-													<div className="relative">
-														<span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-															$
-														</span>
-														<Input
-															className="pl-6"
-															id="limit"
-															name="limit"
-															defaultValue={
-																key.usageLimit ? Number(key.usageLimit) : ""
-															}
-															type="number"
-														/>
-													</div>
-													<div className="text-muted-foreground text-sm">
-														Usage includes both usage from LLM API credits and
-														usage from your own provider keys when applicable.
-													</div>
-												</div>
-												<DialogFooter className="pt-8">
-													<DialogClose asChild>
-														<Button variant="outline">Cancel</Button>
-													</DialogClose>
-													<DialogClose asChild>
-														<Button type="submit">Save changes</Button>
-													</DialogClose>
-												</DialogFooter>
-											</form>
-										</DialogContent>
-									</Dialog>
+									<EditKeySettingsDialog
+										keyData={key}
+										onSave={updateKeySettings}
+									/>
+								</TableCell>
+								<TableCell>
+									<span className="text-sm">
+										{resetPeriodLabels[key.resetPeriod] || "None"}
+									</span>
+									{key.nextResetAt && (
+										<span className="block text-xs text-muted-foreground">
+											{formatDate(key.nextResetAt)}
+										</span>
+									)}
+								</TableCell>
+								<TableCell>
+									{key.expiresAt ? (
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<span className="text-sm cursor-help border-b border-dotted border-muted-foreground/50 hover:border-muted-foreground">
+													{Intl.DateTimeFormat(undefined, {
+														month: "short",
+														day: "numeric",
+														year: "numeric",
+													}).format(new Date(key.expiresAt))}
+												</span>
+											</TooltipTrigger>
+											<TooltipContent>
+												<p className="max-w-xs text-xs whitespace-nowrap">
+													{formatDate(key.expiresAt)}
+												</p>
+											</TooltipContent>
+										</Tooltip>
+									) : (
+										<span className="text-sm text-muted-foreground">Never</span>
+									)}
 								</TableCell>
 								<TableCell>
 									{key.iamRules && key.iamRules.length > 0 ? (
@@ -759,88 +808,31 @@ export function ApiKeysList({
 								</div>
 							</div>
 							<div>
-								<Dialog>
-									<DialogTrigger asChild>
-										<Button
-											variant="outline"
-											size="sm"
-											className="min-w-32 flex justify-between h-full py-1"
-										>
-											<div className="text-left">
-												<div className="text-xs text-muted-foreground mb-1">
-													Usage Limit
-												</div>
-												<div className="font-mono text-xs break-all">
-													{key.usageLimit
-														? `$${Number(key.usageLimit).toFixed(2)}`
-														: "No limit"}
-												</div>
-											</div>
-											<EditIcon />
-										</Button>
-									</DialogTrigger>
-									<DialogContent>
-										<form
-											onSubmit={(e) => {
-												e.preventDefault();
-												const formData = new FormData(
-													e.target as HTMLFormElement,
-												);
-												const newUsageLimit = formData.get("limit") as
-													| string
-													| null;
-												if (newUsageLimit === key.usageLimit) {
-													return;
-												}
-												if (newUsageLimit === "") {
-													updateKeyUsageLimit(key.id, null);
-												} else {
-													updateKeyUsageLimit(key.id, newUsageLimit);
-												}
-											}}
-										>
-											<DialogHeader>
-												<DialogTitle>Edit key credit limit</DialogTitle>
-												<DialogDescription>
-													Set a credit limit for this key. When key usage is
-													past this limit, requests using this key will return
-													an error.
-												</DialogDescription>
-											</DialogHeader>
-											<div className="grid gap-3 pt-8">
-												<Label htmlFor="limit">
-													Usage Limit (leave empty for no limit)
-												</Label>
-												<div className="relative">
-													<span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-														$
-													</span>
-													<Input
-														className="pl-6"
-														id="limit"
-														name="limit"
-														defaultValue={
-															key.usageLimit ? Number(key.usageLimit) : ""
-														}
-														type="number"
-													/>
-												</div>
-												<div className="text-muted-foreground text-sm">
-													Usage includes both usage from LLM API credits and
-													usage from your own provider keys when applicable.
-												</div>
-											</div>
-											<DialogFooter className="pt-8">
-												<DialogClose asChild>
-													<Button variant="outline">Cancel</Button>
-												</DialogClose>
-												<DialogClose asChild>
-													<Button type="submit">Save changes</Button>
-												</DialogClose>
-											</DialogFooter>
-										</form>
-									</DialogContent>
-								</Dialog>
+								<EditKeySettingsDialog
+									keyData={key}
+									onSave={updateKeySettings}
+								/>
+							</div>
+						</div>
+						<div className="pt-2 border-t grid grid-cols-2">
+							<div className="py-1">
+								<div className="text-xs text-muted-foreground mb-1">Reset</div>
+								<div className="text-xs">
+									{resetPeriodLabels[key.resetPeriod] || "None"}
+									{key.nextResetAt && (
+										<span className="block text-muted-foreground">
+											{formatDate(key.nextResetAt)}
+										</span>
+									)}
+								</div>
+							</div>
+							<div className="py-1">
+								<div className="text-xs text-muted-foreground mb-1">
+									Expires
+								</div>
+								<div className="text-xs">
+									{key.expiresAt ? formatDate(key.expiresAt) : "Never"}
+								</div>
 							</div>
 						</div>
 						<div className="pt-2 border-t">
@@ -893,5 +885,176 @@ export function ApiKeysList({
 				))}
 			</div>
 		</>
+	);
+}
+
+// Extracted edit dialog component with its own state for Select controls
+function EditKeySettingsDialog({
+	keyData,
+	onSave,
+}: {
+	keyData: ApiKey;
+	onSave: (
+		id: string,
+		usageLimit: string | null,
+		resetPeriod?: string,
+		expiresAt?: string | null,
+	) => void;
+}) {
+	const [editResetPeriod, setEditResetPeriod] = useState(
+		keyData.resetPeriod || "none",
+	);
+	const [editExpiration, setEditExpiration] =
+		useState<EditExpirationDuration>("keep");
+
+	// Reset local state when dialog opens (key prop from parent re-renders)
+	const handleOpenChange = (open: boolean) => {
+		if (open) {
+			setEditResetPeriod(keyData.resetPeriod || "none");
+			setEditExpiration("keep");
+		}
+	};
+
+	return (
+		<Dialog onOpenChange={handleOpenChange}>
+			<DialogTrigger asChild>
+				<Button
+					variant="outline"
+					size="sm"
+					className="min-w-28 flex justify-between"
+				>
+					{keyData.usageLimit
+						? `$${Number(keyData.usageLimit).toFixed(2)}`
+						: "No limit"}
+					<EditIcon />
+				</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						const formData = new FormData(e.target as HTMLFormElement);
+						const newUsageLimit = formData.get("limit") as string | null;
+						const finalLimit = newUsageLimit === "" ? null : newUsageLimit;
+						const finalResetPeriod = finalLimit ? editResetPeriod : "none";
+						let finalExpiresAt: string | null | undefined;
+						if (editExpiration === "keep") {
+							finalExpiresAt = undefined; // omit from PATCH → keep current
+						} else if (editExpiration === "none") {
+							finalExpiresAt = null; // explicitly remove expiration
+						} else {
+							finalExpiresAt = computeExpiresAt(editExpiration)!.toISOString();
+						}
+						onSave(keyData.id, finalLimit, finalResetPeriod, finalExpiresAt);
+					}}
+				>
+					<DialogHeader>
+						<DialogTitle>Edit API Key Settings</DialogTitle>
+						<DialogDescription>
+							Update the usage limit, reset period, and expiration for this API
+							key.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="grid gap-4 pt-6">
+						<div className="space-y-2">
+							<Label htmlFor="limit">
+								Usage Limit (leave empty for no limit)
+							</Label>
+							<div className="relative">
+								<span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+									$
+								</span>
+								<Input
+									className="pl-6"
+									id="limit"
+									name="limit"
+									defaultValue={
+										keyData.usageLimit ? Number(keyData.usageLimit) : ""
+									}
+									type="number"
+								/>
+							</div>
+							<div className="text-muted-foreground text-xs">
+								Usage includes both usage from LLM API credits and usage from
+								your own provider keys when applicable.
+							</div>
+						</div>
+						<div className="space-y-2">
+							<Label>Reset Period</Label>
+							<Select
+								value={editResetPeriod}
+								onValueChange={(v) =>
+									setEditResetPeriod(
+										v as "none" | "daily" | "weekly" | "monthly",
+									)
+								}
+							>
+								<SelectTrigger className="w-full">
+									<SelectValue placeholder="Select reset period" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="none">None</SelectItem>
+									<SelectItem value="daily">Daily</SelectItem>
+									<SelectItem value="weekly">Weekly</SelectItem>
+									<SelectItem value="monthly">Monthly</SelectItem>
+								</SelectContent>
+							</Select>
+							<div className="text-amber-600 text-xs">
+								⚠️ Warning: Changing the reset period will immediately reset
+								your current usage to $0.00.
+							</div>
+						</div>
+						<div className="space-y-2">
+							<Label>Expiration</Label>
+							<Select
+								value={editExpiration}
+								onValueChange={(v) =>
+									setEditExpiration(v as EditExpirationDuration)
+								}
+							>
+								<SelectTrigger className="w-full">
+									<SelectValue placeholder="Select expiration" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="keep">Keep current</SelectItem>
+									{Object.entries(expirationLabels).map(([value, label]) => (
+										<SelectItem key={value} value={value}>
+											{label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							{editExpiration === "keep" && (
+								<div className="text-muted-foreground text-xs">
+									Current expiration:{" "}
+									{keyData.expiresAt ? formatDate(keyData.expiresAt) : "Never"}.
+									Choose a new duration to replace it, or select &quot;No
+									expiration&quot; to remove it.
+								</div>
+							)}
+							{editExpiration === "none" && (
+								<div className="text-muted-foreground text-xs">
+									Key will never expire.
+								</div>
+							)}
+							{editExpiration !== "keep" && editExpiration !== "none" && (
+								<div className="text-muted-foreground text-xs">
+									Key will expire on:{" "}
+									{formatDate(computeExpiresAt(editExpiration)?.toISOString())}.
+								</div>
+							)}
+						</div>
+					</div>
+					<DialogFooter className="pt-6">
+						<DialogClose asChild>
+							<Button variant="outline">Cancel</Button>
+						</DialogClose>
+						<DialogClose asChild>
+							<Button type="submit">Save changes</Button>
+						</DialogClose>
+					</DialogFooter>
+				</form>
+			</DialogContent>
+		</Dialog>
 	);
 }
