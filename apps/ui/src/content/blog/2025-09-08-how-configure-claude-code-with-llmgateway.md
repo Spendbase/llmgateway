@@ -1,20 +1,20 @@
 ---
-id: blog-claude-code-llmgateway
-slug: how-to-configure-claude-code-with-llmgateway
+id: blog-claude-code-llmapi
+slug: how-to-configure-claude-code-with-llmapi
 date: 2025-09-08
-title: How to configure Claude Code to Use Any Model via LLMGateway
-summary: Learn how to configure Claude Code to access any LLM model through LLMGateway's unified API, including models with tool calling support.
+title: How to configure Claude Code to Use Any Model via LLMAPI
+summary: Learn how to configure Claude Code to access any LLM model through LLMAPI's unified API, including models with tool calling support.
 categories: ["Guides"]
 image:
-  src: "/blog/how-to-configure-claude-code-with-llmgateway.png"
-  alt: "Configure Claude Code with LLMGateway"
+  src: "/blog/how-to-configure-claude-code-with-llmapi.png"
+  alt: "Configure Claude Code with LLMAPI"
   width: 2282
   height: 1198
 ---
 
-Claude Code is a powerful CLI tool that can be configured to use any LLM model through LLMGateway's unified API. This guide shows you how to set up Claude Code to access models beyond Anthropic's offerings.
+Claude Code is a powerful CLI tool that can be configured to use any LLM model through LLMAPI's unified API. This guide shows you how to set up Claude Code to access models beyond Anthropic's offerings.
 
-## Why Use LLMGateway with Claude Code?
+## Why Use LLMAPI with Claude Code?
 
 - **Cost Savings**: Get 50% off for a limited time!
 - **Model Diversity**: Access models from OpenAI, Google, Cohere, and more
@@ -23,13 +23,13 @@ Claude Code is a powerful CLI tool that can be configured to use any LLM model t
 
 ## Configuration
 
-Set these environment variables to configure Claude Code with LLMGateway:
+Set these environment variables to configure Claude Code with LLMAPI:
 
 ```bash
 export ANTHROPIC_BASE_URL=https://api.llmapi.ai
 export ANTHROPIC_AUTH_TOKEN=llmgtwy_.... # your llmapi.ai api key here
-# optionally, choose your model, otherwise it will use the default Claude model via LLMGateway
-export ANTHROPIC_MODEL=gpt-5 # choose your model on llmgateway which supports tool calls
+# optionally, choose your model, otherwise it will use the default Claude model via LLMAPI
+export ANTHROPIC_MODEL=gpt-5 # choose your model on llmapi which supports tool calls
 
 # now run claude!
 claude
@@ -80,7 +80,7 @@ source ~/.zshrc
 
 ### Cost Management
 
-Track usage and costs across all models in the LLMGateway dashboard. Compare costs between providers to optimize your spending.
+Track usage and costs across all models in the LLMAPI dashboard. Compare costs between providers to optimize your spending.
 
 ### Performance Analytics
 
@@ -88,12 +88,12 @@ Monitor response times, token usage, and success rates to choose the best model 
 
 ### Reliability
 
-LLMGateway provides automatic failover and retry logic, ensuring Claude Code continues working even if a provider has issues.
+LLMAPI provides automatic failover and retry logic, ensuring Claude Code continues working even if a provider has issues.
 
 ## Next Steps
 
 - Explore the [Models page](https://llmapi.ai/models) to discover new models
 - Check out [Usage Analytics](https://llmapi.ai/analytics) to optimize costs
-- Read more about [LLMGateway features](https://docs.llmapi.ai) in our documentation
+- Read more about [LLMAPI features](https://docs.llmapi.ai) in our documentation
 
 With this configuration, Claude Code becomes a gateway to the entire ecosystem of LLM models, giving you the flexibility to choose the right tool for each task.

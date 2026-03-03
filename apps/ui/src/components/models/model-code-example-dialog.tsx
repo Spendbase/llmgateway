@@ -126,10 +126,10 @@ console.log(response.choices[0].message.content);`,
 					code: `import { createLLMGateway } from "@llmgateway/ai-sdk-provider";
 import { generateText } from "ai";
 
-const llmgateway = createLLMGateway({ apiKey: process.env.LLM_API_KEY });
+const llmapi = createLLMGateway({ apiKey: process.env.LLM_API_KEY });
 
 const { text } = await generateText({
-  model: llmgateway("${modelId}"),
+  model: llmapi("${modelId}"),
   prompt: "Write a vegetarian lasagna recipe for 4 people.",
 });`,
 				},

@@ -6,12 +6,12 @@ title: "Kimi K2 Thinking Model Support"
 summary: "Added support for Moonshot AI's Kimi K2 Thinking model with 262K context window, advanced reasoning capabilities, and prompt caching for cost-effective thinking tasks."
 image:
   src: "/changelog/kimi-k2-thinking.png"
-  alt: "Kimi K2 Thinking model now available on LLM Gateway"
+  alt: "Kimi K2 Thinking model now available on LLM API"
   width: 1768
   height: 677
 ---
 
-We're excited to announce support for **Kimi K2 Thinking**, Moonshot AI's advanced reasoning model, now available through LLM Gateway. Experience powerful thinking capabilities with extensive context and efficient prompt caching.
+We're excited to announce support for **Kimi K2 Thinking**, Moonshot AI's advanced reasoning model, now available through LLM API. Experience powerful thinking capabilities with extensive context and efficient prompt caching.
 
 ## 📊 Model Specifications
 

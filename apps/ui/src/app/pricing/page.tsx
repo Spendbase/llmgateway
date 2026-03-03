@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
 	title: "Pricing - LLM API",
 	description:
-		"Simple, transparent pricing for LLM Gateway. Start free, scale with low fees.",
+		"Simple, transparent pricing for LLM API. Start free, scale with low fees.",
 };
 
 export default function PricingPage() {

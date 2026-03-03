@@ -89,7 +89,7 @@ subscriptions.openapi(createProSubscription, async (c) => {
 	if (organization.isPersonal) {
 		throw new HTTPException(403, {
 			message:
-				"Pro plan is not available for personal organizations. Please use Dev Plans at code.llmgateway.io or create a regular organization.",
+				"Pro plan is not available for personal organizations. Please use Dev Plans at code.llmapi.ai or create a regular organization.",
 		});
 	}
 

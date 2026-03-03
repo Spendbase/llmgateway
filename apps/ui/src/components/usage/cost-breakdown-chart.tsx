@@ -139,7 +139,7 @@ export function CostBreakdownChart({
 	// Add storage cost as a separate item if it exists
 	if (totalStorageCost > 0) {
 		chartData.push({
-			name: "LLM Gateway Storage",
+			name: "LLM API Storage",
 			value: totalStorageCost,
 			color: "#6366f1", // Indigo color for storage
 		});

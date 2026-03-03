@@ -3,7 +3,7 @@ id: "2"
 slug: "privacy"
 date: "2025-10-21"
 title: "Privacy Policy"
-description: "Read LLM Gateway’s Privacy Policy to understand how we collect, use, and protect your data. Learn about data retention, AI request storage, cookies, and your privacy rights when using our AI gateway platform."
+description: "Read LLM API’s Privacy Policy to understand how we collect, use, and protect your data. Learn about data retention, AI request storage, cookies, and your privacy rights when using our AI gateway platform."
 ---
 
 # Privacy Policy
@@ -11,7 +11,7 @@ description: "Read LLM Gateway’s Privacy Policy to understand how we collect, 
 **Effective Date:** October 21, 2025  
 **Last Updated:** October 21, 2025
 
-LLM Gateway (“we”, “our”, or “us”) provides a unified AI gateway platform that enables users to connect, manage, and analyze AI models across multiple providers.  
+LLM API (“we”, “our”, or “us”) provides a unified AI gateway platform that enables users to connect, manage, and analyze AI models across multiple providers.  
 This Privacy Policy explains how we collect, use, and protect your personal information when you use our website, services, or applications (collectively, the “Service”).
 
 ---

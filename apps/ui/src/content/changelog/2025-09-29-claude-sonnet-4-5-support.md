@@ -6,12 +6,12 @@ title: "Claude Sonnet 4.5 Model Support"
 summary: "Added support for Anthropic's Claude Sonnet 4.5"
 image:
   src: "/changelog/sonnet-4.5.png"
-  alt: "Claude Sonnet models available via Anthropic provider on LLM Gateway"
+  alt: "Claude Sonnet models available via Anthropic provider on LLM API"
   width: 1768
   height: 677
 ---
 
-We're excited to announce support for **Claude Sonnet 4.5**, the latest balanced model from Anthropic, now available through LLM Gateway.
+We're excited to announce support for **Claude Sonnet 4.5**, the latest balanced model from Anthropic, now available through LLM API.
 
 ## 📊 Model Specifications
 

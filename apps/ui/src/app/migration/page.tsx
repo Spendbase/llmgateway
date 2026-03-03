@@ -50,7 +50,7 @@ export default async function MigrationPage() {
 							Migration Guides
 						</h1>
 						<p className="text-lg text-muted-foreground leading-relaxed">
-							Switch to LLM Gateway from other LLM providers with minimal code
+							Switch to LLM API from other LLM providers with minimal code
 							changes. Our OpenAI-compatible API makes migration
 							straightforward.
 						</p>
@@ -101,7 +101,7 @@ export default async function MigrationPage() {
 								Don't see your provider?
 							</h2>
 							<p className="mb-4 text-muted-foreground">
-								LLM Gateway's OpenAI-compatible API works with any client that
+								LLM API's OpenAI-compatible API works with any client that
 								supports OpenAI. Just change the base URL and API key.
 							</p>
 							<Link

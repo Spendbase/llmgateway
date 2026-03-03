@@ -2,11 +2,11 @@
 id: opencode
 slug: opencode
 title: OpenCode Integration
-description: Configure OpenCode to use LLM Gateway for access to any model through an OpenAI-compatible endpoint
+description: Configure OpenCode to use LLM API for access to any model through an OpenAI-compatible endpoint
 date: 2026-01-09
 ---
 
-OpenCode is an open-source AI coding agent that runs in your terminal, IDE, or desktop. This guide shows you how to configure OpenCode to use LLM Gateway, giving you access to 75+ models from multiple providers.
+OpenCode is an open-source AI coding agent that runs in your terminal, IDE, or desktop. This guide shows you how to configure OpenCode to use LLM API, giving you access to 75+ models from multiple providers.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ opencode --version
 
 ## Configuration Steps
 
-Setting up OpenCode with LLM Gateway requires creating a configuration file and connecting your API key.
+Setting up OpenCode with LLM API requires creating a configuration file and connecting your API key.
 
 ### Step 1: Create Configuration File
 
@@ -45,9 +45,9 @@ macOS/Linux:
 ```json
 {
   "provider": {
-    "llmgateway": {
+    "llmapi": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "LLM Gateway",
+      "name": "LLM API",
       "options": {
         "baseURL": "https://api.llmapi.ai/v1"
       },
@@ -67,7 +67,7 @@ macOS/Linux:
       }
     }
   },
-  "model": "llmgateway/gpt-5"
+  "model": "llmapi/gpt-5"
 }
 ```
 
@@ -92,19 +92,19 @@ opencode
 2. Open Command Palette (Ctrl+Shift+P or Cmd+Shift+P)
 3. Type "OpenCode" and select "Open opencode"
 
-Once OpenCode launches, run the `/connect` command to connect to LLM Gateway:
+Once OpenCode launches, run the `/connect` command to connect to LLM API:
 
 ![OpenCode Connect Command](/images/guides/opencode/connect-command.png)
 
-### Step 3: Select LLM Gateway Provider
+### Step 3: Select LLM API Provider
 
-In the provider list, scroll down to find "LLM Gateway" under the "Other" section and select it:
+In the provider list, scroll down to find "LLM API" under the "Other" section and select it:
 
-![Select LLM Gateway Provider](/images/guides/opencode/select-provider.png)
+![Select LLM API Provider](/images/guides/opencode/select-provider.png)
 
 ### Step 4: Enter Your API Key
 
-OpenCode will prompt you for your API key. Enter your LLM Gateway API key and press Enter:
+OpenCode will prompt you for your API key. Enter your LLM API API key and press Enter:
 
 ![Enter API Key](/images/guides/opencode/enter-api-key.png)
 
@@ -112,11 +112,11 @@ OpenCode will automatically save your credentials securely.
 
 **Where to get your API key:**
 
-[Sign up for LLM Gateway](/signup) and create an API key from your dashboard.
+[Sign up for LLM API](/signup) and create an API key from your dashboard.
 
 ### Step 5: Start Using OpenCode
 
-You're all set! OpenCode is now connected to LLM Gateway. You can start asking questions and building with AI:
+You're all set! OpenCode is now connected to LLM API. You can start asking questions and building with AI:
 
 ![OpenCode Ready](/images/guides/opencode/ready-to-use.png)
 
@@ -124,13 +124,13 @@ Try asking OpenCode about your project or request help with coding tasks:
 
 ![OpenCode in Action](/images/guides/opencode/opencode-usage.png)
 
-## Why Use LLM Gateway with OpenCode?
+## Why Use LLM API with OpenCode?
 
 - **Access to 75+ models**: Use models from OpenAI, Anthropic, Google, Meta, and more
-- **Cost optimization**: Track usage and leverage LLM Gateway's caching and routing features
+- **Cost optimization**: Track usage and leverage LLM API's caching and routing features
 - **Unified billing**: One account for all providers instead of managing multiple API keys
 - **Flexibility**: Switch between models without changing authentication or configuration
-- **Cost savings**: Take advantage of LLM Gateway's volume discounts
+- **Cost savings**: Take advantage of LLM API's volume discounts
 
 ## Adding More Models
 
@@ -139,7 +139,7 @@ You can add any model from the [models page](https://llmapi.ai/models) to your c
 ```json
 {
   "provider": {
-    "llmgateway": {
+    "llmapi": {
       "models": {
         "gpt-5": { "name": "GPT-5" },
         "gpt-5-mini": { "name": "GPT-5 Mini" },
@@ -159,7 +159,7 @@ To change your default model, update the `model` field in your configuration:
 
 ```json
 {
-  "model": "llmgateway/gpt-5-mini"
+  "model": "llmapi/gpt-5-mini"
 }
 ```
 
@@ -169,7 +169,7 @@ Or select a different model directly in the OpenCode interface.
 
 ### OpenCode asks for API key every time
 
-Make sure the provider ID in your `config.json` matches exactly: `"llmgateway"` (all lowercase, no spaces).
+Make sure the provider ID in your `config.json` matches exactly: `"llmapi"` (all lowercase, no spaces).
 
 ### 404 Not Found errors
 
@@ -191,4 +191,4 @@ Check that you have an active internet connection and that your API key is valid
 
 ## Get Started
 
-Ready to enhance your OpenCode experience? [Sign up for LLM Gateway](/signup) and get your API key today.
+Ready to enhance your OpenCode experience? [Sign up for LLM API](/signup) and get your API key today.
