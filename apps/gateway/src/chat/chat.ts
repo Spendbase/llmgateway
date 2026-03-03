@@ -745,13 +745,19 @@ chat.openapi(completions, async (c) => {
 	if (!apiKey || apiKey.status !== "active") {
 		throw new HTTPException(401, {
 			message:
-				"Unauthorized: Invalid LLM API API token. Please make sure the token is not deleted or disabled. Go to the LLM API 'API Keys' page to generate a new token.",
+				"Unauthorized: Invalid API token. Please make sure the token is not deleted or disabled. Go to the LLM API 'API Keys' page to generate a new token.",
+		});
+	}
+
+	if (apiKey.expiresAt && new Date() >= apiKey.expiresAt) {
+		throw new HTTPException(401, {
+			message: "API key expired",
 		});
 	}
 
 	if (apiKey.usageLimit && Number(apiKey.usage) >= Number(apiKey.usageLimit)) {
-		throw new HTTPException(401, {
-			message: "Unauthorized: LLM API API key reached its usage limit.",
+		throw new HTTPException(429, {
+			message: "usage_limit_exceeded",
 		});
 	}
 
