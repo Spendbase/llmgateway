@@ -77,6 +77,7 @@ const schema = z.object({
 	total_tokens: z.string().nullable(),
 	reasoning_tokens: z.string().nullable(),
 	cached_tokens: z.string().nullable(),
+	created_at: z.date(),
 });
 
 export async function acquireLock(key: string): Promise<boolean> {
@@ -580,6 +581,7 @@ export async function batchProcessLogs(): Promise<void> {
 					total_tokens: log.totalTokens,
 					reasoning_tokens: log.reasoningTokens,
 					cached_tokens: log.cachedTokens,
+					created_at: log.createdAt,
 				})
 				.from(log)
 				.leftJoin(tables.project, eq(tables.project.id, log.projectId))
@@ -602,6 +604,21 @@ export async function batchProcessLogs(): Promise<void> {
 			const orgCosts = new Map<string, Decimal>();
 			const apiKeyCosts = new Map<string, Decimal>();
 			const logIds: string[] = [];
+
+			// Fetch lastResetAt for all API keys in this batch (Step 6)
+			const uniqueApiKeyIds = [
+				...new Set(unprocessedLogs.rows.map((r) => r.api_key_id)),
+			];
+			const apiKeyResetRows = await tx
+				.select({
+					id: apiKey.id,
+					lastResetAt: apiKey.lastResetAt,
+				})
+				.from(apiKey)
+				.where(inArray(apiKey.id, uniqueApiKeyIds));
+			const apiKeyLastResetMap = new Map<string, Date | null>(
+				apiKeyResetRows.map((k) => [k.id, k.lastResetAt]),
+			);
 
 			for (const raw of unprocessedLogs.rows) {
 				const row = schema.parse(raw);
@@ -635,13 +652,16 @@ export async function batchProcessLogs(): Promise<void> {
 				});
 
 				if (row.cost && row.cost > 0 && !row.cached) {
-					// Always update API key usage for non-cached logs with cost
-					const currentApiKeyCost =
-						apiKeyCosts.get(row.api_key_id) || new Decimal(0);
-					apiKeyCosts.set(
-						row.api_key_id,
-						currentApiKeyCost.plus(new Decimal(row.cost)),
-					);
+					// Update API key usage, but skip logs created before lastResetAt (Step 6)
+					const lastResetAt = apiKeyLastResetMap.get(row.api_key_id) ?? null;
+					if (lastResetAt === null || row.created_at >= lastResetAt) {
+						const currentApiKeyCost =
+							apiKeyCosts.get(row.api_key_id) || new Decimal(0);
+						apiKeyCosts.set(
+							row.api_key_id,
+							currentApiKeyCost.plus(new Decimal(row.cost)),
+						);
+					}
 
 					// Deduct organization credits based on mode:
 					// - Credits mode: deduct full cost (includes request cost + storage cost)
