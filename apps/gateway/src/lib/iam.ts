@@ -54,7 +54,7 @@ export async function validateModelAccess(
 				allowed: false,
 				reason:
 					result.reason +
-					` Adapt your LLMGateway API key IAM permissions in the dashboard or contact your LLMGateway API Key issuer. (Rule ID: ${rule.id})`,
+					` Adapt your LLMAPI API key IAM permissions in the dashboard or contact your LLMAPI API Key issuer. (Rule ID: ${rule.id})`,
 			};
 		}
 	}

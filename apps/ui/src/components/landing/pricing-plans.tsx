@@ -207,7 +207,7 @@ export function PricingPlans() {
 			features: [
 				"Access to ALL models",
 				"Pay with credits",
-				"5% LLMGateway fee on credit usage",
+				"5% LLMAPI fee on credit usage",
 				"3-day data retention",
 				"Standard support",
 			],

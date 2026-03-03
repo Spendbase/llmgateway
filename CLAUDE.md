@@ -69,7 +69,7 @@ NOTE: these commands can only be run in the root directory of the repository, no
 
 ## Architecture Overview
 
-**LLM Gateway** is a monorepo containing a full-stack LLM API gateway with multiple services:
+**LLM API** is a monorepo containing a full-stack LLM API gateway with multiple services:
 
 ### Core Services
 
@@ -166,7 +166,7 @@ NOTE: these commands can only be run in the root directory of the repository, no
 
 ## Key Features
 
-### LLM Gateway
+### LLM API
 
 - Multi-provider support (OpenAI, Anthropic, Google Vertex AI, etc.)
 - OpenAI-compatible API interface
@@ -192,7 +192,7 @@ NOTE: these commands can only be run in the root directory of the repository, no
 
 ## License
 
-LLM Gateway is available under a dual license:
+LLM API is available under a dual license:
 
 - **Open Source**: Core functionality is licensed under AGPLv3 - see the [LICENSE](LICENSE) file for details.
 - **Enterprise**: Commercial features in the `ee/` directory require an Enterprise license - see [ee/LICENSE](ee/LICENSE) for details.

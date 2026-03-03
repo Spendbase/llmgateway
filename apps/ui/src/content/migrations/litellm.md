@@ -2,12 +2,12 @@
 id: litellm
 slug: litellm
 title: Migrate from LiteLLM
-description: How to migrate from LiteLLM proxy to LLM Gateway for a managed solution with analytics
+description: How to migrate from LiteLLM proxy to LLM API for a managed solution with analytics
 date: 2026-01-20
 fromProvider: LiteLLM
 ---
 
-LiteLLM is an excellent open-source library for unifying LLM APIs. LLM Gateway offers similar functionality as a managed service with additional features like built-in analytics, caching, and a web dashboard.
+LiteLLM is an excellent open-source library for unifying LLM APIs. LLM API offers similar functionality as a managed service with additional features like built-in analytics, caching, and a web dashboard.
 
 ## Quick Migration
 
@@ -15,15 +15,15 @@ Since both services expose OpenAI-compatible endpoints, migration is straightfor
 
 ```diff
 - const baseURL = "http://localhost:4000/v1";  // LiteLLM proxy
-+ const baseURL = "https://api.llmgateway.io/v1";
++ const baseURL = "https://api.llmapi.ai/v1";
 
 - const apiKey = process.env.LITELLM_API_KEY;
-+ const apiKey = process.env.LLM_GATEWAY_API_KEY;
++ const apiKey = process.env.LLM_API_KEY;
 ```
 
-## Why Migrate to LLM Gateway?
+## Why Migrate to LLM API?
 
-| Feature                  | LiteLLM       | LLM Gateway   |
+| Feature                  | LiteLLM       | LLM API       |
 | ------------------------ | ------------- | ------------- |
 | OpenAI-compatible API    | Yes           | Yes           |
 | Self-hosting             | Required      | Optional      |
@@ -35,17 +35,17 @@ Since both services expose OpenAI-compatible endpoints, migration is straightfor
 | Maintenance              | Self-managed  | Managed       |
 | Anthropic-compatible API | Yes           | Yes           |
 
-For a detailed feature-by-feature comparison, see [LLM Gateway vs LiteLLM](/compare/litellm).
+For a detailed feature-by-feature comparison, see [LLM API vs LiteLLM](/compare/litellm).
 
 ## Migration Steps
 
-### 1. Get Your LLM Gateway API Key
+### 1. Get Your LLM API API Key
 
-Sign up at [llmgateway.io/signup](/signup) and create an API key from your dashboard.
+Sign up at [llmapi.ai/signup](/signup) and create an API key from your dashboard.
 
 ### 2. Map Your Models
 
-LLM Gateway supports two model ID formats:
+LLM API supports two model ID formats:
 
 **Root Model IDs** (without provider prefix) - Uses smart routing to automatically select the best provider based on uptime, throughput, price, and latency:
 
@@ -67,9 +67,9 @@ anthropic/claude-sonnet-4-6
 google-ai-studio/gemini-3-flash-preview
 ```
 
-This means many LiteLLM model names work directly with LLM Gateway:
+This means many LiteLLM model names work directly with LLM API:
 
-| LiteLLM Model                    | LLM Gateway Model                                                 |
+| LiteLLM Model                    | LLM API Model                                                     |
 | -------------------------------- | ----------------------------------------------------------------- |
 | gpt-5.2                          | gpt-5.2 or openai/gpt-5.2                                         |
 | claude-opus-4-5-20251101         | claude-opus-4-5-20251101 or anthropic/claude-opus-4-5-20251101    |
@@ -80,7 +80,7 @@ This means many LiteLLM model names work directly with LLM Gateway:
 | bedrock/claude-opus-4-6          | claude-opus-4-6 or aws-bedrock/claude-opus-4-6                    |
 | bedrock/claude-sonnet-4-6        | claude-sonnet-4-6 or aws-bedrock/claude-sonnet-4-6                |
 
-For more details on routing behavior, see the [routing documentation](https://docs.llmgateway.io/features/routing).
+For more details on routing behavior, see the [routing documentation](https://docs.llmapi.ai/features/routing).
 
 ### 3. Update Your Code
 
@@ -100,10 +100,10 @@ response = client.chat.completions.create(
     messages=[{"role": "user", "content": "Hello!"}]
 )
 
-# After (LLM Gateway) - model name can stay the same!
+# After (LLM API) - model name can stay the same!
 client = OpenAI(
-    base_url="https://api.llmgateway.io/v1",
-    api_key=os.environ["LLM_GATEWAY_API_KEY"]
+    base_url="https://api.llmapi.ai/v1",
+    api_key=os.environ["LLM_API_KEY"]
 )
 
 response = client.chat.completions.create(
@@ -114,7 +114,7 @@ response = client.chat.completions.create(
 
 #### Python with LiteLLM Library
 
-If you're using the LiteLLM library directly, you can point it to LLM Gateway:
+If you're using the LiteLLM library directly, you can point it to LLM API:
 
 ```python
 import litellm
@@ -125,12 +125,12 @@ response = litellm.completion(
     messages=[{"role": "user", "content": "Hello!"}]
 )
 
-# After (via LLM Gateway) - same model name works
+# After (via LLM API) - same model name works
 response = litellm.completion(
     model="gpt-4",  # or "openai/gpt-4" to target a specific provider
     messages=[{"role": "user", "content": "Hello!"}],
-    api_base="https://api.llmgateway.io/v1",
-    api_key=os.environ["LLM_GATEWAY_API_KEY"]
+    api_base="https://api.llmapi.ai/v1",
+    api_key=os.environ["LLM_API_KEY"]
 )
 ```
 
@@ -145,10 +145,10 @@ const client = new OpenAI({
   apiKey: process.env.LITELLM_API_KEY,
 });
 
-// After (LLM Gateway) - same model name works
+// After (LLM API) - same model name works
 const client = new OpenAI({
-  baseURL: "https://api.llmgateway.io/v1",
-  apiKey: process.env.LLM_GATEWAY_API_KEY,
+  baseURL: "https://api.llmapi.ai/v1",
+  apiKey: process.env.LLM_API_KEY,
 });
 
 const completion = await client.chat.completions.create({
@@ -169,9 +169,9 @@ curl http://localhost:4000/v1/chat/completions \
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 
-# After (LLM Gateway) - same model name works
-curl https://api.llmgateway.io/v1/chat/completions \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+# After (LLM API) - same model name works
+curl https://api.llmapi.ai/v1/chat/completions \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gpt-4",
@@ -197,22 +197,22 @@ model_list:
       api_key: sk-ant-...
 ```
 
-#### LLM Gateway (After)
+#### LLM API (After)
 
-With LLM Gateway, you don't need a config file. Provider keys are managed in the web dashboard, or you can use the default LLM Gateway keys.
+With LLM API, you don't need a config file. Provider keys are managed in the web dashboard, or you can use the default LLM API keys.
 
 For Pro users who want to use their own keys, configure them in the dashboard under Settings > Provider Keys.
 
 ## Streaming Support
 
-LLM Gateway supports streaming identically to LiteLLM:
+LLM API supports streaming identically to LiteLLM:
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://api.llmgateway.io/v1",
-    api_key=os.environ["LLM_GATEWAY_API_KEY"]
+    base_url="https://api.llmapi.ai/v1",
+    api_key=os.environ["LLM_API_KEY"]
 )
 
 stream = client.chat.completions.create(
@@ -228,14 +228,14 @@ for chunk in stream:
 
 ## Function/Tool Calling
 
-LLM Gateway supports function calling:
+LLM API supports function calling:
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://api.llmgateway.io/v1",
-    api_key=os.environ["LLM_GATEWAY_API_KEY"]
+    base_url="https://api.llmapi.ai/v1",
+    api_key=os.environ["LLM_API_KEY"]
 )
 
 tools = [{
@@ -262,10 +262,10 @@ response = client.chat.completions.create(
 
 ## Removing LiteLLM Infrastructure
 
-After verifying LLM Gateway works for your use case, you can decommission your LiteLLM proxy:
+After verifying LLM API works for your use case, you can decommission your LiteLLM proxy:
 
-1. Update all clients to use LLM Gateway endpoints
-2. Monitor the LLM Gateway dashboard for successful requests
+1. Update all clients to use LLM API endpoints
+2. Monitor the LLM API dashboard for successful requests
 3. Shut down your LiteLLM proxy server
 4. Remove LiteLLM configuration files
 
@@ -277,26 +277,26 @@ After verifying LLM Gateway works for your use case, you can decommission your L
 - **Web Dashboard**: Manage API keys and view analytics without CLI
 - **Automatic Updates**: New models available immediately
 
-## Self-Hosting LLM Gateway
+## Self-Hosting LLM API
 
-If you prefer self-hosting like LiteLLM, LLM Gateway is available under AGPLv3:
+If you prefer self-hosting like LiteLLM, LLM API is available under AGPLv3:
 
 ```bash
-git clone https://github.com/llmgateway/llmgateway
+git clone https://github.com/Spendbase/llmgateway
 cd llmgateway
 pnpm install
 pnpm setup
 pnpm dev
 ```
 
-This gives you the same benefits as LiteLLM's self-hosted proxy with LLM Gateway's analytics and caching features.
+This gives you the same benefits as LiteLLM's self-hosted proxy with LLM API's analytics and caching features.
 
 ## Full Comparison
 
-Want to see a detailed breakdown of all features? Check out our [LLM Gateway vs LiteLLM comparison page](/compare/litellm).
+Want to see a detailed breakdown of all features? Check out our [LLM API vs LiteLLM comparison page](/compare/litellm).
 
 ## Need Help?
 
-- Browse available models at [llmgateway.io/models](/models)
-- Read the [API documentation](https://docs.llmgateway.io)
-- Contact support at contact@llmgateway.io
+- Browse available models at [llmapi.ai/models](/models)
+- Read the [API documentation](https://docs.llmapi.ai)
+- Contact support at contact@llmapi.ai

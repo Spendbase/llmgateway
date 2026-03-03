@@ -3,7 +3,7 @@ id: "30"
 slug: "canopywave-kimi-k2-thinking-discount"
 date: "2025-11-11"
 title: "CanopyWave: 75% Off Kimi K2 Thinking"
-summary: "CanopyWave brings Kimi K2 Thinking to LLM Gateway with an exclusive 75% discount."
+summary: "CanopyWave brings Kimi K2 Thinking to LLM API with an exclusive 75% discount."
 image:
   src: "/changelog/canopywave75-off-kimi-k2.png"
   alt: "CanopyWave: 75% Off Kimi K2 Thinking"
