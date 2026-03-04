@@ -134,15 +134,15 @@ describe("Models API", () => {
 		}
 	});
 
-	test("GET /v1/models should include proper output modalities for gemini-2.5-flash-image-preview", async () => {
+	test("GET /v1/models should include proper output modalities for gemini-2.5-flash-image", async () => {
 		const res = await app.request("/v1/models");
 		expect(res.status).toBe(200);
 
 		const json = await res.json();
 
-		// Find the gemini-2.5-flash-image-preview model
+		// Find the gemini-2.5-flash-image model
 		const imageModel = json.data.find(
-			(model: any) => model.id === "gemini-2.5-flash-image-preview",
+			(model: any) => model.id === "gemini-2.5-flash-image",
 		);
 
 		expect(imageModel).toBeDefined();
