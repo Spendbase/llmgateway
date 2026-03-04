@@ -3,16 +3,16 @@ id: blog-custom-providers
 slug: custom-openai-compatible-providers
 date: 2025-05-10
 title: Custom OpenAI-Compatible Providers Are Now Supported
-summary: Bring your own OpenAI-compatible endpoints and route them via LLM Gateway.
+summary: Bring your own OpenAI-compatible endpoints and route them via LLM API.
 categories: ["Announcements"]
 image:
   src: "/blog/custom-openai-compatible-providers.png"
-  alt: "LLM Gateway"
+  alt: "LLM API"
   width: 2282
   height: 1198
 ---
 
-You can now register custom OpenAI-compatible providers in LLM Gateway. Perfect for internal deployments or specialized third-party APIs that speak the OpenAI Chat Completions format.
+You can now register custom OpenAI-compatible providers in LLM API. Perfect for internal deployments or specialized third-party APIs that speak the OpenAI Chat Completions format.
 
 ### Configure a Custom Provider
 

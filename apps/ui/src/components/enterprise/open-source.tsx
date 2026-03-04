@@ -22,7 +22,7 @@ async function fetchGitHubContributors(
 				next: { revalidate: 600 }, // Revalidate every 10 minutes
 				headers: {
 					Accept: "application/vnd.github.v3+json",
-					"User-Agent": "LLM Gateway",
+					"User-Agent": "LLM API",
 				},
 			},
 		);

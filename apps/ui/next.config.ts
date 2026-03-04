@@ -1,8 +1,14 @@
-import { join } from "path";
+import { join, resolve } from "path";
 
 import { withContentCollections } from "@content-collections/next";
 
 import type { NextConfig } from "next";
+
+try {
+	process.loadEnvFile(resolve(__dirname, "../../.env"));
+} catch {
+	// no root .env
+}
 
 const nextConfig: NextConfig = {
 	outputFileTracingRoot: join(__dirname, "../../"),
@@ -14,6 +20,7 @@ const nextConfig: NextConfig = {
 	reactCompiler: true,
 	env: {
 		NEXT_PUBLIC_AUTO_DEPOSIT_CREDITS: process.env.AUTO_DEPOSIT_CREDITS || "50",
+		NEXT_PUBLIC_STRIPE_PUB_KEY: process.env.STRIPE_PUB_KEY,
 	},
 	webpack: (config, { isServer }) => {
 		if (isServer) {

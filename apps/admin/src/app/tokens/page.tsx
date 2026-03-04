@@ -1,4 +1,11 @@
-import { Activity, CircleDollarSign, Hash, Info, Server } from "lucide-react";
+import {
+	Activity,
+	AudioLines,
+	CircleDollarSign,
+	Hash,
+	Info,
+	Server,
+} from "lucide-react";
 
 import SignInPrompt from "@/components/auth/sign-in-prompt";
 import { TokenTimeRangeToggle } from "@/components/token-time-range-toggle";
@@ -90,9 +97,11 @@ export default async function TokensPage({
 		<div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
 			<header className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
 				<div>
-					<h1 className="text-3xl font-semibold tracking-tight">Token Usage</h1>
+					<h1 className="text-3xl font-semibold tracking-tight">
+						Usage Metrics
+					</h1>
 					<p className="mt-1 text-sm text-muted-foreground">
-						Precise request, token, and cost breakdown across your gateway.
+						Precise request, token, TTS, and cost breakdown across your gateway.
 					</p>
 					<p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
 						<Info className="h-3 w-3" />
@@ -119,6 +128,13 @@ export default async function TokensPage({
 					subtitle={`Total tokens across all requests (${windowLabel.toLowerCase()})`}
 					icon={<Activity className="h-4 w-4" />}
 					accent="green"
+				/>
+				<MetricCard
+					label="TTS Characters"
+					value={numberFormatter.format(safeNumber(metrics.totalTtsChars))}
+					subtitle={`Total characters synthesized via TTS (${windowLabel.toLowerCase()})`}
+					icon={<AudioLines className="h-4 w-4" />}
+					accent="blue"
 				/>
 				<MetricCard
 					label="Total Cost"

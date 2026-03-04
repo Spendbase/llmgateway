@@ -1,6 +1,12 @@
 import { models, type ProviderModelMapping } from "./models.js";
 import { providers } from "./providers.js";
 
+export function isAudioModel(model: { output?: string[] | null }): boolean {
+	return (
+		(model.output?.includes("audio") && !model.output.includes("text")) ?? false
+	);
+}
+
 /**
  * Check if a specific model and provider combination supports streaming
  */

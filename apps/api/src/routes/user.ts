@@ -19,6 +19,7 @@ const publicUserSchema = z.object({
 	onboardingCompleted: z.boolean(),
 	emailVerified: z.boolean(),
 	isAdmin: z.boolean(),
+	referral: z.string().nullable(),
 });
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -83,6 +84,7 @@ user.openapi(get, async (c) => {
 			onboardingCompleted: user.onboardingCompleted,
 			emailVerified: user.emailVerified,
 			isAdmin,
+			referral: user.referral,
 		},
 	});
 });
@@ -229,6 +231,7 @@ user.openapi(updateUser, async (c) => {
 			onboardingCompleted: updatedUser.onboardingCompleted,
 			emailVerified: updatedUser.emailVerified,
 			isAdmin,
+			referral: updatedUser.referral,
 		},
 		message: "User updated successfully",
 	});
@@ -489,7 +492,7 @@ user.openapi(completeOnboarding, async (c) => {
 		);
 
 		if (activeProject) {
-			redirectTo = `/${activeOrg.organization.id}/${activeProject.id}/api-keys?openCreateDialog=true`;
+			redirectTo = `/${activeOrg.organization.id}/${activeProject.id}/api-keys`;
 		}
 	}
 
@@ -501,6 +504,7 @@ user.openapi(completeOnboarding, async (c) => {
 			onboardingCompleted: updatedUser.onboardingCompleted,
 			emailVerified: updatedUser.emailVerified,
 			isAdmin,
+			referral: updatedUser.referral,
 		},
 		redirectTo,
 		message: "Onboarding completed successfully",

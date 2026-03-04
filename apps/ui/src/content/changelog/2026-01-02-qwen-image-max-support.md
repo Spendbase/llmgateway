@@ -6,7 +6,7 @@ title: "Alibaba Cloud Qwen Image Models: Advanced Image Generation and Editing"
 summary: "Introducing Alibaba Cloud's Qwen Image model family - powerful models for text-to-image generation and image editing, now available in four variants: Qwen Image, Qwen Image Max, Qwen Image Max 2025-12-30, and Qwen Image Plus."
 image:
   src: "/changelog/qwen-image-models-support.png"
-  alt: "Alibaba Cloud Qwen Image models now available on LLM Gateway"
+  alt: "Alibaba Cloud Qwen Image models now available on LLM API"
   width: 1768
   height: 677
 ---

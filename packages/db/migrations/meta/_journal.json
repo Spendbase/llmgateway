@@ -652,6 +652,41 @@
       "when": 1772137708469,
       "tag": "1772137708_brown_songbird",
       "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "8",
+      "when": 1772182051236,
+      "tag": "1772182051_wide_hercules",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "8",
+      "when": 1772197396438,
+      "tag": "1772197396_pale_siren",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "8",
+      "when": 1772309157244,
+      "tag": "1772309157_wise_xorn",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "8",
+      "when": 1772448077092,
+      "tag": "1772448077_watery_ted_forrester",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "8",
+      "when": 1772619744281,
+      "tag": "1772619744_illegal_the_renegades",
+      "breakpoints": true
     }
   ]
 }

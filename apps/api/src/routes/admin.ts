@@ -48,6 +48,7 @@ const adminTokenMetricsSchema = z.object({
 	endDate: z.string(),
 	totalRequests: z.number(),
 	totalTokens: z.number(),
+	totalTtsChars: z.number(),
 	totalCost: z.number(),
 	inputTokens: z.number(),
 	inputCost: z.number(),
@@ -95,11 +96,10 @@ const organizationSchema = z.object({
 
 const bannerSchema = z.object({
 	id: z.string(),
+	bannerId: z.string(),
 	name: z.string(),
 	description: z.string().nullable(),
 	enabled: z.boolean(),
-	type: z.string(),
-	priority: z.number(),
 });
 
 const updateBannerSchema = z.object({
@@ -846,6 +846,9 @@ admin.openapi(getTokenMetrics, async (c) => {
 				sql<number>`COALESCE(SUM(CAST(${tables.log.totalTokens} AS INTEGER)), 0)`.as(
 					"totalTokens",
 				),
+			totalTtsChars: sql<number>`COALESCE(SUM(${tables.log.ttsChars}), 0)`.as(
+				"totalTtsChars",
+			),
 			totalCost: sql<number>`COALESCE(SUM(${tables.log.cost}), 0)`.as(
 				"totalCost",
 			),
@@ -868,6 +871,7 @@ admin.openapi(getTokenMetrics, async (c) => {
 
 	let totalRequests = 0;
 	let totalTokens = 0;
+	let totalTtsChars = 0;
 	let totalCost = 0;
 	let inputTokens = 0;
 	let inputCost = 0;
@@ -883,6 +887,7 @@ admin.openapi(getTokenMetrics, async (c) => {
 	for (const row of rows) {
 		totalRequests += row.requestsCount;
 		totalTokens += row.totalTokens;
+		totalTtsChars += row.totalTtsChars;
 		totalCost += row.totalCost;
 		inputTokens += row.inputTokens;
 		inputCost += row.inputCost;
@@ -904,6 +909,7 @@ admin.openapi(getTokenMetrics, async (c) => {
 		endDate: now.toISOString(),
 		totalRequests,
 		totalTokens,
+		totalTtsChars,
 		totalCost,
 		inputTokens,
 		inputCost,
@@ -1494,7 +1500,9 @@ admin.openapi(getBannerSettings, async (c) => {
 	}
 
 	const banners = await db.query.banner.findMany({
-		orderBy: (banner, { desc }) => [desc(banner.priority)],
+		orderBy: {
+			enabled: "desc",
+		},
 	});
 
 	return c.json({
@@ -2196,6 +2204,108 @@ admin.openapi(deleteVoucherRoute, async (c) => {
 	}
 
 	await db.delete(tables.voucher).where(eq(tables.voucher.id, id));
+
+	return c.json({ success: true });
+});
+
+const createBannerRoute = createRoute({
+	method: "post",
+	path: "/banners",
+	request: {
+		body: {
+			required: true,
+			content: {
+				"application/json": {
+					schema: z.object({
+						bannerId: z.string(),
+						name: z.string(),
+						description: z.string().nullable(),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: bannerSchema,
+				},
+			},
+			description: "Banner created successfully",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const deleteBannerRoute = createRoute({
+	method: "delete",
+	path: "/banners/{id}",
+	request: {
+		params: z.object({
+			id: z.string().openapi({ example: "abc123" }),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({ success: z.boolean() }),
+				},
+			},
+			description: "Banner deleted successfully",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Banner not found" },
+	},
+});
+
+admin.openapi(createBannerRoute, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const body = c.req.valid("json");
+
+	await db.insert(tables.banner).values({
+		bannerId: body.bannerId,
+		name: body.name,
+		description: body.description,
+	});
+
+	return c.json({ success: true });
+});
+
+admin.openapi(deleteBannerRoute, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+
+	const existing = await db.query.banner.findFirst({
+		where: { id },
+	});
+
+	if (!existing) {
+		throw new HTTPException(404, { message: "Banner not found" });
+	}
+
+	await db.delete(tables.banner).where(eq(tables.banner.id, id));
 
 	return c.json({ success: true });
 });

@@ -6,12 +6,12 @@ title: "Qwen3 Max Model Now Available"
 summary: "Access Alibaba's powerful Qwen3 Max model with 256K context window, advanced reasoning capabilities, vision support, and function calling - all at competitive pricing."
 image:
   src: "/changelog/qwen3-max-support.png"
-  alt: "Qwen3 Max model now available on LLM Gateway"
+  alt: "Qwen3 Max model now available on LLM API"
   width: 1768
   height: 677
 ---
 
-We're excited to announce support for **Qwen3 Max**, Alibaba's most advanced language model, now available through LLM Gateway. Experience cutting-edge AI capabilities with extensive context and multimodal support.
+We're excited to announce support for **Qwen3 Max**, Alibaba's most advanced language model, now available through LLM API. Experience cutting-edge AI capabilities with extensive context and multimodal support.
 
 ## 🚀 Qwen3 Max Overview
 

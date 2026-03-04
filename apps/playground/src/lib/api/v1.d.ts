@@ -364,6 +364,7 @@ export interface paths {
                                 onboardingCompleted: boolean;
                                 emailVerified: boolean;
                                 isAdmin: boolean;
+                                referral: string | null;
                             };
                         };
                     };
@@ -449,6 +450,7 @@ export interface paths {
                                 onboardingCompleted: boolean;
                                 emailVerified: boolean;
                                 isAdmin: boolean;
+                                referral: string | null;
                             };
                             message: string;
                         };
@@ -621,6 +623,7 @@ export interface paths {
                                 onboardingCompleted: boolean;
                                 emailVerified: boolean;
                                 isAdmin: boolean;
+                                referral: string | null;
                             };
                             message: string;
                             redirectTo: string | null;
@@ -971,6 +974,7 @@ export interface paths {
                                 inputTokens: number;
                                 outputTokens: number;
                                 totalTokens: number;
+                                ttsChars: number;
                                 cost: number;
                                 inputCost: number;
                                 outputCost: number;
@@ -988,6 +992,7 @@ export interface paths {
                                     inputTokens: number;
                                     outputTokens: number;
                                     totalTokens: number;
+                                    ttsChars: number;
                                     cost: number;
                                 }[];
                             }[];
@@ -1080,6 +1085,7 @@ export interface paths {
                             endDate: string;
                             totalRequests: number;
                             totalTokens: number;
+                            totalTtsChars: number;
                             totalCost: number;
                             inputTokens: number;
                             inputCost: number;
@@ -1472,11 +1478,10 @@ export interface paths {
                         "application/json": {
                             banners: {
                                 id: string;
+                                bannerId: string;
                                 name: string;
                                 description: string | null;
                                 enabled: boolean;
-                                type: string;
-                                priority: number;
                             }[];
                         };
                     };
@@ -1498,7 +1503,54 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        bannerId: string;
+                        name: string;
+                        description: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Banner created successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            bannerId: string;
+                            name: string;
+                            description: string | null;
+                            enabled: boolean;
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1515,7 +1567,51 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Banner deleted successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success: boolean;
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Banner not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch: {
@@ -1543,11 +1639,10 @@ export interface paths {
                     content: {
                         "application/json": {
                             id: string;
+                            bannerId: string;
                             name: string;
                             description: string | null;
                             enabled: boolean;
-                            type: string;
-                            priority: number;
                         };
                     };
                 };
@@ -4742,12 +4837,63 @@ export interface paths {
                         "application/json": {
                             banners: {
                                 id: string;
+                                bannerId: string;
                                 name: string;
                                 description: string | null;
                                 enabled: boolean;
-                                type: string;
-                                priority: number;
                             }[];
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/banners/{bannerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    bannerId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Get banner by bannerId */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            banner: {
+                                id: string;
+                                bannerId: string;
+                                name: string;
+                                description: string | null;
+                                enabled: boolean;
+                            };
                         };
                     };
                 };
@@ -4862,6 +5008,200 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tts-generations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    cursor?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of TTS generations (metadata only, no audio) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            generations: {
+                                id: string;
+                                model: string;
+                                voice: string;
+                                format: string;
+                                text: string;
+                                chars: number | null;
+                                cost: number | null;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            }[];
+                            hasMore: boolean;
+                            /** Format: date-time */
+                            nextCursor: string | null;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        model: string;
+                        voice: string;
+                        format: string;
+                        text: string;
+                        file: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description TTS generation created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            generation: {
+                                id: string;
+                                model: string;
+                                voice: string;
+                                format: string;
+                                text: string;
+                                chars: number | null;
+                                cost: number | null;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tts-generations/{id}/audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Redirect to pre-signed S3 audio URL */
+                302: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Generation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tts-generations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Generation deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Generation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/google-workspace/callback": {
         parameters: {
             query?: never;
@@ -4923,6 +5263,7 @@ export interface operations {
                 order?: "asc" | "desc";
                 /** @description Include all mapping statuses (for admin) */
                 includeAll?: string;
+                type?: "text" | "audio" | "image" | "video";
             };
             header?: never;
             path?: never;
@@ -4990,6 +5331,12 @@ export interface operations {
                                 deactivationReason: string | null;
                                 /** @enum {string} */
                                 status: "active" | "inactive" | "deactivated";
+                                audioConfig?: {
+                                    characterPrice: number;
+                                    maxCharacters: number;
+                                    languages?: number;
+                                    latencyMs?: number;
+                                } | null;
                                 providerInfo?: {
                                     id: string;
                                     createdAt: string | null;

@@ -252,7 +252,7 @@ export async function POST(req: Request) {
 	const { messages }: ChatRequestBody = body;
 
 	const llmapi = createLLMGateway({
-		apiKey: "llmapi_api_key",
+		apiKey: "llmapi_key",
 		baseUrl: "https://api.llmapi.ai/v1",
 	});
 

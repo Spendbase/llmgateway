@@ -1,6 +1,6 @@
-# LLMGateway Instrumentation Package
+# LLMAPI Instrumentation Package
 
-This package provides OpenTelemetry instrumentation and tracing middleware for LLMGateway services.
+This package provides OpenTelemetry instrumentation and tracing middleware for LLMAPI services.
 
 ## Features
 

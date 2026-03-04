@@ -1,33 +1,33 @@
 ---
-id: blog-introducing-llm-gateway
-slug: introducing-llm-gateway
+id: blog-introducing-llm-api
+slug: introducing-llm-api
 date: 2025-04-12
-title: Introducing LLM Gateway
+title: Introducing LLM API
 summary: Meet the open-source API gateway for routing, observability, and cost tracking across LLM providers.
 categories: ["Announcements"]
 image:
-  src: "/blog/blog-introducing-llm-gateway.png"
-  alt: "LLM Gateway"
+  src: "/blog/blog-introducing-llm-api.png"
+  alt: "LLM API"
   width: 2282
   height: 1198
 ---
 
-# LLM Gateway
+# LLM API
 
-LLM Gateway is an open-source API gateway for Large Language Models (LLMs). It acts as middleware between your apps and LLM providers so you can:
+LLM API is an open-source API gateway for Large Language Models (LLMs). It acts as middleware between your apps and LLM providers so you can:
 
 - **Route**: Switch between providers like OpenAI, Anthropic, and Google with a single API
 - **Manage**: Centralize and rotate provider API keys
 - **Observe**: Track token usage, latency, and error rates
 - **Optimize**: Analyze cost and performance to pick the best models for your workload
 
-## Why LLM Gateway?
+## Why LLM API?
 
-Operating across multiple LLM providers quickly becomes complex credentials, SDK differences, changing models, and cost variance. LLM Gateway standardizes the interface and gives you the visibility to make data-driven choices.
+Operating across multiple LLM providers quickly becomes complex credentials, SDK differences, changing models, and cost variance. LLM API standardizes the interface and gives you the visibility to make data-driven choices.
 
 ## One Compatible Endpoint
 
-LLM Gateway uses an OpenAI-compatible API format, so migrating is seamless:
+LLM API uses an OpenAI-compatible API format, so migrating is seamless:
 
 ```bash
 curl -X POST https://api.llmapi.ai/v1/chat/completions \
@@ -43,4 +43,4 @@ curl -X POST https://api.llmapi.ai/v1/chat/completions \
 
 Get **usage metrics**, **cost analysis**, and **performance tracking** broken down by model and provider, helping you reason about tradeoffs. You can compare latency, token usage, and error rates to choose the best fit per task.
 
-If you're new to LLM Gateway, read our [Docs](/docs) to get started.
+If you're new to LLM API, read our [Docs](/docs) to get started.

@@ -86,7 +86,7 @@ export const features: FeatureDefinition[] = [
 
 const client = new OpenAI({
 	baseURL: "https://api.llmapi.ai/v1",
-	apiKey: process.env.LLMGATEWAY_API_KEY,
+	apiKey: process.env.LLM_API_KEY,
 });
 
 const completion = await client.chat.completions.create({

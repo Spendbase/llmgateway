@@ -48,22 +48,29 @@ export function DashboardLayoutClient({
 	);
 
 	const [isFreeCreditsBannerVisible, setIsFreeCreditsBannerVisible] = useState(
-		localStorage.getItem("isFreeCreditsBannerHidden") !== "true",
+		typeof window !== "undefined"
+			? window.localStorage.getItem("isFreeCreditsBannerHidden") !== "true"
+			: false,
 	);
 
 	const handleCloseFreeCreditsBanner = useCallback(() => {
 		setIsFreeCreditsBannerVisible(false);
-		localStorage.setItem("isFreeCreditsBannerHidden", "true");
+		if (typeof window !== "undefined") {
+			window.localStorage.setItem("isFreeCreditsBannerHidden", "true");
+		}
 	}, []);
 
-	const { data: bannersData } = api.useQuery("get", "/banners", undefined, {
+	const { data: bannerData } = api.useQuery("get", "/banners/{bannerId}", {
+		params: {
+			path: {
+				bannerId: "free-credits",
+			},
+		},
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
 	});
 
-	const freeCreditsBanner = bannersData?.banners?.find(
-		(b) => b.id === "free-credits",
-	);
+	const freeCreditsBanner = bannerData?.banner;
 
 	const shouldShowBanner =
 		freeCreditsBanner?.enabled &&

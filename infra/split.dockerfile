@@ -32,6 +32,9 @@ RUN ARCH=$(uname -m) && \
 # Create app directory
 WORKDIR /app
 
+ARG STRIPE_PUB_KEY
+ENV STRIPE_PUB_KEY=$STRIPE_PUB_KEY
+
 COPY .tool-versions ./
 
 # Install asdf plugins and tools

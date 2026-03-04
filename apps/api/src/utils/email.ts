@@ -151,7 +151,7 @@ export function generatePaymentFailureEmailHtml(
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Payment Failed - LLMGateway</title>
+		<title>Payment Failed - LLMAPI</title>
 	</head>
 	<body
 		style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff;"
@@ -253,7 +253,7 @@ export function generateSubscriptionCancelledEmailHtml(
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Subscription Cancelled - LLMGateway</title>
+		<title>Subscription Cancelled - LLMAPI</title>
 	</head>
 	<body
 		style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff;"
@@ -281,7 +281,7 @@ export function generateSubscriptionCancelledEmailHtml(
 									</p>
 
 									<p style="font-size: 16px; margin-bottom: 20px; color: #333; line-height: 1.5;">
-										You can continue using LLMGateway with our free plan features, or you can resubscribe to Pro at any
+										You can continue using LLMAPI with our free plan features, or you can resubscribe to Pro at any
 										time from your dashboard.
 									</p>
 

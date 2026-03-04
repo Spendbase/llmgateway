@@ -7,6 +7,7 @@ export interface ActivityModelUsage {
 	inputTokens: number;
 	outputTokens: number;
 	totalTokens: number;
+	ttsChars: number;
 	cost: number;
 }
 
@@ -16,6 +17,7 @@ export interface DailyActivity {
 	inputTokens: number;
 	outputTokens: number;
 	totalTokens: number;
+	ttsChars: number;
 	cost: number;
 	outputCost: number;
 	inputCost: number;
@@ -41,6 +43,7 @@ export type ActivitT =
 				inputTokens: number;
 				outputTokens: number;
 				totalTokens: number;
+				ttsChars: number;
 				cost: number;
 				inputCost: number;
 				outputCost: number;

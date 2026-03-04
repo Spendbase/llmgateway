@@ -129,7 +129,7 @@ export default async function ChatPage({
 
 	// Fetch models and providers from API
 	const [models, providers] = await Promise.all([
-		fetchModels(),
+		fetchModels("text"),
 		fetchProviders(),
 	]);
 

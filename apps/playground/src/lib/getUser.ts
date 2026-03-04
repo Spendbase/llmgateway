@@ -30,7 +30,7 @@ export async function getUser() {
 		return null;
 	}
 
-	const user: User = await data.json();
+	const { user }: { user: User } = await data.json();
 
 	if (posthog) {
 		posthog.identify({

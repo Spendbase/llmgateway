@@ -8,7 +8,7 @@ const isProduction = process.env.NODE_ENV === "production";
 
 export const referral = new OpenAPIHono<ServerTypes>();
 
-const REFERRAL_COOKIE_NAME = "llmgateway_referral";
+const REFERRAL_COOKIE_NAME = "llmapi_referral";
 const REFERRAL_COOKIE_DAYS = 30;
 
 const referralRoute = createRoute({

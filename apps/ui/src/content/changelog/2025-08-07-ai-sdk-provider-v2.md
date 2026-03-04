@@ -11,7 +11,7 @@ image:
   height: 677
 ---
 
-We're excited to announce the release of v2.0 of our [@llmgateway/ai-sdk-provider](https://www.npmjs.com/package/@llmgateway/ai-sdk-provider) npm package, making it even easier to integrate LLM Gateway with the Vercel AI SDK.
+We're excited to announce the release of v2.0 of our [@llmgateway/ai-sdk-provider](https://www.npmjs.com/package/@llmgateway/ai-sdk-provider) npm package, making it even easier to integrate LLM API with the Vercel AI SDK.
 
 ## 🚀 What's New in v2.0
 

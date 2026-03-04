@@ -1,6 +1,6 @@
-# LLM Gateway
+# LLM API
 
-LLM Gateway is an open-source API gateway for Large Language Models (LLMs). It acts as a middleware between your applications and various LLM providers, allowing you to:
+LLM API is an open-source API gateway for Large Language Models (LLMs). It acts as a middleware between your applications and various LLM providers, allowing you to:
 
 - Route requests to multiple LLM providers (OpenAI, Anthropic, Google Vertex AI, and others)
 - Manage API keys for different providers in one place
@@ -16,17 +16,17 @@ LLM Gateway is an open-source API gateway for Large Language Models (LLMs). It a
 
 ## Getting Started
 
-You can use LLM Gateway in two ways:
+You can use LLM API in two ways:
 
 - **Hosted Version**: For immediate use without setup, visit [llmapi.ai](https://llmapi.ai) to create an account and get an API key.
-- **Self-Hosted**: Deploy LLM Gateway on your own infrastructure for complete control over your data and configuration.
+- **Self-Hosted**: Deploy LLM API on your own infrastructure for complete control over your data and configuration.
 
-### Using LLM Gateway API
+### Using LLM API
 
 ```bash
 curl -X POST https://internal.llmapi.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $LLM_GATEWAY_API_KEY" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
   -d '{
   "model": "gpt-4o",
   "messages": [
@@ -73,7 +73,7 @@ curl -X POST https://internal.llmapi.ai/v1/chat/completions \
 
 ## License
 
-LLMGateway is available under a dual license:
+LLMAPI is available under a dual license:
 
 - **Open Source**: Core functionality is licensed under AGPLv3 - see the [LICENSE](LICENSE) file for details.
 - **Enterprise**: Commercial features in the `ee/` directory require an Enterprise license - see [ee/LICENSE](ee/LICENSE) for details.
