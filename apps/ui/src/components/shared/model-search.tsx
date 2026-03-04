@@ -118,7 +118,7 @@ export function ModelSearch({
 				continue;
 			}
 
-			// Use createdAt from API (when added to LLM Gateway), fallback to releasedAt
+			// Use createdAt from API (when added to LLM API), fallback to releasedAt
 			const createdAt = model.createdAt
 				? new Date(model.createdAt)
 				: model.releasedAt

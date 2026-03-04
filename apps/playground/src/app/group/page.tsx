@@ -25,7 +25,7 @@ export default async function GroupPage({
 
 	// Fetch models and providers from API
 	const [models, providers] = await Promise.all([
-		fetchModels(),
+		fetchModels("text"),
 		fetchProviders(),
 	]);
 

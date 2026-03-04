@@ -3,7 +3,7 @@ id: "33"
 slug: "cerebras-models-support"
 date: "2025-12-14"
 title: "Cerebras: Ultra-Fast Inference with 6 New Models"
-summary: "New Cerebras provider with six high-performance models, including GPT-OSS 120B and Qwen 3, now available through LLM Gateway."
+summary: "New Cerebras provider with six high-performance models, including GPT-OSS 120B and Qwen 3, now available through LLM API."
 image:
   src: "/changelog/cerebras-models-support.png"
   alt: "Cerebras: Ultra-Fast Inference with 6 New Models"
@@ -11,9 +11,9 @@ image:
   height: 677
 ---
 
-We're excited to announce support for **Cerebras** as a new provider in LLM Gateway, offering **ultra-fast, high-throughput inference** with six powerful models.
+We're excited to announce support for **Cerebras** as a new provider in LLM API, offering **ultra-fast, high-throughput inference** with six powerful models.
 
-Cerebras is available via the LLM Gateway with the provider ID `cerebras`. Learn more about the Cerebras inference platform at [cerebras.ai](https://cerebras.ai?utm_source=llmapi.ai).
+Cerebras is available via the LLM API with the provider ID `cerebras`. Learn more about the Cerebras inference platform at [cerebras.ai](https://cerebras.ai?utm_source=llmapi.ai).
 
 ## 🎯 New Cerebras Models
 

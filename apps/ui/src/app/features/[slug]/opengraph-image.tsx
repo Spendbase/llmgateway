@@ -260,9 +260,7 @@ export default async function FeatureOgImage({
 							color: "#9CA3AF",
 						}}
 					>
-						<span style={{ color: "#ffffff", fontWeight: 600 }}>
-							LLM Gateway
-						</span>
+						<span style={{ color: "#ffffff", fontWeight: 600 }}>LLM API</span>
 						<span style={{ opacity: 0.6 }}>•</span>
 						<span>Features</span>
 					</div>
@@ -342,7 +340,7 @@ export default async function FeatureOgImage({
 						color: "#9CA3AF",
 					}}
 				>
-					<span>llmgateway.io</span>
+					<span>llmapi.ai</span>
 				</div>
 			</div>
 		),

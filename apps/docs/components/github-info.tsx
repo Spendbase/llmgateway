@@ -15,7 +15,7 @@ async function getRepoStarsAndForks(
 	const endpoint = `https://api.github.com/repos/${owner}/${repo}`;
 	const headers = new Headers({
 		"Content-Type": "application/json",
-		"User-Agent": "llmgateway-docs",
+		"User-Agent": "llmapi-docs",
 	});
 
 	const githubToken = token ?? process.env.GITHUB_TOKEN;

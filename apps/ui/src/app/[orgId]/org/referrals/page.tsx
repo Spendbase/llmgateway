@@ -4,40 +4,8 @@ import { ReferralsClient } from "./referrals-client";
 
 export const dynamic = "force-dynamic";
 
-interface Transaction {
-	id: string;
-	createdAt: string;
-	type:
-		| "credit_topup"
-		| "subscription_start"
-		| "subscription_cancel"
-		| "subscription_end";
-	creditAmount: string | null;
-	amount: string | null;
-	status: "pending" | "completed" | "failed";
-	description: string | null;
-}
-
-interface TransactionsData {
-	transactions: Transaction[];
-}
-
 interface ReferralStatsData {
 	referredCount: number;
-}
-
-async function fetchTransactions(orgId: string): Promise<TransactionsData> {
-	const data = await fetchServerData<TransactionsData>(
-		"GET",
-		"/orgs/{id}/transactions",
-		{
-			params: {
-				path: { id: orgId },
-			},
-		},
-	);
-
-	return data || { transactions: [] };
 }
 
 async function fetchReferralStats(orgId: string): Promise<ReferralStatsData> {
@@ -78,15 +46,7 @@ export default async function ReferralsPage({
 		);
 	}
 
-	const [data, stats] = await Promise.all([
-		fetchTransactions(orgId),
-		fetchReferralStats(orgId),
-	]);
+	const stats = await fetchReferralStats(orgId);
 
-	return (
-		<ReferralsClient
-			transactions={data.transactions}
-			referredCount={stats.referredCount}
-		/>
-	);
+	return <ReferralsClient referredCount={stats.referredCount} />;
 }

@@ -51,10 +51,10 @@ console.log(response.choices[0].message.content);`,
 		code: `import { createLLMGateway } from "@llmgateway/ai-sdk-provider";
 import { generateText } from 'ai';
 
-const llmgateway = createLLMGateway({ apiKey });
+const llmapi = createLLMGateway({ apiKey });
 
 const { text } = await generateText({
-  model: llmgateway('openai/gpt-4o'),
+  model: llmapi('openai/gpt-4o'),
   prompt: 'Write a vegetarian lasagna recipe for 4 people.',
 });`,
 	},

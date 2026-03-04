@@ -2,21 +2,21 @@
 id: claude-code
 slug: claude-code
 title: Claude Code Integration
-description: Configure Claude Code to use LLM Gateway for access to any model through the Anthropic API format
+description: Configure Claude Code to use LLM API for access to any model through the Anthropic API format
 date: 2026-01-02
 ---
 
-LLM Gateway provides a native Anthropic-compatible endpoint at `/v1/messages` that allows you to use any model in our catalog while maintaining the familiar Anthropic API format. This is especially useful for Claude Code users who want to access models beyond Claude.
+LLM API provides a native Anthropic-compatible endpoint at `/v1/messages` that allows you to use any model in our catalog while maintaining the familiar Anthropic API format. This is especially useful for Claude Code users who want to access models beyond Claude.
 
 ## Video Tutorial
 
-Watch this quick video guide on setting up Claude Code with LLM Gateway:
+Watch this quick video guide on setting up Claude Code with LLM API:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/FrNDDSER768" title="Claude Code with LLM Gateway" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/FrNDDSER768" title="Claude Code with LLM API" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 ## Quick Start
 
-Configure Claude Code to use LLM Gateway with these environment variables:
+Configure Claude Code to use LLM API with these environment variables:
 
 ```bash
 export ANTHROPIC_BASE_URL=https://api.llmapi.ai
@@ -28,14 +28,14 @@ export ANTHROPIC_MODEL=gpt-5  # or any model from our catalog
 claude
 ```
 
-## Why Use LLM Gateway with Claude Code?
+## Why Use LLM API with Claude Code?
 
-The Anthropic endpoint transforms requests from Anthropic's message format to the OpenAI-compatible format used by LLM Gateway, then transforms the responses back to Anthropic's format. This means you can:
+The Anthropic endpoint transforms requests from Anthropic's message format to the OpenAI-compatible format used by LLM API, then transforms the responses back to Anthropic's format. This means you can:
 
-- Use **any model** available in LLM Gateway with Claude Code
+- Use **any model** available in LLM API with Claude Code
 - Maintain existing workflows that use Anthropic's API format
 - Access models from OpenAI, Google, Cohere, and other providers through the Anthropic interface
-- Leverage LLM Gateway's routing, caching, and cost optimization features
+- Leverage LLM API's routing, caching, and cost optimization features
 
 ## Choosing Models
 
@@ -126,7 +126,7 @@ The endpoint returns responses in Anthropic's message format:
 }
 ```
 
-## Benefits of Using LLM Gateway
+## Benefits of Using LLM API
 
 - **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
 - **Cost Control**: Track and limit your AI spending with detailed usage analytics
@@ -137,4 +137,4 @@ The endpoint returns responses in Anthropic's message format:
 
 ## Get Started
 
-Ready to enhance your Claude Code experience? [Sign up for LLM Gateway](/signup) and get your API key today.
+Ready to enhance your Claude Code experience? [Sign up for LLM API](/signup) and get your API key today.

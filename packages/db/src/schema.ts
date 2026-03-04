@@ -196,6 +196,7 @@ export const referral = pgTable(
 			.notNull()
 			.unique()
 			.references(() => organization.id, { onDelete: "cascade" }),
+		rewardGranted: boolean().notNull().default(false),
 	},
 	(table) => [
 		index("referral_referrer_organization_id_idx").on(
@@ -323,6 +324,14 @@ export const apiKey = pgTable(
 		}).default("active"),
 		usageLimit: decimal(),
 		usage: decimal().notNull().default("0"),
+		resetPeriod: text({
+			enum: ["daily", "weekly", "monthly", "none"],
+		})
+			.notNull()
+			.default("none"),
+		lastResetAt: timestamp({ withTimezone: true }),
+		nextResetAt: timestamp({ withTimezone: true }),
+		expiresAt: timestamp({ withTimezone: true }),
 		projectId: text()
 			.notNull()
 			.references(() => project.id, { onDelete: "cascade" }),
@@ -333,6 +342,8 @@ export const apiKey = pgTable(
 	(table) => [
 		index("api_key_project_id_idx").on(table.projectId),
 		index("api_key_created_by_idx").on(table.createdBy),
+		index("api_key_next_reset_at_idx").on(table.nextResetAt),
+		index("api_key_expires_at_idx").on(table.expiresAt),
 	],
 );
 
@@ -519,6 +530,9 @@ export const log = pgTable(
 				healingMethod?: string;
 			};
 		}>(),
+		ttsChars: integer(),
+		ttsVoice: text(),
+		ttsFormat: text(),
 	},
 	(table) => [
 		index("log_project_id_created_at_idx").on(table.projectId, table.createdAt),
@@ -778,6 +792,12 @@ export const modelProviderMapping = pgTable(
 		jsonOutputSchema: boolean().default(false).notNull(),
 		webSearch: boolean().default(false).notNull(),
 		webSearchPrice: numericDecimal(),
+		audioConfig: jsonb().$type<{
+			characterPrice: number;
+			maxCharacters: number;
+			languages?: number;
+			latencyMs?: number;
+		}>(),
 		discount: numericDecimal().default(0).notNull(),
 		reasoningLevels: json().$type<("minimal" | "low" | "medium" | "high")[]>(),
 		pricingTiers: json().$type<
@@ -850,6 +870,7 @@ export const modelProviderMappingHistory = pgTable(
 		totalDuration: integer().notNull().default(0),
 		totalTimeToFirstToken: integer().notNull().default(0),
 		totalTimeToFirstReasoningToken: integer().notNull().default(0),
+		totalTtsChars: integer().notNull().default(0),
 	},
 	(table) => [
 		// Unique constraint ensures one record per mapping-minute combination
@@ -897,6 +918,7 @@ export const modelHistory = pgTable(
 		totalDuration: integer().notNull().default(0),
 		totalTimeToFirstToken: integer().notNull().default(0),
 		totalTimeToFirstReasoningToken: integer().notNull().default(0),
+		totalTtsChars: integer().notNull().default(0),
 	},
 	(table) => [
 		// Unique constraint ensures one record per model-minute combination
@@ -907,7 +929,8 @@ export const modelHistory = pgTable(
 );
 
 export const banner = pgTable("banner", {
-	id: text().primaryKey(),
+	id: text().primaryKey().$defaultFn(shortid),
+	bannerId: text().notNull(),
 	createdAt: timestamp().notNull().defaultNow(),
 	updatedAt: timestamp()
 		.notNull()
@@ -915,9 +938,7 @@ export const banner = pgTable("banner", {
 		.$onUpdate(() => new Date()),
 	name: text().notNull(),
 	description: text(),
-	enabled: boolean().notNull().default(true),
-	type: text().notNull(),
-	priority: integer().notNull().default(0),
+	enabled: boolean().notNull().default(false),
 });
 
 export const transactionEvent = pgTable(
@@ -984,6 +1005,35 @@ export const voucherLog = pgTable(
 		index("voucher_log_voucher_id_organization_id_idx").on(
 			table.voucherId,
 			table.organizationId,
+		),
+	],
+);
+
+export const ttsGeneration = pgTable(
+	"tts_generation",
+	{
+		id: text().primaryKey().notNull().$defaultFn(shortid),
+		createdAt: timestamp().notNull().defaultNow(),
+		updatedAt: timestamp()
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+		userId: text()
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		model: text().notNull(),
+		voice: text().notNull(),
+		format: text().notNull(),
+		text: text().notNull(),
+		chars: integer(),
+		cost: numericDecimal(),
+		file: text().notNull(),
+	},
+	(table) => [
+		index("tts_generation_user_id_idx").on(table.userId),
+		index("tts_generation_user_id_created_at_idx").on(
+			table.userId,
+			table.createdAt,
 		),
 	],
 );
