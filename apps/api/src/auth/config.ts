@@ -7,7 +7,7 @@ import { Redis } from "ioredis";
 
 import { getResetPasswordEmail } from "@/emails/templates/reset-password.js";
 import { getVerifyEmail } from "@/emails/templates/verify-email.js";
-import { validateEmail } from "@/utils/email-validation.js";
+import { validateEmail, isCorporateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
 import { db, eq, tables, shortid } from "@llmgateway/db";
@@ -817,6 +817,35 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 							error: "account_blocked",
 							message:
 								"Your account has been suspended. Please contact support for assistance.",
+						}),
+						{
+							status: 403,
+							headers: {
+								"Content-Type": "application/json",
+							},
+						},
+					);
+				}
+
+				if (user && !isCorporateEmail(user.email)) {
+					logger.warn("Non-corporate email blocked during sign-in", {
+						userId: user.id,
+						email: maskEmail(user.email),
+						path: ctx.path,
+					});
+
+					const isSocialCallback = ctx.path.includes("/callback");
+					if (isSocialCallback) {
+						const errorUrl = new URL("/corporate-login", uiUrl);
+						errorUrl.searchParams.set("error", "corporate_only");
+						return Response.redirect(errorUrl.toString(), 302);
+					}
+
+					return new Response(
+						JSON.stringify({
+							error: "corporate_only",
+							message:
+								"Only corporate email addresses are allowed. Please sign in with your work email.",
 						}),
 						{
 							status: 403,
