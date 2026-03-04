@@ -1,0 +1,72 @@
+---
+title: ChatBox Integration
+description: Connect ChatBox to LLM API for AI-powered capabilities
+icon: ChatBox
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+ChatBox is a desktop AI chat application available for Windows, Mac, and Linux. It supports multiple providers and offers a clean interface for chatting with AI models, with full support for custom OpenAI-compatible endpoints.
+
+ChatBox supports custom API providers, making it easy to connect LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- ChatBox installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in ChatBox
+
+1. Open ChatBox on your desktop.
+2. Navigate to Settings (gear icon).
+3. Select "OpenAI API Compatible" as the provider.
+4. Enter:
+   - **API Host**: https://api.llmapi.ai/v1
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Model**: the model ID you wish to use
+5. Click "Save".
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that ChatBox can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	ChatBox stores your key locally --- it never leaves your machine.
+</Callout>
+
+## Benefits of Using LLM API with ChatBox
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

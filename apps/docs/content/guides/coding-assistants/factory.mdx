@@ -1,0 +1,73 @@
+---
+title: Factory Integration
+description: Connect Factory to LLM API for AI-powered capabilities
+icon: Factory
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Factory is an AI-powered software development platform that provides autonomous coding agents (Droids) capable of handling complex engineering tasks including code generation, bug fixes, migrations, and testing.
+
+Factory supports custom LLM providers for its Droids, allowing you to connect LLM API as the AI backend.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Factory installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Factory
+
+1. Log in to your Factory dashboard.
+2. Navigate to Settings → LLM Provider.
+3. Select "Custom" or "OpenAI Compatible".
+4. Enter the following:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+5. Select the model for your Droids.
+6. Click "Save".
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Factory can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Factory's Droids benefit from powerful reasoning models. LLM API gives you
+	access to the latest options.
+</Callout>
+
+## Benefits of Using LLM API with Factory
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

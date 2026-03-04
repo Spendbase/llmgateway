@@ -1,0 +1,73 @@
+---
+title: Make Integration
+description: Connect Make to LLM API for AI-powered capabilities
+icon: Make
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Make (formerly Integromat) is a visual workflow automation platform that connects apps and services. It supports AI modules for integrating language model capabilities into automated workflows.
+
+Make's OpenAI and HTTP modules support custom endpoints, allowing you to route AI requests through LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Make installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Make
+
+1. Open Make and navigate to your scenario.
+2. Add an "OpenAI" module or "HTTP" module.
+3. If using OpenAI module, click "Add" next to Connection.
+4. Enter:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+5. For HTTP module, configure a POST request to https://api.llmapi.ai/v1/chat/completions with Authorization: Bearer your-key.
+6. Click "OK" to save.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Make can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Make's visual workflow builder makes it easy to chain LLM API calls with
+	hundreds of other services.
+</Callout>
+
+## Benefits of Using LLM API with Make
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

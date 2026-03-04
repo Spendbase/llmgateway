@@ -1,0 +1,72 @@
+---
+title: Msty Integration
+description: Connect Msty to LLM API for AI-powered capabilities
+icon: Msty
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Msty is a desktop AI chat application that supports both local and remote AI models. It provides a polished interface with features like chat history, prompt templates, and multi-model support.
+
+Msty supports custom API providers, including OpenAI-compatible endpoints like LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Msty installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Msty
+
+1. Open Msty on your desktop.
+2. Navigate to Settings → "Remote Models" or "API Keys".
+3. Click "Add Provider" and select "OpenAI Compatible".
+4. Enter:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+5. Add the model IDs you want to use.
+6. Click "Save".
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Msty can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Msty lets you switch between local and LLM API cloud models at any time.
+</Callout>
+
+## Benefits of Using LLM API with Msty
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

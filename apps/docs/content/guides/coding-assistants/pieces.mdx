@@ -1,0 +1,73 @@
+---
+title: Pieces Integration
+description: Connect Pieces to LLM API for AI-powered capabilities
+icon: Pieces
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Pieces for Developers is an AI-powered productivity tool suite that helps developers save, enrich, search, and share code snippets. It includes a desktop app, browser extensions, and IDE plugins, all powered by a local-first AI engine (PiecesOS) with optional cloud model support.
+
+Pieces supports custom LLM providers through PiecesOS configuration, allowing you to connect LLM API for AI-powered features.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Pieces installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Pieces
+
+1. Open the Pieces Desktop App.
+2. Navigate to Settings → Machine Learning / Model Configuration.
+3. Select "Custom" or "OpenAI Compatible" as the cloud model provider.
+4. Enter the following details:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Endpoint URL**: https://api.llmapi.ai/v1
+5. Select the model you wish to use.
+6. Click "Save" to apply.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Pieces can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	PiecesOS handles the connection locally, so your API key stays on your
+	machine.
+</Callout>
+
+## Benefits of Using LLM API with Pieces
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

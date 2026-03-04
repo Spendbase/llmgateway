@@ -1,0 +1,72 @@
+---
+title: Langflow Integration
+description: Connect Langflow to LLM API for AI-powered capabilities
+icon: Langflow
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Langflow is a visual framework for building multi-agent and RAG applications. It provides a drag-and-drop interface for connecting LLM components, data sources, and tools into complex AI workflows.
+
+Langflow's model components support OpenAI-compatible endpoints.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Langflow installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Langflow
+
+1. Open Langflow in your browser.
+2. Drag an "OpenAI" or "ChatOpenAI" component onto the canvas.
+3. Click the component and configure:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+   - **Model Name**: openai/gpt-4o
+4. Connect the component to your flow and run.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Langflow can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Langflow's visual interface makes it easy to swap models by changing the Model
+	Name field.
+</Callout>
+
+## Benefits of Using LLM API with Langflow
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

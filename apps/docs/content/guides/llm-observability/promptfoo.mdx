@@ -1,0 +1,83 @@
+---
+title: Promptfoo Integration
+description: Connect Promptfoo to LLM API for AI-powered capabilities
+icon: Promptfoo
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Promptfoo is an open-source tool for testing and evaluating LLM outputs. It lets you run prompt benchmarks across multiple models and providers, with support for custom OpenAI-compatible endpoints.
+
+Promptfoo supports custom providers in its configuration file.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Promptfoo installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Promptfoo
+
+1. Set environment variables:
+
+```bash
+export OPENAI_API_KEY="your-llm-api-key-here"
+export OPENAI_BASE_URL="https://api.llmapi.ai/v1"
+```
+
+2. Or configure in promptfooconfig.yaml:
+
+```
+providers:
+\- id: openai:openai/gpt-4o
+config:
+apiKey: your-llm-api-key-here
+apiBaseUrl: https://api.llmapi.ai/v1
+```
+
+3. Run: promptfoo eval
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Promptfoo can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Promptfoo lets you compare multiple LLM API models side by side with automated
+	evaluations.
+</Callout>
+
+## Benefits of Using LLM API with Promptfoo
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

@@ -1,0 +1,73 @@
+---
+title: SkyrimNet Integration
+description: Connect SkyrimNet to LLM API for AI-powered capabilities
+icon: SkyrimNet
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+SkyrimNet is a game modification plugin for The Elder Scrolls V: Skyrim that brings AI-powered NPC interactions to the game. It uses large language models to generate dynamic dialogue, behaviors, and narrative events, creating a more immersive and responsive game world.
+
+SkyrimNet supports custom LLM endpoints, allowing you to point its AI backend at LLM API for access to a wider range of models.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- SkyrimNet installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in SkyrimNet
+
+1. Locate the SkyrimNet configuration file in your Skyrim mod directory.
+2. Open the config file (typically SkyrimNet.ini or a JSON configuration).
+3. Set the API endpoint and key:
+   - **API URL / Endpoint**: https://api.llmapi.ai/v1
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Model**: the model ID you wish to use (e.g., openai/gpt-4o)
+4. Save the configuration file.
+5. Launch Skyrim with SkyrimNet enabled --- AI interactions will now use LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that SkyrimNet can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Faster models like GPT-4o-mini provide quicker NPC response times for a more
+	fluid gameplay experience.
+</Callout>
+
+## Benefits of Using LLM API with SkyrimNet
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

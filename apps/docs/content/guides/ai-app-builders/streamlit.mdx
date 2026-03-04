@@ -1,0 +1,86 @@
+---
+title: Streamlit Integration
+description: Connect Streamlit to LLM API for AI-powered capabilities
+icon: Streamlit
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Streamlit is a Python framework for building data apps and AI interfaces. It makes it easy to create interactive web applications with just a few lines of Python code, commonly used for AI chat interfaces and dashboards.
+
+Streamlit apps can use the OpenAI Python SDK configured with LLM API's endpoint.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Streamlit installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Use LLM API in Streamlit Apps
+
+1. Install dependencies:
+
+```bash
+pip install streamlit openai
+```
+
+2. Configure LLM API in your Streamlit app:
+
+```python
+import streamlit as st
+from openai import OpenAI
+client = OpenAI(
+api_key="your-llm-api-key-here",
+base_url="https://api.llmapi.ai/v1"
+)
+response = client.chat.completions.create(
+model="openai/gpt-4o",
+messages=[{"role":"user","content":"Hello!"}]
+)
+```
+
+3. Run your app: streamlit run app.py
+
+```yaml
+Tip: Store your LLM API key in Streamlit's secrets management (st.secrets) for secure deployment.
+```
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Streamlit can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+## Benefits of Using LLM API with Streamlit
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

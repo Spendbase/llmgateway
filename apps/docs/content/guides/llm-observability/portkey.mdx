@@ -1,0 +1,87 @@
+---
+title: Portkey Integration
+description: Connect Portkey to LLM API for AI-powered capabilities
+icon: Portkey
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Portkey is an AI infrastructure platform that provides a unified gateway for managing multiple LLM providers. It offers observability, reliability features like load balancing and fallbacks, access control, and the ability to bring your own privately-hosted models.
+
+Portkey's BYOLLM (Bring Your Own LLM) feature lets you register LLM API as a custom provider, routing requests through Portkey's gateway while accessing all LLM API models.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Portkey installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Portkey
+
+#### Option A --- Using the Model Catalog (UI)
+
+1. Log in to your Portkey dashboard.
+2. Navigate to Model Catalog → Add Provider.
+3. Enable the "Local/Privately hosted provider" toggle.
+4. Select OpenAI as the matching API spec.
+5. Enter the following:
+   - **Custom Host**: https://api.llmapi.ai/v1
+   - **Authorization Header**: Bearer your-llm-api-key-here
+6. Name your provider (e.g., "LLM API") and click "Create".
+
+#### Option B --- Direct Integration (code)
+
+```javascript
+const portkey = new Portkey({
+	apiKey: "PORTKEY_API_KEY",
+	provider: "openai",
+	customHost: "https://api.llmapi.ai/v1/",
+	Authorization: "Bearer your-llm-api-key-here",
+	forwardHeaders: ["Authorization"],
+});
+```
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Portkey can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Once configured, Portkey adds observability, caching, and fallback routing on
+	top of LLM API --- ideal for production deployments.
+</Callout>
+
+## Benefits of Using LLM API with Portkey
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

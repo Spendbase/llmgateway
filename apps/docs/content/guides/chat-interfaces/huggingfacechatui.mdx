@@ -1,0 +1,86 @@
+---
+title: Hugging Face Chat UI Integration
+description: Connect Hugging Face Chat UI to LLM API for AI-powered capabilities
+icon: Hugging
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Hugging Face Chat UI is an open-source web interface for interacting with language models. It supports multiple providers including OpenAI-compatible endpoints, allowing self-hosted deployments to connect to any compatible API.
+
+By setting the OpenAI provider configuration, you can point Chat UI at LLM API to access all available models.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Hugging Face Chat UI installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Hugging Face Chat UI
+
+1. Open the .env file (or .env.local) in your Chat UI installation.
+2. Set your LLM API key:
+
+```
+OPENAI_API_KEY=your-llm-api-key-here
+```
+
+3. Configure the MODELS environment variable to use LLM API:
+
+```json
+MODELS=\`[{
+"name": "GPT-4o via LLM API",
+"id": "openai/gpt-4o",
+"endpoints": [{
+"type": "openai",
+"baseURL": "https://api.llmapi.ai/v1"
+}]
+}]\`
+```
+
+4. Restart Chat UI --- the configured models will appear in the model selector.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Hugging Face Chat UI can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	You can add multiple models to the MODELS array, each using the same LLM API
+	endpoint but with different model IDs.
+</Callout>
+
+## Benefits of Using LLM API with Hugging Face Chat UI
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

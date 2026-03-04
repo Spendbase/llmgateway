@@ -1,0 +1,73 @@
+---
+title: Quivr Integration
+description: Connect Quivr to LLM API for AI-powered capabilities
+icon: Quivr
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Quivr is an AI-powered knowledge management platform that acts as your second brain. It lets you upload documents, chat with your data, and build AI assistants that can answer questions based on your personal or team knowledge base.
+
+Quivr supports custom LLM backends, allowing you to connect LLM API to power its AI chat and retrieval features.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Quivr installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Quivr
+
+1. Open your Quivr instance (self-hosted or cloud).
+2. Navigate to Settings → LLM Configuration.
+3. Select "OpenAI Compatible" as the provider.
+4. Enter the following details:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+   - **Model**: the model ID you wish to use (e.g., openai/gpt-4o)
+5. Click "Save" to apply.
+6. Start chatting with your knowledge base --- Quivr will use LLM API for all AI responses.
+
+```yaml
+Tip: Using a powerful model through LLM API improves the quality of Quivr's retrieval-augmented generation (RAG) responses.
+```
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Quivr can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+## Benefits of Using LLM API with Quivr
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

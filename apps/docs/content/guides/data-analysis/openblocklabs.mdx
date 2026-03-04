@@ -1,0 +1,85 @@
+---
+title: OpenBlock Labs Integration
+description: Connect OpenBlock Labs to LLM API for AI-powered capabilities
+icon: OpenBlock
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+OB-1 by Open Block Labs is a multi-model, terminal-based coding agent that supports over 300 AI models. It features bring-your-own-API-key functionality, self-optimizing workflows, and session forking, making it a versatile tool for AI-assisted development.
+
+OB-1 supports OpenAI-compatible providers, allowing you to connect LLM API and access all available models from the terminal.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- OpenBlock Labs installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in OB-1
+
+1. Open your terminal and launch OB-1.
+2. Open the settings file at \~/.ob1/settings.json (or use the /model command in OB-1).
+3. Set the following environment variables:
+
+```bash
+export OPENAI_API_KEY="your-llm-api-key-here"
+export OPENAI_BASE_URL="https://api.llmapi.ai/v1"
+```
+
+4. Alternatively, configure in \~/.ob1/settings.json:
+
+```json
+{
+	"apiKey": "your-llm-api-key-here",
+	"apiBase": "https://api.llmapi.ai/v1",
+	"model": "openai/gpt-4o"
+}
+```
+
+5. Use the /model command to switch between models at any time.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that OpenBlock Labs can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Use /model auto to let OB-1 intelligently route tasks to the optimal model
+	based on complexity.
+</Callout>
+
+## Benefits of Using LLM API with OpenBlock Labs
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

@@ -1,0 +1,79 @@
+---
+title: Helicone Integration
+description: Connect Helicone to LLM API for AI-powered capabilities
+icon: Helicone
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Helicone is an open-source LLM observability platform that provides logging, monitoring, caching, and rate limiting for AI applications. It acts as a proxy between your app and the LLM provider.
+
+Helicone proxies requests to LLM providers. Configure it to forward to LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Helicone installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Use LLM API with Helicone
+
+1. Configure your application to route through Helicone to LLM API:
+
+```python
+from openai import OpenAI
+client = OpenAI(
+api_key="your-llm-api-key-here",
+base_url="https://oai.helicone.ai/v1",
+default_headers={
+"Helicone-Auth": "Bearer your-helicone-key",
+"Helicone-Target-Url": "https://api.llmapi.ai/v1"
+}
+)
+```
+
+2. All requests will be logged in Helicone and forwarded to LLM API.
+
+```yaml
+Tip: Helicone adds observability (logging, latency tracking, cost analysis) on top of LLM API.
+```
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Helicone can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+## Benefits of Using LLM API with Helicone
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

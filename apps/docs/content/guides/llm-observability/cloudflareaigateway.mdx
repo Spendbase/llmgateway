@@ -1,0 +1,71 @@
+---
+title: Cloudflare AI Gateway Integration
+description: Connect Cloudflare AI Gateway to LLM API for AI-powered capabilities
+icon: Cloudflare
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Cloudflare AI Gateway is a proxy that sits between your application and AI providers. It provides caching, rate limiting, logging, and analytics for AI API calls.
+
+Configure Cloudflare AI Gateway to proxy requests to LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Cloudflare AI Gateway installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Route LLM API Through Cloudflare AI Gateway
+
+1. Set up an AI Gateway in your Cloudflare dashboard.
+2. Configure the gateway to use LLM API as the origin:
+   - **Provider**: OpenAI Compatible
+   - **Endpoint**: https://api.llmapi.ai/v1
+3. Update your application to use the Cloudflare gateway URL with your LLM API key.
+4. All requests will be proxied through Cloudflare to LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Cloudflare AI Gateway can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Cloudflare AI Gateway adds caching and rate limiting on top of LLM API for
+	production deployments.
+</Callout>
+
+## Benefits of Using LLM API with Cloudflare AI Gateway
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

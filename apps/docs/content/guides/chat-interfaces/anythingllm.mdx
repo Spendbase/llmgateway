@@ -1,0 +1,76 @@
+---
+title: AnythingLLM Integration
+description: Connect AnythingLLM to LLM API for AI-powered capabilities
+icon: AnythingLLM
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+AnythingLLM is a full-stack desktop and Docker application for building private AI assistants. It supports document ingestion, vector search, and chat capabilities with multiple LLM providers --- all running locally or connecting to cloud APIs.
+
+AnythingLLM's provider configuration supports custom OpenAI-compatible endpoints, making it easy to connect LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- AnythingLLM installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in AnythingLLM
+
+1. Open AnythingLLM (desktop app or web interface).
+2. Navigate to Settings → LLM Preference.
+3. Select "Generic OpenAI" as the LLM provider.
+4. Enter the following details:
+   - **Base URL**: https://api.llmapi.ai/v1
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Model**: the model ID you wish to use (e.g., openai/gpt-4o)
+5. Set the token limit according to your chosen model.
+6. Click "Save changes" to apply.
+7. Start a new workspace chat --- all AI requests will now go through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that AnythingLLM can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	AnythingLLM's "Generic OpenAI" provider works with any OpenAI-compatible API.
+	You can combine LLM API with AnythingLLM's local document processing for a
+	powerful private AI assistant.
+</Callout>
+
+## Benefits of Using LLM API with AnythingLLM
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

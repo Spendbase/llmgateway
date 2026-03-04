@@ -1,0 +1,75 @@
+---
+title: Roo Code Integration
+description: Connect Roo Code to LLM API for AI-powered capabilities
+icon: Roo
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Roo Code is an AI-powered coding assistant that runs inside Visual Studio Code. It helps developers write, debug, and refactor code using large language models, with support for multiple API providers including OpenAI-compatible endpoints.
+
+Roo Code's flexible provider system lets you connect any OpenAI-compatible API, including LLM API, to power its AI features.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Roo Code installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Connect LLM API to Roo Code
+
+1. Open Visual Studio Code and make sure the Roo Code extension is installed.
+2. Click the Roo Code icon in the Activity Bar (left sidebar) to open the Roo Code panel.
+3. Open Roo Code Settings (gear icon in the panel).
+4. In the "API Provider" dropdown, select "OpenAI Compatible".
+5. Fill in the following fields:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+6. In the Model field, enter the model ID you wish to use (e.g., openai/gpt-4o, anthropic/claude-3-5-sonnet).
+7. Click "Save" or press Enter to apply the settings.
+8. Start a new Roo Code task --- all requests will now be routed through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Roo Code can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	LLM API supports all major model families. You can switch models at any time
+	from the Roo Code settings panel without changing your API key.
+</Callout>
+
+## Benefits of Using LLM API with Roo Code
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

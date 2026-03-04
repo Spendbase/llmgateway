@@ -1,0 +1,83 @@
+---
+title: Continue Integration
+description: Connect Continue to LLM API for AI-powered capabilities
+icon: Continue
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Continue is an open-source AI coding assistant that integrates directly into VS Code and JetBrains IDEs. It supports a wide range of model providers --- both cloud and local --- and lets developers customize their AI experience through a simple YAML configuration file.
+
+Continue's config.yaml supports OpenAI-compatible providers, making it easy to connect LLM API as your model backend.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Continue installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Continue
+
+1. Open your Continue configuration file (\~/.continue/config.yaml or your project's .continue/config.yaml).
+2. Add LLM API as a model provider:
+
+```
+models:
+\- name: "GPT-4o via LLM API"
+provider: openai
+model: openai/gpt-4o
+apiKey: your-llm-api-key-here
+apiBase: https://api.llmapi.ai/v1
+roles:
+\- chat
+\- edit
+\- apply
+```
+
+3. Save the file. Continue will automatically reload the configuration.
+4. Open Continue in your IDE --- the LLM API model will appear in the model selector.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Continue can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	You can add multiple model entries with different model IDs, all sharing the
+	same LLM API key and base URL.
+</Callout>
+
+## Benefits of Using LLM API with Continue
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>
