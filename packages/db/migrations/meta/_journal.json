@@ -680,6 +680,13 @@
       "when": 1772448077092,
       "tag": "1772448077_watery_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "8",
+      "when": 1772616086605,
+      "tag": "1772616086_tired_gauntlet",
+      "breakpoints": true
     }
   ]
 }
