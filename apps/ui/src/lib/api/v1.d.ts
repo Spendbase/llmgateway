@@ -364,6 +364,7 @@ export interface paths {
                                 onboardingCompleted: boolean;
                                 emailVerified: boolean;
                                 isAdmin: boolean;
+                                referral: string | null;
                             };
                         };
                     };
@@ -449,6 +450,7 @@ export interface paths {
                                 onboardingCompleted: boolean;
                                 emailVerified: boolean;
                                 isAdmin: boolean;
+                                referral: string | null;
                             };
                             message: string;
                         };
@@ -621,6 +623,7 @@ export interface paths {
                                 onboardingCompleted: boolean;
                                 emailVerified: boolean;
                                 isAdmin: boolean;
+                                referral: string | null;
                             };
                             message: string;
                             redirectTo: string | null;

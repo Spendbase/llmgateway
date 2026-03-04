@@ -2,23 +2,16 @@
 
 import Link from "next/link";
 import { redirect, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
 
 import { useResendEmail } from "@/hooks/useResendEmail";
 import Logo from "@/lib/icons/Logo";
 
 export default function VerifyEmailPage() {
 	const searchParams = useSearchParams();
-
-	const initialEmail = useMemo(
-		() => searchParams.get("email") ?? "",
-		[searchParams],
-	);
-
-	const [email] = useState(initialEmail);
+	const email = searchParams.get("email") ?? "";
 
 	const { cooldown, canResend, handleResend, user } = useResendEmail({
-		email: initialEmail,
+		email,
 	});
 
 	if (user?.emailVerified) {

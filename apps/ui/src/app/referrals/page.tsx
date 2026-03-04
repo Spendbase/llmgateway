@@ -4,7 +4,7 @@ import {
 	TrendingUp,
 	Check,
 	Share2,
-	Sparkles,
+	Link2,
 	DollarSign,
 } from "lucide-react";
 
@@ -20,16 +20,18 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
 	title: "Referral Program | LLM API",
 	description:
-		"Earn credits by referring new users to LLM API. Get 1% of all LLM spending from users you refer, added directly to your account balance.",
+		"Earn $20 credits for each friend who signs up and deposits $50. Share your referral link—credits are added directly to your account.",
 	openGraph: {
 		title: "Referral Program | LLM API",
-		description: "Earn 1% of all LLM spending from users you refer to LLM API.",
+		description:
+			"Earn $20 credits for each referred user who deposits $50. No limit on referrals.",
 		type: "website",
 	},
 	twitter: {
 		card: "summary_large_image",
 		title: "Referral Program | LLM API",
-		description: "Earn 1% of all LLM spending from users you refer to LLM API.",
+		description:
+			"Earn $20 credits for each referred user who deposits $50. No limit on referrals.",
 	},
 };
 
@@ -57,12 +59,11 @@ export default function ReferralsPublicPage() {
 						</h1>
 
 						<p className="text-pretty text-base text-muted-foreground sm:text-lg md:text-xl">
-							Earn passive income by referring teams to LLM API. Get{" "}
-							<span className="font-semibold text-foreground">
-								1% of all LLM spending
-							</span>{" "}
-							from every team you refer—paid directly as credits to your
-							account.
+							Share your link with users and teams. When they deposit{" "}
+							<span className="font-semibold text-foreground">$50</span> in
+							credits, you earn{" "}
+							<span className="font-semibold text-foreground">$20</span> credits
+							— added directly to your account. No limit on how many you refer.
 						</p>
 
 						<div className="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row">
@@ -78,9 +79,17 @@ export default function ReferralsPublicPage() {
 						<div className="grid gap-4 pt-8 sm:grid-cols-3">
 							<Card className="border-primary/20 bg-card/50 backdrop-blur">
 								<CardContent className="p-6 text-center">
-									<div className="text-3xl font-bold text-primary">1%</div>
+									<div className="text-3xl font-bold text-primary">$20</div>
 									<div className="mt-1 text-sm text-muted-foreground">
-										Commission rate
+										Per referral
+									</div>
+								</CardContent>
+							</Card>
+							<Card className="border-primary/20 bg-card/50 backdrop-blur">
+								<CardContent className="p-6 text-center">
+									<div className="text-3xl font-bold text-primary">$50</div>
+									<div className="mt-1 text-sm text-muted-foreground">
+										Their first deposit
 									</div>
 								</CardContent>
 							</Card>
@@ -89,14 +98,6 @@ export default function ReferralsPublicPage() {
 									<div className="text-3xl font-bold text-primary">∞</div>
 									<div className="mt-1 text-sm text-muted-foreground">
 										Referral limit
-									</div>
-								</CardContent>
-							</Card>
-							<Card className="border-primary/20 bg-card/50 backdrop-blur">
-								<CardContent className="p-6 text-center">
-									<div className="text-3xl font-bold text-primary">$100</div>
-									<div className="mt-1 text-sm text-muted-foreground">
-										To unlock
 									</div>
 								</CardContent>
 							</Card>
@@ -125,7 +126,7 @@ export default function ReferralsPublicPage() {
 							<div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-primary/10 transition-transform group-hover:scale-150" />
 							<CardContent className="relative p-8 space-y-4">
 								<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-									<Sparkles className="h-6 w-6" />
+									<Link2 className="h-6 w-6" />
 								</div>
 								<div className="space-y-2">
 									<div className="flex items-center gap-2">
@@ -135,11 +136,11 @@ export default function ReferralsPublicPage() {
 										>
 											1
 										</Badge>
-										<h3 className="font-semibold text-lg">Unlock referrals</h3>
+										<h3 className="font-semibold text-lg">Get your link</h3>
 									</div>
 									<p className="text-sm text-muted-foreground leading-relaxed">
-										Top up at least $100 in credits on your organization to
-										become eligible and access your unique referral link.
+										Sign up and copy your personalized referral link from the
+										dashboard. No minimum deposit required.
 									</p>
 								</div>
 							</CardContent>
@@ -183,11 +184,12 @@ export default function ReferralsPublicPage() {
 										>
 											3
 										</Badge>
-										<h3 className="font-semibold text-lg">Earn credits</h3>
+										<h3 className="font-semibold text-lg">Earn $20 credits</h3>
 									</div>
 									<p className="text-sm text-muted-foreground leading-relaxed">
-										Automatically earn 1% of their LLM spending as credits.
-										Track earnings in real-time from your dashboard.
+										When they deposit their first $50 in credits, you
+										automatically receive $20 credits. Track earnings in your
+										dashboard.
 									</p>
 								</div>
 							</CardContent>
@@ -210,19 +212,6 @@ export default function ReferralsPublicPage() {
 									</div>
 
 									<div className="grid gap-4 md:grid-cols-2">
-										<div className="flex gap-3">
-											<div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
-												<Check className="h-3 w-3 text-primary" />
-											</div>
-											<div className="space-y-1">
-												<p className="font-medium">Post-discount earnings</p>
-												<p className="text-sm text-muted-foreground leading-relaxed">
-													Earnings are calculated on LLM usage after any
-													discounts are applied.
-												</p>
-											</div>
-										</div>
-
 										<div className="flex gap-3">
 											<div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
 												<Check className="h-3 w-3 text-primary" />
@@ -269,9 +258,9 @@ export default function ReferralsPublicPage() {
 											<div className="space-y-1">
 												<p className="font-medium">Eligibility</p>
 												<p className="text-sm text-muted-foreground leading-relaxed">
-													Available for eligible organizations in the dashboard.
-													Top up $100 in credits to unlock the referral program
-													and start sharing your link.
+													Available to all users. Sign up, get your referral
+													link from the dashboard, and start sharing—no minimum
+													deposit required.
 												</p>
 											</div>
 										</div>
