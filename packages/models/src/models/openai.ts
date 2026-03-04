@@ -157,7 +157,6 @@ export const openaiModels = [
 				outputPrice: 10.0 / 1e6,
 				cachedInputPrice: 1.25 / 1e6,
 				requestPrice: 0,
-				imageInputPrice: 0.00553,
 				contextSize: 128000,
 				maxOutput: 16384,
 				streaming: true,
