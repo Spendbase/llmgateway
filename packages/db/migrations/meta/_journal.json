@@ -687,6 +687,13 @@
       "when": 1772619744281,
       "tag": "1772619744_illegal_the_renegades",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "8",
+      "when": 1772639024812,
+      "tag": "1772639024_rare_gladiator",
+      "breakpoints": true
     }
   ]
 }
