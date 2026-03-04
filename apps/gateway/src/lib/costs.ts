@@ -253,15 +253,14 @@ export function calculateCosts(
 	const discount = providerInfo.discount || 0;
 	const discountMultiplier = new Decimal(1).minus(discount);
 
-	// Each input image is 560 tokens ($0.0011 per image)
+	// Each input image is 560 tokens
 	const TOKENS_PER_INPUT_IMAGE = 560;
 	const imageInputPrice = (providerInfo as any).imageInputPrice;
 	let imageInputTokens = 0;
 	let imageInputCost: Decimal | null = null;
 	if (imageInputPrice && inputImageCount > 0) {
 		imageInputTokens = inputImageCount * TOKENS_PER_INPUT_IMAGE;
-		// imageInputPrice is per image, not per token
-		imageInputCost = new Decimal(inputImageCount)
+		imageInputCost = new Decimal(imageInputTokens)
 			.times(imageInputPrice)
 			.times(discountMultiplier);
 	}

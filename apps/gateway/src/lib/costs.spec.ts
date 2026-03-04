@@ -291,9 +291,9 @@ describe("calculateCosts", () => {
 	});
 
 	it("should track image input tokens and costs separately", async () => {
-		// Test with gemini-3-pro-image-preview which has imageInputPrice
+		// Test with gemini-3.1-flash-image-preview which has imageInputPrice: 0.25/1M
 		const result = await calculateCosts(
-			"gemini-3-pro-image-preview",
+			"gemini-3.1-flash-image-preview",
 			"google-ai-studio",
 			1000, // text prompt tokens
 			500, // completion tokens
@@ -305,14 +305,13 @@ describe("calculateCosts", () => {
 			2, // 2 input images
 		);
 
-		// Each input image is 560 tokens at $2/1M = $0.00112 per image
+		// Each input image is 560 tokens at $0.25/1M
 		expect(result.imageInputTokens).toBe(1120); // 2 * 560
-		expect(result.imageInputCost).toBeCloseTo(0.00224); // 1120 * 2e-6
+		expect(result.imageInputCost).toBeCloseTo(0.00028); // 1120 * 0.25e-6
 		// promptTokens should include image input tokens
 		expect(result.promptTokens).toBe(2120); // 1000 text + 1120 image
 		// inputCost includes both text and image input costs
-
-		expect(result.inputCost).toBeCloseTo(1000 * (2 / 1e6) + 0.00224);
+		expect(result.inputCost).toBeCloseTo(1000 * (0.25 / 1e6) + 0.00028);
 		// totalCost = inputCost + outputCost (image costs are folded into input/output costs)
 		expect(result.totalCost).toBeCloseTo(
 			(result.inputCost ?? 0) + (result.outputCost ?? 0),
@@ -320,9 +319,9 @@ describe("calculateCosts", () => {
 	});
 
 	it("should track image output tokens and costs separately", async () => {
-		// Test with gemini-3-pro-image-preview for image output
+		// Test with gemini-3.1-flash-image-preview for image output
 		const result = await calculateCosts(
-			"gemini-3-pro-image-preview",
+			"gemini-3.1-flash-image-preview",
 			"google-ai-studio",
 			1000, // text prompt tokens
 			2500, // completion tokens (includes 1120 * 2 = 2240 image tokens for 2 images)
@@ -334,13 +333,13 @@ describe("calculateCosts", () => {
 			0, // no input images
 		);
 
-		// Each 1K output image is 1120 tokens at $120/1M
+		// Each 1K output image is 1120 tokens at $60/1M
 		expect(result.imageOutputTokens).toBe(2240); // 2 * 1120
-		expect(result.imageOutputCost).toBeCloseTo(0.2688); // 2240 * 120e-6
+		expect(result.imageOutputCost).toBeCloseTo(0.1344); // 2240 * 60e-6
 		// outputCost includes both text and image output costs
-		// text: (2500 - 2240) * 12e-6 = 260 * 12e-6 = 0.00312
-		// image: 2240 * 120e-6 = 0.2688
-		expect(result.outputCost).toBeCloseTo(0.00312 + 0.2688);
+		// text: (2500 - 2240) * 1.5e-6 = 260 * 1.5e-6 = 0.00039
+		// image: 2240 * 60e-6 = 0.1344
+		expect(result.outputCost).toBeCloseTo(0.00039 + 0.1344);
 		// totalCost = inputCost + outputCost (image costs are folded into input/output costs)
 		expect(result.totalCost).toBeCloseTo(
 			(result.inputCost ?? 0) + (result.outputCost ?? 0),
@@ -360,7 +359,7 @@ describe("calculateCosts", () => {
 		// totalCost = inputCost + outputCost + cachedInputCost + requestCost + webSearchCost
 		// (inputCost already includes imageInputCost, outputCost already includes imageOutputCost)
 		const result = await calculateCosts(
-			"gemini-3-pro-image-preview",
+			"gemini-3.1-flash-image-preview",
 			"google-ai-studio",
 			1000, // text prompt tokens
 			2500, // completion tokens
