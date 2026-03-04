@@ -1,0 +1,73 @@
+---
+title: Tabnine Integration
+description: Connect Tabnine to LLM API for AI-powered capabilities
+icon: Tabnine
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Tabnine is an AI-powered code completion and assistance tool that integrates into popular IDEs. It supports both proprietary Tabnine models and third-party LLMs including GPT-4, Claude, and Gemini, with enterprise customers able to connect private model endpoints.
+
+Tabnine Enterprise supports custom model endpoints, allowing you to connect LLM API for AI chat and code assistance within your IDE.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Tabnine installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Tabnine
+
+1. Open your IDE with Tabnine installed (VS Code, JetBrains, etc.).
+2. Open Tabnine settings from the Tabnine panel.
+3. Navigate to the Model Configuration or Chat Model section.
+4. Select a third-party model or add a custom endpoint:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Endpoint URL**: https://api.llmapi.ai/v1
+5. Select the model you want to use.
+6. Save settings --- Tabnine will now route AI requests through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Tabnine can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Tabnine Enterprise administrators can configure LLM API as the default
+	provider for all team members through the admin settings.
+</Callout>
+
+## Benefits of Using LLM API with Tabnine
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

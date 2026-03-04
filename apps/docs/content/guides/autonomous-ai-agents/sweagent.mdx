@@ -1,0 +1,82 @@
+---
+title: SWE-Agent Integration
+description: Connect SWE-Agent to LLM API for AI-powered capabilities
+icon: SWE-Agent
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+SWE-agent is an AI-powered software engineering agent that can autonomously resolve GitHub issues by navigating codebases, editing files, and running tests. It uses language models to understand code and plan solutions.
+
+SWE-agent supports custom model endpoints through its configuration, letting you connect LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- SWE-Agent installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in SWE-agent
+
+1. Set environment variables:
+
+```bash
+export OPENAI_API_KEY="your-llm-api-key-here"
+export OPENAI_BASE_URL="https://api.llmapi.ai/v1"
+```
+
+2. Or configure in the SWE-agent config file:
+
+```
+model:
+name: openai/gpt-4o
+api_key: your-llm-api-key-here
+api_base: https://api.llmapi.ai/v1
+```
+
+3. Run SWE-agent as usual --- it will use LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that SWE-Agent can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	SWE-agent benefits from strong reasoning models. Use LLM API to access the
+	latest model offerings.
+</Callout>
+
+## Benefits of Using LLM API with SWE-Agent
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

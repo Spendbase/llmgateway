@@ -1,0 +1,97 @@
+---
+title: Aider Integration
+description: Connect Aider to LLM API for AI-powered capabilities
+icon: Aider
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Aider is an AI pair programming tool that works in your terminal. It lets you edit code in your local git repos by chatting with large language models, supporting multiple providers including OpenAI, Anthropic, and any OpenAI-compatible API.
+
+Aider supports custom OpenAI-compatible endpoints through environment variables and configuration files, making it simple to connect LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Aider installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Aider
+
+#### Option A --- Environment variables (recommended)
+
+1. Set the following environment variables in your shell or .env file:
+
+```bash
+export OPENAI_API_KEY="your-llm-api-key-here"
+export OPENAI_API_BASE="https://api.llmapi.ai/v1"
+```
+
+2. Launch Aider with the model flag:
+
+```
+aider \--model openai/gpt-4o
+```
+
+#### Option B --- YAML config file
+
+1. Add to your .aider.conf.yml:
+
+```
+openai-api-key: your-llm-api-key-here
+openai-api-base: https://api.llmapi.ai/v1
+model: openai/gpt-4o
+```
+
+#### Option C --- Command line flags
+
+```
+aider \--openai-api-key your-llm-api-key-here \\
+\--openai-api-base https://api.llmapi.ai/v1 \\
+\--model openai/gpt-4o
+```
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Aider can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Setting OPENAI\_API\_BASE overrides the default OpenAI endpoint. Aider will
+	send all requests to LLM API instead.
+</Callout>
+
+## Benefits of Using LLM API with Aider
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

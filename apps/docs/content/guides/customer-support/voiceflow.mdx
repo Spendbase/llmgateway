@@ -1,0 +1,73 @@
+---
+title: Voiceflow Integration
+description: Connect Voiceflow to LLM API for AI-powered capabilities
+icon: Voiceflow
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Voiceflow is a collaborative platform for designing, prototyping, and building conversational AI experiences for chat and voice interfaces. It supports custom AI model providers.
+
+Voiceflow's AI features support custom endpoints for model access.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Voiceflow installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Voiceflow
+
+1. Open Voiceflow and navigate to your project.
+2. Go to Integrations → AI Model Settings.
+3. Select "Custom" or "OpenAI Compatible".
+4. Enter:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+5. Select the model.
+6. Click "Save".
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Voiceflow can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Voiceflow's AI Response steps can leverage powerful LLM API models for natural
+	conversations.
+</Callout>
+
+## Benefits of Using LLM API with Voiceflow
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

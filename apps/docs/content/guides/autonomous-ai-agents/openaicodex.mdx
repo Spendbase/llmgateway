@@ -1,0 +1,79 @@
+---
+title: OpenAI Codex Integration
+description: Connect OpenAI Codex to LLM API for AI-powered capabilities
+icon: OpenAI
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+OpenAI Codex CLI is an open-source coding agent that runs in your terminal. It can write and edit code, run commands, and work through multi-step tasks using large language models with full sandbox safety.
+
+Codex CLI supports custom OpenAI-compatible endpoints via environment variables.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- OpenAI Codex installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Codex CLI
+
+1. Set environment variables before launching Codex:
+
+```bash
+export OPENAI_API_KEY="your-llm-api-key-here"
+export OPENAI_BASE_URL="https://api.llmapi.ai/v1"
+```
+
+2. Launch Codex:
+
+```
+codex
+```
+
+3. All AI requests will now go through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that OpenAI Codex can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	OPENAI\_BASE\_URL overrides the default endpoint. Codex CLI will use LLM API
+	for all model requests.
+</Callout>
+
+## Benefits of Using LLM API with OpenAI Codex
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

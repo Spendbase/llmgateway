@@ -1,0 +1,84 @@
+---
+title: Pathway Integration
+description: Connect Pathway to LLM API for AI-powered capabilities
+icon: Pathway
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Pathway is a real-time data processing framework with built-in LLM integration for building live AI pipelines. It processes streaming data and connects to vector stores and LLMs for real-time RAG.
+
+Pathway's LLM xpack supports OpenAI-compatible endpoints.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Pathway installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Pathway
+
+1. Install Pathway:
+
+```bash
+pip install pathway[all]
+```
+
+2. Configure in code:
+
+```python
+import pathway as pw
+from pathway.xpacks.llm import llms
+model = llms.OpenAIChat(
+model="openai/gpt-4o",
+api_key="your-llm-api-key-here",
+api_base="https://api.llmapi.ai/v1"
+)
+```
+
+3. Use in your Pathway pipeline.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Pathway can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Pathway's real-time processing combined with LLM API creates live-updating RAG
+	applications.
+</Callout>
+
+## Benefits of Using LLM API with Pathway
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

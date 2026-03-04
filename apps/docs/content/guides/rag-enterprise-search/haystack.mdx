@@ -1,0 +1,83 @@
+---
+title: Haystack Integration
+description: Connect Haystack to LLM API for AI-powered capabilities
+icon: Haystack
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Haystack by deepset is an open-source framework for building production-ready LLM applications, RAG pipelines, and search systems. It provides modular components for document processing, retrieval, and generation.
+
+Haystack's OpenAI generators support custom base URLs.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Haystack installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Haystack
+
+1. Install Haystack:
+
+```bash
+pip install haystack-ai
+```
+
+2. Configure:
+
+```python
+from haystack.components.generators.chat import OpenAIChatGenerator
+generator = OpenAIChatGenerator(
+model="openai/gpt-4o",
+api_key=Secret.from_token("your-llm-api-key-here"),
+api_base_url="https://api.llmapi.ai/v1"
+)
+```
+
+3. Use the generator in your Haystack pipeline.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Haystack can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Haystack's pipeline architecture lets you combine LLM API models with
+	retrievers and preprocessors.
+</Callout>
+
+## Benefits of Using LLM API with Haystack
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

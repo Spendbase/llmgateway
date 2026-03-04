@@ -1,0 +1,74 @@
+---
+title: Janitor AI Integration
+description: Connect Janitor AI to LLM API for AI-powered capabilities
+icon: Janitor
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+JanitorAI is a character-based AI chat platform that allows users to create and interact with AI-powered characters. It offers a rich library of community-created characters and supports multiple AI backends, including the option to connect your own API through a reverse proxy or OpenAI-compatible endpoint.
+
+By configuring a custom API connection, you can point JanitorAI at any OpenAI-compatible endpoint, including LLM API, to power your character chats with your preferred models.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Janitor AI installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in JanitorAI
+
+1. Go to janitorai.com and log in to your account.
+2. Click your profile icon in the top-right corner and select "API Settings" (or navigate to Settings).
+3. Under the API configuration section, select "OpenAI" as the API type.
+4. Enter the following details:
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Reverse Proxy URL**: https://api.llmapi.ai/v1
+5. In the Model field, enter the model ID you wish to use (e.g., openai/gpt-4o, anthropic/claude-3-5-sonnet).
+6. Click "Save" to apply the settings.
+7. Start a new chat --- all requests will now be routed through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Janitor AI can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	JanitorAI refers to custom endpoints as a "reverse proxy." LLM API works as a
+	drop-in replacement since it is fully OpenAI-compatible.
+</Callout>
+
+## Benefits of Using LLM API with Janitor AI
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

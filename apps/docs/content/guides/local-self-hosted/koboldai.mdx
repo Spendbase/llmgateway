@@ -1,0 +1,71 @@
+---
+title: KoboldAI Integration
+description: Connect KoboldAI to LLM API for AI-powered capabilities
+icon: KoboldAI
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+KoboldAI is an open-source browser-based front-end for text generation AI models. It's popular among creative writers for story generation, roleplay, and interactive fiction, with support for both local and remote models.
+
+KoboldAI's OpenAI-compatible mode lets you connect remote endpoints like LLM API.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- KoboldAI installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in KoboldAI
+
+1. Open KoboldAI in your browser.
+2. Click "AI" in the top menu and select "Connect to OpenAI-compatible API".
+3. Enter:
+   - **API Endpoint**: https://api.llmapi.ai/v1
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+4. Select the model ID.
+5. Click "Connect".
+
+```yaml
+Tip: KoboldAI's advanced generation settings (temperature, top-p, etc.) work with all LLM API models.
+```
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that KoboldAI can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+## Benefits of Using LLM API with KoboldAI
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

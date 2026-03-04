@@ -1,0 +1,74 @@
+---
+title: MindStudio Integration
+description: Connect MindStudio to LLM API for AI-powered capabilities
+icon: MindStudio
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+MindStudio is a no-code platform for building AI-powered applications and workflows. It allows users to create custom AI assistants, automate tasks, and integrate multiple AI models --- all with the option to bring your own API keys for direct model access and cost control.
+
+MindStudio supports custom API keys for major providers and OpenAI-compatible endpoints, letting you connect LLM API for model access.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- MindStudio installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in MindStudio
+
+1. Log in to MindStudio at mindstudio.ai.
+2. Open your workspace settings or navigate to the API Keys section.
+3. Click "Add API Key" or select the OpenAI/Custom provider option.
+4. Enter the following details:
+   - **Provider**: OpenAI Compatible
+   - **API Key**: paste the key you copied from app.llmapi.ai/api-keys
+   - **Base URL**: https://api.llmapi.ai/v1
+5. Click "Save" to store the configuration.
+6. Select LLM API models when building your AI workflows.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that MindStudio can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Using your own API key through LLM API gives you direct control over costs and
+	model selection for all your MindStudio applications.
+</Callout>
+
+## Benefits of Using LLM API with MindStudio
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

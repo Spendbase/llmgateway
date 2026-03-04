@@ -1,0 +1,88 @@
+---
+title: Claude Code Integration
+description: Connect Claude Code to LLM API for AI-powered capabilities
+icon: Claude
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Claude Code is Anthropic's official command-line tool for agentic AI coding. It lets developers delegate complex coding tasks to Claude directly from the terminal, including reading and writing files, executing commands, searching codebases, and working through multi-step programming workflows.
+
+Claude Code supports custom API endpoints through environment variables, allowing you to route requests through LLM API to access multiple models via a single integration.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Claude Code installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Claude Code
+
+1. Open your terminal.
+2. Set the following environment variables before launching Claude Code:
+
+```bash
+export ANTHROPIC_API_KEY="your-llm-api-key-here"
+export ANTHROPIC_BASE_URL="https://api.llmapi.ai/v1"
+```
+
+3. Alternatively, add these variables to your shell profile (\~/.bashrc, \~/.zshrc) or a .env file in your project:
+
+```
+ANTHROPIC_API_KEY=your-llm-api-key-here
+ANTHROPIC_BASE_URL=https://api.llmapi.ai/v1
+```
+
+4. Launch Claude Code as usual:
+
+```
+claude
+```
+
+5. All requests will now be routed through LLM API.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Claude Code can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Setting ANTHROPIC\_BASE\_URL overrides the default Anthropic endpoint. Claude
+	Code will send all requests to LLM API instead, giving you access to all
+	models available through your LLM API subscription.
+</Callout>
+
+## Benefits of Using LLM API with Claude Code
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

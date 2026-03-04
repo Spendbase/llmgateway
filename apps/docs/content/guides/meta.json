@@ -1,0 +1,26 @@
+{
+	"title": "Guides",
+	"icon": "BookOpen",
+	"pages": [
+		"coding-assistants",
+		"chat-interfaces",
+		"autonomous-ai-agents",
+		"workflow-automation",
+		"llm-flow-builders",
+		"rag-enterprise-search",
+		"llm-observability",
+		"ai-app-builders",
+		"notes-knowledge",
+		"writing-creative",
+		"customer-support",
+		"data-analysis",
+		"dev-notebooks",
+		"browser-extensions",
+		"local-self-hosted",
+		"meeting-transcription",
+		"data-extraction",
+		"security-compliance",
+		"sales-marketing",
+		"presentation-document"
+	]
+}

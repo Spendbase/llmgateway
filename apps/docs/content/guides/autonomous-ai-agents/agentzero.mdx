@@ -1,0 +1,77 @@
+---
+title: Agent Zero Integration
+description: Connect Agent Zero to LLM API for AI-powered capabilities
+icon: Agent
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+Agent Zero is a personal AI assistant framework that is organic, self-developing, and fully transparent. It operates in a Docker-based environment and can execute code, browse the web, communicate with other agents, and learn from interactions --- all while keeping its AI backbone completely configurable.
+
+Agent Zero supports OpenAI-compatible APIs as the main LLM backend, making it simple to connect LLM API as your provider.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- Agent Zero installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in Agent Zero
+
+1. Clone and set up Agent Zero following the installation instructions.
+2. Open the .env file in the project root (copy .env.example if it doesn't exist).
+3. Set the following environment variables:
+
+```
+OPENAI_API_KEY=your-llm-api-key-here
+OPENAI_API_BASE=https://api.llmapi.ai/v1
+CHAT_MODEL=openai/gpt-4o
+```
+
+4. Save the .env file.
+5. Start Agent Zero --- it will use LLM API for all AI interactions.
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that Agent Zero can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+<Callout type="info">
+	Agent Zero uses the OpenAI SDK internally. Setting OPENAI\_API\_BASE redirects
+	all requests to LLM API while maintaining full compatibility.
+</Callout>
+
+## Benefits of Using LLM API with Agent Zero
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>

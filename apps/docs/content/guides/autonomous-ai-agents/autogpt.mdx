@@ -1,0 +1,76 @@
+---
+title: AutoGPT Integration
+description: Connect AutoGPT to LLM API for AI-powered capabilities
+icon: AutoGPT
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+
+AutoGPT is an open-source autonomous AI agent framework that can chain together LLM calls to accomplish complex goals. It can browse the web, write code, manage files, and interact with various services --- all autonomously.
+
+AutoGPT supports custom OpenAI-compatible endpoints through its .env configuration.
+
+## Prerequisites
+
+- An LLM API account with an API key
+- AutoGPT installed or accessible
+
+## Setup
+
+<Steps>
+<Step>
+### Get Your LLM API Key
+
+1. Log in to your [LLM API dashboard](https://app.llmapi.ai/api-keys)
+2. Click **Create Key to Start**
+3. Copy your new API key immediately — it will only be shown once
+4. Store the key securely (e.g., in a password manager or `.env` file)
+
+<Callout type="info">
+	LLM API is an OpenAI-compatible gateway that gives you access to dozens of AI
+	models through a single API key and endpoint.
+</Callout>
+
+</Step>
+
+<Step>
+### Configure LLM API in AutoGPT
+
+1. Open the .env file in your AutoGPT installation.
+2. Set the following variables:
+
+```
+OPENAI_API_KEY=your-llm-api-key-here
+OPENAI_API_BASE_URL=https://api.llmapi.ai/v1
+SMART_LLM=openai/gpt-4o
+FAST_LLM=openai/gpt-4o-mini
+```
+
+3. Save the .env file.
+4. Start AutoGPT --- all AI calls will route through LLM API.
+
+```yaml
+Tip: AutoGPT uses two model tiers (SMART and FAST). You can assign different LLM API models to each for cost optimization.
+```
+
+</Step>
+
+<Step>
+### Test the Integration
+
+Verify that AutoGPT can successfully communicate with LLM API by sending a test request. All requests will now be routed through LLM API.
+
+</Step>
+</Steps>
+
+## Benefits of Using LLM API with AutoGPT
+
+- **Multi-Provider Access**: Use models from OpenAI, Anthropic, Google, and more through a single API
+- **Cost Control**: Track and limit your AI spending with detailed usage analytics
+- **Unified Billing**: One account for all providers instead of managing multiple API keys
+- **Caching**: Reduce costs with response caching for repeated requests
+
+<Callout type="info">
+	View all available models on the [models page](https://llmapi.ai/models).
+</Callout>
