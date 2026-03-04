@@ -606,21 +606,6 @@ export async function batchProcessLogs(): Promise<void> {
 			const apiKeyCosts = new Map<string, Decimal>();
 			const logIds: string[] = [];
 
-			// Fetch lastResetAt for all API keys in this batch (Step 6)
-			const uniqueApiKeyIds = [
-				...new Set(unprocessedLogs.rows.map((r) => r.api_key_id)),
-			];
-			const apiKeyResetRows = await tx
-				.select({
-					id: apiKey.id,
-					lastResetAt: apiKey.lastResetAt,
-				})
-				.from(apiKey)
-				.where(inArray(apiKey.id, uniqueApiKeyIds));
-			const apiKeyLastResetMap = new Map<string, Date | null>(
-				apiKeyResetRows.map((k) => [k.id, k.lastResetAt]),
-			);
-
 			for (const raw of unprocessedLogs.rows) {
 				const row = schema.parse(raw);
 
@@ -653,16 +638,12 @@ export async function batchProcessLogs(): Promise<void> {
 				});
 
 				if (row.cost && row.cost > 0 && !row.cached) {
-					// Update API key usage, but skip logs created before lastResetAt (Step 6)
-					const lastResetAt = apiKeyLastResetMap.get(row.api_key_id) ?? null;
-					if (lastResetAt === null || row.created_at >= lastResetAt) {
-						const currentApiKeyCost =
-							apiKeyCosts.get(row.api_key_id) || new Decimal(0);
-						apiKeyCosts.set(
-							row.api_key_id,
-							currentApiKeyCost.plus(new Decimal(row.cost)),
-						);
-					}
+					const currentApiKeyCost =
+						apiKeyCosts.get(row.api_key_id) || new Decimal(0);
+					apiKeyCosts.set(
+						row.api_key_id,
+						currentApiKeyCost.plus(new Decimal(row.cost)),
+					);
 
 					// Deduct organization credits based on mode:
 					// - Credits mode: deduct full cost (includes request cost + storage cost)
@@ -1104,7 +1085,7 @@ export async function resetApiKeyUsage(): Promise<void> {
 
 async function runApiKeyResetLoop() {
 	activeLoops++;
-	const interval = 60 * 1000; // 60 seconds
+	const interval = 60 * 1000;
 	logger.info(
 		`Starting API key reset loop (interval: ${interval / 1000} seconds)...`,
 	);
