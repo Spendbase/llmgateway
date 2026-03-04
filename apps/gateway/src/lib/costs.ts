@@ -260,6 +260,7 @@ export function calculateCosts(
 	let imageInputCost: Decimal | null = null;
 	if (imageInputPrice && inputImageCount > 0) {
 		imageInputTokens = inputImageCount * TOKENS_PER_INPUT_IMAGE;
+		// imageInputPrice is price per token in USD
 		imageInputCost = new Decimal(imageInputTokens)
 			.times(imageInputPrice)
 			.times(discountMultiplier);

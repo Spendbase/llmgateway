@@ -305,13 +305,17 @@ describe("calculateCosts", () => {
 			2, // 2 input images
 		);
 
-		// Each input image is 560 tokens at $0.25/1M
+		// Each input image is 560 tokens, imageInputPrice is $0.25/1M tokens
+		const IMAGE_INPUT_PRICE = 0.25 / 1e6;
 		expect(result.imageInputTokens).toBe(1120); // 2 * 560
-		expect(result.imageInputCost).toBeCloseTo(0.00028); // 1120 * 0.25e-6
+		// imageInputCost = imageInputTokens * imageInputPrice (per-token)
+		expect(result.imageInputCost).toBeCloseTo(1120 * IMAGE_INPUT_PRICE);
 		// promptTokens should include image input tokens
 		expect(result.promptTokens).toBe(2120); // 1000 text + 1120 image
 		// inputCost includes both text and image input costs
-		expect(result.inputCost).toBeCloseTo(1000 * (0.25 / 1e6) + 0.00028);
+		expect(result.inputCost).toBeCloseTo(
+			1000 * IMAGE_INPUT_PRICE + 1120 * IMAGE_INPUT_PRICE,
+		);
 		// totalCost = inputCost + outputCost (image costs are folded into input/output costs)
 		expect(result.totalCost).toBeCloseTo(
 			(result.inputCost ?? 0) + (result.outputCost ?? 0),
