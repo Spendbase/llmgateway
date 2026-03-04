@@ -196,6 +196,7 @@ export const referral = pgTable(
 			.notNull()
 			.unique()
 			.references(() => organization.id, { onDelete: "cascade" }),
+		rewardGranted: boolean().notNull().default(false),
 	},
 	(table) => [
 		index("referral_referrer_organization_id_idx").on(
