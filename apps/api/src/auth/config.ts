@@ -21,6 +21,7 @@ const originUrls =
 	process.env.ORIGIN_URLS ||
 	"http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:4002,http://localhost:3006";
 const isHosted = process.env.HOSTED === "true";
+const corporateAuthFlowCookieName = "llmapi_corporate_auth_flow";
 
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
@@ -66,6 +67,26 @@ function maskEmail(email: string): string {
 		return `***@${domain}`;
 	}
 	return `${local[0]}***@${domain}`;
+}
+
+function getCookieValue(cookieHeader: string, key: string): string | null {
+	const cookies = cookieHeader.split(";");
+	for (const cookie of cookies) {
+		const [rawCookieKey, ...rest] = cookie.trim().split("=");
+		if (rawCookieKey !== key) {
+			continue;
+		}
+
+		return decodeURIComponent(rest.join("="));
+	}
+
+	return null;
+}
+
+function isCorporateAuthFlow(cookieHeader: string): boolean {
+	return (
+		getCookieValue(cookieHeader, corporateAuthFlowCookieName) === "corporate"
+	);
 }
 
 export async function checkResetPasswordRateLimit(
@@ -827,7 +848,14 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					);
 				}
 
-				if (user && !isCorporateEmail(user.email)) {
+				const cookieHeader = ctx.request?.headers.get("cookie") || "";
+				const isRedirectFromCorporateLoginPage =
+					isCorporateAuthFlow(cookieHeader);
+				if (
+					isRedirectFromCorporateLoginPage &&
+					user &&
+					!isCorporateEmail(user.email)
+				) {
 					logger.warn("Non-corporate email blocked during sign-in", {
 						userId: user.id,
 						email: maskEmail(user.email),
@@ -836,24 +864,28 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 					const isSocialCallback = ctx.path.includes("/callback");
 					if (isSocialCallback) {
+						const hasOrganizations =
+							(
+								await db.query.userOrganization.findMany({
+									where: { userId },
+									columns: { userId: true },
+									limit: 1,
+								})
+							).length > 0;
+						if (hasOrganizations) {
+							const sessionId = newSession.session?.id;
+							if (sessionId) {
+								await db
+									.delete(tables.session)
+									.where(eq(tables.session.id, sessionId));
+							}
+						} else {
+							await db.delete(tables.user).where(eq(tables.user.id, userId));
+						}
 						const errorUrl = new URL("/corporate-login", uiUrl);
 						errorUrl.searchParams.set("error", "corporate_only");
-						return Response.redirect(errorUrl.toString(), 302);
+						throw ctx.redirect(errorUrl.toString());
 					}
-
-					return new Response(
-						JSON.stringify({
-							error: "corporate_only",
-							message:
-								"Only corporate email addresses are allowed. Please sign in with your work email.",
-						}),
-						{
-							status: 403,
-							headers: {
-								"Content-Type": "application/json",
-							},
-						},
-					);
 				}
 
 				// Create default org/project for first-time sessions (email signup or first social sign-in)

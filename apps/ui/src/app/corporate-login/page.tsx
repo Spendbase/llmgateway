@@ -15,6 +15,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 	corporate_only:
 		"Only corporate email addresses are allowed. Personal email providers like Gmail, Yahoo, and Outlook are not permitted. Please sign in with your work email.",
 };
+const corporateAuthFlowCookieName = "llmapi_corporate_auth_flow";
 
 function CorporateLoginContent() {
 	const searchParams = useSearchParams();
@@ -38,19 +39,12 @@ function CorporateLoginContent() {
 		posthog.capture("page_viewed_corporate_login");
 	}, [posthog]);
 
-	useEffect(() => {
-		if (errorMessage) {
-			toast({
-				title: "Access restricted",
-				description: errorMessage,
-				variant: "destructive",
-			});
-		}
-	}, [errorMessage]);
-
 	const handleGoogleSignIn = async () => {
 		setIsLoading(true);
 		try {
+			const secureAttr = location.protocol === "https:" ? "; Secure" : "";
+			document.cookie = `${corporateAuthFlowCookieName}=corporate; Path=/; Max-Age=600; SameSite=Lax${secureAttr}`;
+
 			const res = await signIn.social({
 				provider: "google",
 				callbackURL: location.protocol + "//" + location.host + "/",
