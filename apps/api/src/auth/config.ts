@@ -21,7 +21,7 @@ const originUrls =
 	process.env.ORIGIN_URLS ||
 	"http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:4002,http://localhost:3006";
 const isHosted = process.env.HOSTED === "true";
-const corporateAuthFlowCookieName = "llmapi_corporate_auth_flow";
+const CORPORATE_LOGIN_COOKIE_NAME = "llmapi_corporate_auth_flow";
 
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
@@ -77,7 +77,13 @@ function getCookieValue(cookieHeader: string, key: string): string | null {
 			continue;
 		}
 
-		return decodeURIComponent(rest.join("="));
+		const rawValue = rest.join("=");
+
+		try {
+			return decodeURIComponent(rawValue);
+		} catch {
+			return rawValue;
+		}
 	}
 
 	return null;
@@ -85,7 +91,7 @@ function getCookieValue(cookieHeader: string, key: string): string | null {
 
 function isCorporateAuthFlow(cookieHeader: string): boolean {
 	return (
-		getCookieValue(cookieHeader, corporateAuthFlowCookieName) === "corporate"
+		getCookieValue(cookieHeader, CORPORATE_LOGIN_COOKIE_NAME) === "corporate"
 	);
 }
 
@@ -864,22 +870,11 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 					const isSocialCallback = ctx.path.includes("/callback");
 					if (isSocialCallback) {
-						const hasOrganizations =
-							(
-								await db.query.userOrganization.findMany({
-									where: { userId },
-									columns: { userId: true },
-									limit: 1,
-								})
-							).length > 0;
-						if (hasOrganizations) {
-							const sessionId = newSession.session?.id;
-							if (sessionId) {
-								await db
-									.delete(tables.session)
-									.where(eq(tables.session.id, sessionId));
-							}
-						} else {
+						const sessionId = newSession.session?.id;
+						if (sessionId) {
+							await db
+								.delete(tables.session)
+								.where(eq(tables.session.id, sessionId));
 							await db.delete(tables.user).where(eq(tables.user.id, userId));
 						}
 						const errorUrl = new URL("/corporate-login", uiUrl);
