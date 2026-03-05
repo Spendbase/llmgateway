@@ -3567,8 +3567,14 @@ chat.openapi(completions, async (c) => {
 										data.delta?.stop_reason
 									) {
 										finishReason = data.delta.stop_reason;
-									} else if (data.type === "message_stop" || data.stop_reason) {
-										finishReason = data.stop_reason || "end_turn";
+									} else if (data.type === "message_stop") {
+										// Only set finishReason if not already set by message_delta
+										// message_stop is just a stream termination signal
+										if (!finishReason) {
+											finishReason = "end_turn";
+										}
+									} else if (data.stop_reason) {
+										finishReason = data.stop_reason;
 									} else if (data.delta?.stop_reason) {
 										finishReason = data.delta.stop_reason;
 									}

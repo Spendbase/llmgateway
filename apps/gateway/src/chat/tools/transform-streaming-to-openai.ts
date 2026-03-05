@@ -178,8 +178,28 @@ export function transformStreamingToOpenai(
 					],
 					usage: data.usage || null,
 				};
-			} else if (data.type === "message_stop" || data.stop_reason) {
-				const stopReason = data.stop_reason || "end_turn";
+			} else if (data.type === "message_stop") {
+				// message_stop is a stream termination signal only.
+				// The actual stop_reason was already sent via message_delta.
+				// Don't emit finish_reason here to avoid overriding tool_calls.
+				transformedData = {
+					id: data.id || `chatcmpl-${Date.now()}`,
+					object: "chat.completion.chunk",
+					created: data.created || Math.floor(Date.now() / 1000),
+					model: data.model || usedModel,
+					choices: [
+						{
+							index: 0,
+							delta: {
+								role: "assistant",
+							},
+							finish_reason: null,
+						},
+					],
+					usage: data.usage || null,
+				};
+			} else if (data.stop_reason) {
+				const stopReason = data.stop_reason;
 				transformedData = {
 					id: data.id || `chatcmpl-${Date.now()}`,
 					object: "chat.completion.chunk",
