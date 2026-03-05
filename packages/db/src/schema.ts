@@ -178,6 +178,10 @@ export const organization = pgTable("organization", {
 	devPlanExpiresAt: timestamp(),
 	devPlanAllowAllModels: boolean().notNull().default(false),
 	organizationContext: text().notNull().default(""),
+	// Low Balance Alert fields
+	lowBalanceAlertEnabled: boolean().notNull().default(false),
+	lowBalanceAlertThreshold: decimal(),
+	lowBalanceAlertLastStateBelow: boolean().notNull().default(false),
 });
 
 export const referral = pgTable(
@@ -1035,6 +1039,24 @@ export const ttsGeneration = pgTable(
 		index("tts_generation_user_id_created_at_idx").on(
 			table.userId,
 			table.createdAt,
+		),
+	],
+);
+
+export const organizationAlertRecipient = pgTable(
+	"organization_alert_recipient",
+	{
+		id: text().primaryKey().notNull().$defaultFn(shortid),
+		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+		organizationId: text()
+			.notNull()
+			.references(() => organization.id, { onDelete: "cascade" }),
+		email: text().notNull(),
+	},
+	(table) => [
+		unique().on(table.organizationId, table.email),
+		index("organization_alert_recipient_organization_id_idx").on(
+			table.organizationId,
 		),
 	],
 );

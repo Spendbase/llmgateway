@@ -115,6 +115,9 @@ describe("Rate Limiting", () => {
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
 				organizationContext: "",
+				lowBalanceAlertEnabled: false,
+				lowBalanceAlertThreshold: "0",
+				lowBalanceAlertLastStateBelow: false,
 			});
 
 			vi.mocked(redis.zcard).mockResolvedValue(0);
@@ -171,6 +174,9 @@ describe("Rate Limiting", () => {
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
 				organizationContext: "",
+				lowBalanceAlertEnabled: false,
+				lowBalanceAlertThreshold: "0",
+				lowBalanceAlertLastStateBelow: false,
 			});
 
 			vi.mocked(redis.zcard).mockResolvedValue(5); // Under elevated limit (20)
@@ -224,6 +230,9 @@ describe("Rate Limiting", () => {
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
 				organizationContext: "",
+				lowBalanceAlertEnabled: false,
+				lowBalanceAlertThreshold: "0",
+				lowBalanceAlertLastStateBelow: false,
 			});
 
 			vi.mocked(redis.zcard).mockResolvedValue(5); // At limit (5)
@@ -285,6 +294,9 @@ describe("Rate Limiting", () => {
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
 				organizationContext: "",
+				lowBalanceAlertEnabled: false,
+				lowBalanceAlertThreshold: "0",
+				lowBalanceAlertLastStateBelow: false,
 			});
 
 			vi.mocked(redis.zcard).mockResolvedValue(20); // At elevated limit (20)
@@ -346,6 +358,9 @@ describe("Rate Limiting", () => {
 				devPlanExpiresAt: null,
 				devPlanAllowAllModels: false,
 				organizationContext: "",
+				lowBalanceAlertEnabled: false,
+				lowBalanceAlertThreshold: "0",
+				lowBalanceAlertLastStateBelow: false,
 			});
 			vi.mocked(redis.zremrangebyscore).mockRejectedValue(
 				new Error("Redis error"),
