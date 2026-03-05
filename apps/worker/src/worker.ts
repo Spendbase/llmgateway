@@ -25,7 +25,7 @@ import {
 } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
 import { hasErrorCode } from "@llmgateway/models";
-import { calculateFees } from "@llmgateway/shared";
+import { calculateFees, computeNextResetAt } from "@llmgateway/shared";
 
 import {
 	calculateMinutelyHistory,
@@ -46,6 +46,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_123", {
 const AUTO_TOPUP_LOCK_KEY = "auto_topup_check";
 const CREDIT_PROCESSING_LOCK_KEY = "credit_processing";
 const DATA_RETENTION_LOCK_KEY = "data_retention_cleanup";
+const API_KEY_RESET_LOCK_KEY = "api_key_usage_reset";
 const LOCK_DURATION_MINUTES = 5;
 
 // Configuration for batch processing
@@ -77,6 +78,7 @@ const schema = z.object({
 	total_tokens: z.string().nullable(),
 	reasoning_tokens: z.string().nullable(),
 	cached_tokens: z.string().nullable(),
+	created_at: z.date(),
 });
 
 export async function acquireLock(key: string): Promise<boolean> {
@@ -580,6 +582,7 @@ export async function batchProcessLogs(): Promise<void> {
 					total_tokens: log.totalTokens,
 					reasoning_tokens: log.reasoningTokens,
 					cached_tokens: log.cachedTokens,
+					created_at: log.createdAt,
 				})
 				.from(log)
 				.leftJoin(tables.project, eq(tables.project.id, log.projectId))
@@ -635,7 +638,6 @@ export async function batchProcessLogs(): Promise<void> {
 				});
 
 				if (row.cost && row.cost > 0 && !row.cached) {
-					// Always update API key usage for non-cached logs with cost
 					const currentApiKeyCost =
 						apiKeyCosts.get(row.api_key_id) || new Decimal(0);
 					apiKeyCosts.set(
@@ -1016,6 +1018,115 @@ async function runDataRetentionLoop() {
 	}
 }
 
+const API_KEY_RESET_BATCH_SIZE = 1000;
+
+export async function resetApiKeyUsage(): Promise<void> {
+	const lockAcquired = await acquireLock(API_KEY_RESET_LOCK_KEY);
+	if (!lockAcquired) {
+		return;
+	}
+
+	try {
+		const now = new Date();
+
+		await db.transaction(async (tx) => {
+			// Fetch eligible keys with row-level locking
+			const eligibleKeys = await tx
+				.select({
+					id: apiKey.id,
+					resetPeriod: apiKey.resetPeriod,
+				})
+				.from(apiKey)
+				.where(
+					and(
+						sql`${apiKey.resetPeriod} != 'none'`,
+						sql`${apiKey.nextResetAt} IS NOT NULL`,
+						sql`${apiKey.nextResetAt} <= ${now}`,
+					),
+				)
+				.limit(API_KEY_RESET_BATCH_SIZE)
+				.for("update", { skipLocked: true });
+
+			if (eligibleKeys.length === 0) {
+				logger.debug("No API keys require usage reset");
+				return;
+			}
+
+			logger.info(`Resetting usage for ${eligibleKeys.length} API keys`);
+
+			// Precompute nextResetAt for each key in JS (preserves exact UTC logic),
+			// then batch all updates into a single UPDATE ... FROM (VALUES ...) query.
+			const values = eligibleKeys.map((key) => {
+				const nextReset = computeNextResetAt(
+					key.resetPeriod as "daily" | "weekly" | "monthly",
+					now,
+				);
+				// We enforce '!' because resetPeriod='none' is excluded by the query
+				return sql`(${key.id}, ${nextReset!}::timestamptz)`;
+			});
+
+			// Use Drizzle column objects to dynamically emit the correct database column identifiers
+			// (handles camelCase vs snake_case differences inherently).
+			await tx.execute(sql`
+				UPDATE ${apiKey} AS t
+				SET
+					${apiKey.usage} = '0',
+					${apiKey.lastResetAt} = ${now},
+					${apiKey.nextResetAt} = v.next_reset_at
+				FROM (VALUES ${sql.join(values, sql`, `)}) AS v(id, next_reset_at)
+				WHERE t.id = v.id
+			`);
+
+			logger.info(
+				`Successfully reset usage for ${eligibleKeys.length} API keys`,
+			);
+		});
+	} catch (error) {
+		logger.error(
+			"Error resetting API key usage",
+			error instanceof Error ? error : new Error(String(error)),
+		);
+	} finally {
+		await releaseLock(API_KEY_RESET_LOCK_KEY);
+	}
+}
+
+async function runApiKeyResetLoop() {
+	activeLoops++;
+	const interval = 60 * 1000;
+	logger.info(
+		`Starting API key reset loop (interval: ${interval / 1000} seconds)...`,
+	);
+
+	try {
+		// eslint-disable-next-line no-unmodified-loop-condition
+		while (!shouldStop) {
+			try {
+				await resetApiKeyUsage();
+
+				if (!shouldStop) {
+					await new Promise((resolve) => {
+						setTimeout(resolve, interval);
+					});
+				}
+			} catch (error) {
+				logger.error(
+					"Error in API key reset loop",
+					error instanceof Error ? error : new Error(String(error)),
+				);
+				if (!shouldStop) {
+					await new Promise((resolve) => {
+						setTimeout(resolve, 5000);
+					});
+				}
+			}
+		}
+	} finally {
+		activeLoops--;
+		logger.info("API key reset loop stopped");
+	}
+}
+
 export async function startWorker() {
 	if (isWorkerRunning) {
 		logger.error("Worker is already running");
@@ -1196,6 +1307,7 @@ export async function startWorker() {
 	void runAutoTopUpLoop();
 	void runBatchProcessLoop();
 	void runDataRetentionLoop();
+	void runApiKeyResetLoop();
 }
 
 export async function stopWorker(): Promise<boolean> {

@@ -149,9 +149,15 @@ export type SerializedProject = Omit<Project, "createdAt" | "updatedAt"> & {
 
 export type SerializedUser = Pick<User, "id" | "email" | "name">;
 
-export type SerializedApiKey = Omit<ApiKey, "createdAt" | "updatedAt"> & {
+export type SerializedApiKey = Omit<
+	ApiKey,
+	"createdAt" | "updatedAt" | "lastResetAt" | "nextResetAt" | "expiresAt"
+> & {
 	createdAt: string;
 	updatedAt: string;
+	lastResetAt: string | null;
+	nextResetAt: string | null;
+	expiresAt: string | null;
 };
 
 export type SerializedApiKeyIamRule = Omit<
