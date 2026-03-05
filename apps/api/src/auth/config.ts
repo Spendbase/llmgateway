@@ -1,7 +1,7 @@
 import { instrumentBetterAuth } from "@kubiks/otel-better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { passkey } from "better-auth/plugins/passkey";
 import { Redis } from "ioredis";
 
@@ -22,6 +22,10 @@ const originUrls =
 	"http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:4002,http://localhost:3006";
 const isHosted = process.env.HOSTED === "true";
 const CORPORATE_LOGIN_COOKIE_NAME = "llmapi_corporate_auth_flow";
+
+export const AUTH_ERROR_CODES = {
+	CORPORATE_ONLY: "CORPORATE_ONLY",
+} as const;
 
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
@@ -561,6 +565,17 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 		databaseHooks: {
 			user: {
 				create: {
+					before: async (user) => {
+						if (user.email && !isCorporateEmail(user.email)) {
+							logger.warn("Blocked user creation: non-corporate email", {
+								email: maskEmail(user.email),
+							});
+							throw new APIError("BAD_REQUEST", {
+								message: AUTH_ERROR_CODES.CORPORATE_ONLY,
+							});
+						}
+						return { data: user };
+					},
 					after: async (user) => {
 						if (!isHosted) {
 							await db
@@ -870,13 +885,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 					const isSocialCallback = ctx.path.includes("/callback");
 					if (isSocialCallback) {
-						const sessionId = newSession.session?.id;
-						if (sessionId) {
-							await db
-								.delete(tables.session)
-								.where(eq(tables.session.id, sessionId));
-							await db.delete(tables.user).where(eq(tables.user.id, userId));
-						}
 						const errorUrl = new URL("/corporate-login", uiUrl);
 						errorUrl.searchParams.set("error", "corporate_only");
 						throw ctx.redirect(errorUrl.toString());

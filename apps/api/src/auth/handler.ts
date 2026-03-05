@@ -1,11 +1,13 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { apiAuth } from "./config.js";
+import { apiAuth, AUTH_ERROR_CODES } from "./config.js";
 
 import type { ServerTypes } from "@/vars.js";
 
 // Create a Hono app for auth routes
 export const authHandler = new OpenAPIHono<ServerTypes>();
+
+const uiUrl = process.env.UI_URL || "http://localhost:3002";
 
 authHandler.use("*", async (c, next) => {
 	const session = await apiAuth.api.getSession({ headers: c.req.raw.headers });
@@ -19,6 +21,14 @@ authHandler.use("*", async (c, next) => {
 	c.set("user", session.user);
 	c.set("session", session.session);
 	return await next();
+});
+
+authHandler.get("/auth/error", (c) => {
+	const errorCode = c.req.query("error");
+	if (errorCode === AUTH_ERROR_CODES.CORPORATE_ONLY) {
+		return c.redirect(`${uiUrl}/corporate-login?error=corporate_only`, 302);
+	}
+	return apiAuth.handler(c.req.raw);
 });
 
 authHandler.on(["POST", "GET"], "/auth/*", (c) => {
