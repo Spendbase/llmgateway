@@ -619,6 +619,7 @@ export function transformStreamingToOpenai(
 			break;
 		}
 
+		case "azure":
 		case "openai": {
 			if (data.type) {
 				// Log full OpenAI event data for debugging
