@@ -3486,6 +3486,9 @@ export interface paths {
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
                                 organizationContext: string;
+                                lowBalanceAlertEnabled: boolean;
+                                lowBalanceAlertThreshold: string | null;
+                                lowBalanceAlertLastStateBelow: boolean;
                             }[];
                         };
                     };
@@ -3546,6 +3549,9 @@ export interface paths {
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
                                 organizationContext: string;
+                                lowBalanceAlertEnabled: boolean;
+                                lowBalanceAlertThreshold: string | null;
+                                lowBalanceAlertLastStateBelow: boolean;
                             };
                         };
                     };
@@ -3735,6 +3741,9 @@ export interface paths {
                                 devPlanExpiresAt: string | null;
                                 devPlanAllowAllModels: boolean;
                                 organizationContext: string;
+                                lowBalanceAlertEnabled: boolean;
+                                lowBalanceAlertThreshold: string | null;
+                                lowBalanceAlertLastStateBelow: boolean;
                             };
                         };
                     };

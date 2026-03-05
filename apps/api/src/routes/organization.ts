@@ -39,6 +39,10 @@ const organizationSchema = z.object({
 	devPlanExpiresAt: z.date().nullable(),
 	devPlanAllowAllModels: z.boolean(),
 	organizationContext: z.string(),
+	// Low Balance Alert fields
+	lowBalanceAlertEnabled: z.boolean(),
+	lowBalanceAlertThreshold: z.string().nullable(),
+	lowBalanceAlertLastStateBelow: z.boolean(),
 });
 
 const projectSchema = z.object({
