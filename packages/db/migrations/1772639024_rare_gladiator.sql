@@ -1,1 +1,0 @@
-ALTER TABLE "referral" ADD COLUMN "reward_granted" boolean DEFAULT false NOT NULL;
