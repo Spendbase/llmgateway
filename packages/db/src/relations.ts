@@ -30,6 +30,7 @@ export const relations = defineRelations(schema, (r) => ({
 			from: r.organization.id,
 			to: r.referral.referrerOrganizationId,
 		}),
+		alertRecipients: r.many.organizationAlertRecipient(),
 	},
 	referral: {
 		referrerOrganization: r.one.organization({
@@ -135,6 +136,12 @@ export const relations = defineRelations(schema, (r) => ({
 		provider: r.one.provider({
 			from: r.modelProviderMapping.providerId,
 			to: r.provider.id,
+		}),
+	},
+	organizationAlertRecipient: {
+		organization: r.one.organization({
+			from: r.organizationAlertRecipient.organizationId,
+			to: r.organization.id,
 		}),
 	},
 }));
