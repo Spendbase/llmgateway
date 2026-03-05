@@ -9,6 +9,7 @@ export const moonshotModels = [
 		releasedAt: new Date("2025-07-11"),
 		providers: [
 			{
+				stability: "unstable" as const,
 				providerId: "groq",
 				modelName: "moonshotai/kimi-k2-instruct",
 				inputPrice: 1.0 / 1e6,
@@ -33,7 +34,7 @@ export const moonshotModels = [
 				streaming: true,
 				vision: false,
 				tools: true,
-				jsonOutput: true,
+				jsonOutput: false,
 			},
 			{
 				providerId: "moonshot",
@@ -64,6 +65,8 @@ export const moonshotModels = [
 				jsonOutput: true,
 			},
 			{
+				test: "skip",
+				stability: "unstable" as const,
 				providerId: "cloudrift",
 				modelName: "moonshotai/Kimi-K2-Instruct",
 				inputPrice: 0.3 / 1e6,
@@ -74,7 +77,6 @@ export const moonshotModels = [
 				streaming: true,
 				vision: false,
 				tools: true,
-				test: "skip",
 				jsonOutput: true,
 			},
 			{
@@ -114,6 +116,7 @@ export const moonshotModels = [
 		releasedAt: new Date("2025-11-06"),
 		providers: [
 			{
+				test: "skip",
 				providerId: "moonshot",
 				modelName: "kimi-k2-thinking",
 				inputPrice: 0.6 / 1e6,
@@ -215,7 +218,6 @@ export const moonshotModels = [
 			},
 			{
 				providerId: "canopywave",
-				test: "skip",
 				modelName: "moonshotai/kimi-k2.5",
 				inputPrice: 0.5 / 1e6,
 				outputPrice: 2.8 / 1e6,

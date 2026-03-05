@@ -133,6 +133,7 @@ export const googleModels = [
 		releasedAt: new Date("2025-07-22"),
 		providers: [
 			{
+				stability: "unstable" as const,
 				providerId: "google-ai-studio",
 				modelName: "gemini-2.5-flash-lite",
 				inputPrice: 0.1 / 1e6,
@@ -161,6 +162,7 @@ export const googleModels = [
 				tools: true,
 				jsonOutput: true,
 				jsonOutputSchema: true,
+				stability: "unstable" as const,
 			},
 		],
 	},
@@ -172,6 +174,7 @@ export const googleModels = [
 		releasedAt: new Date("2025-09-25"),
 		providers: [
 			{
+				stability: "unstable" as const,
 				providerId: "google-ai-studio",
 				modelName: "gemini-2.5-flash-lite-preview-09-2025",
 				inputPrice: 0.1 / 1e6,
@@ -187,6 +190,7 @@ export const googleModels = [
 				jsonOutputSchema: true,
 			},
 			{
+				stability: "unstable" as const,
 				providerId: "google-vertex",
 				modelName: "gemini-2.5-flash-lite-preview-09-2025",
 				inputPrice: 0.1 / 1e6,
@@ -212,7 +216,6 @@ export const googleModels = [
 		releasedAt: new Date("2026-02-19"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "google-ai-studio",
 				modelName: "gemini-3.1-pro-preview",
 				inputPrice: 2 / 1e6,
@@ -247,7 +250,6 @@ export const googleModels = [
 				jsonOutputSchema: true,
 			},
 			{
-				test: "skip",
 				providerId: "google-vertex",
 				modelName: "gemini-3.1-pro-preview",
 				inputPrice: 2 / 1e6,

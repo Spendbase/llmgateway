@@ -67,6 +67,8 @@ export interface BaseMessage {
 	name?: string;
 	tool_calls?: ToolCall[];
 	tool_call_id?: string;
+	reasoning?: string;
+	reasoning_content?: string;
 }
 
 // Provider-specific message formats

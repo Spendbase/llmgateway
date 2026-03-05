@@ -341,6 +341,13 @@ export function transformResponseToOpenai(
 						// Remove the old reasoning_content field if it exists
 						delete message.reasoning_content;
 					}
+					// Apply parsed tool_calls (e.g. from XML fallback parsing for MiniMax/canopywave)
+					if (toolResults && toolResults.length > 0) {
+						message.tool_calls = toolResults;
+						if (transformedResponse.choices[0].finish_reason !== "tool_calls") {
+							transformedResponse.choices[0].finish_reason = "tool_calls";
+						}
+					}
 					// Add annotations if present
 					if (annotations && annotations.length > 0) {
 						message.annotations = annotations;
