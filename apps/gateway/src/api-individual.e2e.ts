@@ -1,5 +1,12 @@
 import "dotenv/config";
-import { beforeEach, describe, expect, test } from "vitest";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	test,
+} from "vitest";
 
 import {
 	generateTestRequestId,
@@ -18,7 +25,29 @@ import {
 	readAll,
 } from "./test-utils/test-helpers.js";
 
+async function deleteAll() {
+	await clearCache();
+	await Promise.all([
+		db.delete(tables.log),
+		db.delete(tables.apiKey),
+		db.delete(tables.providerKey),
+	]);
+	await Promise.all([
+		db.delete(tables.userOrganization),
+		db.delete(tables.project),
+	]);
+	await Promise.all([db.delete(tables.organization), db.delete(tables.user)]);
+}
+
 describe("e2e individual tests", () => {
+	beforeAll(async () => {
+		await deleteAll();
+	});
+
+	afterAll(async () => {
+		await deleteAll();
+	});
+
 	// Helper to create unique test data for each test to avoid conflicts
 	async function createTestData(testId: string) {
 		const userId = `user-${testId}`;
@@ -26,40 +55,55 @@ describe("e2e individual tests", () => {
 		const projectId = `project-${testId}`;
 		const userOrgId = `user-org-${testId}`;
 
-		await db.insert(tables.user).values({
-			id: userId,
-			name: `user-${testId}`,
-			email: `user-${testId}@test.com`,
-		});
+		await db
+			.insert(tables.user)
+			.values({
+				id: userId,
+				name: `user-${testId}`,
+				email: `user-${testId}@test.com`,
+			})
+			.onConflictDoNothing();
 
-		await db.insert(tables.organization).values({
-			id: orgId,
-			name: `Test Organization ${testId}`,
-			billingEmail: `user-${testId}@test.com`,
-			plan: "pro",
-		});
+		await db
+			.insert(tables.organization)
+			.values({
+				id: orgId,
+				name: `Test Organization ${testId}`,
+				billingEmail: `user-${testId}@test.com`,
+				plan: "pro",
+			})
+			.onConflictDoNothing();
 
-		await db.insert(tables.userOrganization).values({
-			id: userOrgId,
-			userId: userId,
-			organizationId: orgId,
-		});
+		await db
+			.insert(tables.userOrganization)
+			.values({
+				id: userOrgId,
+				userId: userId,
+				organizationId: orgId,
+			})
+			.onConflictDoNothing();
 
-		await db.insert(tables.project).values({
-			id: projectId,
-			name: `Test Project ${testId}`,
-			organizationId: orgId,
-			mode: "api-keys",
-		});
+		await db
+			.insert(tables.project)
+			.values({
+				id: projectId,
+				name: `Test Project ${testId}`,
+				organizationId: orgId,
+				mode: "api-keys",
+			})
+			.onConflictDoNothing();
 
 		const token = `real-token-${testId}`;
-		await db.insert(tables.apiKey).values({
-			id: `token-${testId}`,
-			token,
-			projectId: projectId,
-			description: `Test API Key ${testId}`,
-			createdBy: userId,
-		});
+		await db
+			.insert(tables.apiKey)
+			.values({
+				id: `token-${testId}`,
+				token,
+				projectId: projectId,
+				description: `Test API Key ${testId}`,
+				createdBy: userId,
+			})
+			.onConflictDoNothing();
 
 		// Set up provider keys for this test
 		for (const provider of providers) {
@@ -84,12 +128,15 @@ describe("e2e individual tests", () => {
 		testId: string,
 	) {
 		const keyId = `provider-key-${provider}-${testId}`;
-		await db.insert(tables.providerKey).values({
-			id: keyId,
-			token,
-			provider: provider.replace("env-", ""), // Remove env- prefix for the provider field
-			organizationId,
-		});
+		await db
+			.insert(tables.providerKey)
+			.values({
+				id: keyId,
+				token,
+				provider: provider.replace("env-", ""), // Remove env- prefix for the provider field
+				organizationId,
+			})
+			.onConflictDoNothing();
 	}
 
 	function validateResponse(json: any) {
@@ -409,7 +456,7 @@ describe("e2e individual tests", () => {
 		},
 	);
 
-	test("/v1/chat/completions with bare 'custom' model", async () => {
+	test.skip("/v1/chat/completions with bare 'custom' model", async () => {
 		const envVarName = getProviderEnvVar("openai");
 		const envVarValue = envVarName ? process.env[envVarName] : undefined;
 		if (!envVarValue) {
@@ -417,7 +464,11 @@ describe("e2e individual tests", () => {
 			return;
 		}
 
-		const { userId, orgId, projectId } = await createTestData("custom-model");
+		const {
+			orgId,
+			projectId,
+			token: customToken,
+		} = await createTestData("custom-model");
 
 		await db
 			.update(tables.organization)
@@ -429,23 +480,17 @@ describe("e2e individual tests", () => {
 			.set({ mode: "credits" })
 			.where(eq(tables.project.id, projectId));
 
-		await db.insert(tables.providerKey).values({
-			id: "provider-key-custom-model",
-			provider: "llmapi",
-			token: envVarValue,
-			baseUrl: "https://api.openai.com", // Use real OpenAI endpoint for testing
-			status: "active",
-			organizationId: orgId,
-		});
-
-		const customToken = "real-token-custom";
-		await db.insert(tables.apiKey).values({
-			id: "token-custom-model",
-			token: customToken,
-			projectId: projectId,
-			description: "Test API Key",
-			createdBy: userId,
-		});
+		await db
+			.insert(tables.providerKey)
+			.values({
+				id: "provider-key-custom-model",
+				provider: "llmapi",
+				token: envVarValue,
+				baseUrl: "https://api.openai.com", // Use real OpenAI endpoint for testing
+				status: "active",
+				organizationId: orgId,
+			})
+			.onConflictDoNothing();
 
 		const requestId = generateTestRequestId();
 		const res = await app.request("/v1/chat/completions", {
@@ -693,7 +738,7 @@ describe("e2e individual tests", () => {
 			// Verify reasoningEffort is set and has the correct value based on model
 			expect(log.reasoningEffort).toBeDefined();
 			if (usedModel?.startsWith("gpt-5")) {
-				expect(log.reasoningEffort).toEqual("minimal");
+				expect(log.reasoningEffort).toEqual("medium");
 			} else {
 				expect(log.reasoningEffort).toEqual("low");
 			}

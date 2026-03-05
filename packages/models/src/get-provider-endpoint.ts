@@ -122,15 +122,20 @@ export function getProviderEndpoint(
 			case "minimax":
 				url = "https://api.minimax.io";
 				break;
-			case "aws-bedrock":
+			case "aws-bedrock": {
+				const awsRegion =
+					getProviderEnvValue("aws-bedrock", "region", configIndex) ??
+					"us-east-1";
+				const defaultBedrockUrl = `https://bedrock-runtime.${awsRegion}.amazonaws.com`;
 				url =
 					getProviderEnvValue(
 						"aws-bedrock",
 						"baseUrl",
 						configIndex,
-						"https://bedrock-runtime.us-east-1.amazonaws.com",
-					) ?? "https://bedrock-runtime.us-east-1.amazonaws.com";
+						defaultBedrockUrl,
+					) ?? defaultBedrockUrl;
 				break;
+			}
 			case "azure": {
 				const resource =
 					providerKeyOptions?.azure_resource ??
@@ -147,6 +152,9 @@ export function getProviderEndpoint(
 			}
 			case "canopywave":
 				url = "https://inference.canopywave.io";
+				break;
+			case "cloudrift":
+				url = "https://inference.cloudrift.ai";
 				break;
 			// case "custom":
 			// 	if (!baseUrl) {
@@ -199,37 +207,24 @@ export function getProviderEndpoint(
 			const endpoint = stream ? "streamGenerateContent" : "generateContent";
 			const model = modelName ?? "gemini-2.5-flash-lite";
 
-			// Special handling for some models which require a non-global location
-			let baseEndpoint: string;
-			if (
-				model === "gemini-2.0-flash-lite" ||
-				model === "gemini-2.5-flash-lite"
-			) {
-				baseEndpoint = `${url}/v1/publishers/google/models/${model}:${endpoint}`;
-			} else {
-				const projectId = getProviderEnvValue(
-					"google-vertex",
-					"project",
-					configIndex,
+			const projectId = getProviderEnvValue(
+				"google-vertex",
+				"project",
+				configIndex,
+			);
+
+			const region =
+				getProviderEnvValue("google-vertex", "region", configIndex, "global") ??
+				"global";
+
+			if (!projectId) {
+				const vertexEnv = getProviderEnvConfig("google-vertex");
+				throw new Error(
+					`${vertexEnv?.required.project ?? "LLM_GOOGLE_CLOUD_PROJECT"} environment variable is required for Vertex model "${model}"`,
 				);
-
-				const region =
-					getProviderEnvValue(
-						"google-vertex",
-						"region",
-						configIndex,
-						"global",
-					) ?? "global";
-
-				if (!projectId) {
-					const vertexEnv = getProviderEnvConfig("google-vertex");
-					throw new Error(
-						`${vertexEnv?.required.project ?? "LLM_GOOGLE_CLOUD_PROJECT"} environment variable is required for Vertex model "${model}"`,
-					);
-				}
-
-				baseEndpoint = `${url}/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:${endpoint}`;
 			}
+
+			const baseEndpoint = `${url}/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:${endpoint}`;
 
 			const queryParams = [];
 			if (token) {
@@ -252,10 +247,17 @@ export function getProviderEndpoint(
 			}
 			return `${url}/api/paas/v4/chat/completions`;
 		case "aws-bedrock": {
+			const region =
+				getProviderEnvValue("aws-bedrock", "region", configIndex) ?? "";
+			// AWS region (e.g. "us-east-1") → cross-region inference profile prefix
+			// (e.g. "us."). Falls back to "us." for unrecognised regions.
+			const inferenceProfilePrefix = region.startsWith("eu")
+				? "eu."
+				: region.startsWith("ap")
+					? "ap."
+					: "us.";
 			const prefix =
-				providerKeyOptions?.aws_bedrock_region_prefix ??
-				getProviderEnvValue("aws-bedrock", "region", configIndex, "global.") ??
-				"global.";
+				providerKeyOptions?.aws_bedrock_region_prefix ?? inferenceProfilePrefix;
 
 			const endpoint = stream ? "converse-stream" : "converse";
 			return `${url}/model/${prefix}${modelName}/${endpoint}`;

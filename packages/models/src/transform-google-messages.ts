@@ -47,11 +47,27 @@ export async function transformGoogleMessages(
 	for (const m of messages) {
 		// Handle tool role messages - these become user messages with functionResponse
 		if (m.role === "tool") {
+			// Resolve function name: prefer m.name, then look up from tool_call_id in previous messages
+			let functionName = m.name || "unknown_function";
+			if (!m.name && m.tool_call_id) {
+				for (const prevMsg of messages) {
+					if (prevMsg.role === "assistant" && prevMsg.tool_calls) {
+						const matchingCall = prevMsg.tool_calls.find(
+							(tc) => tc.id === m.tool_call_id,
+						);
+						if (matchingCall) {
+							functionName = matchingCall.function.name;
+							break;
+						}
+					}
+				}
+			}
+
 			// Check if there's already a user message for function responses we can append to
 			const lastMsg = result[result.length - 1];
 			const functionResponsePart: GooglePart = {
 				functionResponse: {
-					name: m.name || "unknown_function",
+					name: functionName,
 					response: {
 						result: m.content,
 					},
