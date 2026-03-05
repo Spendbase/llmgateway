@@ -1048,26 +1048,34 @@ export async function resetApiKeyUsage(): Promise<void> {
 				.for("update", { skipLocked: true });
 
 			if (eligibleKeys.length === 0) {
+				logger.debug("No API keys require usage reset");
 				return;
 			}
 
 			logger.info(`Resetting usage for ${eligibleKeys.length} API keys`);
 
-			for (const key of eligibleKeys) {
+			// Precompute nextResetAt for each key in JS (preserves exact UTC logic),
+			// then batch all updates into a single UPDATE ... FROM (VALUES ...) query.
+			const values = eligibleKeys.map((key) => {
 				const nextReset = computeNextResetAt(
 					key.resetPeriod as "daily" | "weekly" | "monthly",
 					now,
 				);
+				// We enforce '!' because resetPeriod='none' is excluded by the query
+				return sql`(${key.id}, ${nextReset!}::timestamptz)`;
+			});
 
-				await tx
-					.update(apiKey)
-					.set({
-						usage: "0",
-						lastResetAt: now,
-						nextResetAt: nextReset,
-					})
-					.where(eq(apiKey.id, key.id));
-			}
+			// Use Drizzle column objects to dynamically emit the correct database column identifiers
+			// (handles camelCase vs snake_case differences inherently).
+			await tx.execute(sql`
+				UPDATE ${apiKey} AS t
+				SET
+					${apiKey.usage} = '0',
+					${apiKey.lastResetAt} = ${now},
+					${apiKey.nextResetAt} = v.next_reset_at
+				FROM (VALUES ${sql.join(values, sql`, `)}) AS v(id, next_reset_at)
+				WHERE t.id = v.id
+			`);
 
 			logger.info(
 				`Successfully reset usage for ${eligibleKeys.length} API keys`,
