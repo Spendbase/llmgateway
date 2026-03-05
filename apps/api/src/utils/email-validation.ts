@@ -61,7 +61,15 @@ const PUBLIC_EMAIL_DOMAINS = [
 	"daum.net",
 	"hanmail.net",
 	"rediffmail.com",
+	"yandex.ru",
+	"yandex.com",
+	"yandex.by",
+	"yandex.kz",
+	"yandex.ua",
+	"ya.ru",
 ];
+
+const PUBLIC_EMAIL_DOMAIN_SET = new Set(PUBLIC_EMAIL_DOMAINS);
 
 export function validateEmail(email: string): EmailValidationResult {
 	const emailLower = email.toLowerCase();
@@ -103,5 +111,8 @@ export function isCorporateEmail(email: string): boolean {
 	if (!domain) {
 		return false;
 	}
-	return !PUBLIC_EMAIL_DOMAINS.includes(domain);
+	return (
+		!PUBLIC_EMAIL_DOMAIN_SET.has(domain) &&
+		!BLACKLISTED_DOMAINS.includes(domain)
+	);
 }

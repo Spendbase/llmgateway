@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
 		response = NextResponse.next();
 	}
 
-	const isCorpLogin = nextUrl.pathname.includes("/corporate-login");
+	const isCorpLogin = nextUrl.pathname === "/corporate-login";
 	if (!isCorpLogin) {
 		response.cookies.delete(CORPORATE_AUTH_FLOW_COOKIE_NAME);
 	}

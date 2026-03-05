@@ -15,7 +15,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 	corporate_only:
 		"Only corporate email addresses are allowed. Personal email providers like Gmail, Yahoo, and Outlook are not permitted. Please sign in with your work email.",
 };
-const corporateAuthFlowCookieName = "llmapi_corporate_auth_flow";
+const CORPORATE_LOGIN_COOKIE_NAME = "llmapi_corporate_auth_flow";
 
 function CorporateLoginContent() {
 	const searchParams = useSearchParams();
@@ -43,7 +43,7 @@ function CorporateLoginContent() {
 		setIsLoading(true);
 		try {
 			const secureAttr = location.protocol === "https:" ? "; Secure" : "";
-			document.cookie = `${corporateAuthFlowCookieName}=corporate; Path=/; Max-Age=600; SameSite=Lax${secureAttr}`;
+			document.cookie = `${CORPORATE_LOGIN_COOKIE_NAME}=corporate; Path=/; Max-Age=600; SameSite=Lax${secureAttr}`;
 
 			const res = await signIn.social({
 				provider: "google",
@@ -55,6 +55,11 @@ function CorporateLoginContent() {
 					variant: "destructive",
 				});
 			}
+		} catch {
+			toast({
+				title: "Failed to sign in with Google",
+				variant: "destructive",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -68,7 +73,7 @@ function CorporateLoginContent() {
 						<Building2 className="h-6 w-6 text-primary" />
 					</div>
 					<h1 className="text-2xl font-semibold tracking-tight">
-						Welcome to LLM Gateway
+						Welcome to LLM API
 					</h1>
 					<p className="text-sm text-muted-foreground">
 						Sign in with your corporate Google account to continue

@@ -55,9 +55,12 @@ export function useUser(options?: UseUserOptions) {
 		}
 
 		const currentPath = pathname;
-		const isAuthPage = ["/login", "/signup", "/onboarding"].includes(
-			currentPath,
-		);
+		const isAuthPage = [
+			"/login",
+			"/signup",
+			"/onboarding",
+			"/corporate-login",
+		].includes(currentPath);
 
 		// Don't redirect if already on auth pages
 		if (isAuthPage) {
