@@ -1028,4 +1028,276 @@ organization.openapi(importUsersRoute, async (c) => {
 	});
 });
 
+// Low Balance Alert Schemas
+const lowBalanceAlertSettingsSchema = z.object({
+	lowBalanceAlertEnabled: z.boolean(),
+	lowBalanceAlertThreshold: z.number().min(1),
+	alertEmails: z.array(z.string()).max(30),
+});
+
+const lowBalanceAlertSettingsResponseSchema = z.object({
+	lowBalanceAlertEnabled: z.boolean(),
+	lowBalanceAlertThreshold: z.string().nullable(),
+	alertEmails: z.array(z.string()),
+});
+
+// GET /orgs/{id}/low-balance-alert
+const getLowBalanceAlertSettings = createRoute({
+	method: "get",
+	path: "/{id}/low-balance-alert",
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: lowBalanceAlertSettingsResponseSchema,
+				},
+			},
+			description: "Low balance alert settings for the organization",
+		},
+	},
+});
+
+organization.openapi(getLowBalanceAlertSettings, async (c) => {
+	const user = c.get("user");
+	if (!user) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	const { id } = c.req.param();
+
+	const hasAccess = await userHasOrganizationAccess(user.id, id);
+	if (!hasAccess) {
+		throw new HTTPException(403, {
+			message: "You do not have access to this organization",
+		});
+	}
+
+	const org = await db.query.organization.findFirst({
+		where: {
+			id: {
+				eq: id,
+			},
+		},
+		with: {
+			alertRecipients: true,
+		},
+	});
+
+	if (!org || org.status === "deleted") {
+		throw new HTTPException(404, {
+			message: "Organization not found",
+		});
+	}
+
+	return c.json({
+		lowBalanceAlertEnabled: org.lowBalanceAlertEnabled,
+		lowBalanceAlertThreshold: org.lowBalanceAlertThreshold,
+		alertEmails: org.alertRecipients.map((r) => r.email),
+	});
+});
+
+// PUT /orgs/{id}/low-balance-alert
+const updateLowBalanceAlertSettings = createRoute({
+	method: "put",
+	path: "/{id}/low-balance-alert",
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+		body: {
+			content: {
+				"application/json": {
+					schema: lowBalanceAlertSettingsSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						success: z.boolean(),
+					}),
+				},
+			},
+			description: "Low balance alert settings updated successfully.",
+		},
+		400: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						message: z.string(),
+					}),
+				},
+			},
+			description: "Bad request. Invalid email address.",
+		},
+		401: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						message: z.string(),
+					}),
+				},
+			},
+			description: "Unauthorized.",
+		},
+		403: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						message: z.string(),
+					}),
+				},
+			},
+			description: "Forbidden.",
+		},
+		404: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						message: z.string(),
+					}),
+				},
+			},
+			description: "Organization not found.",
+		},
+	},
+});
+
+organization.openapi(updateLowBalanceAlertSettings, async (c) => {
+	const user = c.get("user");
+	if (!user) {
+		throw new HTTPException(401, {
+			message: "Unauthorized",
+		});
+	}
+
+	const { id } = c.req.param();
+	const payload = c.req.valid("json");
+
+	// Check membership and role
+	const userOrganization = await db.query.userOrganization.findFirst({
+		where: {
+			userId: {
+				eq: user.id,
+			},
+			organizationId: {
+				eq: id,
+			},
+		},
+		with: {
+			organization: true,
+		},
+	});
+
+	if (
+		!userOrganization ||
+		userOrganization.organization?.status === "deleted"
+	) {
+		throw new HTTPException(404, {
+			message: "Organization not found",
+		});
+	}
+
+	// Only owners can update alert settings
+	if (userOrganization.role !== "owner") {
+		throw new HTTPException(403, {
+			message: "Only owners can update billing and alert settings",
+		});
+	}
+
+	// Normalize emails: trim, lowercase, remove empty strings, deduplicate
+	const normalizedEmails = [
+		...new Set(
+			payload.alertEmails.map((e) => e.trim().toLowerCase()).filter(Boolean),
+		),
+	];
+
+	// Validate each normalized email
+	const emailSchema = z.string().email();
+	for (const email of normalizedEmails) {
+		const result = emailSchema.safeParse(email);
+		if (!result.success) {
+			throw new HTTPException(400, {
+				message: `Invalid email address: ${email}`,
+			});
+		}
+	}
+
+	// Atomic update: org fields + recipient sync
+	await db.transaction(async (tx) => {
+		// 1. Update organization scalar fields
+		await tx
+			.update(tables.organization)
+			.set({
+				lowBalanceAlertEnabled: payload.lowBalanceAlertEnabled,
+				lowBalanceAlertThreshold: payload.lowBalanceAlertThreshold.toString(),
+			})
+			.where(eq(tables.organization.id, id));
+
+		// Skip recipient sync when alerts are disabled to preserve stored emails
+		if (!payload.lowBalanceAlertEnabled) {
+			return;
+		}
+
+		// 2. Fetch current recipients
+		const currentRecipients =
+			await tx.query.organizationAlertRecipient.findMany({
+				where: {
+					organizationId: {
+						eq: id,
+					},
+				},
+			});
+
+		const currentEmails = currentRecipients.map((r) => r.email);
+
+		// 3. Compute diff
+		const emailsToAdd = normalizedEmails.filter(
+			(e) => !currentEmails.includes(e),
+		);
+		const emailsToRemove = currentEmails.filter(
+			(e) => !normalizedEmails.includes(e),
+		);
+
+		// 4. Delete removed recipients
+		if (emailsToRemove.length > 0) {
+			await tx
+				.delete(tables.organizationAlertRecipient)
+				.where(
+					and(
+						eq(tables.organizationAlertRecipient.organizationId, id),
+						inArray(tables.organizationAlertRecipient.email, emailsToRemove),
+					),
+				);
+		}
+
+		// 5. Insert new recipients
+		if (emailsToAdd.length > 0) {
+			await tx.insert(tables.organizationAlertRecipient).values(
+				emailsToAdd.map((email) => ({
+					organizationId: id,
+					email,
+				})),
+			);
+		}
+	});
+
+	return c.json(
+		{
+			success: true,
+		},
+		200,
+	);
+});
+
 export default organization;
