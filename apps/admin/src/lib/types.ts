@@ -130,6 +130,16 @@ export interface OrgMember {
 	joinedAt: string;
 }
 
+export interface OrgMembersResponse {
+	members: OrgMember[];
+	pagination: {
+		page: number;
+		pageSize: number;
+		total: number;
+		totalPages: number;
+	};
+}
+
 export interface OrgProject {
 	id: string;
 	name: string;
@@ -138,6 +148,16 @@ export interface OrgProject {
 	cachingEnabled: boolean;
 	createdAt: string;
 	activeApiKeysCount: number;
+}
+
+export interface OrgProjectsResponse {
+	projects: OrgProject[];
+	pagination: {
+		page: number;
+		pageSize: number;
+		total: number;
+		totalPages: number;
+	};
 }
 
 export interface OrgDepositItem {
@@ -152,7 +172,7 @@ export interface OrgDepositItem {
 }
 
 export interface OrgApiKeysResponse {
-	items: OrgApiKeyItem[];
+	apiKeys: OrgApiKeyItem[];
 	pagination: {
 		page: number;
 		pageSize: number;
@@ -162,7 +182,7 @@ export interface OrgApiKeysResponse {
 }
 
 export interface OrgDepositsResponse {
-	items: OrgDepositItem[];
+	deposits: OrgDepositItem[];
 	pagination: {
 		page: number;
 		pageSize: number;

@@ -55,7 +55,12 @@ export function useOrgUsage(orgId: string, months = 12) {
 	);
 }
 
-export function useOrgMembers(orgId: string, search?: string) {
+export function useOrgMembers(
+	orgId: string,
+	page: number,
+	pageSize: number,
+	search?: string,
+) {
 	const api = useApi();
 	return api.useQuery(
 		"get",
@@ -63,20 +68,27 @@ export function useOrgMembers(orgId: string, search?: string) {
 		{
 			params: {
 				path: { id: orgId },
-				query: { ...(search ? { search } : {}) },
+				query: {
+					page,
+					pageSize,
+					...(search ? { search } : {}),
+				},
 			},
 		},
 		{ refetchInterval: 30_000 },
 	);
 }
 
-export function useOrgProjects(orgId: string) {
+export function useOrgProjects(orgId: string, page: number, pageSize: number) {
 	const api = useApi();
 	return api.useQuery(
 		"get",
 		"/admin/organizations/{id}/projects",
 		{
-			params: { path: { id: orgId } },
+			params: {
+				path: { id: orgId },
+				query: { page, pageSize },
+			},
 		},
 		{ refetchInterval: 30_000 },
 	);

@@ -75,7 +75,7 @@ function buildSheets(
 	return [
 		{
 			name: "API Keys",
-			rows: (apiKeysRes.data?.items ?? []).map((k) => ({
+			rows: (apiKeysRes.data?.apiKeys ?? []).map((k) => ({
 				Description: k.description ?? "",
 				Project: k.projectName ?? k.projectId,
 				Status: k.status,
@@ -121,7 +121,7 @@ function buildSheets(
 		},
 		{
 			name: "Deposits",
-			rows: (depositsRes.data?.items ?? []).map((d) => ({
+			rows: (depositsRes.data?.deposits ?? []).map((d) => ({
 				Date: fmtDate(d.createdAt),
 				Type: d.type,
 				Status: d.status,

@@ -26,8 +26,8 @@ import type {
 	OrgAnalyticsOverview,
 	OrgApiKeysResponse,
 	OrgDepositsResponse,
-	OrgMember,
-	OrgProject,
+	OrgMembersResponse,
+	OrgProjectsResponse,
 	OrgUsageResponse,
 } from "@/lib/types";
 
@@ -38,8 +38,8 @@ interface OrgAnalyticsLayoutProps {
 	overview: OrgAnalyticsOverview;
 	initialApiKeys: OrgApiKeysResponse;
 	initialUsage: OrgUsageResponse;
-	initialMembers: OrgMember[];
-	initialProjects: OrgProject[];
+	initialMembers: OrgMembersResponse;
+	initialProjects: OrgProjectsResponse;
 	initialDeposits: OrgDepositsResponse;
 }
 

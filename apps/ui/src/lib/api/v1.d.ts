@@ -2293,7 +2293,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            items: {
+                            apiKeys: {
                                 id: string;
                                 description: string | null;
                                 /** @enum {string} */
@@ -2420,6 +2420,8 @@ export interface paths {
             parameters: {
                 query?: {
                     search?: string;
+                    page?: number;
+                    pageSize?: number;
                 };
                 header?: never;
                 path: {
@@ -2447,6 +2449,12 @@ export interface paths {
                                 lastLoginAt: string | null;
                                 joinedAt: string;
                             }[];
+                            pagination: {
+                                page: number;
+                                pageSize: number;
+                                total: number;
+                                totalPages: number;
+                            };
                         };
                     };
                 };
@@ -2483,7 +2491,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                };
                 header?: never;
                 path: {
                     id: string;
@@ -2510,6 +2521,12 @@ export interface paths {
                                 createdAt: string;
                                 activeApiKeysCount: number;
                             }[];
+                            pagination: {
+                                page: number;
+                                pageSize: number;
+                                total: number;
+                                totalPages: number;
+                            };
                         };
                     };
                 };
@@ -2567,7 +2584,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            items: {
+                            deposits: {
                                 id: string;
                                 createdAt: string;
                                 type: string;
