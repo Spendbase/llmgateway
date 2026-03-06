@@ -2310,4 +2310,707 @@ admin.openapi(deleteBannerRoute, async (c) => {
 	return c.json({ success: true });
 });
 
+// ─── Organization Analytics ───────────────────────────────────────────────
+
+const orgAnalyticsOverviewSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	billingEmail: z.string().nullable(),
+	plan: z.enum(["free", "pro"]),
+	status: z.enum(["active", "inactive", "deleted"]).nullable(),
+	credits: z.string(),
+	createdAt: z.date(),
+	projectsCount: z.number(),
+	membersCount: z.number(),
+	activeApiKeysCount: z.number(),
+	totalRequests: z.number(),
+	totalTokens: z.number(),
+	totalCost: z.number(),
+});
+
+const orgApiKeyItemSchema = z.object({
+	id: z.string(),
+	description: z.string().nullable(),
+	status: z.enum(["active", "inactive", "deleted"]),
+	createdAt: z.date(),
+	projectId: z.string(),
+	projectName: z.string().nullable(),
+	usage: z.number().nullable(),
+	usageLimit: z.number().nullable(),
+	lastUsedAt: z.date().nullable(),
+});
+
+const orgUsageMonthSchema = z.object({
+	month: z.string(),
+	requests: z.number(),
+	promptTokens: z.number(),
+	completionTokens: z.number(),
+	reasoningTokens: z.number(),
+	totalTokens: z.number(),
+	cost: z.number(),
+});
+
+const orgMemberSchema = z.object({
+	userId: z.string(),
+	name: z.string().nullable(),
+	email: z.string(),
+	role: z.enum(["owner", "admin", "developer"]),
+	status: z.enum(["active", "blocked"]),
+	lastLoginAt: z.date().nullable(),
+	joinedAt: z.date(),
+});
+
+const orgProjectItemSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	status: z.enum(["active", "inactive", "deleted"]),
+	mode: z.enum(["api-keys", "credits", "hybrid"]),
+	cachingEnabled: z.boolean(),
+	createdAt: z.date(),
+	activeApiKeysCount: z.number(),
+});
+
+const orgDepositItemSchema = z.object({
+	id: z.string(),
+	createdAt: z.date(),
+	type: z.string(),
+	amount: z.string().nullable(),
+	creditAmount: z.string().nullable(),
+	currency: z.string(),
+	status: z.enum(["pending", "completed", "failed"]),
+	description: z.string().nullable(),
+});
+
+const getOrgAnalyticsOverview = createRoute({
+	method: "get",
+	path: "/organizations/{id}",
+	request: {
+		params: z.object({ id: z.string() }),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: orgAnalyticsOverviewSchema.openapi({}),
+				},
+			},
+			description: "Organization analytics overview",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Organization not found" },
+	},
+});
+
+const getOrgApiKeys = createRoute({
+	method: "get",
+	path: "/organizations/{id}/api-keys",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(5000).default(20),
+			status: z.enum(["active", "inactive", "deleted"]).optional(),
+			search: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						items: z.array(orgApiKeyItemSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Paginated API keys for organization",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getOrgUsage = createRoute({
+	method: "get",
+	path: "/organizations/{id}/usage",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			months: z.coerce.number().int().min(1).max(24).default(12),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						months: z.array(orgUsageMonthSchema).openapi({}),
+						totals: z.object({
+							requests: z.number(),
+							promptTokens: z.number(),
+							completionTokens: z.number(),
+							reasoningTokens: z.number(),
+							totalTokens: z.number(),
+							cost: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Monthly usage breakdown for organization",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getOrgMembers = createRoute({
+	method: "get",
+	path: "/organizations/{id}/members",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			search: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						members: z.array(orgMemberSchema).openapi({}),
+					}),
+				},
+			},
+			description: "Organization members",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getOrgProjects = createRoute({
+	method: "get",
+	path: "/organizations/{id}/projects",
+	request: {
+		params: z.object({ id: z.string() }),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						projects: z.array(orgProjectItemSchema).openapi({}),
+					}),
+				},
+			},
+			description: "Organization projects",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getOrgDeposits = createRoute({
+	method: "get",
+	path: "/organizations/{id}/deposits",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(5000).default(20),
+			from: z.string().datetime().optional(),
+			to: z.string().datetime().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						items: z.array(orgDepositItemSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Deposit history for organization",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+admin.openapi(getOrgAnalyticsOverview, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+
+	const org = await db.query.organization.findFirst({
+		where: { id },
+		columns: {
+			id: true,
+			name: true,
+			billingEmail: true,
+			plan: true,
+			status: true,
+			credits: true,
+			createdAt: true,
+		},
+	});
+
+	if (!org) {
+		throw new HTTPException(404, { message: "Organization not found" });
+	}
+
+	const [projectsRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.project)
+		.where(
+			and(
+				eq(tables.project.organizationId, id),
+				eq(tables.project.status, "active"),
+			),
+		);
+
+	const [membersRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.userOrganization)
+		.where(eq(tables.userOrganization.organizationId, id));
+
+	const projectIds = await db
+		.select({ id: tables.project.id })
+		.from(tables.project)
+		.where(eq(tables.project.organizationId, id));
+
+	const projectIdList = projectIds.map((p) => p.id);
+
+	let activeApiKeysCount = 0;
+	if (projectIdList.length > 0) {
+		const [keysRow] = await db
+			.select({ count: sql<number>`COUNT(*)`.as("count") })
+			.from(tables.apiKey)
+			.where(
+				and(
+					inArray(tables.apiKey.projectId, projectIdList),
+					eq(tables.apiKey.status, "active"),
+				),
+			);
+		activeApiKeysCount = Number(keysRow?.count ?? 0);
+	}
+
+	const [usageRow] = await db
+		.select({
+			requests: sql<number>`COUNT(*)`.as("requests"),
+			totalTokens:
+				sql<number>`COALESCE(SUM(${tables.log.promptTokens}), 0) + COALESCE(SUM(${tables.log.completionTokens}), 0) + COALESCE(SUM(${tables.log.reasoningTokens}), 0)`.as(
+					"totalTokens",
+				),
+			cost: sql<number>`COALESCE(SUM(${tables.log.cost}), 0)`.as("cost"),
+		})
+		.from(tables.log)
+		.where(eq(tables.log.organizationId, id));
+
+	return c.json({
+		id: org.id,
+		name: org.name,
+		billingEmail: org.billingEmail,
+		plan: org.plan,
+		status: org.status,
+		credits: String(org.credits),
+		createdAt: org.createdAt,
+		projectsCount: Number(projectsRow?.count ?? 0),
+		membersCount: Number(membersRow?.count ?? 0),
+		activeApiKeysCount,
+		totalRequests: Number(usageRow?.requests ?? 0),
+		totalTokens: Number(usageRow?.totalTokens ?? 0),
+		totalCost: Number(usageRow?.cost ?? 0),
+	});
+});
+
+admin.openapi(getOrgApiKeys, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { page, pageSize, status, search } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	const projectIds = await db
+		.select({ id: tables.project.id, name: tables.project.name })
+		.from(tables.project)
+		.where(eq(tables.project.organizationId, id));
+
+	if (projectIds.length === 0) {
+		return c.json({
+			items: [],
+			pagination: { page, pageSize, total: 0, totalPages: 0 },
+		});
+	}
+
+	const pidList = projectIds.map((p) => p.id);
+	const projectNameMap = new Map(projectIds.map((p) => [p.id, p.name]));
+
+	const conditions = [inArray(tables.apiKey.projectId, pidList)];
+	if (status) {
+		conditions.push(eq(tables.apiKey.status, status));
+	}
+	if (search) {
+		conditions.push(
+			ilike(tables.apiKey.description, `%${escapeLike(search)}%`),
+		);
+	}
+
+	const where = and(...conditions);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.apiKey)
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
+	const lastUsageSq = db
+		.select({
+			apiKeyId: tables.log.apiKeyId,
+			lastUsedAt: sql<Date>`MAX(${tables.log.createdAt})`.as("lastUsedAt"),
+		})
+		.from(tables.log)
+		.where(
+			inArray(
+				tables.log.apiKeyId,
+				db
+					.select({ id: tables.apiKey.id })
+					.from(tables.apiKey)
+					.where(inArray(tables.apiKey.projectId, pidList)),
+			),
+		)
+		.groupBy(tables.log.apiKeyId)
+		.as("last_usage");
+
+	const rows = await db
+		.select({
+			id: tables.apiKey.id,
+			description: tables.apiKey.description,
+			status: tables.apiKey.status,
+			createdAt: tables.apiKey.createdAt,
+			projectId: tables.apiKey.projectId,
+			usage: tables.apiKey.usage,
+			usageLimit: tables.apiKey.usageLimit,
+			lastUsedAt: lastUsageSq.lastUsedAt,
+		})
+		.from(tables.apiKey)
+		.leftJoin(lastUsageSq, eq(lastUsageSq.apiKeyId, tables.apiKey.id))
+		.where(where)
+		.orderBy(desc(tables.apiKey.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	const items = rows.map((r) => ({
+		...r,
+		projectName: projectNameMap.get(r.projectId) ?? null,
+		usage: r.usage ?? null,
+		usageLimit: r.usageLimit ?? null,
+		lastUsedAt: r.lastUsedAt ?? null,
+	}));
+
+	return c.json({
+		items,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
+});
+
+admin.openapi(getOrgUsage, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { months } = c.req.valid("query");
+
+	const since = new Date();
+	since.setMonth(since.getMonth() - months);
+	since.setDate(1);
+	since.setHours(0, 0, 0, 0);
+
+	const rows = await db
+		.select({
+			month:
+				sql<string>`TO_CHAR(DATE_TRUNC('month', ${tables.log.createdAt}), 'YYYY-MM')`.as(
+					"month",
+				),
+			requests: sql<number>`COUNT(*)`.as("requests"),
+			promptTokens:
+				sql<number>`COALESCE(SUM(${tables.log.promptTokens}), 0)`.as(
+					"promptTokens",
+				),
+			completionTokens:
+				sql<number>`COALESCE(SUM(${tables.log.completionTokens}), 0)`.as(
+					"completionTokens",
+				),
+			reasoningTokens:
+				sql<number>`COALESCE(SUM(${tables.log.reasoningTokens}), 0)`.as(
+					"reasoningTokens",
+				),
+			totalTokens:
+				sql<number>`COALESCE(SUM(${tables.log.promptTokens}), 0) + COALESCE(SUM(${tables.log.completionTokens}), 0) + COALESCE(SUM(${tables.log.reasoningTokens}), 0)`.as(
+					"totalTokens",
+				),
+			cost: sql<number>`COALESCE(SUM(${tables.log.cost}), 0)`.as("cost"),
+		})
+		.from(tables.log)
+		.where(
+			and(eq(tables.log.organizationId, id), gte(tables.log.createdAt, since)),
+		)
+		.groupBy(sql`DATE_TRUNC('month', ${tables.log.createdAt})`)
+		.orderBy(asc(sql`DATE_TRUNC('month', ${tables.log.createdAt})`));
+
+	const monthData = rows.map((r) => ({
+		month: r.month,
+		requests: Number(r.requests),
+		promptTokens: Number(r.promptTokens),
+		completionTokens: Number(r.completionTokens),
+		reasoningTokens: Number(r.reasoningTokens),
+		totalTokens: Number(r.totalTokens),
+		cost: Number(r.cost),
+	}));
+
+	const totals = monthData.reduce(
+		(acc, m) => ({
+			requests: acc.requests + m.requests,
+			promptTokens: acc.promptTokens + m.promptTokens,
+			completionTokens: acc.completionTokens + m.completionTokens,
+			reasoningTokens: acc.reasoningTokens + m.reasoningTokens,
+			totalTokens: acc.totalTokens + m.totalTokens,
+			cost: acc.cost + m.cost,
+		}),
+		{
+			requests: 0,
+			promptTokens: 0,
+			completionTokens: 0,
+			reasoningTokens: 0,
+			totalTokens: 0,
+			cost: 0,
+		},
+	);
+
+	return c.json({ months: monthData, totals });
+});
+
+admin.openapi(getOrgMembers, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { search } = c.req.valid("query");
+
+	const userIdsSq = db
+		.select({ userId: tables.userOrganization.userId })
+		.from(tables.userOrganization)
+		.where(eq(tables.userOrganization.organizationId, id))
+		.as("org_user_ids");
+
+	const lastLoginSq = db
+		.select({
+			userId: tables.session.userId,
+			lastLoginAt: sql<Date>`MAX(${tables.session.createdAt})`.as(
+				"lastLoginAt",
+			),
+		})
+		.from(tables.session)
+		.where(
+			exists(
+				db
+					.select()
+					.from(userIdsSq)
+					.where(eq(userIdsSq.userId, tables.session.userId)),
+			),
+		)
+		.groupBy(tables.session.userId)
+		.as("last_login");
+
+	const conditions: ReturnType<typeof eq>[] = [];
+	if (search) {
+		conditions.push(
+			or(
+				ilike(tables.user.email, `%${escapeLike(search)}%`),
+				ilike(tables.user.name, `%${escapeLike(search)}%`),
+			) as ReturnType<typeof eq>,
+		);
+	}
+
+	const rows = await db
+		.select({
+			userId: tables.userOrganization.userId,
+			name: tables.user.name,
+			email: tables.user.email,
+			role: tables.userOrganization.role,
+			status: tables.user.status,
+			lastLoginAt: lastLoginSq.lastLoginAt,
+			joinedAt: tables.userOrganization.createdAt,
+		})
+		.from(tables.userOrganization)
+		.innerJoin(tables.user, eq(tables.user.id, tables.userOrganization.userId))
+		.leftJoin(
+			lastLoginSq,
+			eq(lastLoginSq.userId, tables.userOrganization.userId),
+		)
+		.where(and(eq(tables.userOrganization.organizationId, id), ...conditions))
+		.orderBy(asc(tables.userOrganization.createdAt));
+
+	return c.json({ members: rows });
+});
+
+admin.openapi(getOrgProjects, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+
+	const activeKeysSq = db
+		.select({
+			projectId: tables.apiKey.projectId,
+			count: sql<number>`COUNT(*)`.as("count"),
+		})
+		.from(tables.apiKey)
+		.where(eq(tables.apiKey.status, "active"))
+		.groupBy(tables.apiKey.projectId)
+		.as("active_keys");
+
+	const rows = await db
+		.select({
+			id: tables.project.id,
+			name: tables.project.name,
+			status: tables.project.status,
+			mode: tables.project.mode,
+			cachingEnabled: tables.project.cachingEnabled,
+			createdAt: tables.project.createdAt,
+			activeApiKeysCount: sql<number>`COALESCE(${activeKeysSq.count}, 0)`.as(
+				"activeApiKeysCount",
+			),
+		})
+		.from(tables.project)
+		.leftJoin(activeKeysSq, eq(activeKeysSq.projectId, tables.project.id))
+		.where(eq(tables.project.organizationId, id))
+		.orderBy(asc(tables.project.createdAt));
+
+	return c.json({ projects: rows });
+});
+
+admin.openapi(getOrgDeposits, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { page, pageSize, from, to } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	const creditTypes = [
+		"credit_topup",
+		"credit_refund",
+		"subscription_start",
+		"dev_plan_start",
+		"dev_plan_upgrade",
+		"dev_plan_renewal",
+	] as const;
+
+	const conditions = [
+		eq(tables.transaction.organizationId, id),
+		inArray(tables.transaction.type, creditTypes),
+	];
+
+	if (from) {
+		conditions.push(gte(tables.transaction.createdAt, new Date(from)));
+	}
+	if (to) {
+		conditions.push(lte(tables.transaction.createdAt, new Date(to)));
+	}
+
+	const where = and(...conditions);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.transaction)
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
+	const rows = await db
+		.select({
+			id: tables.transaction.id,
+			createdAt: tables.transaction.createdAt,
+			type: tables.transaction.type,
+			amount: tables.transaction.amount,
+			creditAmount: tables.transaction.creditAmount,
+			currency: tables.transaction.currency,
+			status: tables.transaction.status,
+			description: tables.transaction.description,
+		})
+		.from(tables.transaction)
+		.where(where)
+		.orderBy(desc(tables.transaction.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	const items = rows.map((r) => ({
+		...r,
+		amount: r.amount ? String(r.amount) : null,
+		creditAmount: r.creditAmount ? String(r.creditAmount) : null,
+	}));
+
+	return c.json({
+		items,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
+});
+
 export default admin;
