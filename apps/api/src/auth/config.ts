@@ -868,12 +868,9 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						path: ctx.path,
 					});
 
-					const isSocialCallback = ctx.path.includes("/callback");
-					if (isSocialCallback) {
-						const errorUrl = new URL("/corporate-login", uiUrl);
-						errorUrl.searchParams.set("error", "corporate_only");
-						throw ctx.redirect(errorUrl.toString());
-					}
+					const errorUrl = new URL("/corporate-login", uiUrl);
+					errorUrl.searchParams.set("error", "corporate_only");
+					throw ctx.redirect(errorUrl.toString());
 				}
 
 				// Create default org/project for first-time sessions (email signup or first social sign-in)

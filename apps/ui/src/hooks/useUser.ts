@@ -80,16 +80,16 @@ export function useUser(options?: UseUserOptions) {
 
 	// Handle existing redirect logic
 	useEffect(() => {
-		if (!options?.redirectTo || !options?.redirectWhen) {
+		if (
+			!options?.redirectTo ||
+			!options?.redirectWhen ||
+			isCorporateLoginError
+		) {
 			return;
 		}
 
 		const { redirectTo, redirectWhen, checkOnboarding } = options;
 		const hasUser = !!data?.user;
-
-		if (isCorporateLoginError) {
-			return;
-		}
 
 		if (redirectWhen === "authenticated" && hasUser && !isLoading && !error) {
 			if (checkOnboarding && !data.user.onboardingCompleted) {
@@ -113,6 +113,7 @@ export function useUser(options?: UseUserOptions) {
 		options?.redirectWhen,
 		options?.checkOnboarding,
 		options,
+		isCorporateLoginError,
 	]);
 
 	useEffect(() => {
@@ -123,7 +124,7 @@ export function useUser(options?: UseUserOptions) {
 		if (data?.user && isCorporateLoginError) {
 			checkCorporateEmail();
 		}
-	}, [data?.user, searchParams]);
+	}, [data?.user, isCorporateLoginError]);
 
 	return {
 		user: data?.user || null,
