@@ -1,9 +1,10 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
 
+import { useAuth } from "@/lib/auth-client";
 import { useApi } from "@/lib/fetch-client";
 
 import type { Route } from "next";
@@ -29,6 +30,10 @@ export function useUser(options?: UseUserOptions) {
 	const router = useRouter();
 	const api = useApi();
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const { signOut } = useAuth();
+
+	const isCorporateLoginError = searchParams.get("error") === "corporate_only";
 
 	const { data, isLoading, error } = api.useQuery(
 		"get",
@@ -55,9 +60,12 @@ export function useUser(options?: UseUserOptions) {
 		}
 
 		const currentPath = pathname;
-		const isAuthPage = ["/login", "/signup", "/onboarding"].includes(
-			currentPath,
-		);
+		const isAuthPage = [
+			"/login",
+			"/signup",
+			"/onboarding",
+			"/corporate-login",
+		].includes(currentPath);
 
 		// Don't redirect if already on auth pages
 		if (isAuthPage) {
@@ -72,7 +80,11 @@ export function useUser(options?: UseUserOptions) {
 
 	// Handle existing redirect logic
 	useEffect(() => {
-		if (!options?.redirectTo || !options?.redirectWhen) {
+		if (
+			!options?.redirectTo ||
+			!options?.redirectWhen ||
+			isCorporateLoginError
+		) {
 			return;
 		}
 
@@ -101,7 +113,18 @@ export function useUser(options?: UseUserOptions) {
 		options?.redirectWhen,
 		options?.checkOnboarding,
 		options,
+		isCorporateLoginError,
 	]);
+
+	useEffect(() => {
+		const checkCorporateEmail = async () => {
+			await signOut();
+		};
+
+		if (data?.user && isCorporateLoginError) {
+			checkCorporateEmail();
+		}
+	}, [data?.user, isCorporateLoginError]);
 
 	return {
 		user: data?.user || null,
