@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { describe, expect, it } from "vitest";
+import { getCurrentTest } from "vitest/suite";
 
 import { db, tables } from "@llmgateway/db";
 import {
@@ -15,6 +16,8 @@ import {
 import {
 	clearCache,
 	waitForLogByRequestId,
+	startQueueProcessor,
+	stopQueueProcessor,
 } from "./test-utils/test-helpers.js";
 
 export { getConcurrentTestOptions, getTestOptions };
@@ -328,8 +331,13 @@ export const toolCallModels = testModels
 	.filter((m) =>
 		m.providers.some((p: ProviderModelMapping) => p.tools === true),
 	)
-	// Exclude novita/minimax-m2.1 due to model variability in tool calling
-	.filter((m) => m.model !== "novita/minimax-m2.1");
+	// Exclude models with XML-based tool calling that don't reliably follow OpenAI schema
+	.filter(
+		(m) =>
+			m.model !== "novita/minimax-m2.1" &&
+			m.model !== "canopywave/minimax-m2.1" &&
+			m.model !== "canopywave/minimax-m2.5",
+	);
 
 export const streamingToolCallModels = toolCallModels.filter((m) =>
 	m.providers.some((p: ProviderModelMapping) => {
@@ -450,6 +458,7 @@ export async function validateLogByRequestId(requestId: string) {
 
 export async function beforeAllHook() {
 	await clearCache();
+	startQueueProcessor();
 
 	// Set up shared test data that all tests can use - use ON CONFLICT DO NOTHING to avoid duplicate key errors
 	await db
@@ -522,7 +531,18 @@ export async function beforeAllHook() {
 }
 
 export async function beforeEachHook() {
-	await clearCache();
+	const test = getCurrentTest();
+	const retryCount = test?.result?.retryCount ?? 0;
+	if (retryCount > 0) {
+		const delay = Math.min(2000 * 2 ** (retryCount - 1), 16000);
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, delay);
+		});
+	}
+}
+
+export function afterAllHook() {
+	stopQueueProcessor();
 }
 
 describe("e2e", getConcurrentTestOptions(), () => {

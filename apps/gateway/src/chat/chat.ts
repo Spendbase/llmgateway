@@ -8,6 +8,11 @@ import { reportKeyError, reportKeySuccess } from "@/lib/api-key-health.js";
 import { isCodingModel } from "@/lib/coding-models.js";
 import { calculateCosts, shouldBillCancelledRequests } from "@/lib/costs.js";
 import { getActiveProvidersForModel } from "@/lib/filter-model-mappings.js";
+import {
+	getGoogleVertexToken,
+	hasGoogleVertexCredentials,
+} from "@/lib/google-auth.js";
+import { fetchWithRetryOn429 } from "@/lib/http-client.js";
 import { throwIamException, validateModelAccess } from "@/lib/iam.js";
 import { calculateDataStorageCost, insertLog } from "@/lib/logs.js";
 import { isTimeoutError } from "@/lib/timeout-config.js";
@@ -58,7 +63,10 @@ import { extractTokenUsage } from "./tools/extract-token-usage.js";
 import { extractToolCalls } from "./tools/extract-tool-calls.js";
 import { getFinishReasonFromError } from "./tools/get-finish-reason-from-error.js";
 import { getProviderEnv } from "./tools/get-provider-env.js";
-import { healJsonResponse } from "./tools/heal-json-response.js";
+import {
+	healJsonResponse,
+	stripMarkdownFromJson,
+} from "./tools/heal-json-response.js";
 import { messagesContainImages } from "./tools/messages-contain-images.js";
 import { mightBeCompleteJson } from "./tools/might-be-complete-json.js";
 import { convertAwsEventStreamToSSE } from "./tools/parse-aws-eventstream.js";
@@ -215,6 +223,8 @@ const messageSchema = z.object({
 		.transform((val) => (val === null ? "" : val)),
 	name: z.string().optional(),
 	tool_call_id: z.string().optional(),
+	reasoning: z.string().optional(),
+	reasoning_content: z.string().optional(),
 	tool_calls: z
 		.array(
 			z.object({
@@ -1517,6 +1527,22 @@ chat.openapi(completions, async (c) => {
 		}
 
 		usedToken = providerKey.token;
+
+		// For Google Vertex AI, API keys are not supported — use OAuth2 if credentials are available
+		if (
+			usedProvider === "google-vertex" &&
+			(await hasGoogleVertexCredentials())
+		) {
+			try {
+				usedToken = await getGoogleVertexToken();
+				isOAuth2 = true;
+			} catch (error) {
+				logger.warn(
+					"Failed to get Google Vertex OAuth2 token in api-keys mode, using stored token",
+					error instanceof Error ? error : new Error(String(error)),
+				);
+			}
+		}
 	} else if (project.mode === "credits") {
 		// Check if the organization has enough credits using cached helper function
 		const organization = await db.query.organization.findFirst({
@@ -1580,6 +1606,22 @@ chat.openapi(completions, async (c) => {
 
 		if (providerKey) {
 			usedToken = providerKey.token;
+
+			// For Google Vertex AI, API keys are not supported — use OAuth2 if credentials are available
+			if (
+				usedProvider === "google-vertex" &&
+				(await hasGoogleVertexCredentials())
+			) {
+				try {
+					usedToken = await getGoogleVertexToken();
+					isOAuth2 = true;
+				} catch (error) {
+					logger.warn(
+						"Failed to get Google Vertex OAuth2 token in hybrid mode, using stored token",
+						error instanceof Error ? error : new Error(String(error)),
+					);
+				}
+			}
 		} else {
 			// No API key available, fall back to credits - no pro plan required
 			const organization = await db.query.organization.findFirst({
@@ -1684,6 +1726,14 @@ chat.openapi(completions, async (c) => {
 		(provider) => (provider as ProviderModelMapping).reasoning === true,
 	);
 
+	const selectedProviderHasEffort = (
+		modelInfo.providers.find(
+			(p) =>
+				p.providerId === usedProvider &&
+				(p as ProviderModelMapping).modelName === usedModel,
+		) as ProviderModelMapping | undefined
+	)?.supportedParameters?.includes("effort");
+
 	// Check if messages contain existing tool calls or tool results
 	// If so, use Chat Completions API instead of Responses API
 	const hasExistingToolCalls = messages.some(
@@ -1702,7 +1752,7 @@ chat.openapi(completions, async (c) => {
 			providerKey?.baseUrl || undefined,
 			usedModel,
 			usedProvider === "google-ai-studio" ||
-				usedProvider === "google-vertex" ||
+				(usedProvider === "google-vertex" && !isOAuth2) ||
 				usedProvider === "obsidian"
 				? usedToken
 				: undefined,
@@ -2270,12 +2320,18 @@ chat.openapi(completions, async (c) => {
 				});
 				headers["Content-Type"] = "application/json";
 
-				// Add effort beta header for Anthropic if effort parameter is specified
-				if (usedProvider === "anthropic" && effort !== undefined) {
+				// effort-2025-11-24 beta header is no longer required (effort is GA)
+
+				// Add interleaved thinking beta header for Anthropic when thinking is enabled via reasoning_effort
+				if (
+					usedProvider === "anthropic" &&
+					reasoning_effort !== undefined &&
+					supportsReasoning
+				) {
 					const currentBeta = headers["anthropic-beta"];
 					headers["anthropic-beta"] = currentBeta
-						? `${currentBeta},effort-2025-11-24`
-						: "effort-2025-11-24";
+						? `${currentBeta},interleaved-thinking-2025-05-14`
+						: "interleaved-thinking-2025-05-14";
 				}
 
 				// Add structured outputs beta header for Anthropic if json_schema response_format is specified
@@ -2289,7 +2345,7 @@ chat.openapi(completions, async (c) => {
 						: "structured-outputs-2025-11-13";
 				}
 
-				res = await fetch(url, {
+				res = await fetchWithRetryOn429(url, {
 					method: "POST",
 					headers,
 					body: JSON.stringify(requestBody),
@@ -2799,8 +2855,7 @@ chat.openapi(completions, async (c) => {
 			const streamingIsJsonResponseFormat =
 				response_format?.type === "json_object" ||
 				response_format?.type === "json_schema";
-			const shouldBufferForHealing =
-				streamingResponseHealingEnabled && streamingIsJsonResponseFormat;
+			const shouldBufferForHealing = streamingIsJsonResponseFormat;
 
 			// Buffer for storing chunks when healing is enabled
 			// We need to buffer content, track last chunk info, and replay healed content at the end
@@ -3567,8 +3622,14 @@ chat.openapi(completions, async (c) => {
 										data.delta?.stop_reason
 									) {
 										finishReason = data.delta.stop_reason;
-									} else if (data.type === "message_stop" || data.stop_reason) {
-										finishReason = data.stop_reason || "end_turn";
+									} else if (data.type === "message_stop") {
+										// Only set finishReason if not already set by message_delta
+										// message_stop is just a stream termination signal
+										if (!finishReason) {
+											finishReason = "end_turn";
+										}
+									} else if (data.stop_reason) {
+										finishReason = data.stop_reason;
 									} else if (data.delta?.stop_reason) {
 										finishReason = data.delta.stop_reason;
 									}
@@ -3964,27 +4025,37 @@ chat.openapi(completions, async (c) => {
 						!streamingError
 					) {
 						try {
-							// Combine buffered content and apply healing
+							// Combine buffered content
 							const bufferedContent = bufferedContentChunks.join("");
-							const healingResult = healJsonResponse(bufferedContent);
 
-							// Store plugin results for logging
-							streamingPluginResults.responseHealing = {
-								healed: healingResult.healed,
-								healingMethod: healingResult.healingMethod,
-							};
+							// Always strip markdown code fences for json responses
+							let finalContent = streamingIsJsonResponseFormat
+								? stripMarkdownFromJson(bufferedContent)
+								: bufferedContent;
 
-							if (healingResult.healed) {
-								logger.debug("Streaming response healing applied", {
-									method: healingResult.healingMethod,
-									originalLength: healingResult.originalContent.length,
-									healedLength: healingResult.content.length,
-								});
-								// Update fullContent with healed version for logging
-								fullContent = healingResult.content;
+							// Apply full healing only if plugin is enabled
+							if (streamingResponseHealingEnabled) {
+								const healingResult = healJsonResponse(finalContent);
+
+								streamingPluginResults.responseHealing = {
+									healed: healingResult.healed,
+									healingMethod: healingResult.healingMethod,
+								};
+
+								if (healingResult.healed) {
+									logger.debug("Streaming response healing applied", {
+										method: healingResult.healingMethod,
+										originalLength: healingResult.originalContent.length,
+										healedLength: healingResult.content.length,
+									});
+									finalContent = healingResult.content;
+								}
 							}
 
-							// Send the healed (or original if no healing needed) content as a single chunk
+							// Update fullContent with final version for logging
+							fullContent = finalContent;
+
+							// Send the final content as a single chunk
 							const healedContentChunk = {
 								id: lastChunkId || `chatcmpl-${Date.now()}`,
 								object: "chat.completion.chunk",
@@ -3994,7 +4065,7 @@ chat.openapi(completions, async (c) => {
 									{
 										index: 0,
 										delta: {
-											content: healingResult.content,
+											content: finalContent,
 										},
 										finish_reason: null,
 									},
@@ -4305,12 +4376,28 @@ chat.openapi(completions, async (c) => {
 		});
 		headers["Content-Type"] = "application/json";
 
-		// Add effort beta header for Anthropic if effort parameter is specified
-		if (usedProvider === "anthropic" && effort !== undefined) {
+		// Add effort beta header for Anthropic if effort parameter is specified or auto-injected
+		if (
+			usedProvider === "anthropic" &&
+			(effort !== undefined ||
+				(supportsReasoning && !reasoning_effort && selectedProviderHasEffort))
+		) {
 			const currentBeta = headers["anthropic-beta"];
 			headers["anthropic-beta"] = currentBeta
 				? `${currentBeta},effort-2025-11-24`
 				: "effort-2025-11-24";
+		}
+
+		// Add interleaved thinking beta header for Anthropic when thinking is enabled via reasoning_effort
+		if (
+			usedProvider === "anthropic" &&
+			reasoning_effort !== undefined &&
+			supportsReasoning
+		) {
+			const currentBeta = headers["anthropic-beta"];
+			headers["anthropic-beta"] = currentBeta
+				? `${currentBeta},interleaved-thinking-2025-05-14`
+				: "interleaved-thinking-2025-05-14";
 		}
 
 		// Add structured outputs beta header for Anthropic if json_schema response_format is specified
@@ -4324,7 +4411,7 @@ chat.openapi(completions, async (c) => {
 				: "structured-outputs-2025-11-13";
 		}
 
-		res = await fetch(url, {
+		res = await fetchWithRetryOn429(url, {
 			method: "POST",
 			headers,
 			body: JSON.stringify(requestBody),
@@ -4807,6 +4894,11 @@ chat.openapi(completions, async (c) => {
 			healingMethod?: string;
 		};
 	} = {};
+
+	// Always strip markdown code fences for json responses (model bug, not user-configurable)
+	if (isJsonResponseFormat && content) {
+		content = stripMarkdownFromJson(content);
+	}
 
 	if (responseHealingEnabled && isJsonResponseFormat && content) {
 		const healingResult = healJsonResponse(content);

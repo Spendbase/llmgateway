@@ -62,7 +62,7 @@ const schema = z.object({
 	cost: z.number().nullable(),
 	cached: z.boolean(),
 	api_key_id: z.string(),
-	project_mode: z.enum(["api-keys", "credits", "hybrid"]),
+	project_mode: z.enum(["api-keys", "credits", "hybrid"]).nullable(),
 	used_mode: z.enum(["api-keys", "credits"]),
 	duration: z.number(),
 	requested_model: z.string(),

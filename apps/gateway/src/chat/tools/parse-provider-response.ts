@@ -8,6 +8,64 @@ import type { Annotation, ImageObject } from "./types.js";
 import type { Provider } from "@llmgateway/models";
 
 /**
+ * Parses MiniMax XML tool call format into OpenAI-compatible tool_calls array.
+ * Used as fallback when canopywave's OpenAI wrapper fails to convert XML to JSON.
+ * Format: <minimax:tool_call><invoke name="fn"><parameter name="p">v</parameter></invoke></minimax:tool_call>
+ */
+function parseMiniMaxXmlToolCalls(content: string): any[] {
+	const toolCalls: any[] = [];
+	const toolCallBlocks =
+		content.match(/<minimax:tool_call>([\s\S]*?)<\/minimax:tool_call>/g) || [];
+
+	for (const block of toolCallBlocks) {
+		const invokeMatches =
+			block.match(/<invoke name=["']?([^"'>]+)["']?>([\s\S]*?)<\/invoke>/g) ||
+			[];
+
+		for (const invoke of invokeMatches) {
+			const nameMatch = invoke.match(/^<invoke name=["']?([^"'>]+)["']?>/);
+			if (!nameMatch) {
+				continue;
+			}
+
+			const functionName = nameMatch[1].trim();
+			const args: Record<string, unknown> = {};
+			const paramMatches =
+				invoke.match(
+					/<parameter name=["']?([^"'>]+)["']?>([\s\S]*?)<\/parameter>/g,
+				) || [];
+
+			for (const param of paramMatches) {
+				const paramMatch = param.match(
+					/<parameter name=["']?([^"'>]+)["']?>([\s\S]*?)<\/parameter>/,
+				);
+				if (!paramMatch) {
+					continue;
+				}
+				const paramName = paramMatch[1].trim();
+				const paramValue = paramMatch[2].trim();
+				try {
+					args[paramName] = JSON.parse(paramValue);
+				} catch {
+					args[paramName] = paramValue;
+				}
+			}
+
+			toolCalls.push({
+				id: `minimax_${functionName}_${toolCalls.length}`,
+				type: "function",
+				function: {
+					name: functionName,
+					arguments: JSON.stringify(args),
+				},
+			});
+		}
+	}
+
+	return toolCalls;
+}
+
+/**
  * Parses response content and metadata from different providers
  */
 export function parseProviderResponse(
@@ -220,8 +278,17 @@ export function parseProviderResponse(
 				}),
 			);
 
-			// Debug logging to identify parsing issues
-			if (!content && !reasoningContent && parts.length > 0 && !images.length) {
+			// Debug logging to identify parsing issues (skip if parts are only functionCalls/thoughtSignatures)
+			const hasOnlyFunctionCallParts = parts.every(
+				(part: any) => part.functionCall || part.thoughtSignature,
+			);
+			if (
+				!content &&
+				!reasoningContent &&
+				parts.length > 0 &&
+				!images.length &&
+				!hasOnlyFunctionCallParts
+			) {
 				logger.warn(
 					"[parse-provider-response] Google response has parts but no text extracted",
 					{
@@ -483,6 +550,28 @@ export function parseProviderResponse(
 					json.choices?.[0]?.message?.reasoning_content ||
 					null;
 				finishReason = json.choices?.[0]?.finish_reason || null;
+
+				// Fallback: parse MiniMax XML tool call format when canopywave wrapper fails to convert
+				// MiniMax models use <minimax:tool_call><invoke name="..."><parameter name="...">...</parameter></invoke></minimax:tool_call>
+				if (
+					(!toolResults || toolResults.length === 0) &&
+					content &&
+					content.includes("<minimax:tool_call>")
+				) {
+					const parsedXmlToolCalls = parseMiniMaxXmlToolCalls(content);
+					if (parsedXmlToolCalls.length > 0) {
+						toolResults = parsedXmlToolCalls;
+						// Strip the XML tool call block from content
+						content =
+							content
+								.replace(
+									/<minimax:tool_call>[\s\S]*?<\/minimax:tool_call>/g,
+									"",
+								)
+								.trim() || null;
+						finishReason = "tool_calls";
+					}
+				}
 
 				// Standard OpenAI-style token parsing
 				promptTokens = json.usage?.prompt_tokens || null;

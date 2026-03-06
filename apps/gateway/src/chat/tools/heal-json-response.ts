@@ -23,6 +23,31 @@ export interface HealingResult {
 }
 
 /**
+ * Strips markdown code fences from JSON content if present.
+ * Also strips <think>...</think> blocks that some reasoning models prepend.
+ * Always-on for json_object/json_schema responses, regardless of healing plugin.
+ */
+export function stripMarkdownFromJson(content: string): string {
+	let stripped = content;
+
+	// Strip <think>...</think> blocks (reasoning models like minimax/canopywave)
+	stripped = stripped.replace(/<think>[\s\S]*?<\/think>\s*/g, "").trim();
+
+	const jsonBlockMatch = stripped.match(/^```json\s*([\s\S]*?)\s*```$/);
+	if (jsonBlockMatch && jsonBlockMatch[1]) {
+		return jsonBlockMatch[1].trim();
+	}
+	const genericBlockMatch = stripped.match(/^```\s*([\s\S]*?)\s*```$/);
+	if (genericBlockMatch && genericBlockMatch[1]) {
+		const extracted = genericBlockMatch[1].trim();
+		if (extracted.startsWith("{") || extracted.startsWith("[")) {
+			return extracted;
+		}
+	}
+	return stripped;
+}
+
+/**
  * Attempts to extract valid JSON from a string that may contain markdown code blocks
  */
 function extractFromMarkdown(content: string): string | null {
