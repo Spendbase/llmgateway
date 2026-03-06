@@ -1096,11 +1096,14 @@ organization.openapi(getLowBalanceAlertSettings, async (c) => {
 		});
 	}
 
-	return c.json({
-		lowBalanceAlertEnabled: org.lowBalanceAlertEnabled,
-		lowBalanceAlertThreshold: org.lowBalanceAlertThreshold,
-		alertEmails: org.alertRecipients.map((r) => r.email),
-	});
+	return c.json(
+		{
+			lowBalanceAlertEnabled: org.lowBalanceAlertEnabled,
+			lowBalanceAlertThreshold: org.lowBalanceAlertThreshold,
+			alertEmails: org.alertRecipients.map((r) => r.email),
+		},
+		200,
+	);
 });
 
 // PUT /orgs/{id}/low-balance-alert

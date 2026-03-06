@@ -22,6 +22,7 @@ import { tracingMiddleware } from "./middleware/tracing.js";
 import { beacon } from "./routes/beacon.js";
 import { googleWorkspace } from "./routes/google-workspace.js";
 import { routes } from "./routes/index.js";
+import { internalBilling } from "./routes/internal-billing.js";
 import { internalModels } from "./routes/internal-models.js";
 import { referral } from "./routes/referral.js";
 import { stripeRoutes } from "./stripe.js";
@@ -189,6 +190,7 @@ app.route("/", beacon);
 app.route("/", referral);
 
 app.route("/internal", internalModels);
+app.route("/internal/billing", internalBilling);
 
 app.doc("/json", config);
 

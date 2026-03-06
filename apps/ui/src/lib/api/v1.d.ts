@@ -247,6 +247,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/billing/low-balance-alert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send low balance alert email
+         * @description Internal endpoint called by the worker to send low balance alert emails to organization recipients.
+         */
+        post: operations["internal_send_low_balance_alert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/rankings": {
         parameters: {
             query?: never;
@@ -4100,6 +4120,17 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Bad request. Invalid email address. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
                 /** @description Unauthorized. */
                 401: {
                     headers: {
@@ -5552,6 +5583,78 @@ export interface operations {
                             /** @enum {string} */
                             status: "active" | "inactive";
                         }[];
+                    };
+                };
+            };
+        };
+    };
+    internal_send_low_balance_alert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    organizationId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Low balance alert emails sent successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                    };
+                };
+            };
+            /** @description Unauthorized. Missing or invalid internal secret. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Organization not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Organization no longer qualifies for low balance alert. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Failed to send low balance alert emails. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
                     };
                 };
             };
