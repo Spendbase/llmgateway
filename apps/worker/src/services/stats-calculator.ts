@@ -152,6 +152,9 @@ async function calculateModelHistoryForMinute(targetMinute: Date) {
 		processedModels.add(modelEntry.modelId);
 
 		const stat = activeModelsMap.get(modelEntry.modelId);
+		if (!stat) {
+			continue;
+		}
 
 		// Use actual stats if available, otherwise create zero stats
 		const logsCount = stat?.logsCount || 0;
@@ -335,6 +338,9 @@ async function calculateHistoryForMinute(targetMinute: Date) {
 
 		const key = `${mapping.modelId}-${mapping.providerId}`;
 		const stat = activeMappingsMap.get(key);
+		if (!stat) {
+			continue;
+		}
 
 		// Use actual stats if available, otherwise create zero stats
 		const logsCount = stat?.logsCount || 0;
