@@ -240,7 +240,7 @@ export interface OpenAIResponsesRequestBody {
 	model: string;
 	input: OpenAIResponsesInputItem[];
 	reasoning: {
-		effort: "minimal" | "low" | "medium" | "high";
+		effort: "minimal" | "low" | "medium" | "high" | "xhigh";
 		summary: "detailed";
 	};
 	tools?: Array<{
