@@ -8,6 +8,7 @@ import {
 	CheckCircle2,
 	XCircle,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DepositCreditsButton } from "@/components/deposit-credits/deposit-credits-dialog";
@@ -234,7 +235,12 @@ export function OrganizationsTable({
 						{organizations.map((org: Organization) => (
 							<tr key={org.id} className="hover:bg-muted/30 transition-colors">
 								<td className="px-4 py-4 font-medium">
-									{highlightMatch(org.name, searchQuery)}
+									<Link
+										href={`/organizations/${org.id}`}
+										className="hover:underline hover:text-primary transition-colors"
+									>
+										{highlightMatch(org.name, searchQuery)}
+									</Link>
 								</td>
 								<td className="px-4 py-4">
 									{highlightMatch(org.billingEmail, searchQuery)}
