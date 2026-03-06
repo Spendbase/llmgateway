@@ -870,13 +870,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 					const isSocialCallback = ctx.path.includes("/callback");
 					if (isSocialCallback) {
-						const sessionId = newSession.session?.id;
-						if (sessionId) {
-							await db
-								.delete(tables.session)
-								.where(eq(tables.session.id, sessionId));
-							await db.delete(tables.user).where(eq(tables.user.id, userId));
-						}
 						const errorUrl = new URL("/corporate-login", uiUrl);
 						errorUrl.searchParams.set("error", "corporate_only");
 						throw ctx.redirect(errorUrl.toString());

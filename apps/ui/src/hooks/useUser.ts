@@ -1,9 +1,10 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
 
+import { useAuth } from "@/lib/auth-client";
 import { useApi } from "@/lib/fetch-client";
 
 import type { Route } from "next";
@@ -29,6 +30,10 @@ export function useUser(options?: UseUserOptions) {
 	const router = useRouter();
 	const api = useApi();
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const { signOut } = useAuth();
+
+	const isCorporateLoginError = searchParams.get("error") === "corporate_only";
 
 	const { data, isLoading, error } = api.useQuery(
 		"get",
@@ -82,6 +87,10 @@ export function useUser(options?: UseUserOptions) {
 		const { redirectTo, redirectWhen, checkOnboarding } = options;
 		const hasUser = !!data?.user;
 
+		if (isCorporateLoginError) {
+			return;
+		}
+
 		if (redirectWhen === "authenticated" && hasUser && !isLoading && !error) {
 			if (checkOnboarding && !data.user.onboardingCompleted) {
 				router.push("/onboarding");
@@ -105,6 +114,16 @@ export function useUser(options?: UseUserOptions) {
 		options?.checkOnboarding,
 		options,
 	]);
+
+	useEffect(() => {
+		const checkCorporateEmail = async () => {
+			await signOut();
+		};
+
+		if (data?.user && isCorporateLoginError) {
+			checkCorporateEmail();
+		}
+	}, [data?.user, searchParams]);
 
 	return {
 		user: data?.user || null,
