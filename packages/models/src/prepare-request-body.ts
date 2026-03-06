@@ -455,6 +455,7 @@ export async function prepareRequestBody(
 	}
 
 	switch (usedProvider) {
+		case "azure":
 		case "openai": {
 			// Check if the model supports responses API
 			const providerMapping = modelDef?.providers.find(
