@@ -7,8 +7,8 @@ import type {
 	OrgAnalyticsOverview,
 	OrgApiKeysResponse,
 	OrgDepositsResponse,
-	OrgMember,
-	OrgProject,
+	OrgMembersResponse,
+	OrgProjectsResponse,
 	OrgUsageResponse,
 } from "@/lib/types";
 
@@ -38,12 +38,12 @@ export default async function OrgAnalyticsPage({
 					params: { path: { id } },
 				},
 			),
-			fetchServerData<{ members: OrgMember[] }>(
+			fetchServerData<OrgMembersResponse>(
 				"GET",
 				"/admin/organizations/{id}/members",
 				{ params: { path: { id } } },
 			),
-			fetchServerData<{ projects: OrgProject[] }>(
+			fetchServerData<OrgProjectsResponse>(
 				"GET",
 				"/admin/organizations/{id}/projects",
 				{ params: { path: { id } } },
@@ -65,7 +65,7 @@ export default async function OrgAnalyticsPage({
 			overview={overview}
 			initialApiKeys={
 				apiKeys ?? {
-					items: [],
+					apiKeys: [],
 					pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
 				}
 			}
@@ -82,11 +82,21 @@ export default async function OrgAnalyticsPage({
 					},
 				}
 			}
-			initialMembers={members?.members ?? []}
-			initialProjects={projects?.projects ?? []}
+			initialMembers={
+				members ?? {
+					members: [],
+					pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+				}
+			}
+			initialProjects={
+				projects ?? {
+					projects: [],
+					pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+				}
+			}
 			initialDeposits={
 				deposits ?? {
-					items: [],
+					deposits: [],
 					pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
 				}
 			}

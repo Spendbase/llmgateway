@@ -1,15 +1,17 @@
 "use client";
 
 import { format } from "date-fns";
+import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { CustomBadge as Badge } from "@/components/ui/custom-badge";
 import { useOrgProjects } from "@/hooks/use-org-section-query";
 
-import type { OrgProject } from "@/lib/types";
+import type { OrgProjectsResponse } from "@/lib/types";
 
 interface OrgProjectsSectionProps {
 	orgId: string;
-	initialData: OrgProject[];
+	initialData: OrgProjectsResponse;
 }
 
 function statusVariant(status: string) {
@@ -36,14 +38,18 @@ export function OrgProjectsSection({
 	orgId,
 	initialData,
 }: OrgProjectsSectionProps) {
-	const { data } = useOrgProjects(orgId);
-	const projects = data?.projects ?? initialData;
+	const [page, setPage] = useState(1);
+
+	const { data } = useOrgProjects(orgId, page, 20);
+	const result = data ?? initialData;
+	const projects = result.projects;
+	const pagination = result.pagination;
 
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex items-center justify-between">
 				<span className="text-sm text-muted-foreground">
-					{projects.length} project{projects.length !== 1 ? "s" : ""}
+					{pagination.total} project{pagination.total !== 1 ? "s" : ""}
 				</span>
 			</div>
 
@@ -116,6 +122,33 @@ export function OrgProjectsSection({
 					</tbody>
 				</table>
 			</div>
+
+			{pagination.totalPages > 1 && (
+				<div className="flex items-center justify-between text-sm text-muted-foreground">
+					<span>{pagination.total} total</span>
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={page <= 1}
+							onClick={() => setPage((p) => p - 1)}
+						>
+							Previous
+						</Button>
+						<span>
+							{page} / {pagination.totalPages}
+						</span>
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={page >= pagination.totalPages}
+							onClick={() => setPage((p) => p + 1)}
+						>
+							Next
+						</Button>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

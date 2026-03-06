@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { CustomBadge as Badge } from "@/components/ui/custom-badge";
 import { Input } from "@/components/ui/input";
 import { useOrgDeposits } from "@/hooks/use-org-section-query";
@@ -116,7 +117,7 @@ export function OrgDepositsSection({
 						</tr>
 					</thead>
 					<tbody>
-						{result.items.map((deposit) => (
+						{result.deposits.map((deposit) => (
 							<tr
 								key={deposit.id}
 								className="border-b last:border-0 hover:bg-muted/30 transition-colors"
@@ -147,7 +148,7 @@ export function OrgDepositsSection({
 								</td>
 							</tr>
 						))}
-						{result.items.length === 0 && (
+						{result.deposits.length === 0 && (
 							<tr>
 								<td
 									colSpan={6}
@@ -165,23 +166,25 @@ export function OrgDepositsSection({
 				<div className="flex items-center justify-between text-sm text-muted-foreground">
 					<span>{result.pagination.total} total</span>
 					<div className="flex items-center gap-2">
-						<button
-							className="px-2 py-1 rounded border text-xs disabled:opacity-40"
+						<Button
+							variant="outline"
+							size="sm"
 							disabled={page <= 1}
 							onClick={() => setPage((p) => p - 1)}
 						>
 							Previous
-						</button>
+						</Button>
 						<span>
 							{page} / {result.pagination.totalPages}
 						</span>
-						<button
-							className="px-2 py-1 rounded border text-xs disabled:opacity-40"
+						<Button
+							variant="outline"
+							size="sm"
 							disabled={page >= result.pagination.totalPages}
 							onClick={() => setPage((p) => p + 1)}
 						>
 							Next
-						</button>
+						</Button>
 					</div>
 				</div>
 			)}

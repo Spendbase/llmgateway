@@ -5,16 +5,17 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { CustomBadge as Badge } from "@/components/ui/custom-badge";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useOrgMembers } from "@/hooks/use-org-section-query";
 
-import type { OrgMember } from "@/lib/types";
+import type { OrgMembersResponse } from "@/lib/types";
 
 interface OrgMembersSectionProps {
 	orgId: string;
-	initialData: OrgMember[];
+	initialData: OrgMembersResponse;
 }
 
 function roleVariant(role: string) {
@@ -48,10 +49,13 @@ export function OrgMembersSection({
 	initialData,
 }: OrgMembersSectionProps) {
 	const [search, setSearch] = useState("");
+	const [page, setPage] = useState(1);
 	const debouncedSearch = useDebounce(search, 300);
 
-	const { data } = useOrgMembers(orgId, debouncedSearch || undefined);
-	const members = data?.members ?? initialData;
+	const { data } = useOrgMembers(orgId, page, 20, debouncedSearch || undefined);
+	const result = data ?? initialData;
+	const members = result.members;
+	const pagination = result.pagination;
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -62,11 +66,14 @@ export function OrgMembersSection({
 						className="pl-9"
 						placeholder="Search by name or email..."
 						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						onChange={(e) => {
+							setSearch(e.target.value);
+							setPage(1);
+						}}
 					/>
 				</div>
-				<span className="text-sm text-muted-foreground">
-					{members.length} member{members.length !== 1 ? "s" : ""}
+				<span className="text-sm text-muted-foreground ml-auto">
+					{pagination.total} member{pagination.total !== 1 ? "s" : ""}
 				</span>
 			</div>
 
@@ -149,6 +156,33 @@ export function OrgMembersSection({
 					</tbody>
 				</table>
 			</div>
+
+			{pagination.totalPages > 1 && (
+				<div className="flex items-center justify-between text-sm text-muted-foreground">
+					<span>{pagination.total} total</span>
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={page <= 1}
+							onClick={() => setPage((p) => p - 1)}
+						>
+							Previous
+						</Button>
+						<span>
+							{page} / {pagination.totalPages}
+						</span>
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={page >= pagination.totalPages}
+							onClick={() => setPage((p) => p + 1)}
+						>
+							Next
+						</Button>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

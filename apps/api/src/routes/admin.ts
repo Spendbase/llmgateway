@@ -2419,7 +2419,7 @@ const getOrgApiKeys = createRoute({
 			content: {
 				"application/json": {
 					schema: z.object({
-						items: z.array(orgApiKeyItemSchema).openapi({}),
+						apiKeys: z.array(orgApiKeyItemSchema).openapi({}),
 						pagination: z.object({
 							page: z.number(),
 							pageSize: z.number(),
@@ -2476,6 +2476,8 @@ const getOrgMembers = createRoute({
 		params: z.object({ id: z.string() }),
 		query: z.object({
 			search: z.string().optional(),
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(200).default(20),
 		}),
 	},
 	responses: {
@@ -2484,6 +2486,12 @@ const getOrgMembers = createRoute({
 				"application/json": {
 					schema: z.object({
 						members: z.array(orgMemberSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
 					}),
 				},
 			},
@@ -2499,6 +2507,10 @@ const getOrgProjects = createRoute({
 	path: "/organizations/{id}/projects",
 	request: {
 		params: z.object({ id: z.string() }),
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(200).default(20),
+		}),
 	},
 	responses: {
 		200: {
@@ -2506,6 +2518,12 @@ const getOrgProjects = createRoute({
 				"application/json": {
 					schema: z.object({
 						projects: z.array(orgProjectItemSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
 					}),
 				},
 			},
@@ -2533,7 +2551,7 @@ const getOrgDeposits = createRoute({
 			content: {
 				"application/json": {
 					schema: z.object({
-						items: z.array(orgDepositItemSchema).openapi({}),
+						deposits: z.array(orgDepositItemSchema).openapi({}),
 						pagination: z.object({
 							page: z.number(),
 							pageSize: z.number(),
@@ -2663,7 +2681,7 @@ admin.openapi(getOrgApiKeys, async (c) => {
 
 	if (projectIds.length === 0) {
 		return c.json({
-			items: [],
+			apiKeys: [],
 			pagination: { page, pageSize, total: 0, totalPages: 0 },
 		});
 	}
@@ -2735,7 +2753,7 @@ admin.openapi(getOrgApiKeys, async (c) => {
 	}));
 
 	return c.json({
-		items,
+		apiKeys: items,
 		pagination: {
 			page,
 			pageSize,
@@ -2836,7 +2854,8 @@ admin.openapi(getOrgMembers, async (c) => {
 	}
 
 	const { id } = c.req.valid("param");
-	const { search } = c.req.valid("query");
+	const { search, page, pageSize } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
 
 	const userIdsSq = db
 		.select({ userId: tables.userOrganization.userId })
@@ -2873,6 +2892,19 @@ admin.openapi(getOrgMembers, async (c) => {
 		);
 	}
 
+	const where = and(
+		eq(tables.userOrganization.organizationId, id),
+		...conditions,
+	);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.userOrganization)
+		.innerJoin(tables.user, eq(tables.user.id, tables.userOrganization.userId))
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
 	const rows = await db
 		.select({
 			userId: tables.userOrganization.userId,
@@ -2889,10 +2921,20 @@ admin.openapi(getOrgMembers, async (c) => {
 			lastLoginSq,
 			eq(lastLoginSq.userId, tables.userOrganization.userId),
 		)
-		.where(and(eq(tables.userOrganization.organizationId, id), ...conditions))
-		.orderBy(asc(tables.userOrganization.createdAt));
+		.where(where)
+		.orderBy(asc(tables.userOrganization.createdAt))
+		.limit(pageSize)
+		.offset(offset);
 
-	return c.json({ members: rows });
+	return c.json({
+		members: rows,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
 });
 
 admin.openapi(getOrgProjects, async (c) => {
@@ -2905,6 +2947,8 @@ admin.openapi(getOrgProjects, async (c) => {
 	}
 
 	const { id } = c.req.valid("param");
+	const { page, pageSize } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
 
 	const activeKeysSq = db
 		.select({
@@ -2915,6 +2959,15 @@ admin.openapi(getOrgProjects, async (c) => {
 		.where(eq(tables.apiKey.status, "active"))
 		.groupBy(tables.apiKey.projectId)
 		.as("active_keys");
+
+	const where = eq(tables.project.organizationId, id);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.project)
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
 
 	const rows = await db
 		.select({
@@ -2930,10 +2983,20 @@ admin.openapi(getOrgProjects, async (c) => {
 		})
 		.from(tables.project)
 		.leftJoin(activeKeysSq, eq(activeKeysSq.projectId, tables.project.id))
-		.where(eq(tables.project.organizationId, id))
-		.orderBy(asc(tables.project.createdAt));
+		.where(where)
+		.orderBy(asc(tables.project.createdAt))
+		.limit(pageSize)
+		.offset(offset);
 
-	return c.json({ projects: rows });
+	return c.json({
+		projects: rows,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
 });
 
 admin.openapi(getOrgDeposits, async (c) => {
@@ -3003,7 +3066,7 @@ admin.openapi(getOrgDeposits, async (c) => {
 	}));
 
 	return c.json({
-		items,
+		deposits: items,
 		pagination: {
 			page,
 			pageSize,
