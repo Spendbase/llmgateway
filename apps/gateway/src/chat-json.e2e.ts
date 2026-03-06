@@ -104,7 +104,7 @@ describe("e2e", getConcurrentTestOptions(), () => {
 					},
 					{
 						role: "user",
-						content: "What is the weather like today?",
+						content: "What is the weather like in New York today?",
 					},
 				],
 				response_format: {
@@ -261,7 +261,7 @@ describe("e2e", getConcurrentTestOptions(), () => {
 						},
 						{
 							role: "user",
-							content: "What is the weather like today?",
+							content: "What is the weather like in New York today?",
 						},
 					],
 					response_format: {

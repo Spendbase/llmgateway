@@ -1,10 +1,32 @@
 import { processLogQueue } from "worker";
 
-import { redisClient } from "@llmgateway/cache";
+import { redisClient, LOG_QUEUE } from "@llmgateway/cache";
 import { db, tables, eq } from "@llmgateway/db";
 
+let queueProcessorTimer: ReturnType<typeof setInterval> | null = null;
+
+export function startQueueProcessor(intervalMs = 50) {
+	if (queueProcessorTimer) {
+		return;
+	}
+	queueProcessorTimer = setInterval(() => {
+		void processLogQueue();
+	}, intervalMs);
+}
+
+export function stopQueueProcessor() {
+	if (queueProcessorTimer) {
+		clearInterval(queueProcessorTimer);
+		queueProcessorTimer = null;
+	}
+}
+
 export async function clearCache() {
-	await redisClient.flushdb();
+	const keys = await redisClient.keys("*");
+	const toDelete = keys.filter((k) => k !== LOG_QUEUE);
+	if (toDelete.length > 0) {
+		await redisClient.del(...toDelete);
+	}
 }
 
 /**
@@ -23,8 +45,6 @@ export async function waitForLogs(
 	console.log(`Waiting for ${expectedCount} logs (timeout: ${maxWaitMs}ms)...`);
 
 	while (Date.now() - startTime < maxWaitMs) {
-		await processLogQueue();
-
 		const logs = await db.query.log.findMany({});
 
 		if (logs.length >= expectedCount) {
@@ -55,15 +75,12 @@ export async function waitForLogs(
  */
 export async function waitForLogByRequestId(
 	requestId: string,
-	maxWaitMs = 20000,
+	maxWaitMs = 30000,
 	intervalMs = 100,
 ) {
 	const startTime = Date.now();
 
 	while (Date.now() - startTime < maxWaitMs) {
-		// Process the log queue to ensure any pending logs are written to the database
-		await processLogQueue();
-
 		// Query for the specific log entry by request ID
 		const logs = await db
 			.select()

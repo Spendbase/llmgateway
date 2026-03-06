@@ -174,6 +174,7 @@ export const metaModels = [
 		releasedAt: new Date("2025-04-30"),
 		providers: [
 			{
+				test: "skip",
 				providerId: "groq",
 				modelName: "meta-llama/llama-guard-4-12b",
 				inputPrice: 0.2 / 1e6,
@@ -231,7 +232,6 @@ export const metaModels = [
 			// },
 			{
 				providerId: "novita",
-				test: "skip",
 				modelName: "meta-llama/llama-3.3-70b-instruct",
 				inputPrice: 0.135 / 1e6,
 				outputPrice: 0.4 / 1e6,
@@ -274,8 +274,8 @@ export const metaModels = [
 		family: "meta",
 		providers: [
 			{
+				test: "skip",
 				providerId: "nebius",
-				test: "only",
 				modelName: "meta-llama/Llama-Guard-3-8B",
 				inputPrice: 0.02 / 1e6,
 				outputPrice: 0.06 / 1e6,

@@ -15,6 +15,62 @@ const BLACKLISTED_DOMAINS = [
 	"anondrop.net",
 ];
 
+const PUBLIC_EMAIL_DOMAINS = [
+	"gmail.com",
+	"googlemail.com",
+	"yahoo.com",
+	"yahoo.co.uk",
+	"yahoo.co.in",
+	"yahoo.co.jp",
+	"outlook.com",
+	"hotmail.com",
+	"hotmail.co.uk",
+	"live.com",
+	"live.co.uk",
+	"msn.com",
+	"aol.com",
+	"icloud.com",
+	"me.com",
+	"mac.com",
+	"mail.com",
+	"protonmail.com",
+	"proton.me",
+	"zoho.com",
+	"gmx.com",
+	"gmx.net",
+	"web.de",
+	"fastmail.com",
+	"tutanota.com",
+	"tuta.io",
+	"hey.com",
+	"inbox.com",
+	"rocketmail.com",
+	"att.net",
+	"sbcglobal.net",
+	"comcast.net",
+	"verizon.net",
+	"cox.net",
+	"charter.net",
+	"earthlink.net",
+	"optonline.net",
+	"qq.com",
+	"163.com",
+	"126.com",
+	"sina.com",
+	"naver.com",
+	"daum.net",
+	"hanmail.net",
+	"rediffmail.com",
+	"yandex.ru",
+	"yandex.com",
+	"yandex.by",
+	"yandex.kz",
+	"yandex.ua",
+	"ya.ru",
+];
+
+const PUBLIC_EMAIL_DOMAIN_SET = new Set(PUBLIC_EMAIL_DOMAINS);
+
 export function validateEmail(email: string): EmailValidationResult {
 	const emailLower = email.toLowerCase();
 
@@ -48,4 +104,15 @@ export function validateEmail(email: string): EmailValidationResult {
 	}
 
 	return { valid: true };
+}
+
+export function isCorporateEmail(email: string): boolean {
+	const domain = email.toLowerCase().trim().split("@")[1];
+	if (!domain) {
+		return false;
+	}
+	return (
+		!PUBLIC_EMAIL_DOMAIN_SET.has(domain) &&
+		!BLACKLISTED_DOMAINS.includes(domain)
+	);
 }

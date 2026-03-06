@@ -1,4 +1,5 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { GoogleAuth } from "google-auth-library";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
@@ -181,12 +182,35 @@ keysProvider.openapi(create, async (c) => {
 		if (provider === "custom") {
 			validationResult = { valid: true };
 		} else {
+			// For Google Vertex, try ADC (Application Default Credentials) first
+			let vertexOAuth2Token: string | undefined;
+			if (provider === "google-vertex") {
+				try {
+					const credentialsJson =
+						process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+					const auth = credentialsJson
+						? new GoogleAuth({
+								credentials: JSON.parse(credentialsJson),
+								scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+							})
+						: new GoogleAuth({
+								scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+							});
+					const client = await auth.getClient();
+					const tokenResponse = await client.getAccessToken();
+					vertexOAuth2Token = tokenResponse.token ?? undefined;
+				} catch {
+					// ADC not available, fall through to API key validation
+				}
+			}
+
 			validationResult = await validateProviderKey(
 				provider as ProviderId,
 				userToken,
 				baseUrl,
 				isTestEnv,
 				options,
+				vertexOAuth2Token,
 			);
 		}
 	} catch (error) {
@@ -199,15 +223,28 @@ keysProvider.openapi(create, async (c) => {
 
 	if (validationResult.error) {
 		const errorMessage = validationResult.error || "Upstream server error";
+		const statusCode = validationResult.statusCode;
 		logger.error("Provider key validation failed", {
 			provider,
 			model: validationResult.model,
-			statusCode: validationResult.statusCode,
+			statusCode,
 			error: errorMessage,
 		});
-		throw new HTTPException(500, {
-			message: `Error from provider: ${errorMessage} and status code ${validationResult.statusCode} (using model ${validationResult.model}). Please try again later or contact support.`,
-		});
+		// 5xx from upstream = provider temporarily unavailable, not an invalid key
+		// Still save the key but log the issue
+		if (statusCode && statusCode >= 500) {
+			logger.warn(
+				"Provider returned 5xx during key validation, saving key anyway",
+				{
+					provider,
+					statusCode,
+				},
+			);
+		} else {
+			throw new HTTPException(500, {
+				message: `Error from provider: ${errorMessage} and status code ${statusCode} (using model ${validationResult.model}). Please try again later or contact support.`,
+			});
+		}
 	}
 
 	if (!validationResult.valid) {

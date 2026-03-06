@@ -25,8 +25,8 @@ export const minimaxModels = [
 				jsonOutput: false,
 			},
 			{
+				stability: "unstable" as const,
 				providerId: "canopywave",
-				test: "skip",
 				modelName: "minimax/minimax-m2.5",
 				inputPrice: 0.27 / 1e6,
 				outputPrice: 1.08 / 1e6,
@@ -126,7 +126,6 @@ export const minimaxModels = [
 			},
 			{
 				providerId: "novita",
-				test: "skip",
 				modelName: "minimax/minimax-m2.1",
 				inputPrice: 0.3 / 1e6,
 				cachedInputPrice: 0.03 / 1e6,
@@ -143,9 +142,9 @@ export const minimaxModels = [
 				jsonOutputSchema: false,
 			},
 			{
+				stability: "unstable" as const,
 				providerId: "canopywave",
 				modelName: "minimax/minimax-m2.1",
-				test: "skip",
 				inputPrice: 0.27 / 1e6,
 				cachedInputPrice: 0.07 / 1e6,
 				outputPrice: 1.08 / 1e6,

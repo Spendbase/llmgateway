@@ -10,6 +10,8 @@ export {
 	getDevPlanCreditsLimit,
 } from "./dev-plans.js";
 
+export { computeNextResetAt } from "./api-keys.js";
+
 export {
 	HealthChecker,
 	type HealthCheckResult,

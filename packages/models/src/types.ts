@@ -67,6 +67,8 @@ export interface BaseMessage {
 	name?: string;
 	tool_calls?: ToolCall[];
 	tool_call_id?: string;
+	reasoning?: string;
+	reasoning_content?: string;
 }
 
 // Provider-specific message formats
@@ -238,7 +240,7 @@ export interface OpenAIResponsesRequestBody {
 	model: string;
 	input: OpenAIResponsesInputItem[];
 	reasoning: {
-		effort: "minimal" | "low" | "medium" | "high";
+		effort: "minimal" | "low" | "medium" | "high" | "xhigh";
 		summary: "detailed";
 	};
 	tools?: Array<{

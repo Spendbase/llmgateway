@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/lib/components/button";
 import { Checkbox } from "@/lib/components/checkbox";
@@ -16,6 +16,13 @@ import {
 } from "@/lib/components/dialog";
 import { Input } from "@/lib/components/input";
 import { Label } from "@/lib/components/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/lib/components/select";
 import {
 	Tooltip,
 	TooltipContent,
@@ -34,6 +41,45 @@ interface CreateApiKeyDialogProps {
 	disabledMessage?: string;
 }
 
+type ExpirationDuration =
+	| "none"
+	| "1h"
+	| "1d"
+	| "7d"
+	| "30d"
+	| "90d"
+	| "180d"
+	| "1y";
+
+function computeExpiresAt(duration: ExpirationDuration): Date | null {
+	if (duration === "none") {
+		return null;
+	}
+	const now = new Date();
+	const ms = now.getTime();
+	const durations: Record<Exclude<ExpirationDuration, "none">, number> = {
+		"1h": 60 * 60 * 1000,
+		"1d": 24 * 60 * 60 * 1000,
+		"7d": 7 * 24 * 60 * 60 * 1000,
+		"30d": 30 * 24 * 60 * 60 * 1000,
+		"90d": 90 * 24 * 60 * 60 * 1000,
+		"180d": 180 * 24 * 60 * 60 * 1000,
+		"1y": 365 * 24 * 60 * 60 * 1000,
+	};
+	return new Date(ms + durations[duration]);
+}
+
+const expirationLabels: Record<ExpirationDuration, string> = {
+	none: "No expiration",
+	"1h": "1 hour",
+	"1d": "1 day",
+	"7d": "7 days",
+	"30d": "30 days",
+	"90d": "90 days",
+	"180d": "180 days",
+	"1y": "1 year",
+};
+
 export function CreateApiKeyDialog({
 	children,
 	selectedProject,
@@ -47,10 +93,27 @@ export function CreateApiKeyDialog({
 	const [name, setName] = useState("");
 	const [limit, setLimit] = useState<string>("0");
 	const [limitChecked, setLimitChecked] = useState<boolean>(false);
+	const [resetPeriod, setResetPeriod] = useState<string>("none");
+	const [expirationDuration, setExpirationDuration] =
+		useState<ExpirationDuration>("none");
 	const [apiKey, setApiKey] = useState("");
 	const api = useApi();
 
 	const { mutate: createApiKey } = api.useMutation("post", "/keys/api");
+
+	const expirationPreview = useMemo(() => {
+		const date = computeExpiresAt(expirationDuration);
+		if (!date) {
+			return null;
+		}
+		return Intl.DateTimeFormat(undefined, {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		}).format(date);
+	}, [expirationDuration]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -59,12 +122,21 @@ export function CreateApiKeyDialog({
 			return;
 		}
 
+		const finalResetPeriod = limitChecked ? resetPeriod : "none";
+		const expiresAt = computeExpiresAt(expirationDuration);
+
 		createApiKey(
 			{
 				body: {
 					description: name.trim(),
 					projectId: selectedProject.id,
 					usageLimit: limitChecked ? limit : null,
+					resetPeriod: finalResetPeriod as
+						| "daily"
+						| "weekly"
+						| "monthly"
+						| "none",
+					expiresAt: expiresAt ? expiresAt.toISOString() : null,
 				},
 			},
 			{
@@ -104,6 +176,9 @@ export function CreateApiKeyDialog({
 			setName("");
 			setApiKey("");
 			setLimit("");
+			setLimitChecked(false);
+			setResetPeriod("none");
+			setExpirationDuration("none");
 		}, 300);
 	};
 
@@ -159,6 +234,9 @@ export function CreateApiKeyDialog({
 										onCheckedChange={(v) => {
 											if (v !== "indeterminate") {
 												setLimitChecked(v);
+												if (!v) {
+													setResetPeriod("none");
+												}
 											}
 										}}
 									/>
@@ -188,6 +266,50 @@ export function CreateApiKeyDialog({
 										required={limitChecked}
 									/>
 								</div>
+							</div>
+							{/* Reset Period - only visible when limit is set */}
+							<div className={`space-y-2 ${limitChecked ? "block" : "hidden"}`}>
+								<Label htmlFor="reset-period">Reset Period</Label>
+								<Select value={resetPeriod} onValueChange={setResetPeriod}>
+									<SelectTrigger id="reset-period" className="w-full">
+										<SelectValue placeholder="Select reset period" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="none">None</SelectItem>
+										<SelectItem value="daily">Daily</SelectItem>
+										<SelectItem value="weekly">Weekly</SelectItem>
+										<SelectItem value="monthly">Monthly</SelectItem>
+									</SelectContent>
+								</Select>
+								<div className="text-muted-foreground text-xs">
+									Usage will be reset to $0.00 at the end of each period.
+								</div>
+							</div>
+							{/* Expiration */}
+							<div className="space-y-2">
+								<Label htmlFor="expiration">Expiration</Label>
+								<Select
+									value={expirationDuration}
+									onValueChange={(v) =>
+										setExpirationDuration(v as ExpirationDuration)
+									}
+								>
+									<SelectTrigger id="expiration" className="w-full">
+										<SelectValue placeholder="Select expiration" />
+									</SelectTrigger>
+									<SelectContent>
+										{Object.entries(expirationLabels).map(([value, label]) => (
+											<SelectItem key={value} value={value}>
+												{label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								{expirationPreview && (
+									<div className="text-muted-foreground text-xs">
+										Key will expire on: {expirationPreview}
+									</div>
+								)}
 							</div>
 							<DialogFooter>
 								<Button type="button" variant="outline" onClick={handleClose}>

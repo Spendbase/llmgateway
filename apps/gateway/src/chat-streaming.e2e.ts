@@ -1,8 +1,16 @@
 import "dotenv/config";
-import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	test,
+} from "vitest";
 
 import { app } from "@/app.js";
 import {
+	afterAllHook,
 	beforeAllHook,
 	beforeEachHook,
 	generateTestRequestId,
@@ -16,6 +24,7 @@ import { readAll } from "@/test-utils/test-helpers.js";
 
 describe("e2e", getConcurrentTestOptions(), () => {
 	beforeAll(beforeAllHook);
+	afterAll(afterAllHook);
 
 	beforeEach(beforeEachHook);
 

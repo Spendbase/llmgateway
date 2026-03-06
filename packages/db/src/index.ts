@@ -10,6 +10,7 @@ export * from "./relations.js";
 export * from "./provider-metrics.js";
 
 export * from "drizzle-orm";
+export { withReplicas } from "drizzle-orm/pg-core";
 
 export const tables = {
 	...schema,
