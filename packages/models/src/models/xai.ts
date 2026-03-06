@@ -18,7 +18,6 @@ export const xaiModels = [
 		releasedAt: new Date("2025-02-17"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "xai",
 				modelName: "grok-3",
 				inputPrice: 3.0 / 1e6,
@@ -165,7 +164,6 @@ export const xaiModels = [
 		releasedAt: new Date("2025-07-09"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "xai",
 				modelName: "grok-4-0709",
 				inputPrice: 3.0 / 1e6,
@@ -292,7 +290,6 @@ export const xaiModels = [
 		releasedAt: new Date("2025-08-28"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "xai",
 				modelName: "grok-code-fast-1",
 				inputPrice: 0.2 / 1e6,

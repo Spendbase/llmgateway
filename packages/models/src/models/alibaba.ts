@@ -9,7 +9,6 @@ export const alibabaModels = [
 		releasedAt: new Date("2025-09-05"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "alibaba",
 				modelName: "qwen-max",
 				discount: 0.2,
@@ -33,7 +32,6 @@ export const alibabaModels = [
 		releasedAt: new Date("2025-01-25"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "alibaba",
 				modelName: "qwen-max-latest",
 				discount: 0.2,
@@ -223,7 +221,6 @@ export const alibabaModels = [
 		releasedAt: new Date("2025-09-23"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "alibaba",
 				modelName: "qwen3-coder-plus",
 				discount: 0.2,
@@ -870,7 +867,6 @@ export const alibabaModels = [
 		releasedAt: new Date("2025-09-24"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "alibaba",
 				modelName: "qwen3-max-preview",
 				discount: 0.2,
@@ -1181,6 +1177,7 @@ export const alibabaModels = [
 		releasedAt: new Date("2025-03-06"),
 		providers: [
 			{
+				test: "skip",
 				providerId: "alibaba",
 				modelName: "qwq-plus",
 				discount: 0.2,
@@ -1206,7 +1203,6 @@ export const alibabaModels = [
 		releasedAt: new Date("2024-09-18"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "alibaba",
 				modelName: "qwen-coder-plus",
 				discount: 0.2,
@@ -1454,7 +1450,6 @@ export const alibabaModels = [
 		releasedAt: new Date("2025-02-19"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "alibaba",
 				modelName: "qwen2.5-vl-32b-instruct",
 				discount: 0.2,
@@ -1479,7 +1474,6 @@ export const alibabaModels = [
 		releasedAt: new Date("2026-01-23"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "alibaba",
 				modelName: "qwen3-max-2026-01-23",
 				discount: 0.2,

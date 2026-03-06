@@ -103,7 +103,6 @@ export const openaiModels = [
 		releasedAt: new Date("2023-03-14"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "openai",
 				modelName: "gpt-4",
 				inputPrice: 30.0 / 1e6,
@@ -231,7 +230,6 @@ export const openaiModels = [
 		releasedAt: new Date("2023-11-06"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "openai",
 				modelName: "gpt-4-turbo",
 				inputPrice: 10.0 / 1e6,
@@ -242,7 +240,7 @@ export const openaiModels = [
 				streaming: true,
 				vision: true,
 				tools: true,
-				jsonOutputSchema: true,
+				jsonOutputSchema: false,
 				jsonOutput: true,
 			},
 			// {
@@ -311,7 +309,6 @@ export const openaiModels = [
 		releasedAt: new Date("2024-09-12"),
 		providers: [
 			{
-				test: "skip",
 				providerId: "openai",
 				modelName: "o1",
 				inputPrice: 15.0 / 1e6,
@@ -355,6 +352,9 @@ export const openaiModels = [
 		providers: [
 			{
 				stability: "unstable" as const,
+				test: "skip",
+				deprecatedAt: new Date("2025-04-28"),
+				deactivatedAt: new Date("2025-10-27"),
 				providerId: "openai",
 				modelName: "o1-mini",
 				inputPrice: 1.1 / 1e6,
@@ -984,6 +984,7 @@ export const openaiModels = [
 				maxOutput: 272000,
 				streaming: true,
 				reasoning: true,
+				reasoningLevels: ["high"],
 				reasoningOutput: "omit",
 				vision: true,
 				tools: true,
