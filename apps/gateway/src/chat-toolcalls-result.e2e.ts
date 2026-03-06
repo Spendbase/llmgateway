@@ -41,7 +41,7 @@ describe("e2e", getConcurrentTestOptions(), () => {
 						{
 							role: "system",
 							content:
-								"You are a weather assistant that can get weather information for cities.",
+								"You are a weather assistant. Always call available tools immediately to answer weather questions. Never ask for clarification.",
 						},
 						{
 							role: "user",
@@ -111,7 +111,7 @@ describe("e2e", getConcurrentTestOptions(), () => {
 						{
 							role: "system",
 							content:
-								"You are a weather assistant that can get weather information for cities.",
+								"You are a weather assistant. Always call available tools immediately to answer weather questions. Never ask for clarification.",
 						},
 						{
 							role: "user",

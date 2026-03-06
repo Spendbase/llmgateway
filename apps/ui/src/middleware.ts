@@ -1,27 +1,37 @@
 import { NextResponse } from "next/server";
 
+import type { NextRequest } from "next/server";
+
 const REFERRAL_COOKIE_NAME = "llmapi_referral";
 const REFERRAL_COOKIE_DAYS = 30;
+const CORPORATE_AUTH_FLOW_COOKIE_NAME = "llmapi_corporate_auth_flow";
 
-export function middleware(request: Request) {
-	const url = new URL(request.url);
-	const ref = url.searchParams.get("ref");
+export function middleware(request: NextRequest) {
+	const { nextUrl } = request;
+	const ref = nextUrl.searchParams.get("ref");
 
-	if (!ref) {
-		return NextResponse.next();
+	let response: NextResponse;
+
+	if (ref) {
+		const targetUrl = nextUrl.clone();
+		targetUrl.searchParams.delete("ref");
+
+		response = NextResponse.redirect(targetUrl, 307);
+
+		response.cookies.set(REFERRAL_COOKIE_NAME, ref, {
+			path: "/",
+			maxAge: 60 * 60 * 24 * REFERRAL_COOKIE_DAYS,
+			sameSite: "lax",
+			secure: process.env.NODE_ENV === "production",
+		});
+	} else {
+		response = NextResponse.next();
 	}
 
-	url.searchParams.delete("ref");
-	const targetUrl =
-		url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : "");
-
-	const response = NextResponse.redirect(new URL(targetUrl, url.origin), 307);
-
-	response.cookies.set(REFERRAL_COOKIE_NAME, ref, {
-		path: "/",
-		maxAge: 60 * 60 * 24 * REFERRAL_COOKIE_DAYS,
-		sameSite: "lax",
-	});
+	const isCorpLogin = nextUrl.pathname === "/corporate-login";
+	if (!isCorpLogin) {
+		response.cookies.delete(CORPORATE_AUTH_FLOW_COOKIE_NAME);
+	}
 
 	return response;
 }

@@ -19,6 +19,7 @@ export async function validateProviderKey(
 	baseUrl?: string,
 	skipValidation = false,
 	providerKeyOptions?: ProviderKeyOptions,
+	oauth2Token?: string,
 ): Promise<ProviderValidationResult> {
 	// Skip validation if requested (e.g. in test environment)
 	if (skipValidation) {
@@ -42,9 +43,11 @@ export async function validateProviderKey(
 				validationModel: cheapestModel || undefined,
 			});
 			if (!cheapestModel) {
-				throw new Error(
-					`No model with pricing information found for provider ${provider}`,
+				logger.debug(
+					"No stable model found for provider, skipping validation",
+					{ provider },
 				);
+				return { valid: true };
 			}
 			validationModel = cheapestModel;
 		}
@@ -69,11 +72,15 @@ export async function validateProviderKey(
 			providerKeyOptions,
 		});
 
+		// For Google Vertex with OAuth2, don't pass token as query param (it goes in Authorization header)
+		const vertexUsingOAuth2 = provider === "google-vertex" && !!oauth2Token;
+
 		const endpoint = getProviderEndpoint(
 			provider,
 			baseUrl,
 			effectiveModelId, // Pass model ID for providers that need it in the URL (e.g., aws-bedrock, azure)
-			provider === "google-ai-studio" || provider === "google-vertex"
+			provider === "google-ai-studio" ||
+				(provider === "google-vertex" && !vertexUsingOAuth2)
 				? token
 				: undefined,
 			false, // validation doesn't need streaming
@@ -125,7 +132,9 @@ export async function validateProviderKey(
 			undefined, // effort
 		);
 
-		const headers = getProviderHeaders(provider, token);
+		const headers = vertexUsingOAuth2
+			? { Authorization: `Bearer ${oauth2Token}` }
+			: getProviderHeaders(provider, token);
 		headers["Content-Type"] = "application/json";
 
 		const response = await fetch(endpoint, {

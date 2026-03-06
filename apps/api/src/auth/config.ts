@@ -7,7 +7,7 @@ import { Redis } from "ioredis";
 
 import { getResetPasswordEmail } from "@/emails/templates/reset-password.js";
 import { getVerifyEmail } from "@/emails/templates/verify-email.js";
-import { validateEmail } from "@/utils/email-validation.js";
+import { validateEmail, isCorporateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
 import { db, eq, tables, shortid } from "@llmgateway/db";
@@ -21,6 +21,7 @@ const originUrls =
 	process.env.ORIGIN_URLS ||
 	"http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:4002,http://localhost:3006";
 const isHosted = process.env.HOSTED === "true";
+const CORPORATE_LOGIN_COOKIE_NAME = "llmapi_corporate_auth_flow";
 
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
@@ -66,6 +67,32 @@ function maskEmail(email: string): string {
 		return `***@${domain}`;
 	}
 	return `${local[0]}***@${domain}`;
+}
+
+function getCookieValue(cookieHeader: string, key: string): string | null {
+	const cookies = cookieHeader.split(";");
+	for (const cookie of cookies) {
+		const [rawCookieKey, ...rest] = cookie.trim().split("=");
+		if (rawCookieKey !== key) {
+			continue;
+		}
+
+		const rawValue = rest.join("=");
+
+		try {
+			return decodeURIComponent(rawValue);
+		} catch {
+			return rawValue;
+		}
+	}
+
+	return null;
+}
+
+function isCorporateAuthFlow(cookieHeader: string): boolean {
+	return (
+		getCookieValue(cookieHeader, CORPORATE_LOGIN_COOKIE_NAME) === "corporate"
+	);
 }
 
 export async function checkResetPasswordRateLimit(
@@ -825,6 +852,25 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 							},
 						},
 					);
+				}
+
+				const cookieHeader = ctx.request?.headers.get("cookie") || "";
+				const isRedirectFromCorporateLoginPage =
+					isCorporateAuthFlow(cookieHeader);
+				if (
+					isRedirectFromCorporateLoginPage &&
+					user &&
+					!isCorporateEmail(user.email)
+				) {
+					logger.warn("Non-corporate email blocked during sign-in", {
+						userId: user.id,
+						email: maskEmail(user.email),
+						path: ctx.path,
+					});
+
+					const errorUrl = new URL("/corporate-login", uiUrl);
+					errorUrl.searchParams.set("error", "corporate_only");
+					throw ctx.redirect(errorUrl.toString());
 				}
 
 				// Create default org/project for first-time sessions (email signup or first social sign-in)

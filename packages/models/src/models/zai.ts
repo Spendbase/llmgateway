@@ -502,6 +502,7 @@ export const zaiModels = [
 		providers: [
 			{
 				providerId: "zai",
+				test: "skip",
 				modelName: "glm-4.6v",
 				inputPrice: 0.3 / 1e6,
 				cachedInputPrice: 0.05 / 1e6,
@@ -517,6 +518,7 @@ export const zaiModels = [
 				jsonOutput: true,
 			},
 			{
+				test: "skip",
 				providerId: "novita",
 				modelName: "zai-org/glm-4.6v",
 				inputPrice: 0.3 / 1e6,

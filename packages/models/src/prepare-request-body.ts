@@ -455,6 +455,7 @@ export async function prepareRequestBody(
 	}
 
 	switch (usedProvider) {
+		case "azure":
 		case "openai": {
 			// Check if the model supports responses API
 			const providerMapping = modelDef?.providers.find(
@@ -847,11 +848,24 @@ export async function prepareRequestBody(
 			if (presence_penalty !== undefined) {
 				requestBody.presence_penalty = presence_penalty;
 			}
+
 			if (effort !== undefined) {
 				if (!requestBody.output_config) {
 					requestBody.output_config = {};
 				}
 				requestBody.output_config.effort = effort;
+			}
+
+			// Enable adaptive thinking for models that use it (claude-opus-4-6, claude-sonnet-4-6)
+			// These models use adaptive thinking instead of the older budget_tokens approach
+			const modelSupportedParams = providerMapping?.supportedParameters;
+			if (
+				supportsReasoning &&
+				!reasoning_effort &&
+				modelSupportedParams?.includes("effort") &&
+				!requestBody.thinking
+			) {
+				requestBody.thinking = { type: "adaptive" };
 			}
 
 			// Handle response_format for Anthropic - transform to output_format
@@ -1249,6 +1263,31 @@ export async function prepareRequestBody(
 							}),
 						},
 					];
+
+					// Set explicit toolConfig to ensure consistent tool calling behavior
+					if (tool_choice === "none") {
+						requestBody.toolConfig = {
+							functionCallingConfig: { mode: "NONE" },
+						};
+					} else if (tool_choice === "required") {
+						requestBody.toolConfig = {
+							functionCallingConfig: { mode: "ANY" },
+						};
+					} else if (
+						typeof tool_choice === "object" &&
+						tool_choice?.type === "function"
+					) {
+						requestBody.toolConfig = {
+							functionCallingConfig: {
+								mode: "ANY",
+								allowedFunctionNames: [tool_choice.function.name],
+							},
+						};
+					} else {
+						requestBody.toolConfig = {
+							functionCallingConfig: { mode: "AUTO" },
+						};
+					}
 				}
 			}
 
@@ -1265,6 +1304,9 @@ export async function prepareRequestBody(
 			// Add optional parameters if they are provided
 			if (temperature !== undefined) {
 				requestBody.generationConfig.temperature = temperature;
+			} else if (tools && tools.filter(isFunctionTool).length > 0) {
+				// Google docs recommend temperature=0 for reliable function calling
+				requestBody.generationConfig.temperature = 0;
 			}
 			if (max_tokens !== undefined) {
 				requestBody.generationConfig.maxOutputTokens = max_tokens;
@@ -1381,6 +1423,23 @@ export async function prepareRequestBody(
 			}
 			break;
 		}
+	}
+
+	// Convert reasoning field back to reasoning_content for providers that require it
+	// (e.g. moonshot/kimi-k2.5 needs reasoning_content in assistant messages with tool_calls)
+	if (requestBody.messages && usedProvider === "moonshot") {
+		requestBody.messages = requestBody.messages.map((msg: any) => {
+			if (msg.role === "assistant" && msg.tool_calls) {
+				if (msg.reasoning && !msg.reasoning_content) {
+					const { reasoning, ...rest } = msg;
+					return { ...rest, reasoning_content: reasoning };
+				}
+				if (!msg.reasoning_content) {
+					return { ...msg, reasoning_content: "" };
+				}
+			}
+			return msg;
+		});
 	}
 
 	return requestBody;
