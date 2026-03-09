@@ -2258,6 +2258,8 @@ export interface paths {
                                     status: "active" | "inactive";
                                 }[];
                                 maskedToken: string;
+                                /** @enum {string} */
+                                effectiveStatus: "active" | "inactive" | "deleted" | "expired";
                             }[];
                             planLimits?: {
                                 currentCount: number;
@@ -2342,6 +2344,8 @@ export interface paths {
                                     status: "active" | "inactive";
                                 }[];
                                 token: string;
+                                /** @enum {string} */
+                                effectiveStatus: "active" | "inactive" | "deleted" | "expired";
                             };
                         };
                     };
@@ -2480,6 +2484,8 @@ export interface paths {
                                     status: "active" | "inactive";
                                 }[];
                                 maskedToken: string;
+                                /** @enum {string} */
+                                effectiveStatus: "active" | "inactive" | "deleted" | "expired";
                             };
                         };
                     };
@@ -2593,6 +2599,8 @@ export interface paths {
                                     status: "active" | "inactive";
                                 }[];
                                 maskedToken: string;
+                                /** @enum {string} */
+                                effectiveStatus: "active" | "inactive" | "deleted" | "expired";
                             };
                         };
                     };
