@@ -799,7 +799,8 @@ export const modelProviderMapping = pgTable(
 			latencyMs?: number;
 		}>(),
 		discount: numericDecimal().default(0).notNull(),
-		reasoningLevels: json().$type<("minimal" | "low" | "medium" | "high")[]>(),
+		reasoningLevels:
+			json().$type<("minimal" | "low" | "medium" | "high" | "xhigh")[]>(),
 		pricingTiers: json().$type<
 			{
 				name: string;
