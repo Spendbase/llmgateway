@@ -316,16 +316,18 @@ const list = createRoute({
 					schema: z.object({
 						apiKeys: z
 							.array(
-								apiKeySchema.omit({ effectiveStatus: true }).extend({
-									// Return both full token and masked version
-									maskedToken: z.string(),
-									effectiveStatus: z.enum([
-										"active",
-										"inactive",
-										"deleted",
-										"expired",
-									]),
-								}),
+								apiKeySchema
+									.omit({ token: true, effectiveStatus: true })
+									.extend({
+										// Return only masked token in the list
+										maskedToken: z.string(),
+										effectiveStatus: z.enum([
+											"active",
+											"inactive",
+											"deleted",
+											"expired",
+										]),
+									}),
 							)
 							.openapi({}),
 						planLimits: z
@@ -461,11 +463,14 @@ keysApi.openapi(list, async (c) => {
 	}
 
 	return c.json({
-		apiKeys: apiKeys.map((key) => ({
-			...key,
-			maskedToken: maskToken(key.token),
-			effectiveStatus: computeEffectiveStatus(key),
-		})),
+		apiKeys: apiKeys.map((key) => {
+			const { token: _token, ...restApiKey } = key;
+			return {
+				...restApiKey,
+				maskedToken: maskToken(key.token),
+				effectiveStatus: computeEffectiveStatus(key),
+			};
+		}),
 		planLimits: projectId
 			? {
 					currentCount,
