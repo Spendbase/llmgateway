@@ -170,7 +170,7 @@ async function convertImagesToBase64(
  */
 function supportsReasoningEffort(
 	provider: ProviderModelMapping,
-	reasoning_effort: "minimal" | "low" | "medium" | "high" | undefined,
+	reasoning_effort: "minimal" | "low" | "medium" | "high" | "xhigh" | undefined,
 ): boolean {
 	// If no reasoning_effort is requested, no filtering needed
 	if (reasoning_effort === undefined) {
@@ -213,7 +213,7 @@ const messageSchema = z.object({
 						type: z.literal("image_url"),
 						image_url: z.object({
 							url: z.string(),
-							detail: z.enum(["low", "high", "auto"]).optional(),
+							detail: z.enum(["low", "high", "auto", "original"]).optional(),
 						}),
 					}),
 				]),
@@ -329,6 +329,7 @@ const completionsRequestSchema = z.object({
 						description: z.string().optional(),
 						parameters: z.record(z.any()).optional(),
 					}),
+					defer_loading: z.boolean().optional(),
 				}),
 				z.object({
 					type: z.literal("web_search"),
@@ -351,12 +352,19 @@ const completionsRequestSchema = z.object({
 						example: "str_replace_based_edit_tool",
 					}),
 				}),
+				z.object({
+					type: z.literal("tool_search"),
+					execution: z.enum(["server", "client"]).optional(),
+					name: z.string().optional(),
+					description: z.string().optional(),
+					parameters: z.record(z.any()).optional(),
+				}),
 			]),
 		)
 		.optional()
 		.openapi({
 			description:
-				"Tools available to the model. Supports function tools (cross-provider), web_search tools, and provider-specific native tools like Anthropic's text_editor_20250429 for optimized code editing.",
+				"Tools available to the model. Supports function tools (cross-provider), web_search, tool_search (GPT-5.4+ Responses API), and provider-specific native tools like Anthropic's text_editor_20250429.",
 		}),
 	tool_choice: z
 		.union([
@@ -372,7 +380,7 @@ const completionsRequestSchema = z.object({
 		])
 		.optional(),
 	reasoning_effort: z
-		.enum(["minimal", "low", "medium", "high"])
+		.enum(["minimal", "low", "medium", "high", "xhigh"])
 		.nullable()
 		.optional()
 		.transform((val) => (val === null ? undefined : val))
@@ -1420,7 +1428,7 @@ chat.openapi(completions, async (c) => {
 		// Check if the selected provider supports reasoning
 		if (selectedProviderMapping?.reasoning === true) {
 			// Determine the default reasoning_effort value based on model name
-			let defaultEffort: "minimal" | "low" | "medium" | "high";
+			let defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh";
 			if (baseModelName.startsWith("gpt-5")) {
 				defaultEffort = "medium";
 			} else {
@@ -1447,15 +1455,22 @@ chat.openapi(completions, async (c) => {
 				} else {
 					// Default effort not supported, pick the first level from fixed priority order
 					// Priority order: minimal, low, medium, high
-					const priorityOrder: ("minimal" | "low" | "medium" | "high")[] = [
-						"minimal",
-						"low",
-						"medium",
-						"high",
-					];
+					const priorityOrder: (
+						| "minimal"
+						| "low"
+						| "medium"
+						| "high"
+						| "xhigh"
+					)[] = ["minimal", "low", "medium", "high", "xhigh"];
 
 					// Find the first priority level that is supported
-					let selectedEffort: "minimal" | "low" | "medium" | "high" | undefined;
+					let selectedEffort:
+						| "minimal"
+						| "low"
+						| "medium"
+						| "high"
+						| "xhigh"
+						| undefined;
 					for (const level of priorityOrder) {
 						if (supportedLevels.includes(level)) {
 							selectedEffort = level;

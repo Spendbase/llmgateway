@@ -49,7 +49,7 @@ const modelSchema = z.object({
 			parallelToolCalls: z.boolean(),
 			reasoning: z.boolean(),
 			reasoningLevels: z
-				.array(z.enum(["minimal", "low", "medium", "high"]))
+				.array(z.enum(["minimal", "low", "medium", "high", "xhigh"]))
 				.nullable()
 				.optional(),
 			stability: z

@@ -18,6 +18,7 @@ export const toolFunction = z.object({
 export const functionTool = z.object({
 	type: z.literal("function"),
 	function: toolFunction,
+	defer_loading: z.boolean().optional(),
 });
 
 export const webSearchTool = z.object({
@@ -39,10 +40,19 @@ export const anthropicTextEditorTool = z.object({
 	name: z.string(),
 });
 
+export const toolSearchTool = z.object({
+	type: z.literal("tool_search"),
+	execution: z.enum(["server", "client"]).optional(),
+	name: z.string().optional(),
+	description: z.string().optional(),
+	parameters: z.record(z.any()).optional(),
+});
+
 export const tool = z.union([
 	functionTool,
 	webSearchTool,
 	anthropicTextEditorTool,
+	toolSearchTool,
 ]);
 
 export const toolChoice = z.union([

@@ -155,7 +155,7 @@ export function validateModelCapabilities(
 						: `any of the eligible providers (${reasoningProviders.map((p) => p.providerId).join(", ")})`;
 
 					// Sort supported levels in fixed priority order: minimal, low, medium, high
-					const priorityOrder = ["minimal", "low", "medium", "high"];
+					const priorityOrder = ["minimal", "low", "medium", "high", "xhigh"];
 					const sortedLevels = priorityOrder.filter((level) =>
 						allSupportedLevels.has(level),
 					);

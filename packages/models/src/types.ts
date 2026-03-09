@@ -17,7 +17,7 @@ export interface ImageUrlContent {
 	type: "image_url";
 	image_url: {
 		url: string;
-		detail?: "low" | "high" | "auto";
+		detail?: "low" | "high" | "auto" | "original";
 	};
 }
 
@@ -121,6 +121,11 @@ export interface OpenAIFunctionToolInput {
 		description?: string;
 		parameters?: FunctionParameter | Record<string, any>;
 	};
+	/**
+	 * When true, the tool definition is deferred and loaded via tool search on demand.
+	 * Only supported by GPT-5.4+ via the Responses API.
+	 */
+	defer_loading?: boolean;
 }
 
 // Web search tool input type
@@ -147,10 +152,24 @@ export interface AnthropicTextEditorToolInput {
 	name: string;
 }
 
-// Compatible type for API requests - accepts function, web_search, and native tools
+/**
+ * Tool search tool — allows model to dynamically load tool definitions on demand.
+ * Only supported by GPT-5.4+ via the Responses API.
+ * @see https://developers.openai.com/api/docs/guides/tools-tool-search
+ */
+export interface OpenAIToolSearchToolInput {
+	type: "tool_search";
+	execution?: "server" | "client";
+	name?: string;
+	description?: string;
+	parameters?: FunctionParameter | Record<string, any>;
+}
+
+// Compatible type for API requests - accepts function, web_search, tool_search, and native tools
 export type OpenAIToolInput =
 	| OpenAIFunctionToolInput
 	| OpenAIWebSearchToolInput
+	| OpenAIToolSearchToolInput
 	| AnthropicTextEditorToolInput;
 
 export interface AnthropicTool {
@@ -215,7 +234,7 @@ export interface OpenAIRequestBody extends BaseRequestBody {
 	stream_options?: {
 		include_usage: boolean;
 	};
-	reasoning_effort?: "minimal" | "low" | "medium" | "high";
+	reasoning_effort?: "minimal" | "low" | "medium" | "high" | "xhigh";
 }
 
 export interface OpenAIResponsesFunctionCall {
@@ -243,12 +262,33 @@ export interface OpenAIResponsesRequestBody {
 		effort: "minimal" | "low" | "medium" | "high" | "xhigh";
 		summary: "detailed";
 	};
-	tools?: Array<{
-		type: "function";
-		name: string;
-		description?: string;
-		parameters: FunctionParameter;
-	}>;
+	tools?: Array<
+		| {
+				type: "function";
+				name: string;
+				description?: string;
+				parameters: FunctionParameter;
+				defer_loading?: boolean;
+		  }
+		| {
+				type: "tool_search";
+				execution?: "server" | "client";
+				name?: string;
+				description?: string;
+				parameters?: FunctionParameter | Record<string, any>;
+		  }
+		| {
+				type: "web_search";
+				user_location?: {
+					type?: "approximate";
+					city?: string;
+					region?: string;
+					country?: string;
+					timezone?: string;
+				};
+				search_context_size?: "low" | "medium" | "high";
+		  }
+	>;
 	tool_choice?: ToolChoiceType;
 	stream?: boolean;
 	temperature?: number;
@@ -364,7 +404,7 @@ export type RequestBodyPreparer = (
 	response_format?: OpenAIRequestBody["response_format"],
 	tools?: OpenAITool[],
 	tool_choice?: ToolChoiceType,
-	reasoning_effort?: "minimal" | "low" | "medium" | "high",
+	reasoning_effort?: "minimal" | "low" | "medium" | "high" | "xhigh",
 	supportsReasoning?: boolean,
 	isProd?: boolean,
 	maxImageSizeMB?: number,
@@ -451,6 +491,15 @@ export function isWebSearchTool(
 	tool: OpenAIToolInput,
 ): tool is OpenAIWebSearchToolInput {
 	return tool.type === "web_search";
+}
+
+/**
+ * Type guard to check if a tool is a tool search tool
+ */
+export function isToolSearchTool(
+	tool: OpenAIToolInput,
+): tool is OpenAIToolSearchToolInput {
+	return tool.type === "tool_search";
 }
 
 // Web search types
