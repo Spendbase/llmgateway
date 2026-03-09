@@ -13,6 +13,5 @@ export type User = SerializedUser | null;
 export type ApiKey = Omit<SerializedApiKey, "token"> & {
 	token?: string;
 	maskedToken: string;
-	effectiveStatus: "active" | "inactive" | "deleted" | "expired";
 	iamRules?: Omit<SerializedApiKeyIamRule, "apiKeyId">[];
 };
