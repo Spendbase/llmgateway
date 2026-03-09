@@ -284,6 +284,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-4.1",
 				inputPrice: 2.0 / 1e6,
@@ -539,6 +540,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				stability: "unstable" as const,
 				modelName: "o3-mini",
 				inputPrice: 1.1 / 1e6,
@@ -711,6 +713,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-5",
 				inputPrice: 1.25 / 1e6,
@@ -777,6 +780,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-5-mini",
 				inputPrice: 0.25 / 1e6,
@@ -843,6 +847,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-5-nano",
 				inputPrice: 0.05 / 1e6,
@@ -940,6 +945,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				modelName: "gpt-5.1",
 				inputPrice: 1.25 / 1e6,
 				outputPrice: 10.0 / 1e6,
@@ -1026,6 +1032,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-5.1-codex",
 				inputPrice: 1.25 / 1e6,
@@ -1074,6 +1081,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-5.1-codex-mini",
 				inputPrice: 0.25 / 1e6,
@@ -1130,6 +1138,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-5.2",
 				inputPrice: 1.75 / 1e6,
@@ -1187,6 +1196,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-5.2-pro",
 				inputPrice: 21.0 / 1e6,
@@ -1236,6 +1246,7 @@ export const openaiModels = [
 			{
 				test: "skip",
 				providerId: "azure",
+				deactivatedAt: new Date("2025-01-01"),
 				// stability: "unstable" as const,
 				modelName: "gpt-5.2-chat-latest",
 				inputPrice: 1.75 / 1e6,
