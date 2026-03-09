@@ -190,3 +190,71 @@ export interface OrgDepositsResponse {
 		totalPages: number;
 	};
 }
+
+export interface OrgLogsResponse {
+	logs: Record<string, unknown>[];
+	pagination: {
+		page: number;
+		pageSize: number;
+		total: number;
+		totalPages: number;
+	};
+}
+
+export interface ModelAnalyticsItem {
+	id: string;
+	name: string;
+	family: string;
+	status: string;
+	logsCount: number;
+	errorsCount: number;
+	clientErrorsCount: number;
+	gatewayErrorsCount: number;
+	upstreamErrorsCount: number;
+	cachedCount: number;
+	avgTimeToFirstToken: number | null;
+	errorRate: number;
+	cacheHitRate: number;
+}
+
+export interface ProviderAnalyticsItem {
+	id: string;
+	name: string;
+	status: string;
+	logsCount: number;
+	errorsCount: number;
+	clientErrorsCount: number;
+	gatewayErrorsCount: number;
+	upstreamErrorsCount: number;
+	cachedCount: number;
+	avgTimeToFirstToken: number | null;
+	errorRate: number;
+	cacheHitRate: number;
+}
+
+export interface PlatformAnalyticsResponse {
+	models: ModelAnalyticsItem[];
+	providers: ProviderAnalyticsItem[];
+}
+
+export interface TimeSeriesPoint {
+	timestamp: string;
+	logsCount: number;
+	errorsCount: number;
+	cachedCount: number;
+	totalTokens: number;
+}
+
+export interface RevenueTrendPoint {
+	date: string;
+	revenue: number;
+	creditTopups: number;
+	subscriptions: number;
+}
+
+export interface TimeSeriesAnalyticsResponse {
+	window: "6h" | "24h" | "7d" | "30d" | "90d" | "all";
+	bucketSize: string;
+	series: TimeSeriesPoint[];
+	revenueTrend: RevenueTrendPoint[];
+}

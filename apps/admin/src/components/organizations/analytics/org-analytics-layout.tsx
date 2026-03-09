@@ -17,6 +17,7 @@ import { useOrgExportAll } from "@/hooks/use-org-export-all";
 
 import { OrgApiKeysSection } from "./org-api-keys-section";
 import { OrgDepositsSection } from "./org-deposits-section";
+import { OrgLogsSection } from "./org-logs-section";
 import { OrgMembersSection } from "./org-members-section";
 import { OrgOverviewCards } from "./org-overview-cards";
 import { OrgProjectsSection } from "./org-projects-section";
@@ -26,12 +27,19 @@ import type {
 	OrgAnalyticsOverview,
 	OrgApiKeysResponse,
 	OrgDepositsResponse,
+	OrgLogsResponse,
 	OrgMembersResponse,
 	OrgProjectsResponse,
 	OrgUsageResponse,
 } from "@/lib/types";
 
-type TabKey = "api-keys" | "usage" | "members" | "projects" | "deposits";
+type TabKey =
+	| "api-keys"
+	| "usage"
+	| "members"
+	| "projects"
+	| "deposits"
+	| "logs";
 
 interface OrgAnalyticsLayoutProps {
 	orgId: string;
@@ -41,6 +49,7 @@ interface OrgAnalyticsLayoutProps {
 	initialMembers: OrgMembersResponse;
 	initialProjects: OrgProjectsResponse;
 	initialDeposits: OrgDepositsResponse;
+	initialLogs: OrgLogsResponse;
 }
 
 function statusVariant(status: string | null) {
@@ -61,6 +70,7 @@ export function OrgAnalyticsLayout({
 	initialMembers,
 	initialProjects,
 	initialDeposits,
+	initialLogs,
 }: OrgAnalyticsLayoutProps) {
 	const [activeTab, setActiveTab] = useState<TabKey>("api-keys");
 	const { run, loading } = useOrgExportAll(orgId, overview.name);
@@ -78,9 +88,6 @@ export function OrgAnalyticsLayout({
 						<h1 className="text-xl font-semibold">{overview.name}</h1>
 						<Badge variant={statusVariant(overview.status)}>
 							{overview.status ?? "unknown"}
-						</Badge>
-						<Badge variant={overview.plan === "pro" ? "purple" : "default"}>
-							{overview.plan}
 						</Badge>
 					</div>
 					<p className="text-sm text-muted-foreground pl-9">
@@ -115,7 +122,7 @@ export function OrgAnalyticsLayout({
 				onValueChange={(v) => setActiveTab(v as TabKey)}
 				className="w-full"
 			>
-				<TabsList className="grid w-full grid-cols-5 h-11">
+				<TabsList className="grid w-full grid-cols-6 h-11">
 					<TabsTrigger value="api-keys" className="cursor-pointer">
 						API Keys
 					</TabsTrigger>
@@ -131,6 +138,9 @@ export function OrgAnalyticsLayout({
 					<TabsTrigger value="deposits" className="cursor-pointer">
 						Deposits
 					</TabsTrigger>
+					<TabsTrigger value="logs" className="cursor-pointer">
+						Logs
+					</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="api-keys" className="mt-4">
@@ -138,6 +148,9 @@ export function OrgAnalyticsLayout({
 				</TabsContent>
 				<TabsContent value="usage" className="mt-4">
 					<OrgUsageSection orgId={orgId} initialData={initialUsage} />
+				</TabsContent>
+				<TabsContent value="logs" className="mt-4">
+					<OrgLogsSection orgId={orgId} initialData={initialLogs} />
 				</TabsContent>
 				<TabsContent value="members" className="mt-4">
 					<OrgMembersSection orgId={orgId} initialData={initialMembers} />

@@ -18,8 +18,11 @@ import {
 	or,
 	lt,
 	sql,
+	sum,
 	tables,
 	inArray,
+	modelHistory,
+	modelProviderMappingHistory,
 } from "@llmgateway/db";
 import { revenueCounter } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
@@ -3067,6 +3070,695 @@ admin.openapi(getOrgDeposits, async (c) => {
 
 	return c.json({
 		deposits: items,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
+});
+
+const analyticsWindowSchema = z.enum(["6h", "24h", "7d", "30d", "90d", "all"]);
+const analyticsRangeSchema = z.enum(["24h", "7d", "30d", "90d", "all"]);
+
+const analyticsModelItemSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	family: z.string(),
+	status: z.string(),
+	logsCount: z.number(),
+	errorsCount: z.number(),
+	clientErrorsCount: z.number(),
+	gatewayErrorsCount: z.number(),
+	upstreamErrorsCount: z.number(),
+	cachedCount: z.number(),
+	avgTimeToFirstToken: z.number().nullable(),
+	errorRate: z.number(),
+	cacheHitRate: z.number(),
+});
+
+const analyticsProviderItemSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	status: z.string(),
+	logsCount: z.number(),
+	errorsCount: z.number(),
+	clientErrorsCount: z.number(),
+	gatewayErrorsCount: z.number(),
+	upstreamErrorsCount: z.number(),
+	cachedCount: z.number(),
+	avgTimeToFirstToken: z.number().nullable(),
+	errorRate: z.number(),
+	cacheHitRate: z.number(),
+});
+
+const platformAnalyticsResponseSchema = z.object({
+	models: z.array(analyticsModelItemSchema),
+	providers: z.array(analyticsProviderItemSchema),
+});
+
+const timeSeriesPointSchema = z.object({
+	timestamp: z.string(),
+	logsCount: z.number(),
+	errorsCount: z.number(),
+	cachedCount: z.number(),
+	totalTokens: z.number(),
+});
+
+const revenueTrendPointSchema = z.object({
+	date: z.string(),
+	revenue: z.number(),
+	creditTopups: z.number(),
+	subscriptions: z.number(),
+});
+
+const timeSeriesAnalyticsResponseSchema = z.object({
+	window: analyticsWindowSchema,
+	bucketSize: z.string(),
+	series: z.array(timeSeriesPointSchema),
+	revenueTrend: z.array(revenueTrendPointSchema),
+});
+
+const getAnalyticsPlatform = createRoute({
+	method: "get",
+	path: "/analytics/platform",
+	request: {
+		query: z.object({
+			range: analyticsRangeSchema.default("all").optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: platformAnalyticsResponseSchema.openapi({}),
+				},
+			},
+			description:
+				"Platform-wide analytics from pre-aggregated model and provider tables.",
+		},
+	},
+});
+
+const analyticsGranularitySchema = z.enum([
+	"minute",
+	"hour",
+	"day",
+	"week",
+	"month",
+]);
+
+const getAnalyticsTimeSeries = createRoute({
+	method: "get",
+	path: "/analytics/time-series",
+	request: {
+		query: z.object({
+			window: analyticsWindowSchema.default("24h").optional(),
+			granularity: analyticsGranularitySchema.optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: timeSeriesAnalyticsResponseSchema.openapi({}),
+				},
+			},
+			description:
+				"Time series analytics from modelHistory and revenue from transactions.",
+		},
+	},
+});
+
+function deriveRates(
+	logsCount: number,
+	errorsCount: number,
+	cachedCount: number,
+): { errorRate: number; cacheHitRate: number } {
+	return {
+		errorRate: logsCount > 0 ? errorsCount / logsCount : 0,
+		cacheHitRate: logsCount > 0 ? cachedCount / logsCount : 0,
+	};
+}
+
+admin.openapi(getAnalyticsPlatform, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { range = "all" } = c.req.valid("query");
+
+	const rangeHoursMap: Record<string, number> = {
+		"24h": 24,
+		"7d": 7 * 24,
+		"30d": 30 * 24,
+		"90d": 90 * 24,
+	};
+	const fromDate =
+		range !== "all"
+			? new Date(Date.now() - (rangeHoursMap[range] ?? 0) * 60 * 60 * 1000)
+			: null;
+
+	const modelHistoryFilter = fromDate
+		? gte(modelHistory.minuteTimestamp, fromDate)
+		: undefined;
+	const mappingHistoryFilter = fromDate
+		? gte(modelProviderMappingHistory.minuteTimestamp, fromDate)
+		: undefined;
+
+	const [modelMeta, modelAgg, providerMeta, providerAgg] = await Promise.all([
+		db.query.model.findMany({
+			columns: { id: true, name: true, family: true, status: true },
+		}),
+		db
+			.select({
+				modelId: modelHistory.modelId,
+				logsCount: sum(modelHistory.logsCount).mapWith(Number),
+				errorsCount: sum(modelHistory.errorsCount).mapWith(Number),
+				clientErrorsCount: sum(modelHistory.clientErrorsCount).mapWith(Number),
+				gatewayErrorsCount: sum(modelHistory.gatewayErrorsCount).mapWith(
+					Number,
+				),
+				upstreamErrorsCount: sum(modelHistory.upstreamErrorsCount).mapWith(
+					Number,
+				),
+				cachedCount: sum(modelHistory.cachedCount).mapWith(Number),
+				totalTtft: sum(modelHistory.totalTimeToFirstToken).mapWith(Number),
+			})
+			.from(modelHistory)
+			.where(modelHistoryFilter)
+			.groupBy(modelHistory.modelId),
+		db.query.provider.findMany({
+			columns: { id: true, name: true, status: true },
+		}),
+		db
+			.select({
+				providerId: modelProviderMappingHistory.providerId,
+				logsCount: sum(modelProviderMappingHistory.logsCount).mapWith(Number),
+				errorsCount: sum(modelProviderMappingHistory.errorsCount).mapWith(
+					Number,
+				),
+				clientErrorsCount: sum(
+					modelProviderMappingHistory.clientErrorsCount,
+				).mapWith(Number),
+				gatewayErrorsCount: sum(
+					modelProviderMappingHistory.gatewayErrorsCount,
+				).mapWith(Number),
+				upstreamErrorsCount: sum(
+					modelProviderMappingHistory.upstreamErrorsCount,
+				).mapWith(Number),
+				cachedCount: sum(modelProviderMappingHistory.cachedCount).mapWith(
+					Number,
+				),
+			})
+			.from(modelProviderMappingHistory)
+			.where(mappingHistoryFilter)
+			.groupBy(modelProviderMappingHistory.providerId),
+	]);
+
+	const modelAggMap = new Map(modelAgg.map((r) => [r.modelId, r]));
+	const providerAggMap = new Map(providerAgg.map((r) => [r.providerId, r]));
+
+	const models = modelMeta.map((m) => {
+		const agg = modelAggMap.get(m.id);
+		const logsCount = agg?.logsCount ?? 0;
+		const errorsCount = agg?.errorsCount ?? 0;
+		const cachedCount = agg?.cachedCount ?? 0;
+		const avgTimeToFirstToken =
+			logsCount > 0 && agg?.totalTtft
+				? Math.round(agg.totalTtft / logsCount)
+				: null;
+		return {
+			id: m.id,
+			name: m.name ?? m.id,
+			family: m.family,
+			status: m.status ?? "active",
+			logsCount,
+			errorsCount,
+			clientErrorsCount: agg?.clientErrorsCount ?? 0,
+			gatewayErrorsCount: agg?.gatewayErrorsCount ?? 0,
+			upstreamErrorsCount: agg?.upstreamErrorsCount ?? 0,
+			cachedCount,
+			avgTimeToFirstToken,
+			...deriveRates(logsCount, errorsCount, cachedCount),
+		};
+	});
+
+	const providers = providerMeta.map((p) => {
+		const agg = providerAggMap.get(p.id);
+		const logsCount = agg?.logsCount ?? 0;
+		const errorsCount = agg?.errorsCount ?? 0;
+		const cachedCount = agg?.cachedCount ?? 0;
+		return {
+			id: p.id,
+			name: p.name,
+			status: p.status ?? "active",
+			logsCount,
+			errorsCount,
+			clientErrorsCount: agg?.clientErrorsCount ?? 0,
+			gatewayErrorsCount: agg?.gatewayErrorsCount ?? 0,
+			upstreamErrorsCount: agg?.upstreamErrorsCount ?? 0,
+			cachedCount,
+			avgTimeToFirstToken: null,
+			...deriveRates(logsCount, errorsCount, cachedCount),
+		};
+	});
+
+	return c.json({ models, providers });
+});
+
+const bucketSizeMap: Record<string, string> = {
+	"6h": "minute",
+	"24h": "hour",
+	"7d": "hour",
+	"30d": "day",
+	"90d": "week",
+	all: "month",
+};
+
+const windowHoursMap: Record<string, number | null> = {
+	"6h": 6,
+	"24h": 24,
+	"7d": 7 * 24,
+	"30d": 30 * 24,
+	"90d": 90 * 24,
+	all: null,
+};
+
+admin.openapi(getAnalyticsTimeSeries, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const query = c.req.valid("query");
+	const windowParam = query.window ?? "24h";
+	const bucketSize = query.granularity ?? bucketSizeMap[windowParam] ?? "day";
+	const hours = windowHoursMap[windowParam];
+
+	const startDate =
+		hours !== null
+			? new Date(Date.now() - hours * 60 * 60 * 1000)
+			: new Date(0);
+
+	const bucketLiteral = sql.raw(`'${bucketSize}'`);
+	const truncExpr = sql<string>`date_trunc(${bucketLiteral}, ${tables.modelHistory.minuteTimestamp})`;
+	const revenueTruncExpr = sql<string>`date_trunc(${bucketLiteral}, ${tables.transaction.createdAt})`;
+
+	const [seriesRows, revenueRows] = await Promise.all([
+		db
+			.select({
+				timestamp: truncExpr.as("timestamp"),
+				logsCount: sql<number>`SUM(${tables.modelHistory.logsCount})::int`.as(
+					"logsCount",
+				),
+				errorsCount:
+					sql<number>`SUM(${tables.modelHistory.errorsCount})::int`.as(
+						"errorsCount",
+					),
+				cachedCount:
+					sql<number>`SUM(${tables.modelHistory.cachedCount})::int`.as(
+						"cachedCount",
+					),
+				totalTokens:
+					sql<number>`SUM(${tables.modelHistory.totalTokens})::int`.as(
+						"totalTokens",
+					),
+			})
+			.from(tables.modelHistory)
+			.where(gte(tables.modelHistory.minuteTimestamp, startDate))
+			.groupBy(truncExpr)
+			.orderBy(asc(truncExpr)),
+		db
+			.select({
+				date: revenueTruncExpr.as("date"),
+				revenue:
+					sql<number>`COALESCE(SUM(CAST(${tables.transaction.amount} AS NUMERIC)), 0)`.as(
+						"revenue",
+					),
+				creditTopups:
+					sql<number>`COALESCE(SUM(CASE WHEN ${tables.transaction.type} = 'credit_topup' THEN CAST(${tables.transaction.amount} AS NUMERIC) ELSE 0 END), 0)`.as(
+						"creditTopups",
+					),
+				subscriptions:
+					sql<number>`COALESCE(SUM(CASE WHEN ${tables.transaction.type} IN ('subscription_start', 'dev_plan_start', 'dev_plan_renewal') THEN CAST(${tables.transaction.amount} AS NUMERIC) ELSE 0 END), 0)`.as(
+						"subscriptions",
+					),
+			})
+			.from(tables.transaction)
+			.where(
+				and(
+					eq(tables.transaction.status, "completed"),
+					gte(tables.transaction.createdAt, startDate),
+				),
+			)
+			.groupBy(revenueTruncExpr)
+			.orderBy(asc(revenueTruncExpr)),
+	]);
+
+	const series = seriesRows.map(
+		(r: {
+			timestamp: string;
+			logsCount: number;
+			errorsCount: number;
+			cachedCount: number;
+			totalTokens: number;
+		}) => ({
+			timestamp: new Date(r.timestamp).toISOString(),
+			logsCount: r.logsCount ?? 0,
+			errorsCount: r.errorsCount ?? 0,
+			cachedCount: r.cachedCount ?? 0,
+			totalTokens: r.totalTokens ?? 0,
+		}),
+	);
+
+	const revenueTrend = revenueRows.map(
+		(r: {
+			date: string;
+			revenue: number;
+			creditTopups: number;
+			subscriptions: number;
+		}) => ({
+			date: new Date(r.date).toISOString().split("T")[0],
+			revenue: Number(r.revenue),
+			creditTopups: Number(r.creditTopups),
+			subscriptions: Number(r.subscriptions),
+		}),
+	);
+
+	return c.json({ window: windowParam, bucketSize, series, revenueTrend });
+});
+
+const orgLogItemSchema = z
+	.object({
+		id: z.string(),
+		requestId: z.string(),
+		createdAt: z.date(),
+		organizationId: z.string(),
+		projectId: z.string(),
+		apiKeyId: z.string(),
+		duration: z.number(),
+		timeToFirstToken: z.number().nullable(),
+		timeToFirstReasoningToken: z.number().nullable(),
+		requestedModel: z.string(),
+		requestedProvider: z.string().nullable(),
+		usedModel: z.string(),
+		usedModelMapping: z.string().nullable(),
+		usedProvider: z.string(),
+		responseSize: z.number(),
+		content: z.string().nullable(),
+		reasoningContent: z.string().nullable(),
+		tools: z.any().nullable(),
+		toolChoice: z.any().nullable(),
+		toolResults: z.any().nullable(),
+		finishReason: z.string().nullable(),
+		unifiedFinishReason: z.string().nullable(),
+		promptTokens: z.number().nullable(),
+		completionTokens: z.number().nullable(),
+		totalTokens: z.number().nullable(),
+		reasoningTokens: z.number().nullable(),
+		cachedTokens: z.number().nullable(),
+		messages: z.any().nullable(),
+		temperature: z.number().nullable(),
+		maxTokens: z.number().nullable(),
+		topP: z.number().nullable(),
+		frequencyPenalty: z.number().nullable(),
+		presencePenalty: z.number().nullable(),
+		reasoningEffort: z.string().nullable(),
+		effort: z.string().nullable(),
+		responseFormat: z.any().nullable(),
+		hasError: z.boolean().nullable(),
+		errorDetails: z.any().nullable(),
+		cost: z.number().nullable(),
+		inputCost: z.number().nullable(),
+		outputCost: z.number().nullable(),
+		cachedInputCost: z.number().nullable(),
+		requestCost: z.number().nullable(),
+		webSearchCost: z.number().nullable(),
+		estimatedCost: z.boolean().nullable(),
+		discount: z.number().nullable(),
+		pricingTier: z.string().nullable(),
+		canceled: z.boolean().nullable(),
+		streamed: z.boolean().nullable(),
+		cached: z.boolean().nullable(),
+		mode: z.string(),
+		usedMode: z.string(),
+		source: z.string().nullable(),
+		customHeaders: z.any().nullable(),
+		routingMetadata: z.any().nullable(),
+		dataStorageCost: z.number().nullable(),
+		params: z.any().nullable(),
+		plugins: z.any().nullable(),
+		pluginResults: z.any().nullable(),
+	})
+	.openapi({});
+
+const getOrgLogsFilters = createRoute({
+	method: "get",
+	path: "/organizations/{id}/logs/filters",
+	request: {
+		params: z.object({ id: z.string() }),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						providers: z.array(z.string()),
+						models: z.array(z.string()),
+					}),
+				},
+			},
+			description: "Unique providers and models for org logs",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+admin.openapi(getOrgLogsFilters, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+
+	const [providers, models] = await Promise.all([
+		db
+			.selectDistinct({ value: tables.log.usedProvider })
+			.from(tables.log)
+			.where(eq(tables.log.organizationId, id))
+			.orderBy(asc(tables.log.usedProvider)),
+		db
+			.selectDistinct({ value: tables.log.requestedModel })
+			.from(tables.log)
+			.where(eq(tables.log.organizationId, id))
+			.orderBy(asc(tables.log.requestedModel)),
+	]);
+
+	return c.json({
+		providers: providers.map((r) => r.value),
+		models: models.map((r) => r.value),
+	});
+});
+
+const getOrgLogs = createRoute({
+	method: "get",
+	path: "/organizations/{id}/logs",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(100).default(20),
+			apiKeyId: z.string().optional(),
+			from: z.string().optional(),
+			to: z.string().optional(),
+			unifiedFinishReason: z.string().optional(),
+			provider: z.string().optional(),
+			model: z.string().optional(),
+			customHeaderKey: z.string().optional(),
+			customHeaderValue: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						logs: z.array(orgLogItemSchema),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Organization request logs",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+admin.openapi(getOrgLogs, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const {
+		page,
+		pageSize,
+		apiKeyId,
+		from,
+		to,
+		unifiedFinishReason,
+		provider,
+		model,
+		customHeaderKey,
+		customHeaderValue,
+	} = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	const conditions = [eq(tables.log.organizationId, id)];
+	if (apiKeyId) {
+		conditions.push(eq(tables.log.apiKeyId, apiKeyId));
+	}
+	if (from) {
+		conditions.push(gte(tables.log.createdAt, new Date(from)));
+	}
+	if (to) {
+		conditions.push(lte(tables.log.createdAt, new Date(to)));
+	}
+	if (unifiedFinishReason) {
+		conditions.push(eq(tables.log.unifiedFinishReason, unifiedFinishReason));
+	}
+	if (provider) {
+		conditions.push(eq(tables.log.usedProvider, provider));
+	}
+	if (model) {
+		conditions.push(ilike(tables.log.requestedModel, `%${model}%`));
+	}
+	if (customHeaderKey && customHeaderValue) {
+		conditions.push(
+			sql`${tables.log.customHeaders}->>${customHeaderKey} = ${customHeaderValue}`,
+		);
+	} else if (customHeaderKey) {
+		conditions.push(sql`${tables.log.customHeaders} ? ${customHeaderKey}`);
+	}
+
+	const where = and(...conditions);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.log)
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
+	const rows = await db
+		.select({
+			id: tables.log.id,
+			requestId: tables.log.requestId,
+			createdAt: tables.log.createdAt,
+			organizationId: tables.log.organizationId,
+			projectId: tables.log.projectId,
+			apiKeyId: tables.log.apiKeyId,
+			duration: tables.log.duration,
+			timeToFirstToken: tables.log.timeToFirstToken,
+			timeToFirstReasoningToken: tables.log.timeToFirstReasoningToken,
+			requestedModel: tables.log.requestedModel,
+			requestedProvider: tables.log.requestedProvider,
+			usedModel: tables.log.usedModel,
+			usedModelMapping: tables.log.usedModelMapping,
+			usedProvider: tables.log.usedProvider,
+			responseSize: tables.log.responseSize,
+			content: tables.log.content,
+			reasoningContent: tables.log.reasoningContent,
+			tools: tables.log.tools,
+			toolChoice: tables.log.toolChoice,
+			toolResults: tables.log.toolResults,
+			finishReason: tables.log.finishReason,
+			unifiedFinishReason: tables.log.unifiedFinishReason,
+			promptTokens: tables.log.promptTokens,
+			completionTokens: tables.log.completionTokens,
+			totalTokens: tables.log.totalTokens,
+			reasoningTokens: tables.log.reasoningTokens,
+			cachedTokens: tables.log.cachedTokens,
+			messages: tables.log.messages,
+			temperature: tables.log.temperature,
+			maxTokens: tables.log.maxTokens,
+			topP: tables.log.topP,
+			frequencyPenalty: tables.log.frequencyPenalty,
+			presencePenalty: tables.log.presencePenalty,
+			reasoningEffort: tables.log.reasoningEffort,
+			effort: tables.log.effort,
+			responseFormat: tables.log.responseFormat,
+			hasError: tables.log.hasError,
+			errorDetails: tables.log.errorDetails,
+			cost: tables.log.cost,
+			inputCost: tables.log.inputCost,
+			outputCost: tables.log.outputCost,
+			cachedInputCost: tables.log.cachedInputCost,
+			requestCost: tables.log.requestCost,
+			webSearchCost: tables.log.webSearchCost,
+			estimatedCost: tables.log.estimatedCost,
+			discount: tables.log.discount,
+			pricingTier: tables.log.pricingTier,
+			canceled: tables.log.canceled,
+			streamed: tables.log.streamed,
+			cached: tables.log.cached,
+			mode: tables.log.mode,
+			usedMode: tables.log.usedMode,
+			source: tables.log.source,
+			customHeaders: tables.log.customHeaders,
+			routingMetadata: tables.log.routingMetadata,
+			dataStorageCost: tables.log.dataStorageCost,
+			params: tables.log.params,
+			plugins: tables.log.plugins,
+			pluginResults: tables.log.pluginResults,
+		})
+		.from(tables.log)
+		.where(where)
+		.orderBy(desc(tables.log.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	const toNum = (v: unknown) =>
+		v !== null && v !== undefined ? Number(v) : null;
+
+	return c.json({
+		logs: rows.map((r) => ({
+			...r,
+			promptTokens: toNum(r.promptTokens),
+			completionTokens: toNum(r.completionTokens),
+			totalTokens: toNum(r.totalTokens),
+			reasoningTokens: toNum(r.reasoningTokens),
+			cachedTokens: toNum(r.cachedTokens),
+			dataStorageCost: toNum(r.dataStorageCost),
+		})),
 		pagination: {
 			page,
 			pageSize,

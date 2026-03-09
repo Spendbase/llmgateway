@@ -50,7 +50,6 @@ export function OrgOverviewCards({
 				title="Credits"
 				value={`$${Number(overview.credits).toFixed(2)}`}
 				icon={<CreditCard className="h-4 w-4" />}
-				sub={overview.plan.toUpperCase()}
 			/>
 			<MetricCard
 				title="Total Requests"
