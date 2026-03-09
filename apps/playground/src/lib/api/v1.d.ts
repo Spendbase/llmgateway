@@ -810,6 +810,7 @@ export interface paths {
                                             [key: string]: unknown;
                                         };
                                     };
+                                    defer_loading?: boolean;
                                 } | {
                                     /** @enum {string} */
                                     type: "web_search";
@@ -826,6 +827,16 @@ export interface paths {
                                     /** @enum {string} */
                                     type: "text_editor_20250429";
                                     name: string;
+                                } | {
+                                    /** @enum {string} */
+                                    type: "tool_search";
+                                    /** @enum {string} */
+                                    execution?: "server" | "client";
+                                    name?: string;
+                                    description?: string;
+                                    parameters?: {
+                                        [key: string]: unknown;
+                                    };
                                 })[] | null;
                                 toolChoice: "none" | "auto" | "required" | {
                                     /** @enum {string} */
@@ -5348,7 +5359,7 @@ export interface operations {
                                 vision: boolean | null;
                                 reasoning: boolean | null;
                                 reasoningOutput: string | null;
-                                reasoningLevels: ("minimal" | "low" | "medium" | "high")[] | null;
+                                reasoningLevels: ("minimal" | "low" | "medium" | "high" | "xhigh")[] | null;
                                 tools: boolean | null;
                                 jsonOutput: boolean | null;
                                 jsonOutputSchema: boolean | null;

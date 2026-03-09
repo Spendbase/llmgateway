@@ -35,7 +35,7 @@ export interface ApiModelProviderMapping {
 	vision?: boolean;
 	reasoning?: boolean;
 	reasoningOutput?: string;
-	reasoningLevels?: ("minimal" | "low" | "medium" | "high")[];
+	reasoningLevels?: ("minimal" | "low" | "medium" | "high" | "xhigh")[];
 	tools?: boolean;
 	jsonOutput?: boolean;
 	jsonOutputSchema?: boolean;

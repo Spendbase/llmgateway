@@ -54,7 +54,7 @@ const modelProviderMappingSchema = z.object({
 	reasoning: nullableToOptional(z.boolean()),
 	reasoningOutput: nullableToOptional(z.string()),
 	reasoningLevels: nullableToOptional(
-		z.array(z.enum(["minimal", "low", "medium", "high"])),
+		z.array(z.enum(["minimal", "low", "medium", "high", "xhigh"])),
 	),
 	tools: nullableToOptional(z.boolean()),
 	jsonOutput: nullableToOptional(z.boolean()),
