@@ -145,7 +145,7 @@ export async function syncProvidersAndModels() {
 								reasoningLevels:
 									"reasoningLevels" in mapping
 										? (mapping.reasoningLevels as
-												| ("minimal" | "low" | "medium" | "high")[]
+												| ("minimal" | "low" | "medium" | "high" | "xhigh")[]
 												| undefined)
 										: undefined,
 								pricingTiers:
@@ -225,7 +225,7 @@ export async function syncProvidersAndModels() {
 							reasoningLevels:
 								"reasoningLevels" in mapping
 									? (mapping.reasoningLevels as
-											| ("minimal" | "low" | "medium" | "high")[]
+											| ("minimal" | "low" | "medium" | "high" | "xhigh")[]
 											| undefined)
 									: undefined,
 							pricingTiers:
