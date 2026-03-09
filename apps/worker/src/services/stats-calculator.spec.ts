@@ -376,36 +376,21 @@ describe("stats-calculator", () => {
 
 			await calculateMinutelyHistory();
 
-			// Should create history records for existing mappings only, ignoring the invalid log
+			// No history records should be created since the log doesn't match any active mapping
 			const historyRecords = await db
 				.select()
 				.from(modelProviderMappingHistory);
-			expect(historyRecords.length).toBeGreaterThanOrEqual(2); // Our test mappings
-
-			// All should have zero stats since the log was for non-existent model/provider
-			for (const record of historyRecords) {
-				expect(record.logsCount).toBe(0);
-				expect(record.totalOutputTokens).toBe(0);
-			}
+			expect(historyRecords).toHaveLength(0);
 		});
 
 		it("should handle empty logs gracefully", async () => {
 			await calculateMinutelyHistory();
 
-			// Should create history records for all mappings with zero stats
+			// No history records should be created when there are no logs
 			const historyRecords = await db
 				.select()
 				.from(modelProviderMappingHistory);
-			expect(historyRecords.length).toBeGreaterThanOrEqual(2); // Our test mappings
-
-			// All should have zero stats since no logs were inserted
-			for (const record of historyRecords) {
-				expect(record.logsCount).toBe(0);
-				expect(record.errorsCount).toBe(0);
-				expect(record.totalOutputTokens).toBe(0);
-				expect(record.totalDuration).toBe(0);
-				expect(record.cachedCount).toBe(0);
-			}
+			expect(historyRecords).toHaveLength(0);
 		});
 
 		it("should update existing history records on conflict", async () => {
@@ -448,11 +433,11 @@ describe("stats-calculator", () => {
 
 			await calculateMinutelyHistory();
 
-			// Should have records for both mappings (including inactive one)
+			// Only the gpt-4/openai mapping had activity, claude was not inserted
 			const historyRecords = await db
 				.select()
 				.from(modelProviderMappingHistory);
-			expect(historyRecords.length).toBeGreaterThanOrEqual(2); // At least the 2 test mappings
+			expect(historyRecords).toHaveLength(1);
 
 			// Check the active mapping was updated
 			const gptRecord = historyRecords.find(
@@ -462,65 +447,45 @@ describe("stats-calculator", () => {
 			expect(gptRecord?.logsCount).toBe(1);
 			expect(gptRecord?.totalOutputTokens).toBe(100);
 
-			// Check inactive mapping has zero stats
+			// Claude mapping had no logs, so no history record was created for it
 			const claudeRecord = historyRecords.find(
 				(r) =>
 					r.modelId === "claude-3-5-sonnet" && r.providerId === "anthropic",
 			);
-			expect(claudeRecord).toBeTruthy();
-			expect(claudeRecord?.logsCount).toBe(0);
-			expect(claudeRecord?.totalOutputTokens).toBe(0);
+			expect(claudeRecord).toBeUndefined();
 
 			// Check that model history was also created
 			const modelHistoryRecords = await db.select().from(modelHistory);
-			expect(modelHistoryRecords.length).toBeGreaterThanOrEqual(2); // At least 2 models
+			expect(modelHistoryRecords).toHaveLength(1); // Only gpt-4 had activity
 
 			const gptModelRecord = modelHistoryRecords.find(
 				(r) => r.modelId === "gpt-4",
 			);
 			expect(gptModelRecord).toBeTruthy();
-			expect(gptModelRecord?.logsCount).toBe(1); // Only one log in this test
-			expect(gptModelRecord?.totalOutputTokens).toBe(100); // Only 100 tokens
+			expect(gptModelRecord?.logsCount).toBe(1);
+			expect(gptModelRecord?.totalOutputTokens).toBe(100);
 
+			// Claude model had no logs, so no history record was created for it
 			const claudeModelRecord = modelHistoryRecords.find(
 				(r) => r.modelId === "claude-3-5-sonnet",
 			);
-			expect(claudeModelRecord).toBeTruthy();
-			expect(claudeModelRecord?.logsCount).toBe(0); // No logs for claude in this test
-			expect(claudeModelRecord?.totalOutputTokens).toBe(0);
+			expect(claudeModelRecord).toBeUndefined();
 		});
 
-		it("should create entries for inactive model-provider mappings", async () => {
-			// Don't insert any logs, so all mappings should be inactive
+		it("should not create entries for mappings with no activity", async () => {
+			// Don't insert any logs
 
 			await calculateMinutelyHistory();
 
-			// Should create history records for all model-provider mappings
+			// No history records should be created since no logs were inserted
 			const historyRecords = await db
 				.select()
 				.from(modelProviderMappingHistory);
-			expect(historyRecords.length).toBeGreaterThanOrEqual(2); // At least our 2 test mappings
+			expect(historyRecords).toHaveLength(0);
 
-			// All should have zero stats since no logs were inserted
-			for (const record of historyRecords) {
-				expect(record.logsCount).toBe(0);
-				expect(record.errorsCount).toBe(0);
-				expect(record.totalOutputTokens).toBe(0);
-				expect(record.totalDuration).toBe(0);
-				expect(record.cachedCount).toBe(0);
-			}
-
-			// Check model history was also created with zero stats
+			// Check model history was also not created
 			const modelHistoryRecords = await db.select().from(modelHistory);
-			expect(modelHistoryRecords.length).toBeGreaterThanOrEqual(2); // At least our 2 test models
-
-			for (const record of modelHistoryRecords) {
-				expect(record.logsCount).toBe(0);
-				expect(record.errorsCount).toBe(0);
-				expect(record.totalOutputTokens).toBe(0);
-				expect(record.totalDuration).toBe(0);
-				expect(record.cachedCount).toBe(0);
-			}
+			expect(modelHistoryRecords).toHaveLength(0);
 		});
 	});
 
