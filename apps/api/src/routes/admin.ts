@@ -8,7 +8,7 @@ import {
 	and,
 	asc,
 	count,
-	db,
+	primaryDb as db,
 	desc,
 	eq,
 	exists,
