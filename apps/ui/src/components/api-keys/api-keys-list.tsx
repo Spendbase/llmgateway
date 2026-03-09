@@ -208,9 +208,14 @@ export function ApiKeysList({
 		"/keys/api/limit/{id}",
 	);
 
-	const allKeys = data?.apiKeys.filter((key) => key.status !== "deleted") || [];
-	const activeKeys = allKeys.filter((key) => key.status === "active");
-	const inactiveKeys = allKeys.filter((key) => key.status === "inactive");
+	const allKeys =
+		data?.apiKeys.filter((key) => key.effectiveStatus !== "deleted") || [];
+	// Use effectiveStatus for active/inactive filtering
+	const activeKeys = allKeys.filter((key) => key.effectiveStatus === "active");
+	const inactiveKeys = allKeys.filter(
+		(key) =>
+			key.effectiveStatus === "inactive" || key.effectiveStatus === "expired",
+	);
 	const planLimits = data?.planLimits;
 
 	const filteredKeys = (() => {
@@ -533,7 +538,10 @@ export function ApiKeysList({
 									</div>
 								</TableCell>
 								<TableCell>
-									<StatusBadge status={key.status} variant="detailed" />
+									<StatusBadge
+										status={key.effectiveStatus}
+										variant="detailed"
+									/>
 								</TableCell>
 								<TableCell>
 									<Tooltip>
@@ -721,7 +729,7 @@ export function ApiKeysList({
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center gap-2">
 									<h3 className="font-medium text-sm">{key.description}</h3>
-									<StatusBadge status={key.status} />
+									<StatusBadge status={key.effectiveStatus} />
 								</div>
 								<div className="flex items-center gap-2 mt-1">
 									<span className="text-xs text-muted-foreground">
