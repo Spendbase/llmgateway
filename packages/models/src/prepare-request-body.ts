@@ -509,25 +509,11 @@ export async function prepareRequestBody(
 							...(tool.defer_loading ? { defer_loading: true } : {}),
 						}));
 					}
-					// Add tool_search tool if present (GPT-5.4+ only)
 					if (toolSearch) {
 						if (!responsesBody.tools) {
 							responsesBody.tools = [];
 						}
-						const toolSearchEntry: any = { type: "tool_search" };
-						if (toolSearch.execution) {
-							toolSearchEntry.execution = toolSearch.execution;
-						}
-						if (toolSearch.name) {
-							toolSearchEntry.name = toolSearch.name;
-						}
-						if (toolSearch.description) {
-							toolSearchEntry.description = toolSearch.description;
-						}
-						if (toolSearch.parameters) {
-							toolSearchEntry.parameters = toolSearch.parameters;
-						}
-						responsesBody.tools.push(toolSearchEntry);
+						responsesBody.tools.push(toolSearch);
 					}
 				}
 

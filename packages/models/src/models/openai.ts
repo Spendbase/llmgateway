@@ -1412,6 +1412,7 @@ export const openaiModels = [
 				modelName: "gpt-5.4-pro",
 				inputPrice: 30.0 / 1e6,
 				outputPrice: 180.0 / 1e6,
+				cachedInputPrice: 3.0 / 1e6,
 				// Prompts >272K tokens are charged at 2x input and 1.5x output for the full session
 				pricingTiers: [
 					{
@@ -1419,12 +1420,14 @@ export const openaiModels = [
 						upToTokens: 272000,
 						inputPrice: 30.0 / 1e6,
 						outputPrice: 180.0 / 1e6,
+						cachedInputPrice: 3.0 / 1e6,
 					},
 					{
 						name: "Over 272K",
 						upToTokens: Infinity,
 						inputPrice: 60.0 / 1e6,
 						outputPrice: 270.0 / 1e6,
+						cachedInputPrice: 6.0 / 1e6,
 					},
 				],
 				requestPrice: 0,
