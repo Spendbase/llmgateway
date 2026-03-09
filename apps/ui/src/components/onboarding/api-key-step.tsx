@@ -80,7 +80,6 @@ export function ApiKeyStep() {
 		updatedAt: string;
 		description: string;
 		status: "active" | "inactive" | "deleted" | null;
-		effectiveStatus: "active" | "inactive" | "deleted" | "expired";
 		projectId: string;
 		maskedToken: string;
 		token?: string;
@@ -316,7 +315,7 @@ Docs: https://docs.llmapi.ai/`;
 															</TableCell>
 															<TableCell>
 																<StatusBadge
-																	status={key.effectiveStatus}
+																	status={key.status}
 																	variant="detailed"
 																/>
 															</TableCell>
@@ -367,7 +366,7 @@ Docs: https://docs.llmapi.ai/`;
 																{key.description}
 															</h3>
 															<StatusBadge
-																status={key.effectiveStatus}
+																status={key.status}
 																variant="detailed"
 															/>
 														</div>

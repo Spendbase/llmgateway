@@ -15,26 +15,6 @@ export const keysApi = new OpenAPIHono<ServerTypes>();
 // Create a schema for API key responses
 // Using z.object directly instead of createSelectSchema due to compatibility issues
 
-function computeEffectiveStatus(key: {
-	status: "active" | "inactive" | "deleted" | null;
-	expiresAt: Date | string | null;
-}): "active" | "inactive" | "deleted" | "expired" {
-	if (key.status === "deleted") {
-		return "deleted";
-	}
-	if (key.status === "inactive") {
-		return "inactive";
-	}
-	if (
-		key.status === "active" &&
-		key.expiresAt &&
-		new Date() >= new Date(key.expiresAt)
-	) {
-		return "expired";
-	}
-	return key.status ?? "active";
-}
-
 const apiKeySchema = z.object({
 	id: z.string(),
 	createdAt: z.date(),
@@ -42,7 +22,6 @@ const apiKeySchema = z.object({
 	token: z.string(),
 	description: z.string(),
 	status: z.enum(["active", "inactive", "deleted"]).nullable(),
-	effectiveStatus: z.enum(["active", "inactive", "deleted", "expired"]),
 	usageLimit: z.string().nullable(),
 	usage: z.string(),
 	resetPeriod: z.enum(["daily", "weekly", "monthly", "none"]),
@@ -181,15 +160,9 @@ const create = createRoute({
 				"application/json": {
 					schema: z.object({
 						apiKey: apiKeySchema
-							.omit({ token: true, effectiveStatus: true })
+							.omit({ token: true })
 							.extend({
 								token: z.string(),
-								effectiveStatus: z.enum([
-									"active",
-									"inactive",
-									"deleted",
-									"expired",
-								]),
 							})
 							.openapi({}),
 					}),
@@ -297,7 +270,6 @@ keysApi.openapi(create, async (c) => {
 		apiKey: {
 			...apiKey,
 			token, // Include the token in the response
-			effectiveStatus: computeEffectiveStatus(apiKey),
 		},
 	});
 });
@@ -316,18 +288,10 @@ const list = createRoute({
 					schema: z.object({
 						apiKeys: z
 							.array(
-								apiKeySchema
-									.omit({ token: true, effectiveStatus: true })
-									.extend({
-										// Return only masked token in the list
-										maskedToken: z.string(),
-										effectiveStatus: z.enum([
-											"active",
-											"inactive",
-											"deleted",
-											"expired",
-										]),
-									}),
+								apiKeySchema.omit({ token: true }).extend({
+									// Return only masked token in the list
+									maskedToken: z.string(),
+								}),
 							)
 							.openapi({}),
 						planLimits: z
@@ -468,7 +432,6 @@ keysApi.openapi(list, async (c) => {
 			return {
 				...restApiKey,
 				maskedToken: maskToken(key.token),
-				effectiveStatus: computeEffectiveStatus(key),
 			};
 		}),
 		planLimits: projectId
@@ -633,15 +596,9 @@ const updateStatus = createRoute({
 					schema: z.object({
 						message: z.string(),
 						apiKey: apiKeySchema
-							.omit({ token: true, effectiveStatus: true })
+							.omit({ token: true })
 							.extend({
 								maskedToken: z.string(),
-								effectiveStatus: z.enum([
-									"active",
-									"inactive",
-									"deleted",
-									"expired",
-								]),
 							})
 							.openapi({}),
 					}),
@@ -762,7 +719,6 @@ keysApi.openapi(updateStatus, async (c) => {
 		apiKey: {
 			...restApiKey,
 			maskedToken: maskToken(updatedApiKey.token),
-			effectiveStatus: computeEffectiveStatus(updatedApiKey),
 		},
 	});
 });
@@ -790,15 +746,9 @@ const updateUsageLimit = createRoute({
 					schema: z.object({
 						message: z.string(),
 						apiKey: apiKeySchema
-							.omit({ token: true, effectiveStatus: true })
+							.omit({ token: true })
 							.extend({
 								maskedToken: z.string(),
-								effectiveStatus: z.enum([
-									"active",
-									"inactive",
-									"deleted",
-									"expired",
-								]),
 							})
 							.openapi({}),
 					}),
@@ -913,6 +863,14 @@ keysApi.openapi(updateUsageLimit, async (c) => {
 	}
 	if (expiresAt !== undefined) {
 		updates.expiresAt = expiresAt;
+
+		// Reactivate key if expiration is extended and it wasn't deleted
+		if (apiKey.status !== "deleted") {
+			const isFuture = expiresAt === null || new Date(expiresAt) > new Date();
+			if (isFuture && apiKey.status === "inactive") {
+				updates.status = "active";
+			}
+		}
 	}
 
 	// Recalculate Period Logic ONLY if usageLimit or resetPeriod is provided
@@ -954,7 +912,6 @@ keysApi.openapi(updateUsageLimit, async (c) => {
 		apiKey: {
 			...restApiKey,
 			maskedToken: maskToken(updatedApiKey.token),
-			effectiveStatus: computeEffectiveStatus(updatedApiKey),
 		},
 	});
 });

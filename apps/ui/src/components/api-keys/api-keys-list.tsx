@@ -208,14 +208,11 @@ export function ApiKeysList({
 		"/keys/api/limit/{id}",
 	);
 
-	const allKeys =
-		data?.apiKeys.filter((key) => key.effectiveStatus !== "deleted") || [];
-	// Use effectiveStatus for active/inactive filtering
-	const activeKeys = allKeys.filter((key) => key.effectiveStatus === "active");
-	const inactiveKeys = allKeys.filter(
-		(key) =>
-			key.effectiveStatus === "inactive" || key.effectiveStatus === "expired",
-	);
+	// Filter keys that are NOT deleted
+	const allKeys = data?.apiKeys.filter((key) => key.status !== "deleted") || [];
+	// Use status for active/inactive filtering
+	const activeKeys = allKeys.filter((key) => key.status === "active");
+	const inactiveKeys = allKeys.filter((key) => key.status === "inactive");
 	const planLimits = data?.planLimits;
 
 	const filteredKeys = (() => {
@@ -538,10 +535,7 @@ export function ApiKeysList({
 									</div>
 								</TableCell>
 								<TableCell>
-									<StatusBadge
-										status={key.effectiveStatus}
-										variant="detailed"
-									/>
+									<StatusBadge status={key.status} variant="detailed" />
 								</TableCell>
 								<TableCell>
 									<Tooltip>
@@ -729,7 +723,7 @@ export function ApiKeysList({
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center gap-2">
 									<h3 className="font-medium text-sm">{key.description}</h3>
-									<StatusBadge status={key.effectiveStatus} />
+									<StatusBadge status={key.status} />
 								</div>
 								<div className="flex items-center gap-2 mt-1">
 									<span className="text-xs text-muted-foreground">

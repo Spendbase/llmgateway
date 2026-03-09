@@ -1081,9 +1081,18 @@ export async function resetApiKeyUsage(): Promise<void> {
 				`Successfully reset usage for ${eligibleKeys.length} API keys`,
 			);
 		});
+
+		// Process API key expirations sequentially in the same loop execution
+		await db.execute(sql`
+			UPDATE "api_key"
+			SET status = 'inactive'
+			WHERE status = 'active'
+			  AND expires_at IS NOT NULL
+			  AND expires_at <= ${now}
+		`);
 	} catch (error) {
 		logger.error(
-			"Error resetting API key usage",
+			"Error processing API key maintenance",
 			error instanceof Error ? error : new Error(String(error)),
 		);
 	} finally {

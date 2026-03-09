@@ -4,7 +4,7 @@ import { Badge } from "@/lib/components/badge";
 import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
-	status: "active" | "inactive" | "deleted" | "expired" | null;
+	status: "active" | "inactive" | "deleted" | null;
 	variant?: "simple" | "detailed";
 }
 
@@ -24,7 +24,6 @@ export function StatusBadge({
 					iconClassName: "text-green-600 dark:text-green-500",
 				};
 			case "inactive":
-			case "expired":
 				return {
 					icon: CircleSlash,
 					className:
