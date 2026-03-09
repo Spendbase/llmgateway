@@ -83,12 +83,14 @@ interface ChatUIProps {
 	status: ChatStatus;
 	stop: () => void;
 	regenerate: () => void;
-	reasoningEffort: "" | "minimal" | "low" | "medium" | "high";
+	reasoningEffort: "" | "minimal" | "low" | "medium" | "high" | "xhigh";
 	setReasoningEffort: (
-		value: "" | "minimal" | "low" | "medium" | "high",
+		value: "" | "minimal" | "low" | "medium" | "high" | "xhigh",
 	) => void;
 	supportsReasoning: boolean;
-	supportedReasoningLevels: ("minimal" | "low" | "medium" | "high")[] | null;
+	supportedReasoningLevels:
+		| ("minimal" | "low" | "medium" | "high" | "xhigh")[]
+		| null;
 	onAutoReasoning?: () => void;
 	imageAspectRatio:
 		| "auto"
@@ -636,7 +638,7 @@ export const ChatUI = ({
 											}
 										} else {
 											setReasoningEffort(
-												val as "minimal" | "low" | "medium" | "high",
+												val as "minimal" | "low" | "medium" | "high" | "xhigh",
 											);
 										}
 									}}
@@ -658,6 +660,9 @@ export const ChatUI = ({
 										)}
 										{supportedReasoningLevels.includes("high") && (
 											<SelectItem value="high">High</SelectItem>
+										)}
+										{supportedReasoningLevels.includes("xhigh") && (
+											<SelectItem value="xhigh">XHigh</SelectItem>
 										)}
 									</SelectContent>
 								</Select>

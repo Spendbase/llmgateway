@@ -15,6 +15,7 @@ import type {
 	OpenAIRequestBody,
 	OpenAIResponsesRequestBody,
 	OpenAIToolInput,
+	OpenAIToolSearchToolInput,
 	ProviderRequestBody,
 	ToolChoiceType,
 	WebSearchTool,
@@ -37,6 +38,7 @@ function separateToolsByType(tools?: OpenAIToolInput[]): {
 	functionTools: OpenAIFunctionToolInput[];
 	webSearchTool?: WebSearchTool;
 	nativeAnthropicTools: AnthropicTextEditorToolInput[];
+	toolSearchTool?: OpenAIToolSearchToolInput;
 } {
 	if (!tools || tools.length === 0) {
 		return { functionTools: [], nativeAnthropicTools: [] };
@@ -45,6 +47,7 @@ function separateToolsByType(tools?: OpenAIToolInput[]): {
 	const functionTools: OpenAIFunctionToolInput[] = [];
 	const nativeAnthropicTools: AnthropicTextEditorToolInput[] = [];
 	let webSearchTool: WebSearchTool | undefined;
+	let toolSearchTool: OpenAIToolSearchToolInput | undefined;
 
 	for (const tool of tools) {
 		if (isFunctionTool(tool)) {
@@ -53,10 +56,12 @@ function separateToolsByType(tools?: OpenAIToolInput[]): {
 			webSearchTool = tool as WebSearchTool;
 		} else if (tool.type === "text_editor_20250429") {
 			nativeAnthropicTools.push(tool as AnthropicTextEditorToolInput);
+		} else if (tool.type === "tool_search") {
+			toolSearchTool = tool as OpenAIToolSearchToolInput;
 		}
 	}
 
-	return { functionTools, webSearchTool, nativeAnthropicTools };
+	return { functionTools, webSearchTool, nativeAnthropicTools, toolSearchTool };
 }
 
 /**
@@ -385,7 +390,7 @@ export async function prepareRequestBody(
 	response_format: OpenAIRequestBody["response_format"],
 	tools?: OpenAIToolInput[],
 	tool_choice?: ToolChoiceType,
-	reasoning_effort?: "minimal" | "low" | "medium" | "high",
+	reasoning_effort?: "minimal" | "low" | "medium" | "high" | "xhigh",
 	supportsReasoning?: boolean,
 	isProd = false,
 	maxImageSizeMB = 20,
@@ -493,16 +498,36 @@ export async function prepareRequestBody(
 
 				// Add tools support for responses API (transform format if needed)
 				if (tools && tools.length > 0) {
-					// Filter to only function tools (web_search is handled separately)
-					const functionTools = tools.filter(isFunctionTool);
+					const { functionTools, toolSearchTool: toolSearch } =
+						separateToolsByType(tools);
 					if (functionTools.length > 0) {
-						// Transform tools from chat completions format to responses API format
 						responsesBody.tools = functionTools.map((tool) => ({
 							type: "function" as const,
 							name: tool.function.name,
 							description: tool.function.description,
 							parameters: tool.function.parameters as FunctionParameter,
+							...(tool.defer_loading ? { defer_loading: true } : {}),
 						}));
+					}
+					// Add tool_search tool if present (GPT-5.4+ only)
+					if (toolSearch) {
+						if (!responsesBody.tools) {
+							responsesBody.tools = [];
+						}
+						const toolSearchEntry: any = { type: "tool_search" };
+						if (toolSearch.execution) {
+							toolSearchEntry.execution = toolSearch.execution;
+						}
+						if (toolSearch.name) {
+							toolSearchEntry.name = toolSearch.name;
+						}
+						if (toolSearch.description) {
+							toolSearchEntry.description = toolSearch.description;
+						}
+						if (toolSearch.parameters) {
+							toolSearchEntry.parameters = toolSearch.parameters;
+						}
+						responsesBody.tools.push(toolSearchEntry);
 					}
 				}
 
