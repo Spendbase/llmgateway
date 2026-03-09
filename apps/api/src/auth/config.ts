@@ -575,6 +575,38 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					},
 				},
 			},
+			session: {
+				create: {
+					before: async (session, ctx) => {
+						const currentUser = await db.query.user.findFirst({
+							where: {
+								id: session.userId,
+							},
+						});
+
+						const cookieHeader = ctx?.request?.headers.get("cookie") || "";
+						const isRedirectFromCorporateLoginPage =
+							isCorporateAuthFlow(cookieHeader);
+						if (
+							isRedirectFromCorporateLoginPage &&
+							currentUser &&
+							!isCorporateEmail(currentUser.email)
+						) {
+							logger.warn("Non-corporate email blocked during sign-in", {
+								userId: currentUser.id,
+								email: maskEmail(currentUser.email),
+								path: ctx?.path || "",
+							});
+
+							const errorUrl = new URL("/corporate-login", uiUrl);
+							errorUrl.searchParams.set("error", "corporate_only");
+							throw ctx?.redirect(errorUrl.toString());
+						}
+
+						return { data: session };
+					},
+				},
+			},
 		},
 		socialProviders: {
 			github: {
@@ -852,25 +884,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 							},
 						},
 					);
-				}
-
-				const cookieHeader = ctx.request?.headers.get("cookie") || "";
-				const isRedirectFromCorporateLoginPage =
-					isCorporateAuthFlow(cookieHeader);
-				if (
-					isRedirectFromCorporateLoginPage &&
-					user &&
-					!isCorporateEmail(user.email)
-				) {
-					logger.warn("Non-corporate email blocked during sign-in", {
-						userId: user.id,
-						email: maskEmail(user.email),
-						path: ctx.path,
-					});
-
-					const errorUrl = new URL("/corporate-login", uiUrl);
-					errorUrl.searchParams.set("error", "corporate_only");
-					throw ctx.redirect(errorUrl.toString());
 				}
 
 				// Create default org/project for first-time sessions (email signup or first social sign-in)
