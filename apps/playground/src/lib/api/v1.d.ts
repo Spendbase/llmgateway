@@ -2628,6 +2628,312 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/analytics/platform": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    range?: "24h" | "7d" | "30d" | "90d" | "all";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Platform-wide analytics from pre-aggregated model and provider tables. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            models: {
+                                id: string;
+                                name: string;
+                                family: string;
+                                status: string;
+                                logsCount: number;
+                                errorsCount: number;
+                                clientErrorsCount: number;
+                                gatewayErrorsCount: number;
+                                upstreamErrorsCount: number;
+                                cachedCount: number;
+                                avgTimeToFirstToken: number | null;
+                                errorRate: number;
+                                cacheHitRate: number;
+                            }[];
+                            providers: {
+                                id: string;
+                                name: string;
+                                status: string;
+                                logsCount: number;
+                                errorsCount: number;
+                                clientErrorsCount: number;
+                                gatewayErrorsCount: number;
+                                upstreamErrorsCount: number;
+                                cachedCount: number;
+                                avgTimeToFirstToken: number | null;
+                                errorRate: number;
+                                cacheHitRate: number;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/time-series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    window?: "6h" | "24h" | "7d" | "30d" | "90d" | "all";
+                    granularity?: "minute" | "hour" | "day" | "week" | "month";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Time series analytics from modelHistory and revenue from transactions. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            window: "6h" | "24h" | "7d" | "30d" | "90d" | "all";
+                            bucketSize: string;
+                            series: {
+                                timestamp: string;
+                                logsCount: number;
+                                errorsCount: number;
+                                cachedCount: number;
+                                totalTokens: number;
+                            }[];
+                            revenueTrend: {
+                                date: string;
+                                revenue: number;
+                                creditTopups: number;
+                                subscriptions: number;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/organizations/{id}/logs/filters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Unique providers and models for org logs */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            providers: string[];
+                            models: string[];
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/organizations/{id}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    apiKeyId?: string;
+                    from?: string;
+                    to?: string;
+                    unifiedFinishReason?: string;
+                    provider?: string;
+                    model?: string;
+                    customHeaderKey?: string;
+                    customHeaderValue?: string;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Organization request logs */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            logs: {
+                                id: string;
+                                requestId: string;
+                                createdAt: string;
+                                organizationId: string;
+                                projectId: string;
+                                apiKeyId: string;
+                                duration: number;
+                                timeToFirstToken: number | null;
+                                timeToFirstReasoningToken: number | null;
+                                requestedModel: string;
+                                requestedProvider: string | null;
+                                usedModel: string;
+                                usedModelMapping: string | null;
+                                usedProvider: string;
+                                responseSize: number;
+                                content: string | null;
+                                reasoningContent: string | null;
+                                tools?: unknown;
+                                toolChoice?: unknown;
+                                toolResults?: unknown;
+                                finishReason: string | null;
+                                unifiedFinishReason: string | null;
+                                promptTokens: number | null;
+                                completionTokens: number | null;
+                                totalTokens: number | null;
+                                reasoningTokens: number | null;
+                                cachedTokens: number | null;
+                                messages?: unknown;
+                                temperature: number | null;
+                                maxTokens: number | null;
+                                topP: number | null;
+                                frequencyPenalty: number | null;
+                                presencePenalty: number | null;
+                                reasoningEffort: string | null;
+                                effort: string | null;
+                                responseFormat?: unknown;
+                                hasError: boolean | null;
+                                errorDetails?: unknown;
+                                cost: number | null;
+                                inputCost: number | null;
+                                outputCost: number | null;
+                                cachedInputCost: number | null;
+                                requestCost: number | null;
+                                webSearchCost: number | null;
+                                estimatedCost: boolean | null;
+                                discount: number | null;
+                                pricingTier: string | null;
+                                canceled: boolean | null;
+                                streamed: boolean | null;
+                                cached: boolean | null;
+                                mode: string;
+                                usedMode: string;
+                                source: string | null;
+                                customHeaders?: unknown;
+                                routingMetadata?: unknown;
+                                dataStorageCost: number | null;
+                                params?: unknown;
+                                plugins?: unknown;
+                                pluginResults?: unknown;
+                            }[];
+                            pagination: {
+                                page: number;
+                                pageSize: number;
+                                total: number;
+                                totalPages: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/keys/api": {
         parameters: {
             query?: never;

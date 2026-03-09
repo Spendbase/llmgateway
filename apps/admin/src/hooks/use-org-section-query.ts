@@ -94,6 +94,70 @@ export function useOrgProjects(orgId: string, page: number, pageSize: number) {
 	);
 }
 
+export interface OrgLogsFilters {
+	apiKeyId?: string;
+	from?: string;
+	to?: string;
+	unifiedFinishReason?: string;
+	provider?: string;
+	model?: string;
+	customHeaderKey?: string;
+	customHeaderValue?: string;
+}
+
+export function useOrgLogs(
+	orgId: string,
+	page: number,
+	pageSize: number,
+	filters: OrgLogsFilters = {},
+) {
+	const api = useApi();
+	const {
+		apiKeyId,
+		from,
+		to,
+		unifiedFinishReason,
+		provider,
+		model,
+		customHeaderKey,
+		customHeaderValue,
+	} = filters;
+	return api.useQuery(
+		"get",
+		"/admin/organizations/{id}/logs",
+		{
+			params: {
+				path: { id: orgId },
+				query: {
+					page,
+					pageSize,
+					...(apiKeyId ? { apiKeyId } : {}),
+					...(from ? { from } : {}),
+					...(to ? { to } : {}),
+					...(unifiedFinishReason ? { unifiedFinishReason } : {}),
+					...(provider ? { provider } : {}),
+					...(model ? { model } : {}),
+					...(customHeaderKey ? { customHeaderKey } : {}),
+					...(customHeaderValue ? { customHeaderValue } : {}),
+				},
+			},
+		},
+		{ refetchInterval: 30_000 },
+	);
+}
+
+export function useOrgLogsFilters(orgId: string) {
+	const api = useApi();
+	return api.useQuery(
+		"get",
+		"/admin/organizations/{id}/logs/filters",
+		{
+			params: { path: { id: orgId } },
+		},
+		{ staleTime: 5 * 60 * 1000 },
+	);
+}
+
 export function useOrgDeposits(
 	orgId: string,
 	page: number,

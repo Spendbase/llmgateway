@@ -7,6 +7,7 @@ import type {
 	OrgAnalyticsOverview,
 	OrgApiKeysResponse,
 	OrgDepositsResponse,
+	OrgLogsResponse,
 	OrgMembersResponse,
 	OrgProjectsResponse,
 	OrgUsageResponse,
@@ -19,7 +20,7 @@ export default async function OrgAnalyticsPage({
 }) {
 	const { id } = await params;
 
-	const [overview, apiKeys, usage, members, projects, deposits] =
+	const [overview, apiKeys, usage, members, projects, deposits, logs] =
 		await Promise.all([
 			fetchServerData<OrgAnalyticsOverview>(
 				"GET",
@@ -51,6 +52,11 @@ export default async function OrgAnalyticsPage({
 			fetchServerData<OrgDepositsResponse>(
 				"GET",
 				"/admin/organizations/{id}/deposits",
+				{ params: { path: { id } } },
+			),
+			fetchServerData<OrgLogsResponse>(
+				"GET",
+				"/admin/organizations/{id}/logs",
 				{ params: { path: { id } } },
 			),
 		]);
@@ -97,6 +103,12 @@ export default async function OrgAnalyticsPage({
 			initialDeposits={
 				deposits ?? {
 					deposits: [],
+					pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+				}
+			}
+			initialLogs={
+				logs ?? {
+					logs: [],
 					pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
 				}
 			}
