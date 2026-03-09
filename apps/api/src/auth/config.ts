@@ -7,6 +7,7 @@ import { Redis } from "ioredis";
 
 import { getResetPasswordEmail } from "@/emails/templates/reset-password.js";
 import { getVerifyEmail } from "@/emails/templates/verify-email.js";
+import { getTimeMessage } from "@/utils/convert-time.js";
 import { validateEmail, isCorporateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
@@ -283,6 +284,64 @@ export async function checkEmailResendRateLimit(
 		);
 		return { allowed: true, resetTime: now, remaining: 0 };
 	}
+}
+
+export type VerifyEmailWithCodeResult =
+	| { success: true }
+	| { success: false; error: "too_many_attempts"; retryAfter: number }
+	| { success: false; error: "invalid_or_expired" };
+
+export async function verifyEmailWithCode(
+	email: string,
+	code: string,
+): Promise<VerifyEmailWithCodeResult> {
+	const normalizedEmail = email.toLowerCase().trim();
+	const rateLimit = await checkEmailResendRateLimit(normalizedEmail);
+	if (!rateLimit.allowed) {
+		return {
+			success: false,
+			error: "too_many_attempts",
+			retryAfter: rateLimit.resetTime,
+		};
+	}
+
+	const verificationRow = await db.query.verification.findFirst({
+		where: {
+			identifier: normalizedEmail,
+			value: code.trim(),
+		},
+	});
+
+	if (!verificationRow) {
+		return { success: false, error: "invalid_or_expired" };
+	}
+
+	const now = new Date();
+	if (verificationRow.expiresAt && verificationRow.expiresAt <= now) {
+		return { success: false, error: "invalid_or_expired" };
+	}
+
+	const userRow = await db.query.user.findFirst({
+		where: {
+			email: normalizedEmail,
+		},
+	});
+
+	if (!userRow) {
+		return { success: false, error: "invalid_or_expired" };
+	}
+
+	await db.transaction(async (tx) => {
+		await tx
+			.update(tables.user)
+			.set({ emailVerified: true })
+			.where(eq(tables.user.id, userRow.id));
+		await tx
+			.delete(tables.verification)
+			.where(eq(tables.verification.id, verificationRow.id));
+	});
+
+	return { success: true };
 }
 
 export interface ExponentialRateLimitConfig {
@@ -600,12 +659,38 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					// },
 					sendVerificationEmail: async ({ user, token }) => {
 						try {
-							const callbackURL = `${uiUrl}/dashboard?emailVerified=true`;
-							const url = `${apiUrl}/auth/verify-email?token=${encodeURIComponent(
-								token,
-							)}&callbackURL=${encodeURIComponent(callbackURL)}`;
+							const code = String(
+								Math.floor(100_000 + Math.random() * 900_000),
+							);
+							const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+							const normalizedEmail = user.email.toLowerCase().trim();
 
-							const html = getVerifyEmail({ url });
+							// eslint-disable-next-line no-console
+							console.log("sendVerificationEmail", code);
+
+							const existing = await db.query.verification.findFirst({
+								where: { value: token },
+								columns: { id: true },
+							});
+
+							if (existing) {
+								await db
+									.update(tables.verification)
+									.set({
+										value: code,
+										expiresAt,
+										identifier: normalizedEmail,
+									})
+									.where(eq(tables.verification.id, existing.id));
+							} else {
+								await db.insert(tables.verification).values({
+									identifier: normalizedEmail,
+									value: code,
+									expiresAt,
+								});
+							}
+
+							const html = getVerifyEmail({ code });
 
 							await sendTransactionalEmail({
 								to: user.email,
@@ -788,21 +873,21 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						const rateLimit = await checkEmailResendRateLimit(body.email);
 
 						if (!rateLimit.allowed) {
-							const retryAfter = Math.ceil(
-								(rateLimit.resetTime - Date.now()) / 1000,
+							const timeMessage = getTimeMessage(
+								rateLimit.resetTime - Date.now(),
 							);
 
 							return new Response(
 								JSON.stringify({
 									error: "too_many_requests",
-									message: `Please wait ${retryAfter} seconds before requesting another email.`,
-									retryAfter,
+									message: `Please wait ${timeMessage} before requesting another email.`,
+									retryAfter: rateLimit.resetTime,
 								}),
 								{
 									status: 429,
 									headers: {
 										"Content-Type": "application/json",
-										"Retry-After": retryAfter.toString(),
+										"Retry-After": rateLimit.resetTime.toString(),
 									},
 								},
 							);

@@ -1,12 +1,12 @@
 import { getEmailLayout } from "@/emails/base-layout.js";
 
 export interface VerifyEmailProps {
-	url: string;
+	code: string;
 }
 
 const uiUrl = process.env.UI_URL || "http://localhost:3002";
 
-export function getVerifyEmail({ url }: VerifyEmailProps): string {
+export function getVerifyEmail({ code }: VerifyEmailProps): string {
 	const content = `
 					<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; padding: 40px 20px;">
 						<tr>
@@ -34,26 +34,17 @@ export function getVerifyEmail({ url }: VerifyEmailProps): string {
 												Thanks for signing up! Please verify your email address to complete your registration and start using your account.
 											</p>
 											<p style="margin: 0 0 24px 0; font-size: 14px; color: #333333;">
-												Click the button below to confirm your email:
+												Enter this verification code on the website:
 											</p>
 
 											<div style="text-align:center; margin: 32px 0;">
-												<a href="${url}"
-												style="display: inline-block; padding: 12px 36px; border-radius: 6px; background-color: #3F35FF; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none;">
-													Verify email
-												</a>
+												<span style="display: inline-block; padding: 16px 32px; border-radius: 8px; background-color: #f0f0f0; font-size: 24px; font-weight: 700; letter-spacing: 0.2em; font-family: monospace;">
+													${code}
+												</span>
 											</div>
 
-											<p style="margin: 32px 0 8px 0; font-size: 13px; color: #666666;">
-												If that button doesn't work, copy and paste this link into your browser:
-											</p>
-											<p style="margin: 0 0 40px 0; font-size: 13px;line-height: 1.4; color: #666666;">
-												<a
-													href="${url}"
-													style="color: #3F35FF; text-decoration: none; word-break: break-all; display: inline-block;"
-												>
-													${url}
-												</a>
+											<p style="margin: 0 0 40px 0; font-size: 13px; color: #666666;">
+												The code expires in 15 minutes. If you didn&apos;t request this, you can ignore this email.
 											</p>
 										</td>
 									</tr>
