@@ -21,7 +21,7 @@ const pool = new Pool({
 
 const instrumentedPool = instrumentDrizzle(pool, otelConfig);
 
-const primaryDb = drizzle({
+export const primaryDb = drizzle({
 	client: instrumentedPool,
 	casing: "snake_case",
 	relations,
