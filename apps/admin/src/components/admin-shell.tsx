@@ -2,6 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
+	BarChart2,
 	Briefcase,
 	Banknote,
 	KeyRound,
@@ -49,6 +50,7 @@ export function AdminShell({ children }: AdminShellProps) {
 	const queryClient = useQueryClient();
 
 	const isDashboard = pathname === "/" || pathname === "";
+	const isAnalytics = pathname === "/analytics";
 	const isTokens = pathname === "/tokens";
 	const isOrganizations = pathname === "/organizations";
 	const isDeposits =
@@ -106,6 +108,12 @@ export function AdminShell({ children }: AdminShellProps) {
 									<SidebarMenuButton isActive={isDashboard} size="lg">
 										<LayoutDashboard className="h-4 w-4" />
 										<span>Dashboard</span>
+									</SidebarMenuButton>
+								</Link>
+								<Link href="/analytics" className="block">
+									<SidebarMenuButton isActive={isAnalytics} size="lg">
+										<BarChart2 className="h-4 w-4" />
+										<span>Analytics</span>
 									</SidebarMenuButton>
 								</Link>
 								<Link href="/tokens" className="block">

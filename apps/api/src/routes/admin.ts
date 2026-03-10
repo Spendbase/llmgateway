@@ -18,8 +18,11 @@ import {
 	or,
 	lt,
 	sql,
+	sum,
 	tables,
 	inArray,
+	modelHistory,
+	modelProviderMappingHistory,
 } from "@llmgateway/db";
 import { revenueCounter } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
@@ -2308,6 +2311,1461 @@ admin.openapi(deleteBannerRoute, async (c) => {
 	await db.delete(tables.banner).where(eq(tables.banner.id, id));
 
 	return c.json({ success: true });
+});
+
+// ─── Organization Analytics ───────────────────────────────────────────────
+
+const orgAnalyticsOverviewSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	billingEmail: z.string().nullable(),
+	plan: z.enum(["free", "pro"]),
+	status: z.enum(["active", "inactive", "deleted"]).nullable(),
+	credits: z.string(),
+	createdAt: z.date(),
+	projectsCount: z.number(),
+	membersCount: z.number(),
+	activeApiKeysCount: z.number(),
+	totalRequests: z.number(),
+	totalTokens: z.number(),
+	totalCost: z.number(),
+});
+
+const orgApiKeyItemSchema = z.object({
+	id: z.string(),
+	description: z.string().nullable(),
+	status: z.enum(["active", "inactive", "deleted"]),
+	createdAt: z.date(),
+	projectId: z.string(),
+	projectName: z.string().nullable(),
+	usage: z.number().nullable(),
+	usageLimit: z.number().nullable(),
+	lastUsedAt: z.date().nullable(),
+});
+
+const orgUsageMonthSchema = z.object({
+	month: z.string(),
+	requests: z.number(),
+	promptTokens: z.number(),
+	completionTokens: z.number(),
+	reasoningTokens: z.number(),
+	totalTokens: z.number(),
+	cost: z.number(),
+});
+
+const orgMemberSchema = z.object({
+	userId: z.string(),
+	name: z.string().nullable(),
+	email: z.string(),
+	role: z.enum(["owner", "admin", "developer"]),
+	status: z.enum(["active", "blocked"]),
+	lastLoginAt: z.date().nullable(),
+	joinedAt: z.date(),
+});
+
+const orgProjectItemSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	status: z.enum(["active", "inactive", "deleted"]),
+	mode: z.enum(["api-keys", "credits", "hybrid"]),
+	cachingEnabled: z.boolean(),
+	createdAt: z.date(),
+	activeApiKeysCount: z.number(),
+});
+
+const orgDepositItemSchema = z.object({
+	id: z.string(),
+	createdAt: z.date(),
+	type: z.string(),
+	amount: z.string().nullable(),
+	creditAmount: z.string().nullable(),
+	currency: z.string(),
+	status: z.enum(["pending", "completed", "failed"]),
+	description: z.string().nullable(),
+});
+
+const getOrgAnalyticsOverview = createRoute({
+	method: "get",
+	path: "/organizations/{id}",
+	request: {
+		params: z.object({ id: z.string() }),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: orgAnalyticsOverviewSchema.openapi({}),
+				},
+			},
+			description: "Organization analytics overview",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+		404: { description: "Organization not found" },
+	},
+});
+
+const getOrgApiKeys = createRoute({
+	method: "get",
+	path: "/organizations/{id}/api-keys",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(5000).default(20),
+			status: z.enum(["active", "inactive", "deleted"]).optional(),
+			search: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						apiKeys: z.array(orgApiKeyItemSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Paginated API keys for organization",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getOrgUsage = createRoute({
+	method: "get",
+	path: "/organizations/{id}/usage",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			months: z.coerce.number().int().min(1).max(24).default(12),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						months: z.array(orgUsageMonthSchema).openapi({}),
+						totals: z.object({
+							requests: z.number(),
+							promptTokens: z.number(),
+							completionTokens: z.number(),
+							reasoningTokens: z.number(),
+							totalTokens: z.number(),
+							cost: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Monthly usage breakdown for organization",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getOrgMembers = createRoute({
+	method: "get",
+	path: "/organizations/{id}/members",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			search: z.string().optional(),
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(200).default(20),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						members: z.array(orgMemberSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Organization members",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getOrgProjects = createRoute({
+	method: "get",
+	path: "/organizations/{id}/projects",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(200).default(20),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						projects: z.array(orgProjectItemSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Organization projects",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+const getOrgDeposits = createRoute({
+	method: "get",
+	path: "/organizations/{id}/deposits",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(5000).default(20),
+			from: z.string().datetime().optional(),
+			to: z.string().datetime().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						deposits: z.array(orgDepositItemSchema).openapi({}),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Deposit history for organization",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+admin.openapi(getOrgAnalyticsOverview, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+
+	const org = await db.query.organization.findFirst({
+		where: { id },
+		columns: {
+			id: true,
+			name: true,
+			billingEmail: true,
+			plan: true,
+			status: true,
+			credits: true,
+			createdAt: true,
+		},
+	});
+
+	if (!org) {
+		throw new HTTPException(404, { message: "Organization not found" });
+	}
+
+	const [projectsRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.project)
+		.where(
+			and(
+				eq(tables.project.organizationId, id),
+				eq(tables.project.status, "active"),
+			),
+		);
+
+	const [membersRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.userOrganization)
+		.where(eq(tables.userOrganization.organizationId, id));
+
+	const projectIds = await db
+		.select({ id: tables.project.id })
+		.from(tables.project)
+		.where(eq(tables.project.organizationId, id));
+
+	const projectIdList = projectIds.map((p) => p.id);
+
+	let activeApiKeysCount = 0;
+	if (projectIdList.length > 0) {
+		const [keysRow] = await db
+			.select({ count: sql<number>`COUNT(*)`.as("count") })
+			.from(tables.apiKey)
+			.where(
+				and(
+					inArray(tables.apiKey.projectId, projectIdList),
+					eq(tables.apiKey.status, "active"),
+				),
+			);
+		activeApiKeysCount = Number(keysRow?.count ?? 0);
+	}
+
+	const [usageRow] = await db
+		.select({
+			requests: sql<number>`COUNT(*)`.as("requests"),
+			totalTokens:
+				sql<number>`COALESCE(SUM(${tables.log.promptTokens}), 0) + COALESCE(SUM(${tables.log.completionTokens}), 0) + COALESCE(SUM(${tables.log.reasoningTokens}), 0)`.as(
+					"totalTokens",
+				),
+			cost: sql<number>`COALESCE(SUM(${tables.log.cost}), 0)`.as("cost"),
+		})
+		.from(tables.log)
+		.where(eq(tables.log.organizationId, id));
+
+	return c.json({
+		id: org.id,
+		name: org.name,
+		billingEmail: org.billingEmail,
+		plan: org.plan,
+		status: org.status,
+		credits: String(org.credits),
+		createdAt: org.createdAt,
+		projectsCount: Number(projectsRow?.count ?? 0),
+		membersCount: Number(membersRow?.count ?? 0),
+		activeApiKeysCount,
+		totalRequests: Number(usageRow?.requests ?? 0),
+		totalTokens: Number(usageRow?.totalTokens ?? 0),
+		totalCost: Number(usageRow?.cost ?? 0),
+	});
+});
+
+admin.openapi(getOrgApiKeys, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { page, pageSize, status, search } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	const projectIds = await db
+		.select({ id: tables.project.id, name: tables.project.name })
+		.from(tables.project)
+		.where(eq(tables.project.organizationId, id));
+
+	if (projectIds.length === 0) {
+		return c.json({
+			apiKeys: [],
+			pagination: { page, pageSize, total: 0, totalPages: 0 },
+		});
+	}
+
+	const pidList = projectIds.map((p) => p.id);
+	const projectNameMap = new Map(projectIds.map((p) => [p.id, p.name]));
+
+	const conditions = [inArray(tables.apiKey.projectId, pidList)];
+	if (status) {
+		conditions.push(eq(tables.apiKey.status, status));
+	}
+	if (search) {
+		conditions.push(
+			ilike(tables.apiKey.description, `%${escapeLike(search)}%`),
+		);
+	}
+
+	const where = and(...conditions);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.apiKey)
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
+	const lastUsageSq = db
+		.select({
+			apiKeyId: tables.log.apiKeyId,
+			lastUsedAt: sql<Date>`MAX(${tables.log.createdAt})`.as("lastUsedAt"),
+		})
+		.from(tables.log)
+		.where(
+			inArray(
+				tables.log.apiKeyId,
+				db
+					.select({ id: tables.apiKey.id })
+					.from(tables.apiKey)
+					.where(inArray(tables.apiKey.projectId, pidList)),
+			),
+		)
+		.groupBy(tables.log.apiKeyId)
+		.as("last_usage");
+
+	const rows = await db
+		.select({
+			id: tables.apiKey.id,
+			description: tables.apiKey.description,
+			status: tables.apiKey.status,
+			createdAt: tables.apiKey.createdAt,
+			projectId: tables.apiKey.projectId,
+			usage: tables.apiKey.usage,
+			usageLimit: tables.apiKey.usageLimit,
+			lastUsedAt: lastUsageSq.lastUsedAt,
+		})
+		.from(tables.apiKey)
+		.leftJoin(lastUsageSq, eq(lastUsageSq.apiKeyId, tables.apiKey.id))
+		.where(where)
+		.orderBy(desc(tables.apiKey.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	const items = rows.map((r) => ({
+		...r,
+		projectName: projectNameMap.get(r.projectId) ?? null,
+		usage: r.usage ?? null,
+		usageLimit: r.usageLimit ?? null,
+		lastUsedAt: r.lastUsedAt ?? null,
+	}));
+
+	return c.json({
+		apiKeys: items,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
+});
+
+admin.openapi(getOrgUsage, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { months } = c.req.valid("query");
+
+	const since = new Date();
+	since.setMonth(since.getMonth() - months);
+	since.setDate(1);
+	since.setHours(0, 0, 0, 0);
+
+	const rows = await db
+		.select({
+			month:
+				sql<string>`TO_CHAR(DATE_TRUNC('month', ${tables.log.createdAt}), 'YYYY-MM')`.as(
+					"month",
+				),
+			requests: sql<number>`COUNT(*)`.as("requests"),
+			promptTokens:
+				sql<number>`COALESCE(SUM(${tables.log.promptTokens}), 0)`.as(
+					"promptTokens",
+				),
+			completionTokens:
+				sql<number>`COALESCE(SUM(${tables.log.completionTokens}), 0)`.as(
+					"completionTokens",
+				),
+			reasoningTokens:
+				sql<number>`COALESCE(SUM(${tables.log.reasoningTokens}), 0)`.as(
+					"reasoningTokens",
+				),
+			totalTokens:
+				sql<number>`COALESCE(SUM(${tables.log.promptTokens}), 0) + COALESCE(SUM(${tables.log.completionTokens}), 0) + COALESCE(SUM(${tables.log.reasoningTokens}), 0)`.as(
+					"totalTokens",
+				),
+			cost: sql<number>`COALESCE(SUM(${tables.log.cost}), 0)`.as("cost"),
+		})
+		.from(tables.log)
+		.where(
+			and(eq(tables.log.organizationId, id), gte(tables.log.createdAt, since)),
+		)
+		.groupBy(sql`DATE_TRUNC('month', ${tables.log.createdAt})`)
+		.orderBy(asc(sql`DATE_TRUNC('month', ${tables.log.createdAt})`));
+
+	const monthData = rows.map((r) => ({
+		month: r.month,
+		requests: Number(r.requests),
+		promptTokens: Number(r.promptTokens),
+		completionTokens: Number(r.completionTokens),
+		reasoningTokens: Number(r.reasoningTokens),
+		totalTokens: Number(r.totalTokens),
+		cost: Number(r.cost),
+	}));
+
+	const totals = monthData.reduce(
+		(acc, m) => ({
+			requests: acc.requests + m.requests,
+			promptTokens: acc.promptTokens + m.promptTokens,
+			completionTokens: acc.completionTokens + m.completionTokens,
+			reasoningTokens: acc.reasoningTokens + m.reasoningTokens,
+			totalTokens: acc.totalTokens + m.totalTokens,
+			cost: acc.cost + m.cost,
+		}),
+		{
+			requests: 0,
+			promptTokens: 0,
+			completionTokens: 0,
+			reasoningTokens: 0,
+			totalTokens: 0,
+			cost: 0,
+		},
+	);
+
+	return c.json({ months: monthData, totals });
+});
+
+admin.openapi(getOrgMembers, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { search, page, pageSize } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	const userIdsSq = db
+		.select({ userId: tables.userOrganization.userId })
+		.from(tables.userOrganization)
+		.where(eq(tables.userOrganization.organizationId, id))
+		.as("org_user_ids");
+
+	const lastLoginSq = db
+		.select({
+			userId: tables.session.userId,
+			lastLoginAt: sql<Date>`MAX(${tables.session.createdAt})`.as(
+				"lastLoginAt",
+			),
+		})
+		.from(tables.session)
+		.where(
+			exists(
+				db
+					.select()
+					.from(userIdsSq)
+					.where(eq(userIdsSq.userId, tables.session.userId)),
+			),
+		)
+		.groupBy(tables.session.userId)
+		.as("last_login");
+
+	const conditions: ReturnType<typeof eq>[] = [];
+	if (search) {
+		conditions.push(
+			or(
+				ilike(tables.user.email, `%${escapeLike(search)}%`),
+				ilike(tables.user.name, `%${escapeLike(search)}%`),
+			) as ReturnType<typeof eq>,
+		);
+	}
+
+	const where = and(
+		eq(tables.userOrganization.organizationId, id),
+		...conditions,
+	);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.userOrganization)
+		.innerJoin(tables.user, eq(tables.user.id, tables.userOrganization.userId))
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
+	const rows = await db
+		.select({
+			userId: tables.userOrganization.userId,
+			name: tables.user.name,
+			email: tables.user.email,
+			role: tables.userOrganization.role,
+			status: tables.user.status,
+			lastLoginAt: lastLoginSq.lastLoginAt,
+			joinedAt: tables.userOrganization.createdAt,
+		})
+		.from(tables.userOrganization)
+		.innerJoin(tables.user, eq(tables.user.id, tables.userOrganization.userId))
+		.leftJoin(
+			lastLoginSq,
+			eq(lastLoginSq.userId, tables.userOrganization.userId),
+		)
+		.where(where)
+		.orderBy(asc(tables.userOrganization.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	return c.json({
+		members: rows,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
+});
+
+admin.openapi(getOrgProjects, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { page, pageSize } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	const activeKeysSq = db
+		.select({
+			projectId: tables.apiKey.projectId,
+			count: sql<number>`COUNT(*)`.as("count"),
+		})
+		.from(tables.apiKey)
+		.where(eq(tables.apiKey.status, "active"))
+		.groupBy(tables.apiKey.projectId)
+		.as("active_keys");
+
+	const where = eq(tables.project.organizationId, id);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.project)
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
+	const rows = await db
+		.select({
+			id: tables.project.id,
+			name: tables.project.name,
+			status: tables.project.status,
+			mode: tables.project.mode,
+			cachingEnabled: tables.project.cachingEnabled,
+			createdAt: tables.project.createdAt,
+			activeApiKeysCount: sql<number>`COALESCE(${activeKeysSq.count}, 0)`.as(
+				"activeApiKeysCount",
+			),
+		})
+		.from(tables.project)
+		.leftJoin(activeKeysSq, eq(activeKeysSq.projectId, tables.project.id))
+		.where(where)
+		.orderBy(asc(tables.project.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	return c.json({
+		projects: rows,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
+});
+
+admin.openapi(getOrgDeposits, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const { page, pageSize, from, to } = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	const creditTypes = [
+		"credit_topup",
+		"credit_refund",
+		"subscription_start",
+		"dev_plan_start",
+		"dev_plan_upgrade",
+		"dev_plan_renewal",
+	] as const;
+
+	const conditions = [
+		eq(tables.transaction.organizationId, id),
+		inArray(tables.transaction.type, creditTypes),
+	];
+
+	if (from) {
+		conditions.push(gte(tables.transaction.createdAt, new Date(from)));
+	}
+	if (to) {
+		conditions.push(lte(tables.transaction.createdAt, new Date(to)));
+	}
+
+	const where = and(...conditions);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.transaction)
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
+	const rows = await db
+		.select({
+			id: tables.transaction.id,
+			createdAt: tables.transaction.createdAt,
+			type: tables.transaction.type,
+			amount: tables.transaction.amount,
+			creditAmount: tables.transaction.creditAmount,
+			currency: tables.transaction.currency,
+			status: tables.transaction.status,
+			description: tables.transaction.description,
+		})
+		.from(tables.transaction)
+		.where(where)
+		.orderBy(desc(tables.transaction.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	const items = rows.map((r) => ({
+		...r,
+		amount: r.amount ? String(r.amount) : null,
+		creditAmount: r.creditAmount ? String(r.creditAmount) : null,
+	}));
+
+	return c.json({
+		deposits: items,
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
+});
+
+const analyticsWindowSchema = z.enum(["6h", "24h", "7d", "30d", "90d", "all"]);
+const analyticsRangeSchema = z.enum(["24h", "7d", "30d", "90d", "all"]);
+
+const analyticsModelItemSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	family: z.string(),
+	status: z.string(),
+	logsCount: z.number(),
+	errorsCount: z.number(),
+	clientErrorsCount: z.number(),
+	gatewayErrorsCount: z.number(),
+	upstreamErrorsCount: z.number(),
+	cachedCount: z.number(),
+	avgTimeToFirstToken: z.number().nullable(),
+	errorRate: z.number(),
+	cacheHitRate: z.number(),
+});
+
+const analyticsProviderItemSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	status: z.string(),
+	logsCount: z.number(),
+	errorsCount: z.number(),
+	clientErrorsCount: z.number(),
+	gatewayErrorsCount: z.number(),
+	upstreamErrorsCount: z.number(),
+	cachedCount: z.number(),
+	avgTimeToFirstToken: z.number().nullable(),
+	errorRate: z.number(),
+	cacheHitRate: z.number(),
+});
+
+const platformAnalyticsResponseSchema = z.object({
+	models: z.array(analyticsModelItemSchema),
+	providers: z.array(analyticsProviderItemSchema),
+});
+
+const timeSeriesPointSchema = z.object({
+	timestamp: z.string(),
+	logsCount: z.number(),
+	errorsCount: z.number(),
+	cachedCount: z.number(),
+	totalTokens: z.number(),
+});
+
+const revenueTrendPointSchema = z.object({
+	date: z.string(),
+	revenue: z.number(),
+	creditTopups: z.number(),
+	subscriptions: z.number(),
+});
+
+const timeSeriesAnalyticsResponseSchema = z.object({
+	window: analyticsWindowSchema,
+	bucketSize: z.string(),
+	series: z.array(timeSeriesPointSchema),
+	revenueTrend: z.array(revenueTrendPointSchema),
+});
+
+const getAnalyticsPlatform = createRoute({
+	method: "get",
+	path: "/analytics/platform",
+	request: {
+		query: z.object({
+			range: analyticsRangeSchema.default("all").optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: platformAnalyticsResponseSchema.openapi({}),
+				},
+			},
+			description:
+				"Platform-wide analytics from pre-aggregated model and provider tables.",
+		},
+	},
+});
+
+const analyticsGranularitySchema = z.enum([
+	"minute",
+	"hour",
+	"day",
+	"week",
+	"month",
+]);
+
+const getAnalyticsTimeSeries = createRoute({
+	method: "get",
+	path: "/analytics/time-series",
+	request: {
+		query: z.object({
+			window: analyticsWindowSchema.default("24h").optional(),
+			granularity: analyticsGranularitySchema.optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: timeSeriesAnalyticsResponseSchema.openapi({}),
+				},
+			},
+			description:
+				"Time series analytics from modelHistory and revenue from transactions.",
+		},
+	},
+});
+
+function deriveRates(
+	logsCount: number,
+	errorsCount: number,
+	cachedCount: number,
+): { errorRate: number; cacheHitRate: number } {
+	return {
+		errorRate: logsCount > 0 ? errorsCount / logsCount : 0,
+		cacheHitRate: logsCount > 0 ? cachedCount / logsCount : 0,
+	};
+}
+
+admin.openapi(getAnalyticsPlatform, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { range = "all" } = c.req.valid("query");
+
+	const rangeHoursMap: Record<string, number> = {
+		"24h": 24,
+		"7d": 7 * 24,
+		"30d": 30 * 24,
+		"90d": 90 * 24,
+	};
+	const fromDate =
+		range !== "all"
+			? new Date(Date.now() - (rangeHoursMap[range] ?? 0) * 60 * 60 * 1000)
+			: null;
+
+	const modelHistoryFilter = fromDate
+		? gte(modelHistory.minuteTimestamp, fromDate)
+		: undefined;
+	const mappingHistoryFilter = fromDate
+		? gte(modelProviderMappingHistory.minuteTimestamp, fromDate)
+		: undefined;
+
+	const [modelMeta, modelAgg, providerMeta, providerAgg] = await Promise.all([
+		db.query.model.findMany({
+			columns: { id: true, name: true, family: true, status: true },
+		}),
+		db
+			.select({
+				modelId: modelHistory.modelId,
+				logsCount: sum(modelHistory.logsCount).mapWith(Number),
+				errorsCount: sum(modelHistory.errorsCount).mapWith(Number),
+				clientErrorsCount: sum(modelHistory.clientErrorsCount).mapWith(Number),
+				gatewayErrorsCount: sum(modelHistory.gatewayErrorsCount).mapWith(
+					Number,
+				),
+				upstreamErrorsCount: sum(modelHistory.upstreamErrorsCount).mapWith(
+					Number,
+				),
+				cachedCount: sum(modelHistory.cachedCount).mapWith(Number),
+				totalTtft: sum(modelHistory.totalTimeToFirstToken).mapWith(Number),
+			})
+			.from(modelHistory)
+			.where(modelHistoryFilter)
+			.groupBy(modelHistory.modelId),
+		db.query.provider.findMany({
+			columns: { id: true, name: true, status: true },
+		}),
+		db
+			.select({
+				providerId: modelProviderMappingHistory.providerId,
+				logsCount: sum(modelProviderMappingHistory.logsCount).mapWith(Number),
+				errorsCount: sum(modelProviderMappingHistory.errorsCount).mapWith(
+					Number,
+				),
+				clientErrorsCount: sum(
+					modelProviderMappingHistory.clientErrorsCount,
+				).mapWith(Number),
+				gatewayErrorsCount: sum(
+					modelProviderMappingHistory.gatewayErrorsCount,
+				).mapWith(Number),
+				upstreamErrorsCount: sum(
+					modelProviderMappingHistory.upstreamErrorsCount,
+				).mapWith(Number),
+				cachedCount: sum(modelProviderMappingHistory.cachedCount).mapWith(
+					Number,
+				),
+			})
+			.from(modelProviderMappingHistory)
+			.where(mappingHistoryFilter)
+			.groupBy(modelProviderMappingHistory.providerId),
+	]);
+
+	const modelAggMap = new Map(modelAgg.map((r) => [r.modelId, r]));
+	const providerAggMap = new Map(providerAgg.map((r) => [r.providerId, r]));
+
+	const models = modelMeta.map((m) => {
+		const agg = modelAggMap.get(m.id);
+		const logsCount = agg?.logsCount ?? 0;
+		const errorsCount = agg?.errorsCount ?? 0;
+		const cachedCount = agg?.cachedCount ?? 0;
+		const avgTimeToFirstToken =
+			logsCount > 0 && agg?.totalTtft
+				? Math.round(agg.totalTtft / logsCount)
+				: null;
+		return {
+			id: m.id,
+			name: m.name ?? m.id,
+			family: m.family,
+			status: m.status ?? "active",
+			logsCount,
+			errorsCount,
+			clientErrorsCount: agg?.clientErrorsCount ?? 0,
+			gatewayErrorsCount: agg?.gatewayErrorsCount ?? 0,
+			upstreamErrorsCount: agg?.upstreamErrorsCount ?? 0,
+			cachedCount,
+			avgTimeToFirstToken,
+			...deriveRates(logsCount, errorsCount, cachedCount),
+		};
+	});
+
+	const providers = providerMeta.map((p) => {
+		const agg = providerAggMap.get(p.id);
+		const logsCount = agg?.logsCount ?? 0;
+		const errorsCount = agg?.errorsCount ?? 0;
+		const cachedCount = agg?.cachedCount ?? 0;
+		return {
+			id: p.id,
+			name: p.name,
+			status: p.status ?? "active",
+			logsCount,
+			errorsCount,
+			clientErrorsCount: agg?.clientErrorsCount ?? 0,
+			gatewayErrorsCount: agg?.gatewayErrorsCount ?? 0,
+			upstreamErrorsCount: agg?.upstreamErrorsCount ?? 0,
+			cachedCount,
+			avgTimeToFirstToken: null,
+			...deriveRates(logsCount, errorsCount, cachedCount),
+		};
+	});
+
+	return c.json({ models, providers });
+});
+
+const bucketSizeMap: Record<string, string> = {
+	"6h": "minute",
+	"24h": "hour",
+	"7d": "hour",
+	"30d": "day",
+	"90d": "week",
+	all: "month",
+};
+
+const windowHoursMap: Record<string, number | null> = {
+	"6h": 6,
+	"24h": 24,
+	"7d": 7 * 24,
+	"30d": 30 * 24,
+	"90d": 90 * 24,
+	all: null,
+};
+
+admin.openapi(getAnalyticsTimeSeries, async (c) => {
+	const authUser = c.get("user");
+
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const query = c.req.valid("query");
+	const windowParam = query.window ?? "24h";
+	const bucketSize = query.granularity ?? bucketSizeMap[windowParam] ?? "day";
+	const hours = windowHoursMap[windowParam];
+
+	const startDate =
+		hours !== null
+			? new Date(Date.now() - hours * 60 * 60 * 1000)
+			: new Date(0);
+
+	const bucketLiteral = sql.raw(`'${bucketSize}'`);
+	const truncExpr = sql<string>`date_trunc(${bucketLiteral}, ${tables.modelHistory.minuteTimestamp})`;
+	const revenueTruncExpr = sql<string>`date_trunc(${bucketLiteral}, ${tables.transaction.createdAt})`;
+
+	const [seriesRows, revenueRows] = await Promise.all([
+		db
+			.select({
+				timestamp: truncExpr.as("timestamp"),
+				logsCount: sql<number>`SUM(${tables.modelHistory.logsCount})::int`.as(
+					"logsCount",
+				),
+				errorsCount:
+					sql<number>`SUM(${tables.modelHistory.errorsCount})::int`.as(
+						"errorsCount",
+					),
+				cachedCount:
+					sql<number>`SUM(${tables.modelHistory.cachedCount})::int`.as(
+						"cachedCount",
+					),
+				totalTokens:
+					sql<number>`SUM(${tables.modelHistory.totalTokens})::int`.as(
+						"totalTokens",
+					),
+			})
+			.from(tables.modelHistory)
+			.where(gte(tables.modelHistory.minuteTimestamp, startDate))
+			.groupBy(truncExpr)
+			.orderBy(asc(truncExpr)),
+		db
+			.select({
+				date: revenueTruncExpr.as("date"),
+				revenue:
+					sql<number>`COALESCE(SUM(CAST(${tables.transaction.amount} AS NUMERIC)), 0)`.as(
+						"revenue",
+					),
+				creditTopups:
+					sql<number>`COALESCE(SUM(CASE WHEN ${tables.transaction.type} = 'credit_topup' THEN CAST(${tables.transaction.amount} AS NUMERIC) ELSE 0 END), 0)`.as(
+						"creditTopups",
+					),
+				subscriptions:
+					sql<number>`COALESCE(SUM(CASE WHEN ${tables.transaction.type} IN ('subscription_start', 'dev_plan_start', 'dev_plan_renewal') THEN CAST(${tables.transaction.amount} AS NUMERIC) ELSE 0 END), 0)`.as(
+						"subscriptions",
+					),
+			})
+			.from(tables.transaction)
+			.where(
+				and(
+					eq(tables.transaction.status, "completed"),
+					gte(tables.transaction.createdAt, startDate),
+				),
+			)
+			.groupBy(revenueTruncExpr)
+			.orderBy(asc(revenueTruncExpr)),
+	]);
+
+	const series = seriesRows.map(
+		(r: {
+			timestamp: string;
+			logsCount: number;
+			errorsCount: number;
+			cachedCount: number;
+			totalTokens: number;
+		}) => ({
+			timestamp: new Date(r.timestamp).toISOString(),
+			logsCount: r.logsCount ?? 0,
+			errorsCount: r.errorsCount ?? 0,
+			cachedCount: r.cachedCount ?? 0,
+			totalTokens: r.totalTokens ?? 0,
+		}),
+	);
+
+	const revenueTrend = revenueRows.map(
+		(r: {
+			date: string;
+			revenue: number;
+			creditTopups: number;
+			subscriptions: number;
+		}) => ({
+			date: new Date(r.date).toISOString().split("T")[0],
+			revenue: Number(r.revenue),
+			creditTopups: Number(r.creditTopups),
+			subscriptions: Number(r.subscriptions),
+		}),
+	);
+
+	return c.json({ window: windowParam, bucketSize, series, revenueTrend });
+});
+
+const orgLogItemSchema = z
+	.object({
+		id: z.string(),
+		requestId: z.string(),
+		createdAt: z.date(),
+		organizationId: z.string(),
+		projectId: z.string(),
+		apiKeyId: z.string(),
+		duration: z.number(),
+		timeToFirstToken: z.number().nullable(),
+		timeToFirstReasoningToken: z.number().nullable(),
+		requestedModel: z.string(),
+		requestedProvider: z.string().nullable(),
+		usedModel: z.string(),
+		usedModelMapping: z.string().nullable(),
+		usedProvider: z.string(),
+		responseSize: z.number(),
+		content: z.string().nullable(),
+		reasoningContent: z.string().nullable(),
+		tools: z.any().nullable(),
+		toolChoice: z.any().nullable(),
+		toolResults: z.any().nullable(),
+		finishReason: z.string().nullable(),
+		unifiedFinishReason: z.string().nullable(),
+		promptTokens: z.number().nullable(),
+		completionTokens: z.number().nullable(),
+		totalTokens: z.number().nullable(),
+		reasoningTokens: z.number().nullable(),
+		cachedTokens: z.number().nullable(),
+		messages: z.any().nullable(),
+		temperature: z.number().nullable(),
+		maxTokens: z.number().nullable(),
+		topP: z.number().nullable(),
+		frequencyPenalty: z.number().nullable(),
+		presencePenalty: z.number().nullable(),
+		reasoningEffort: z.string().nullable(),
+		effort: z.string().nullable(),
+		responseFormat: z.any().nullable(),
+		hasError: z.boolean().nullable(),
+		errorDetails: z.any().nullable(),
+		cost: z.number().nullable(),
+		inputCost: z.number().nullable(),
+		outputCost: z.number().nullable(),
+		cachedInputCost: z.number().nullable(),
+		requestCost: z.number().nullable(),
+		webSearchCost: z.number().nullable(),
+		estimatedCost: z.boolean().nullable(),
+		discount: z.number().nullable(),
+		pricingTier: z.string().nullable(),
+		canceled: z.boolean().nullable(),
+		streamed: z.boolean().nullable(),
+		cached: z.boolean().nullable(),
+		mode: z.string(),
+		usedMode: z.string(),
+		source: z.string().nullable(),
+		customHeaders: z.any().nullable(),
+		routingMetadata: z.any().nullable(),
+		dataStorageCost: z.number().nullable(),
+		params: z.any().nullable(),
+		plugins: z.any().nullable(),
+		pluginResults: z.any().nullable(),
+	})
+	.openapi({});
+
+const getOrgLogsFilters = createRoute({
+	method: "get",
+	path: "/organizations/{id}/logs/filters",
+	request: {
+		params: z.object({ id: z.string() }),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						providers: z.array(z.string()),
+						models: z.array(z.string()),
+					}),
+				},
+			},
+			description: "Unique providers and models for org logs",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+admin.openapi(getOrgLogsFilters, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+
+	const [providers, models] = await Promise.all([
+		db
+			.selectDistinct({ value: tables.log.usedProvider })
+			.from(tables.log)
+			.where(eq(tables.log.organizationId, id))
+			.orderBy(asc(tables.log.usedProvider)),
+		db
+			.selectDistinct({ value: tables.log.requestedModel })
+			.from(tables.log)
+			.where(eq(tables.log.organizationId, id))
+			.orderBy(asc(tables.log.requestedModel)),
+	]);
+
+	return c.json({
+		providers: providers.map((r) => r.value),
+		models: models.map((r) => r.value),
+	});
+});
+
+const getOrgLogs = createRoute({
+	method: "get",
+	path: "/organizations/{id}/logs",
+	request: {
+		params: z.object({ id: z.string() }),
+		query: z.object({
+			page: z.coerce.number().int().min(1).default(1),
+			pageSize: z.coerce.number().int().min(1).max(100).default(20),
+			apiKeyId: z.string().optional(),
+			from: z.string().optional(),
+			to: z.string().optional(),
+			unifiedFinishReason: z.string().optional(),
+			provider: z.string().optional(),
+			model: z.string().optional(),
+			customHeaderKey: z.string().optional(),
+			customHeaderValue: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						logs: z.array(orgLogItemSchema),
+						pagination: z.object({
+							page: z.number(),
+							pageSize: z.number(),
+							total: z.number(),
+							totalPages: z.number(),
+						}),
+					}),
+				},
+			},
+			description: "Organization request logs",
+		},
+		401: { description: "Unauthorized" },
+		403: { description: "Forbidden" },
+	},
+});
+
+admin.openapi(getOrgLogs, async (c) => {
+	const authUser = c.get("user");
+	if (!authUser) {
+		throw new HTTPException(401, { message: "Unauthorized" });
+	}
+	if (!isAdminEmail(authUser.email)) {
+		throw new HTTPException(403, { message: "Admin access required" });
+	}
+
+	const { id } = c.req.valid("param");
+	const {
+		page,
+		pageSize,
+		apiKeyId,
+		from,
+		to,
+		unifiedFinishReason,
+		provider,
+		model,
+		customHeaderKey,
+		customHeaderValue,
+	} = c.req.valid("query");
+	const offset = (page - 1) * pageSize;
+
+	const conditions = [eq(tables.log.organizationId, id)];
+	if (apiKeyId) {
+		conditions.push(eq(tables.log.apiKeyId, apiKeyId));
+	}
+	if (from) {
+		conditions.push(gte(tables.log.createdAt, new Date(from)));
+	}
+	if (to) {
+		conditions.push(lte(tables.log.createdAt, new Date(to)));
+	}
+	if (unifiedFinishReason) {
+		conditions.push(eq(tables.log.unifiedFinishReason, unifiedFinishReason));
+	}
+	if (provider) {
+		conditions.push(eq(tables.log.usedProvider, provider));
+	}
+	if (model) {
+		conditions.push(ilike(tables.log.requestedModel, `%${model}%`));
+	}
+	if (customHeaderKey && customHeaderValue) {
+		conditions.push(
+			sql`${tables.log.customHeaders}->>${customHeaderKey} = ${customHeaderValue}`,
+		);
+	} else if (customHeaderKey) {
+		conditions.push(sql`${tables.log.customHeaders} ? ${customHeaderKey}`);
+	}
+
+	const where = and(...conditions);
+
+	const [totalRow] = await db
+		.select({ count: sql<number>`COUNT(*)`.as("count") })
+		.from(tables.log)
+		.where(where);
+
+	const total = Number(totalRow?.count ?? 0);
+
+	const rows = await db
+		.select({
+			id: tables.log.id,
+			requestId: tables.log.requestId,
+			createdAt: tables.log.createdAt,
+			organizationId: tables.log.organizationId,
+			projectId: tables.log.projectId,
+			apiKeyId: tables.log.apiKeyId,
+			duration: tables.log.duration,
+			timeToFirstToken: tables.log.timeToFirstToken,
+			timeToFirstReasoningToken: tables.log.timeToFirstReasoningToken,
+			requestedModel: tables.log.requestedModel,
+			requestedProvider: tables.log.requestedProvider,
+			usedModel: tables.log.usedModel,
+			usedModelMapping: tables.log.usedModelMapping,
+			usedProvider: tables.log.usedProvider,
+			responseSize: tables.log.responseSize,
+			content: tables.log.content,
+			reasoningContent: tables.log.reasoningContent,
+			tools: tables.log.tools,
+			toolChoice: tables.log.toolChoice,
+			toolResults: tables.log.toolResults,
+			finishReason: tables.log.finishReason,
+			unifiedFinishReason: tables.log.unifiedFinishReason,
+			promptTokens: tables.log.promptTokens,
+			completionTokens: tables.log.completionTokens,
+			totalTokens: tables.log.totalTokens,
+			reasoningTokens: tables.log.reasoningTokens,
+			cachedTokens: tables.log.cachedTokens,
+			messages: tables.log.messages,
+			temperature: tables.log.temperature,
+			maxTokens: tables.log.maxTokens,
+			topP: tables.log.topP,
+			frequencyPenalty: tables.log.frequencyPenalty,
+			presencePenalty: tables.log.presencePenalty,
+			reasoningEffort: tables.log.reasoningEffort,
+			effort: tables.log.effort,
+			responseFormat: tables.log.responseFormat,
+			hasError: tables.log.hasError,
+			errorDetails: tables.log.errorDetails,
+			cost: tables.log.cost,
+			inputCost: tables.log.inputCost,
+			outputCost: tables.log.outputCost,
+			cachedInputCost: tables.log.cachedInputCost,
+			requestCost: tables.log.requestCost,
+			webSearchCost: tables.log.webSearchCost,
+			estimatedCost: tables.log.estimatedCost,
+			discount: tables.log.discount,
+			pricingTier: tables.log.pricingTier,
+			canceled: tables.log.canceled,
+			streamed: tables.log.streamed,
+			cached: tables.log.cached,
+			mode: tables.log.mode,
+			usedMode: tables.log.usedMode,
+			source: tables.log.source,
+			customHeaders: tables.log.customHeaders,
+			routingMetadata: tables.log.routingMetadata,
+			dataStorageCost: tables.log.dataStorageCost,
+			params: tables.log.params,
+			plugins: tables.log.plugins,
+			pluginResults: tables.log.pluginResults,
+		})
+		.from(tables.log)
+		.where(where)
+		.orderBy(desc(tables.log.createdAt))
+		.limit(pageSize)
+		.offset(offset);
+
+	const toNum = (v: unknown) =>
+		v !== null && v !== undefined ? Number(v) : null;
+
+	return c.json({
+		logs: rows.map((r) => ({
+			...r,
+			promptTokens: toNum(r.promptTokens),
+			completionTokens: toNum(r.completionTokens),
+			totalTokens: toNum(r.totalTokens),
+			reasoningTokens: toNum(r.reasoningTokens),
+			cachedTokens: toNum(r.cachedTokens),
+			dataStorageCost: toNum(r.dataStorageCost),
+		})),
+		pagination: {
+			page,
+			pageSize,
+			total,
+			totalPages: Math.ceil(total / pageSize),
+		},
+	});
 });
 
 export default admin;
