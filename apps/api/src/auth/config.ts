@@ -615,7 +615,12 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 
 							const errorUrl = new URL("/corporate-login", uiUrl);
 							errorUrl.searchParams.set("error", "corporate_only");
-							throw ctx?.redirect(errorUrl.toString());
+							if (!ctx) {
+								throw new Error(
+									"Auth context not available to perform redirect.",
+								);
+							}
+							throw ctx.redirect(errorUrl.toString());
 						}
 
 						return { data: session };
