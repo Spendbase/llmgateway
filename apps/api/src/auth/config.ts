@@ -794,17 +794,22 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						const rateLimit = await checkEmailResendRateLimit(body.email);
 
 						if (!rateLimit.allowed) {
-							const timeMessage = getTimeMessage(
-								rateLimit.resetTime - Date.now(),
-							);
+							const remainingMs = Math.max(0, rateLimit.resetTime - Date.now());
+							const retryAfterSeconds = Math.ceil(remainingMs / 1000);
+							const timeMessage = getTimeMessage(remainingMs);
 
 							return new Response(
 								JSON.stringify({
 									error: "too_many_requests",
 									message: `Please wait ${timeMessage} before requesting another code.`,
+									retryAfter: retryAfterSeconds,
 								}),
 								{
 									status: 429,
+									headers: {
+										"Content-Type": "application/json",
+										"Retry-After": retryAfterSeconds.toString(),
+									},
 								},
 							);
 						}
