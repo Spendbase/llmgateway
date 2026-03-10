@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Copy } from "lucide-react";
+import { Copy, AlertTriangle } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { useMemo, useState } from "react";
 
@@ -351,10 +351,13 @@ export function CreateApiKeyDialog({
 										<span className="sr-only">Copy API key</span>
 									</Button>
 								</div>
-								<p className="text-muted-foreground text-xs">
-									Make sure to store this API key securely. You won't be able to
-									see it again.
-								</p>
+								<div className="mt-3 flex items-start gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-500">
+									<AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500 mt-0.5 shrink-0" />
+									<p>
+										This API key will only be shown once. Make sure to copy and
+										store it securely before closing this window.
+									</p>
+								</div>
 							</div>
 							<DialogFooter>
 								<Button onClick={handleClose}>Done</Button>

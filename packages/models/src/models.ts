@@ -112,7 +112,7 @@ export interface ProviderModelMapping {
 	 * Only relevant when reasoning is true.
 	 * When undefined, all levels are allowed (default behavior).
 	 */
-	reasoningLevels?: ("minimal" | "low" | "medium" | "high")[];
+	reasoningLevels?: ("minimal" | "low" | "medium" | "high" | "xhigh")[];
 	/**
 	 * Whether this model supports the OpenAI responses API (defaults to true if reasoning is true)
 	 */

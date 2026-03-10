@@ -24,3 +24,4 @@ benchmark_results.json
 *.db
 *.csv
 goauth.json
+.cursor/

@@ -105,6 +105,14 @@ describe("e2e", getConcurrentTestOptions(), () => {
 			if (shouldCheckReasoning) {
 				expect(json.choices[0].message).toHaveProperty("reasoning");
 			}
+
+			// For providers with reasoningOutput: "omit", content must not contain <think> tags
+			if (reasoningProvider?.reasoningOutput === "omit") {
+				const content = json.choices[0].message.content;
+				if (content !== null) {
+					expect(content).not.toMatch(/<think>/);
+				}
+			}
 		},
 	);
 });

@@ -90,6 +90,10 @@ function isProviderSuitable(
 		return false;
 	}
 
+	if (provider.deactivatedAt && now > provider.deactivatedAt) {
+		return false;
+	}
+
 	if ((provider.contextSize ?? 8192) < requiredContextSize) {
 		return false;
 	}

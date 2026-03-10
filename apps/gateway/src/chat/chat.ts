@@ -75,6 +75,10 @@ import { parseProviderResponse } from "./tools/parse-provider-response.js";
 import { resolveAutoRoutingProviders } from "./tools/resolve-auto-routing-providers.js";
 import { resolveModelInfo } from "./tools/resolve-model-info.js";
 import { selectAutoRouteModel } from "./tools/select-auto-route-model.js";
+import {
+	stripThinkTags,
+	ThinkTagStreamStripper,
+} from "./tools/strip-think-tags.js";
 import { transformResponseToOpenai } from "./tools/transform-response-to-openai.js";
 import { transformStreamingToOpenai } from "./tools/transform-streaming-to-openai.js";
 import { DEFAULT_TOKENIZER_MODEL } from "./tools/types.js";
@@ -170,7 +174,7 @@ async function convertImagesToBase64(
  */
 function supportsReasoningEffort(
 	provider: ProviderModelMapping,
-	reasoning_effort: "minimal" | "low" | "medium" | "high" | undefined,
+	reasoning_effort: "minimal" | "low" | "medium" | "high" | "xhigh" | undefined,
 ): boolean {
 	// If no reasoning_effort is requested, no filtering needed
 	if (reasoning_effort === undefined) {
@@ -213,7 +217,7 @@ const messageSchema = z.object({
 						type: z.literal("image_url"),
 						image_url: z.object({
 							url: z.string(),
-							detail: z.enum(["low", "high", "auto"]).optional(),
+							detail: z.enum(["low", "high", "auto", "original"]).optional(),
 						}),
 					}),
 				]),
@@ -329,6 +333,7 @@ const completionsRequestSchema = z.object({
 						description: z.string().optional(),
 						parameters: z.record(z.any()).optional(),
 					}),
+					defer_loading: z.boolean().optional(),
 				}),
 				z.object({
 					type: z.literal("web_search"),
@@ -351,12 +356,19 @@ const completionsRequestSchema = z.object({
 						example: "str_replace_based_edit_tool",
 					}),
 				}),
+				z.object({
+					type: z.literal("tool_search"),
+					execution: z.enum(["server", "client"]).optional(),
+					name: z.string().optional(),
+					description: z.string().optional(),
+					parameters: z.record(z.any()).optional(),
+				}),
 			]),
 		)
 		.optional()
 		.openapi({
 			description:
-				"Tools available to the model. Supports function tools (cross-provider), web_search tools, and provider-specific native tools like Anthropic's text_editor_20250429 for optimized code editing.",
+				"Tools available to the model. Supports function tools (cross-provider), web_search, tool_search (GPT-5.4+ Responses API), and provider-specific native tools like Anthropic's text_editor_20250429.",
 		}),
 	tool_choice: z
 		.union([
@@ -372,7 +384,7 @@ const completionsRequestSchema = z.object({
 		])
 		.optional(),
 	reasoning_effort: z
-		.enum(["minimal", "low", "medium", "high"])
+		.enum(["minimal", "low", "medium", "high", "xhigh"])
 		.nullable()
 		.optional()
 		.transform((val) => (val === null ? undefined : val))
@@ -1420,7 +1432,7 @@ chat.openapi(completions, async (c) => {
 		// Check if the selected provider supports reasoning
 		if (selectedProviderMapping?.reasoning === true) {
 			// Determine the default reasoning_effort value based on model name
-			let defaultEffort: "minimal" | "low" | "medium" | "high";
+			let defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh";
 			if (baseModelName.startsWith("gpt-5")) {
 				defaultEffort = "medium";
 			} else {
@@ -1447,15 +1459,22 @@ chat.openapi(completions, async (c) => {
 				} else {
 					// Default effort not supported, pick the first level from fixed priority order
 					// Priority order: minimal, low, medium, high
-					const priorityOrder: ("minimal" | "low" | "medium" | "high")[] = [
-						"minimal",
-						"low",
-						"medium",
-						"high",
-					];
+					const priorityOrder: (
+						| "minimal"
+						| "low"
+						| "medium"
+						| "high"
+						| "xhigh"
+					)[] = ["minimal", "low", "medium", "high", "xhigh"];
 
 					// Find the first priority level that is supported
-					let selectedEffort: "minimal" | "low" | "medium" | "high" | undefined;
+					let selectedEffort:
+						| "minimal"
+						| "low"
+						| "medium"
+						| "high"
+						| "xhigh"
+						| undefined;
 					for (const level of priorityOrder) {
 						if (supportedLevels.includes(level)) {
 							selectedEffort = level;
@@ -1733,6 +1752,12 @@ chat.openapi(completions, async (c) => {
 				(p as ProviderModelMapping).modelName === usedModel,
 		) as ProviderModelMapping | undefined
 	)?.supportedParameters?.includes("effort");
+
+	const selectedProviderReasoningOutput = (
+		modelInfo.providers.find((p) => p.providerId === usedProvider) as
+			| ProviderModelMapping
+			| undefined
+	)?.reasoningOutput;
 
 	// Check if messages contain existing tool calls or tool results
 	// If so, use Chat Completions API instead of Responses API
@@ -2863,6 +2888,12 @@ chat.openapi(completions, async (c) => {
 			let lastChunkId: string | null = null;
 			let lastChunkModel: string | null = null;
 			let lastChunkCreated: number | null = null;
+
+			// State tracking for stripping <think> tags in streaming for providers with reasoningOutput: "omit"
+			const shouldStripThinkTags = selectedProviderReasoningOutput === "omit";
+			const thinkTagStripper = shouldStripThinkTags
+				? new ThinkTagStreamStripper()
+				: null;
 			let streamingPluginResults: {
 				responseHealing?: {
 					healed: boolean;
@@ -3381,6 +3412,19 @@ chat.openapi(completions, async (c) => {
 												}
 											}
 										}
+									}
+								}
+							}
+
+							// Strip <think> tags from streaming content for providers with reasoningOutput: "omit"
+							if (thinkTagStripper) {
+								const delta = transformedData.choices?.[0]?.delta;
+								if (delta?.content) {
+									const output = thinkTagStripper.process(delta.content);
+									if (output) {
+										delta.content = output;
+									} else {
+										delete delta.content;
 									}
 								}
 							}
@@ -4894,6 +4938,15 @@ chat.openapi(completions, async (c) => {
 			healingMethod?: string;
 		};
 	} = {};
+
+	// Strip <think> tags for providers with reasoningOutput: "omit" (e.g. MiniMax)
+	if (content && selectedProviderReasoningOutput === "omit") {
+		content = stripThinkTags(content);
+
+		if (json?.choices?.[0]?.message !== undefined) {
+			json.choices[0].message.content = content;
+		}
+	}
 
 	// Always strip markdown code fences for json responses (model bug, not user-configurable)
 	if (isJsonResponseFormat && content) {
