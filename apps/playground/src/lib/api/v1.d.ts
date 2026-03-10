@@ -2649,7 +2649,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    range?: "24h" | "7d" | "30d" | "90d" | "all";
+                    range?: "12h" | "24h" | "7d" | "30d" | "90d" | "all";
                 };
                 header?: never;
                 path?: never;
@@ -2716,7 +2716,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    window?: "6h" | "24h" | "7d" | "30d" | "90d" | "all";
+                    window?: "6h" | "12h" | "24h" | "7d" | "30d" | "90d" | "all";
                     granularity?: "minute" | "hour" | "day" | "week" | "month";
                 };
                 header?: never;
@@ -2733,7 +2733,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** @enum {string} */
-                            window: "6h" | "24h" | "7d" | "30d" | "90d" | "all";
+                            window: "6h" | "12h" | "24h" | "7d" | "30d" | "90d" | "all";
                             bucketSize: string;
                             series: {
                                 timestamp: string;
