@@ -23,6 +23,10 @@ const originUrls =
 const isHosted = process.env.HOSTED === "true";
 const CORPORATE_LOGIN_COOKIE_NAME = "llmapi_corporate_auth_flow";
 
+export const AUTH_ERROR_CODES = {
+	CORPORATE_ONLY: "CORPORATE_ONLY",
+} as const;
+
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
 	port: Number(process.env.REDIS_PORT) || 6379,
@@ -93,6 +97,20 @@ function isCorporateAuthFlow(cookieHeader: string): boolean {
 	return (
 		getCookieValue(cookieHeader, CORPORATE_LOGIN_COOKIE_NAME) === "corporate"
 	);
+}
+
+function isCorporateLoginRequest(ctx: { request?: Request }): boolean {
+	const cookieHeader = ctx.request?.headers?.get("cookie") ?? "";
+	if (isCorporateAuthFlow(cookieHeader)) {
+		return true;
+	}
+	const referer = ctx.request?.headers?.get("referer") ?? "";
+	try {
+		const url = new URL(referer);
+		return url.pathname.includes("/corporate-login");
+	} catch {
+		return false;
+	}
 }
 
 export async function checkResetPasswordRateLimit(
@@ -584,11 +602,8 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 							},
 						});
 
-						const cookieHeader = ctx?.request?.headers.get("cookie") || "";
-						const isRedirectFromCorporateLoginPage =
-							isCorporateAuthFlow(cookieHeader);
 						if (
-							isRedirectFromCorporateLoginPage &&
+							isCorporateLoginRequest({ request: ctx?.request }) &&
 							currentUser &&
 							!isCorporateEmail(currentUser.email)
 						) {
@@ -694,6 +709,29 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 									headers: {
 										"Content-Type": "application/json",
 									},
+								},
+							);
+						}
+
+						if (
+							isCorporateLoginRequest(ctx) &&
+							user &&
+							!isCorporateEmail(normalizedEmail)
+						) {
+							logger.warn("Non-corporate email blocked during sign-in", {
+								userId: user.id,
+								email: maskEmail(normalizedEmail),
+								path: ctx?.path || "",
+							});
+							return new Response(
+								JSON.stringify({
+									error: AUTH_ERROR_CODES.CORPORATE_ONLY,
+									message:
+										"Only corporate email addresses are allowed. Please sign in with your work email.",
+								}),
+								{
+									status: 403,
+									headers: { "Content-Type": "application/json" },
 								},
 							);
 						}
