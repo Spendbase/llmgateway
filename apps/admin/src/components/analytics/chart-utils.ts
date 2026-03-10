@@ -5,6 +5,7 @@ import type {
 
 export const windowLabels: Record<AnalyticsWindow, string> = {
 	"6h": "6 hours",
+	"12h": "12 hours",
 	"24h": "24 hours",
 	"7d": "7 days",
 	"30d": "30 days",

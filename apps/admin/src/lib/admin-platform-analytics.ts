@@ -7,7 +7,7 @@ export type { AnalyticsRange } from "./analytics-constants";
 export { ANALYTICS_RANGE_OPTIONS, rangeToWindow } from "./analytics-constants";
 
 export async function getAdminPlatformAnalytics(
-	range: AnalyticsRange = "all",
+	range: AnalyticsRange = "12h",
 ): Promise<PlatformAnalyticsResponse | null> {
 	return await fetchServerData<PlatformAnalyticsResponse>(
 		"GET",

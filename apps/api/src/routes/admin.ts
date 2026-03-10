@@ -3079,8 +3079,16 @@ admin.openapi(getOrgDeposits, async (c) => {
 	});
 });
 
-const analyticsWindowSchema = z.enum(["6h", "24h", "7d", "30d", "90d", "all"]);
-const analyticsRangeSchema = z.enum(["24h", "7d", "30d", "90d", "all"]);
+const analyticsWindowSchema = z.enum([
+	"6h",
+	"12h",
+	"24h",
+	"7d",
+	"30d",
+	"90d",
+	"all",
+]);
+const analyticsRangeSchema = z.enum(["12h", "24h", "7d", "30d", "90d", "all"]);
 
 const analyticsModelItemSchema = z.object({
 	id: z.string(),
@@ -3145,7 +3153,7 @@ const getAnalyticsPlatform = createRoute({
 	path: "/analytics/platform",
 	request: {
 		query: z.object({
-			range: analyticsRangeSchema.default("all").optional(),
+			range: analyticsRangeSchema.default("12h").optional(),
 		}),
 	},
 	responses: {
@@ -3213,9 +3221,10 @@ admin.openapi(getAnalyticsPlatform, async (c) => {
 		throw new HTTPException(403, { message: "Admin access required" });
 	}
 
-	const { range = "all" } = c.req.valid("query");
+	const { range = "12h" } = c.req.valid("query");
 
 	const rangeHoursMap: Record<string, number> = {
+		"12h": 12,
 		"24h": 24,
 		"7d": 7 * 24,
 		"30d": 30 * 24,
@@ -3336,6 +3345,7 @@ admin.openapi(getAnalyticsPlatform, async (c) => {
 
 const bucketSizeMap: Record<string, string> = {
 	"6h": "minute",
+	"12h": "hour",
 	"24h": "hour",
 	"7d": "hour",
 	"30d": "day",
@@ -3345,6 +3355,7 @@ const bucketSizeMap: Record<string, string> = {
 
 const windowHoursMap: Record<string, number | null> = {
 	"6h": 6,
+	"12h": 12,
 	"24h": 24,
 	"7d": 7 * 24,
 	"30d": 30 * 24,

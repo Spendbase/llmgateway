@@ -14,7 +14,14 @@ import { getAdminTimeSeries } from "@/lib/admin-time-series";
 
 import type { AnalyticsRange } from "@/lib/admin-platform-analytics";
 
-const VALID_RANGES: AnalyticsRange[] = ["24h", "7d", "30d", "90d", "all"];
+const VALID_RANGES: AnalyticsRange[] = [
+	"12h",
+	"24h",
+	"7d",
+	"30d",
+	"90d",
+	"all",
+];
 
 export default async function AnalyticsPage({
 	searchParams,
@@ -25,7 +32,7 @@ export default async function AnalyticsPage({
 	const range = (
 		VALID_RANGES.includes(params?.range as AnalyticsRange)
 			? params!.range
-			: "all"
+			: "12h"
 	) as AnalyticsRange;
 
 	const window = rangeToWindow(range);
