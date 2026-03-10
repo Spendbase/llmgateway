@@ -51,14 +51,20 @@ function LowBalanceAlertsSettings() {
 	}, [alertSettings]);
 
 	const isValidEmail = (email: string) => {
-		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+		// Strict practical email validation:
+		// - exactly one @
+		// - local part at least 1 char, no spaces
+		// - domain part at least 1 char, no spaces
+		// - exactly one or more dots in domain
+		// - TLD at least 2 alpha characters
+		return /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email);
 	};
 
 	const handleAddEmail = (e?: React.FormEvent) => {
 		if (e) {
 			e.preventDefault();
 		}
-		const trimmed = emailInput.trim();
+		const trimmed = emailInput.trim().toLowerCase();
 		if (!trimmed) {
 			return;
 		}
@@ -150,9 +156,11 @@ function LowBalanceAlertsSettings() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-row items-center justify-between rounded-lg border p-4">
 				<div className="space-y-0.5">
-					<Label htmlFor="low-balance-enabled">Enable Low Balance Alerts</Label>
+					<Label htmlFor="low-balance-enabled" className="text-base">
+						Enable Low Balance Alerts
+					</Label>
 					<p className="text-sm text-muted-foreground">
 						Send emails when your credit balance drops below the threshold
 					</p>
