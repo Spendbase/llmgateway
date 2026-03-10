@@ -530,8 +530,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 							subject: "Verify your email address",
 							html,
 						});
-						// eslint-disable-next-line no-console
-						console.log("otp", otp);
 					} catch (error) {
 						logger.error(
 							"Failed to send verification OTP",
@@ -631,7 +629,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				}
 			: {
 					sendOnSignUp: false,
-					autoSignInAfterVerification: true,
+					autoSignInAfterVerification: false,
 				},
 		hooks: {
 			before: createAuthMiddleware(async (ctx) => {
