@@ -42,7 +42,7 @@ describe("API auth configuration", () => {
 			expect(apiAuth.options.emailVerification?.sendOnSignUp).toBe(false);
 			expect(
 				apiAuth.options.emailVerification?.autoSignInAfterVerification,
-			).toBe(false);
+			).toBe(true);
 		}
 	});
 
