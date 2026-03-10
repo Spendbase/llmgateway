@@ -1236,6 +1236,13 @@ organization.openapi(updateLowBalanceAlertSettings, async (c) => {
 		}
 	}
 
+	const org = userOrganization.organization!;
+	const thresholdChanged =
+		payload.lowBalanceAlertThreshold !== Number(org.lowBalanceAlertThreshold);
+	const enabledChangedToTrue =
+		payload.lowBalanceAlertEnabled && !org.lowBalanceAlertEnabled;
+	const shouldRearm = thresholdChanged || enabledChangedToTrue;
+
 	// Atomic update: org fields + recipient sync
 	await db.transaction(async (tx) => {
 		// 1. Update organization scalar fields
@@ -1244,13 +1251,9 @@ organization.openapi(updateLowBalanceAlertSettings, async (c) => {
 			.set({
 				lowBalanceAlertEnabled: payload.lowBalanceAlertEnabled,
 				lowBalanceAlertThreshold: payload.lowBalanceAlertThreshold.toString(),
+				...(shouldRearm ? { lowBalanceAlertLastStateBelow: false } : {}),
 			})
 			.where(eq(tables.organization.id, id));
-
-		// Skip recipient sync when alerts are disabled to preserve stored emails
-		if (!payload.lowBalanceAlertEnabled) {
-			return;
-		}
 
 		// 2. Fetch current recipients
 		const currentRecipients =

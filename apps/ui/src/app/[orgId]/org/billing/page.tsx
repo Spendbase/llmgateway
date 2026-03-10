@@ -1,4 +1,5 @@
 import { AutoTopUpSettings } from "@/components/billing/auto-topup-settings";
+import { LowBalanceAlertsSettings } from "@/components/billing/low-balance-alerts-settings";
 import { PaymentMethodsManagement } from "@/components/credits/payment-methods-management";
 import { TopUpCreditsButton } from "@/components/credits/top-up-credits-dialog";
 import {
@@ -71,6 +72,19 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 						</CardHeader>
 						<CardContent>
 							<AutoTopUpSettings />
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>Low Balance Alerts</CardTitle>
+							<CardDescription>
+								Receive email notifications when your credits fall below a
+								specified amount.
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<LowBalanceAlertsSettings />
 						</CardContent>
 					</Card>
 				</div>

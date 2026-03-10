@@ -344,7 +344,7 @@ async function processAutoTopUp(): Promise<void> {
 }
 
 async function processLowBalanceAlerts(): Promise<void> {
-	const apiUrl = process.env.INTERNAL_API_URL;
+	const apiUrl = process.env.API_URL || "http://localhost:4002";
 	const apiSecret = process.env.INTERNAL_API_SECRET;
 
 	const lockAcquired = await acquireLock(LOW_BALANCE_ALERT_LOCK_KEY);
@@ -356,9 +356,9 @@ async function processLowBalanceAlerts(): Promise<void> {
 
 	try {
 		// Phase 1 - trigger alerts
-		if (!apiUrl || !apiSecret) {
+		if (!apiSecret) {
 			logger.error(
-				"Low balance alert job missing INTERNAL_API_URL or INTERNAL_API_SECRET in environment. Skipping Phase 1 (sending alerts).",
+				"Low balance alert job missing INTERNAL_API_SECRET in environment. Skipping Phase 1 (sending alerts).",
 			);
 		} else {
 			const candidateOrgs = await db.query.organization.findMany({
