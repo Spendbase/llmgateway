@@ -1717,6 +1717,7 @@ export interface paths {
                                 createdAt: string;
                                 organizationId: string;
                                 organizationName: string;
+                                organizationEmail: string | null;
                                 amount: string | null;
                                 creditAmount: string | null;
                                 currency: string;
@@ -1790,6 +1791,7 @@ export interface paths {
                                 createdAt: string;
                                 organizationId: string;
                                 organizationName: string;
+                                organizationEmail: string | null;
                                 amount: string | null;
                                 creditAmount: string | null;
                                 currency: string;
@@ -1808,6 +1810,11 @@ export interface paths {
                                 /** @enum {string|null} */
                                 newStatus: "pending" | "completed" | "failed" | null;
                                 metadata?: unknown;
+                                adminUser?: {
+                                    id: string;
+                                    name: string | null;
+                                    email: string;
+                                } | null;
                             }[];
                         };
                     };
