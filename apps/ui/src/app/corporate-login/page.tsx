@@ -69,31 +69,33 @@ function CorporateLoginContent() {
 
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		setIsLoading(true);
-		const secureAttr = location.protocol === "https:" ? "; Secure" : "";
-		document.cookie = `${CORPORATE_LOGIN_COOKIE_NAME}=corporate; Path=/; Max-Age=600; SameSite=Lax${secureAttr}`;
+		try {
+			const secureAttr = location.protocol === "https:" ? "; Secure" : "";
+			document.cookie = `${CORPORATE_LOGIN_COOKIE_NAME}=corporate; Path=/; Max-Age=600; SameSite=Lax${secureAttr}`;
 
-		await signIn.email(
-			{
-				email: values.email,
-				password: values.password,
-			},
-			{
-				onSuccess: () => {
-					queryClient.clear();
-					toast({ title: "Login successful" });
-					router.push("/");
+			await signIn.email(
+				{
+					email: values.email,
+					password: values.password,
 				},
-				onError: (ctx) => {
-					toast({
-						title: "Failed to sign in",
-						variant: "destructive",
-						description: ctx?.error?.message || "An unknown error occurred",
-					});
+				{
+					onSuccess: () => {
+						queryClient.clear();
+						toast({ title: "Login successful" });
+						router.push("/");
+					},
+					onError: (ctx) => {
+						toast({
+							title: "Failed to sign in",
+							variant: "destructive",
+							description: ctx?.error?.message || "An unknown error occurred",
+						});
+					},
 				},
-			},
-		);
-
-		setIsLoading(false);
+			);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	const handleGoogleSignIn = async () => {
