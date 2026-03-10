@@ -14,6 +14,7 @@ export const keysApi = new OpenAPIHono<ServerTypes>();
 
 // Create a schema for API key responses
 // Using z.object directly instead of createSelectSchema due to compatibility issues
+
 const apiKeySchema = z.object({
 	id: z.string(),
 	createdAt: z.date(),
@@ -708,12 +709,13 @@ keysApi.openapi(updateStatus, async (c) => {
 		.where(eq(tables.apiKey.id, id))
 		.returning();
 
+	const { token: _token, ...restApiKey } = updatedApiKey;
+
 	return c.json({
 		message: `API key status updated to ${status}`,
 		apiKey: {
-			...updatedApiKey,
+			...restApiKey,
 			maskedToken: maskToken(updatedApiKey.token),
-			token: undefined,
 		},
 	});
 });
@@ -858,6 +860,14 @@ keysApi.openapi(updateUsageLimit, async (c) => {
 	}
 	if (expiresAt !== undefined) {
 		updates.expiresAt = expiresAt;
+
+		// Reactivate key if expiration is extended and it wasn't deleted
+		if (apiKey.status !== "deleted") {
+			const isFuture = expiresAt === null || new Date(expiresAt) > new Date();
+			if (isFuture && apiKey.status === "inactive") {
+				updates.status = "active";
+			}
+		}
 	}
 
 	// Recalculate Period Logic ONLY if usageLimit or resetPeriod is provided
@@ -892,12 +902,13 @@ keysApi.openapi(updateUsageLimit, async (c) => {
 		.where(eq(tables.apiKey.id, id))
 		.returning();
 
+	const { token: _token, ...restApiKey } = updatedApiKey;
+
 	return c.json({
 		message: `API key usage limit updated to ${usageLimit}`,
 		apiKey: {
-			...updatedApiKey,
+			...restApiKey,
 			maskedToken: maskToken(updatedApiKey.token),
-			token: undefined,
 		},
 	});
 });
