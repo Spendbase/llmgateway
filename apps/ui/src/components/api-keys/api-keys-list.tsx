@@ -208,7 +208,9 @@ export function ApiKeysList({
 		"/keys/api/limit/{id}",
 	);
 
+	// Filter keys that are NOT deleted
 	const allKeys = data?.apiKeys.filter((key) => key.status !== "deleted") || [];
+	// Use status for active/inactive filtering
 	const activeKeys = allKeys.filter((key) => key.status === "active");
 	const inactiveKeys = allKeys.filter((key) => key.status === "inactive");
 	const planLimits = data?.planLimits;
