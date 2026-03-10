@@ -70,6 +70,18 @@ export function DepositDetailIndex({ data }: { data: DepositDetailResponse }) {
 			</header>
 
 			<div className="grid gap-6 md:grid-cols-2">
+				<div className="md:col-span-2 rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+					<h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground mb-4">
+						Organization
+					</h2>
+					<div className="flex flex-col gap-1">
+						<p className="font-semibold text-lg">{deposit.organizationName}</p>
+						<p className="text-sm text-muted-foreground">
+							{deposit.organizationEmail || "-"}
+						</p>
+					</div>
+				</div>
+
 				<div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
 					<h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground mb-4">
 						Transaction Info

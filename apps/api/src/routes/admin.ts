@@ -114,6 +114,7 @@ const depositTransactionSchema = z.object({
 	createdAt: z.date(),
 	organizationId: z.string(),
 	organizationName: z.string(),
+	organizationEmail: z.string().nullable(),
 	amount: z.string().nullable(),
 	creditAmount: z.string().nullable(),
 	currency: z.string(),
@@ -130,6 +131,14 @@ const depositEventSchema = z.object({
 	type: z.enum(["created", "status_changed"]),
 	newStatus: z.enum(["pending", "completed", "failed"]).nullable(),
 	metadata: z.unknown().nullable(),
+	adminUser: z
+		.object({
+			id: z.string(),
+			name: z.string().nullable(),
+			email: z.string(),
+		})
+		.nullable()
+		.optional(),
 });
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -1624,6 +1633,7 @@ admin.openapi(getDeposits, async (c) => {
 			stripeInvoiceId: tables.transaction.stripeInvoiceId,
 			description: tables.transaction.description,
 			organizationName: tables.organization.name,
+			organizationEmail: tables.organization.billingEmail,
 			paymentMethod:
 				sql<string>`CASE WHEN ${tables.transaction.stripePaymentIntentId} IS NOT NULL THEN 'Stripe' ELSE 'System' END`.as(
 					"paymentMethod",
@@ -1680,6 +1690,7 @@ admin.openapi(getDeposit, async (c) => {
 			stripeInvoiceId: tables.transaction.stripeInvoiceId,
 			description: tables.transaction.description,
 			organizationName: tables.organization.name,
+			organizationEmail: tables.organization.billingEmail,
 			paymentMethod:
 				sql<string>`CASE WHEN ${tables.transaction.stripePaymentIntentId} IS NOT NULL THEN 'Stripe' ELSE 'System' END`.as(
 					"paymentMethod",
@@ -1709,8 +1720,17 @@ admin.openapi(getDeposit, async (c) => {
 			type: tables.transactionEvent.type,
 			newStatus: tables.transactionEvent.newStatus,
 			metadata: tables.transactionEvent.metadata,
+			adminUser: {
+				id: tables.user.id,
+				name: tables.user.name,
+				email: tables.user.email,
+			},
 		})
 		.from(tables.transactionEvent)
+		.leftJoin(
+			tables.user,
+			sql`CAST(${tables.transactionEvent.metadata}->>'adminUserId' AS TEXT) = ${tables.user.id}`,
+		)
 		.where(eq(tables.transactionEvent.transactionId, id))
 		.orderBy(desc(tables.transactionEvent.createdAt));
 
