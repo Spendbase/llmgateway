@@ -307,6 +307,14 @@ describe("e2e", getConcurrentTestOptions(), () => {
 					expect(json.choices[0].message.reasoning.length).toBeGreaterThan(0);
 				}
 
+				// For providers with reasoningOutput: "omit", content must not contain <think> tags
+				if (
+					(reasoningProvider as ProviderModelMapping)?.reasoningOutput ===
+					"omit"
+				) {
+					expect(message.content).toBeNull();
+				}
+
 				// Validate logs
 				const log = await validateLogByRequestId(requestId);
 				expect(log.streamed).toBe(false);
