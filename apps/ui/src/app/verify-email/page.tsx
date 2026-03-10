@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { useResendEmail } from "@/hooks/useResendEmail";
+import { useAuthClient } from "@/lib/auth-client";
 import { useToast } from "@/lib/components/use-toast";
-import { useAppConfig } from "@/lib/config";
 import { useApi } from "@/lib/fetch-client";
 import Logo from "@/lib/icons/Logo";
 
@@ -18,7 +18,7 @@ export default function VerifyEmailPage() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const { toast } = useToast();
-	const { apiUrl } = useAppConfig();
+	const authClient = useAuthClient();
 	const api = useApi();
 	const queryClient = useQueryClient();
 
@@ -76,16 +76,33 @@ export default function VerifyEmailPage() {
 
 		setIsSubmitting(true);
 		try {
-			const res = await fetch(`${apiUrl}/auth/verify-email-with-code`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				credentials: "include",
-				body: JSON.stringify({ email: trimmedEmail, code: trimmedCode }),
+			const { data, error } = await authClient.emailOtp.verifyEmail({
+				email: trimmedEmail,
+				otp: trimmedCode,
 			});
 
-			const data = await res.json();
+			if (error) {
+				const code = (error as { code?: string })?.code;
+				const message = (error as { message?: string })?.message;
 
-			if (data.success) {
+				if (code === "TOO_MANY_ATTEMPTS") {
+					toast({
+						title: "Too many attempts",
+						description: message ?? "Request a new code and try again.",
+						variant: "destructive",
+					});
+					return;
+				}
+
+				toast({
+					title: "Verification failed",
+					description: message ?? "Invalid or expired code. Request a new one.",
+					variant: "destructive",
+				});
+				return;
+			}
+
+			if (data) {
 				const queryKey = api.queryOptions("get", "/user/me", {}).queryKey;
 				await queryClient.invalidateQueries({ queryKey });
 				toast({
@@ -94,24 +111,7 @@ export default function VerifyEmailPage() {
 				});
 				router.refresh();
 				router.replace("/onboarding");
-				return;
 			}
-
-			if (res.status === 429) {
-				toast({
-					title: "Too many attempts",
-					description: data.message,
-					variant: "destructive",
-				});
-				return;
-			}
-
-			toast({
-				title: "Verification failed",
-				description:
-					data.message ?? "Invalid or expired code. Request a new one.",
-				variant: "destructive",
-			});
 		} catch (error: unknown) {
 			if (error instanceof Error) {
 				toast({

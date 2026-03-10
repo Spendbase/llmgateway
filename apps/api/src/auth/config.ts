@@ -2,6 +2,7 @@ import { instrumentBetterAuth } from "@kubiks/otel-better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { passkey } from "better-auth/plugins/passkey";
 import { Redis } from "ioredis";
 
@@ -286,64 +287,6 @@ export async function checkEmailResendRateLimit(
 	}
 }
 
-export type VerifyEmailWithCodeResult =
-	| { success: true }
-	| { success: false; error: "too_many_attempts"; retryAfter: number }
-	| { success: false; error: "invalid_or_expired" };
-
-export async function verifyEmailWithCode(
-	email: string,
-	code: string,
-): Promise<VerifyEmailWithCodeResult> {
-	const normalizedEmail = email.toLowerCase().trim();
-	const rateLimit = await checkEmailResendRateLimit(normalizedEmail);
-	if (!rateLimit.allowed) {
-		return {
-			success: false,
-			error: "too_many_attempts",
-			retryAfter: rateLimit.resetTime,
-		};
-	}
-
-	const verificationRow = await db.query.verification.findFirst({
-		where: {
-			identifier: normalizedEmail,
-			value: code.trim(),
-		},
-	});
-
-	if (!verificationRow) {
-		return { success: false, error: "invalid_or_expired" };
-	}
-
-	const now = new Date();
-	if (verificationRow.expiresAt && verificationRow.expiresAt <= now) {
-		return { success: false, error: "invalid_or_expired" };
-	}
-
-	const userRow = await db.query.user.findFirst({
-		where: {
-			email: normalizedEmail,
-		},
-	});
-
-	if (!userRow) {
-		return { success: false, error: "invalid_or_expired" };
-	}
-
-	await db.transaction(async (tx) => {
-		await tx
-			.update(tables.user)
-			.set({ emailVerified: true })
-			.where(eq(tables.user.id, userRow.id));
-		await tx
-			.delete(tables.verification)
-			.where(eq(tables.verification.id, verificationRow.id));
-	});
-
-	return { success: true };
-}
-
 export interface ExponentialRateLimitConfig {
 	keyPrefix: string;
 	baseDelayMs: number;
@@ -572,6 +515,34 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				rpName: process.env.PASSKEY_RP_NAME || "LLMGateway",
 				origin: uiUrl,
 			}),
+			emailOTP({
+				overrideDefaultEmailVerification: true,
+				otpLength: 6,
+				expiresIn: 15 * 60,
+				async sendVerificationOTP({ email, otp, type }) {
+					if (type !== "email-verification") {
+						return;
+					}
+					try {
+						const html = getVerifyEmail({ code: otp });
+						await sendTransactionalEmail({
+							to: email,
+							subject: "Verify your email address",
+							html,
+						});
+						// eslint-disable-next-line no-console
+						console.log("otp", otp);
+					} catch (error) {
+						logger.error(
+							"Failed to send verification OTP",
+							error instanceof Error ? error : new Error(String(error)),
+						);
+						throw new Error(
+							"Failed to send verification email. Please try again.",
+						);
+					}
+				},
+			}),
 		],
 		emailAndPassword: {
 			enabled: true,
@@ -657,60 +628,10 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					// }) => {
 
 					// },
-					sendVerificationEmail: async ({ user, token }) => {
-						try {
-							const code = String(
-								Math.floor(100_000 + Math.random() * 900_000),
-							);
-							const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-							const normalizedEmail = user.email.toLowerCase().trim();
-
-							// eslint-disable-next-line no-console
-							console.log("sendVerificationEmail", code);
-
-							const existing = await db.query.verification.findFirst({
-								where: { value: token },
-								columns: { id: true },
-							});
-
-							if (existing) {
-								await db
-									.update(tables.verification)
-									.set({
-										value: code,
-										expiresAt,
-										identifier: normalizedEmail,
-									})
-									.where(eq(tables.verification.id, existing.id));
-							} else {
-								await db.insert(tables.verification).values({
-									identifier: normalizedEmail,
-									value: code,
-									expiresAt,
-								});
-							}
-
-							const html = getVerifyEmail({ code });
-
-							await sendTransactionalEmail({
-								to: user.email,
-								subject: "Verify your email address",
-								html,
-							});
-						} catch (error) {
-							logger.error(
-								"Failed to send verification email",
-								error instanceof Error ? error : new Error(String(error)),
-							);
-							throw new Error(
-								"Failed to send verification email. Please try again.",
-							);
-						}
-					},
 				}
 			: {
 					sendOnSignUp: false,
-					autoSignInAfterVerification: false,
+					autoSignInAfterVerification: true,
 				},
 		hooks: {
 			before: createAuthMiddleware(async (ctx) => {
@@ -867,6 +788,31 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					}
 				}
 
+				if (ctx.path.startsWith("/email-otp/send-verification-otp")) {
+					const body = ctx.body as
+						| { email?: string; type?: string }
+						| undefined;
+					if (body?.email && body?.type === "email-verification") {
+						const rateLimit = await checkEmailResendRateLimit(body.email);
+
+						if (!rateLimit.allowed) {
+							const timeMessage = getTimeMessage(
+								rateLimit.resetTime - Date.now(),
+							);
+
+							return new Response(
+								JSON.stringify({
+									error: "too_many_requests",
+									message: `Please wait ${timeMessage} before requesting another code.`,
+								}),
+								{
+									status: 429,
+								},
+							);
+						}
+					}
+				}
+
 				if (ctx.path.startsWith("/send-verification-email")) {
 					const body = ctx.body as { email?: string } | undefined;
 					if (body?.email) {
@@ -881,14 +827,9 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 								JSON.stringify({
 									error: "too_many_requests",
 									message: `Please wait ${timeMessage} before requesting another email.`,
-									retryAfter: rateLimit.resetTime,
 								}),
 								{
 									status: 429,
-									headers: {
-										"Content-Type": "application/json",
-										"Retry-After": rateLimit.resetTime.toString(),
-									},
 								},
 							);
 						}
