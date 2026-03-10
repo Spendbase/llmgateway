@@ -30,7 +30,7 @@ interface ChatRequestBody {
 			| "21:9";
 		image_size?: "1K" | "2K" | "4K" | string; // string for Alibaba WIDTHxHEIGHT format
 	};
-	reasoning_effort?: "minimal" | "low" | "medium" | "high";
+	reasoning_effort?: "minimal" | "low" | "medium" | "high" | "xhigh";
 	web_search?: boolean;
 }
 

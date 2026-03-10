@@ -77,7 +77,7 @@ export default function ChatPageClient({
 
 	const [selectedModel, setSelectedModel] = useState(getInitialModel());
 	const [reasoningEffort, setReasoningEffort] = useState<
-		"" | "minimal" | "low" | "medium" | "high"
+		"" | "minimal" | "low" | "medium" | "high" | "xhigh"
 	>("");
 	const [imageAspectRatio, setImageAspectRatio] = useState<
 		| "auto"
@@ -249,13 +249,14 @@ export default function ChatPageClient({
 			// If reasoningLevels defined, use it; otherwise all levels supported
 			return (
 				(mapping.reasoningLevels as
-					| ("minimal" | "low" | "medium" | "high")[]
+					| ("minimal" | "low" | "medium" | "high" | "xhigh")[]
 					| null) ||
-				(["minimal", "low", "medium", "high"] as (
+				(["minimal", "low", "medium", "high", "xhigh"] as (
 					| "minimal"
 					| "low"
 					| "medium"
 					| "high"
+					| "xhigh"
 				)[])
 			);
 		}
@@ -271,22 +272,24 @@ export default function ChatPageClient({
 				| "low"
 				| "medium"
 				| "high"
+				| "xhigh"
 			)[];
 		}
 
 		// Default: all levels
-		return ["minimal", "low", "medium", "high"] as (
+		return ["minimal", "low", "medium", "high", "xhigh"] as (
 			| "minimal"
 			| "low"
 			| "medium"
 			| "high"
+			| "xhigh"
 		)[];
 	}, [selectedModel, models, supportsReasoning]);
 
 	// Helper to get auto reasoning level (prefer "medium", else first available)
 	const getAutoReasoningLevel = (
-		levels: ("minimal" | "low" | "medium" | "high")[] | null,
-	): "" | "minimal" | "low" | "medium" | "high" => {
+		levels: ("minimal" | "low" | "medium" | "high" | "xhigh")[] | null,
+	): "" | "minimal" | "low" | "medium" | "high" | "xhigh" => {
 		if (!levels || levels.length === 0) {
 			return "";
 		}
@@ -1061,7 +1064,7 @@ function ExtraChatPanel({
 }: ExtraChatPanelProps) {
 	const [selectedModel, setSelectedModel] = useState(initialModel);
 	const [reasoningEffort, setReasoningEffort] = useState<
-		"" | "minimal" | "low" | "medium" | "high"
+		"" | "minimal" | "low" | "medium" | "high" | "xhigh"
 	>("");
 	const [imageAspectRatio, setImageAspectRatio] = useState<
 		| "auto"
@@ -1167,13 +1170,14 @@ function ExtraChatPanel({
 			// If reasoningLevels defined, use it; otherwise all levels supported
 			return (
 				(mapping.reasoningLevels as
-					| ("minimal" | "low" | "medium" | "high")[]
+					| ("minimal" | "low" | "medium" | "high" | "xhigh")[]
 					| null) ||
-				(["minimal", "low", "medium", "high"] as (
+				(["minimal", "low", "medium", "high", "xhigh"] as (
 					| "minimal"
 					| "low"
 					| "medium"
 					| "high"
+					| "xhigh"
 				)[])
 			);
 		}
@@ -1189,22 +1193,24 @@ function ExtraChatPanel({
 				| "low"
 				| "medium"
 				| "high"
+				| "xhigh"
 			)[];
 		}
 
 		// Default: all levels
-		return ["minimal", "low", "medium", "high"] as (
+		return ["minimal", "low", "medium", "high", "xhigh"] as (
 			| "minimal"
 			| "low"
 			| "medium"
 			| "high"
+			| "xhigh"
 		)[];
 	}, [selectedModel, models, supportsReasoning]);
 
 	// Helper to get auto reasoning level (prefer "medium", else first available)
 	const getAutoReasoningLevel = (
-		levels: ("minimal" | "low" | "medium" | "high")[] | null,
-	): "" | "minimal" | "low" | "medium" | "high" => {
+		levels: ("minimal" | "low" | "medium" | "high" | "xhigh")[] | null,
+	): "" | "minimal" | "low" | "medium" | "high" | "xhigh" => {
 		if (!levels || levels.length === 0) {
 			return "";
 		}

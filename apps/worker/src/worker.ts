@@ -1065,14 +1065,14 @@ export async function resetApiKeyUsage(): Promise<void> {
 				return sql`(${key.id}, ${nextReset!}::timestamptz)`;
 			});
 
-			// Use Drizzle column objects to dynamically emit the correct database column identifiers
-			// (handles camelCase vs snake_case differences inherently).
+			// We must use hardcoded snake_case names in the SET clause because
+			// PostgreSQL does not allow table-prefixed columns in UPDATE SET.
 			await tx.execute(sql`
 				UPDATE ${apiKey} AS t
 				SET
-					${apiKey.usage} = '0',
-					${apiKey.lastResetAt} = ${now},
-					${apiKey.nextResetAt} = v.next_reset_at
+					usage = '0',
+					last_reset_at = ${now},
+					next_reset_at = v.next_reset_at
 				FROM (VALUES ${sql.join(values, sql`, `)}) AS v(id, next_reset_at)
 				WHERE t.id = v.id
 			`);
@@ -1081,9 +1081,18 @@ export async function resetApiKeyUsage(): Promise<void> {
 				`Successfully reset usage for ${eligibleKeys.length} API keys`,
 			);
 		});
+
+		// Process API key expirations sequentially in the same loop execution
+		await db.execute(sql`
+			UPDATE "api_key"
+			SET status = 'inactive'
+			WHERE status = 'active'
+			  AND expires_at IS NOT NULL
+			  AND expires_at <= ${now}
+		`);
 	} catch (error) {
 		logger.error(
-			"Error resetting API key usage",
+			"Error processing API key maintenance",
 			error instanceof Error ? error : new Error(String(error)),
 		);
 	} finally {
