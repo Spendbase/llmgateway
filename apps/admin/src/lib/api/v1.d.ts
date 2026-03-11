@@ -1075,7 +1075,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    window?: "7d" | "30d";
+                    window?: "1d" | "3d" | "7d" | "30d";
                 };
                 header?: never;
                 path?: never;
@@ -1091,7 +1091,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** @enum {string} */
-                            window: "7d" | "30d";
+                            window: "1d" | "3d" | "7d" | "30d";
                             startDate: string;
                             endDate: string;
                             totalRequests: number;
@@ -2126,6 +2126,7 @@ export interface paths {
                             usedByOrganizations: {
                                 orgId: string;
                                 orgName: string;
+                                organizationEmail: string | null;
                                 usageCount: number;
                                 lastUsedAt: string;
                             }[];

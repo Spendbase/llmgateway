@@ -1075,7 +1075,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    window?: "7d" | "30d";
+                    window?: "1d" | "3d" | "7d" | "30d";
                 };
                 header?: never;
                 path?: never;
@@ -1091,7 +1091,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** @enum {string} */
-                            window: "7d" | "30d";
+                            window: "1d" | "3d" | "7d" | "30d";
                             startDate: string;
                             endDate: string;
                             totalRequests: number;
@@ -1717,6 +1717,7 @@ export interface paths {
                                 createdAt: string;
                                 organizationId: string;
                                 organizationName: string;
+                                organizationEmail: string | null;
                                 amount: string | null;
                                 creditAmount: string | null;
                                 currency: string;
@@ -1790,6 +1791,7 @@ export interface paths {
                                 createdAt: string;
                                 organizationId: string;
                                 organizationName: string;
+                                organizationEmail: string | null;
                                 amount: string | null;
                                 creditAmount: string | null;
                                 currency: string;
@@ -1808,6 +1810,11 @@ export interface paths {
                                 /** @enum {string|null} */
                                 newStatus: "pending" | "completed" | "failed" | null;
                                 metadata?: unknown;
+                                adminUser?: {
+                                    id: string;
+                                    name: string | null;
+                                    email: string;
+                                } | null;
                             }[];
                         };
                     };
@@ -2119,6 +2126,7 @@ export interface paths {
                             usedByOrganizations: {
                                 orgId: string;
                                 orgName: string;
+                                organizationEmail: string | null;
                                 usageCount: number;
                                 lastUsedAt: string;
                             }[];
