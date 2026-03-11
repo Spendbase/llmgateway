@@ -23,6 +23,10 @@ const originUrls =
 const isHosted = process.env.HOSTED === "true";
 const CORPORATE_LOGIN_COOKIE_NAME = "llmapi_corporate_auth_flow";
 
+export const AUTH_ERROR_CODES = {
+	CORPORATE_ONLY: "CORPORATE_ONLY",
+} as const;
+
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
 	port: Number(process.env.REDIS_PORT) || 6379,
@@ -93,6 +97,20 @@ function isCorporateAuthFlow(cookieHeader: string): boolean {
 	return (
 		getCookieValue(cookieHeader, CORPORATE_LOGIN_COOKIE_NAME) === "corporate"
 	);
+}
+
+function isCorporateLoginRequest(ctx: { request?: Request }): boolean {
+	const cookieHeader = ctx.request?.headers?.get("cookie") ?? "";
+	if (isCorporateAuthFlow(cookieHeader)) {
+		return true;
+	}
+	const referer = ctx.request?.headers?.get("referer") ?? "";
+	try {
+		const url = new URL(referer);
+		return url.pathname.includes("/corporate-login");
+	} catch {
+		return false;
+	}
 }
 
 export async function checkResetPasswordRateLimit(
@@ -575,6 +593,40 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					},
 				},
 			},
+			session: {
+				create: {
+					before: async (session, ctx) => {
+						const currentUser = await db.query.user.findFirst({
+							where: {
+								id: session.userId,
+							},
+						});
+
+						if (
+							isCorporateLoginRequest({ request: ctx?.request }) &&
+							currentUser &&
+							!isCorporateEmail(currentUser.email)
+						) {
+							logger.warn("Non-corporate email blocked during sign-in", {
+								userId: currentUser.id,
+								email: maskEmail(currentUser.email),
+								path: ctx?.path || "",
+							});
+
+							const errorUrl = new URL("/corporate-login", uiUrl);
+							errorUrl.searchParams.set("error", "corporate_only");
+							if (!ctx) {
+								throw new Error(
+									"Auth context not available to perform redirect.",
+								);
+							}
+							throw ctx.redirect(errorUrl.toString());
+						}
+
+						return { data: session };
+					},
+				},
+			},
 		},
 		socialProviders: {
 			github: {
@@ -662,6 +714,29 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 									headers: {
 										"Content-Type": "application/json",
 									},
+								},
+							);
+						}
+
+						if (
+							isCorporateLoginRequest(ctx) &&
+							user &&
+							!isCorporateEmail(normalizedEmail)
+						) {
+							logger.warn("Non-corporate email blocked during sign-in", {
+								userId: user.id,
+								email: maskEmail(normalizedEmail),
+								path: ctx?.path || "",
+							});
+							return new Response(
+								JSON.stringify({
+									error: AUTH_ERROR_CODES.CORPORATE_ONLY,
+									message:
+										"Only corporate email addresses are allowed. Please sign in with your work email.",
+								}),
+								{
+									status: 403,
+									headers: { "Content-Type": "application/json" },
 								},
 							);
 						}
@@ -852,25 +927,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 							},
 						},
 					);
-				}
-
-				const cookieHeader = ctx.request?.headers.get("cookie") || "";
-				const isRedirectFromCorporateLoginPage =
-					isCorporateAuthFlow(cookieHeader);
-				if (
-					isRedirectFromCorporateLoginPage &&
-					user &&
-					!isCorporateEmail(user.email)
-				) {
-					logger.warn("Non-corporate email blocked during sign-in", {
-						userId: user.id,
-						email: maskEmail(user.email),
-						path: ctx.path,
-					});
-
-					const errorUrl = new URL("/corporate-login", uiUrl);
-					errorUrl.searchParams.set("error", "corporate_only");
-					throw ctx.redirect(errorUrl.toString());
 				}
 
 				// Create default org/project for first-time sessions (email signup or first social sign-in)
