@@ -3,6 +3,8 @@
 @plugin "tailwindcss-animate";
 @plugin "@tailwindcss/typography";
 
+@source "../../../../packages/shared/src";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

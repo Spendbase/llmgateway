@@ -1,6 +1,6 @@
 import { fetchServerData } from "./server-api";
 
-export type TokenWindow = "7d" | "30d";
+export type TokenWindow = "1d" | "3d" | "7d" | "30d";
 
 export interface AdminTokenMetrics {
 	window: TokenWindow;

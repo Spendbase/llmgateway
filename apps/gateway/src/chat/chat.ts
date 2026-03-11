@@ -75,6 +75,10 @@ import { parseProviderResponse } from "./tools/parse-provider-response.js";
 import { resolveAutoRoutingProviders } from "./tools/resolve-auto-routing-providers.js";
 import { resolveModelInfo } from "./tools/resolve-model-info.js";
 import { selectAutoRouteModel } from "./tools/select-auto-route-model.js";
+import {
+	stripThinkTags,
+	ThinkTagStreamStripper,
+} from "./tools/strip-think-tags.js";
 import { transformResponseToOpenai } from "./tools/transform-response-to-openai.js";
 import { transformStreamingToOpenai } from "./tools/transform-streaming-to-openai.js";
 import { DEFAULT_TOKENIZER_MODEL } from "./tools/types.js";
@@ -1749,6 +1753,12 @@ chat.openapi(completions, async (c) => {
 		) as ProviderModelMapping | undefined
 	)?.supportedParameters?.includes("effort");
 
+	const selectedProviderReasoningOutput = (
+		modelInfo.providers.find((p) => p.providerId === usedProvider) as
+			| ProviderModelMapping
+			| undefined
+	)?.reasoningOutput;
+
 	// Check if messages contain existing tool calls or tool results
 	// If so, use Chat Completions API instead of Responses API
 	const hasExistingToolCalls = messages.some(
@@ -2878,6 +2888,12 @@ chat.openapi(completions, async (c) => {
 			let lastChunkId: string | null = null;
 			let lastChunkModel: string | null = null;
 			let lastChunkCreated: number | null = null;
+
+			// State tracking for stripping <think> tags in streaming for providers with reasoningOutput: "omit"
+			const shouldStripThinkTags = selectedProviderReasoningOutput === "omit";
+			const thinkTagStripper = shouldStripThinkTags
+				? new ThinkTagStreamStripper()
+				: null;
 			let streamingPluginResults: {
 				responseHealing?: {
 					healed: boolean;
@@ -3396,6 +3412,19 @@ chat.openapi(completions, async (c) => {
 												}
 											}
 										}
+									}
+								}
+							}
+
+							// Strip <think> tags from streaming content for providers with reasoningOutput: "omit"
+							if (thinkTagStripper) {
+								const delta = transformedData.choices?.[0]?.delta;
+								if (delta?.content) {
+									const output = thinkTagStripper.process(delta.content);
+									if (output) {
+										delta.content = output;
+									} else {
+										delete delta.content;
 									}
 								}
 							}
@@ -4909,6 +4938,15 @@ chat.openapi(completions, async (c) => {
 			healingMethod?: string;
 		};
 	} = {};
+
+	// Strip <think> tags for providers with reasoningOutput: "omit" (e.g. MiniMax)
+	if (content && selectedProviderReasoningOutput === "omit") {
+		content = stripThinkTags(content);
+
+		if (json?.choices?.[0]?.message !== undefined) {
+			json.choices[0].message.content = content;
+		}
+	}
 
 	// Always strip markdown code fences for json responses (model bug, not user-configurable)
 	if (isJsonResponseFormat && content) {
