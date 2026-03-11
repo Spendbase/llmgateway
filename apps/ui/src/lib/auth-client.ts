@@ -1,4 +1,4 @@
-import { passkeyClient } from "better-auth/client/plugins";
+import { emailOTPClient, passkeyClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { useMemo } from "react";
 
@@ -11,7 +11,7 @@ export function useAuthClient() {
 	return useMemo(() => {
 		return createAuthClient({
 			baseURL: config.apiUrl + "/auth",
-			plugins: [passkeyClient()],
+			plugins: [passkeyClient(), emailOTPClient()],
 		});
 	}, [config.apiUrl]);
 }

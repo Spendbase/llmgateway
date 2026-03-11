@@ -53,12 +53,9 @@ export const useResendEmail = ({ email }: { email: string | null }) => {
 		}
 
 		try {
-			const response = await authClient.sendVerificationEmail({
+			const response = await authClient.emailOtp.sendVerificationOtp({
 				email,
-				callbackURL:
-					typeof window !== "undefined"
-						? `${window.location.origin}/?emailVerified=true`
-						: undefined,
+				type: "email-verification",
 			});
 
 			if (response.error) {
@@ -72,7 +69,6 @@ export const useResendEmail = ({ email }: { email: string | null }) => {
 		} catch (error: any) {
 			if (error.status === 429) {
 				const retryAfter = error?.retryAfter || RESEND_COOLDOWN_SECONDS;
-				console.log(retryAfter);
 				const expiry = Date.now() + retryAfter * 1000;
 				localStorage.setItem(STORAGE_KEY, expiry.toString());
 

@@ -2,11 +2,13 @@ import { instrumentBetterAuth } from "@kubiks/otel-better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { passkey } from "better-auth/plugins/passkey";
 import { Redis } from "ioredis";
 
 import { getResetPasswordEmail } from "@/emails/templates/reset-password.js";
 import { getVerifyEmail } from "@/emails/templates/verify-email.js";
+import { getTimeMessage } from "@/utils/convert-time.js";
 import { validateEmail, isCorporateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
@@ -531,6 +533,32 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				rpName: process.env.PASSKEY_RP_NAME || "LLMGateway",
 				origin: uiUrl,
 			}),
+			emailOTP({
+				overrideDefaultEmailVerification: true,
+				otpLength: 6,
+				expiresIn: 15 * 60,
+				async sendVerificationOTP({ email, otp, type }) {
+					if (type !== "email-verification") {
+						return;
+					}
+					try {
+						const html = getVerifyEmail({ code: otp });
+						await sendTransactionalEmail({
+							to: email,
+							subject: "Verify your email address",
+							html,
+						});
+					} catch (error) {
+						logger.error(
+							"Failed to send verification OTP",
+							error instanceof Error ? error : new Error(String(error)),
+						);
+						throw new Error(
+							"Failed to send verification email. Please try again.",
+						);
+					}
+				},
+			}),
 		],
 		emailAndPassword: {
 			enabled: true,
@@ -650,30 +678,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					// }) => {
 
 					// },
-					sendVerificationEmail: async ({ user, token }) => {
-						try {
-							const callbackURL = `${uiUrl}/dashboard?emailVerified=true`;
-							const url = `${apiUrl}/auth/verify-email?token=${encodeURIComponent(
-								token,
-							)}&callbackURL=${encodeURIComponent(callbackURL)}`;
-
-							const html = getVerifyEmail({ url });
-
-							await sendTransactionalEmail({
-								to: user.email,
-								subject: "Verify your email address",
-								html,
-							});
-						} catch (error) {
-							logger.error(
-								"Failed to send verification email",
-								error instanceof Error ? error : new Error(String(error)),
-							);
-							throw new Error(
-								"Failed to send verification email. Please try again.",
-							);
-						}
-					},
 				}
 			: {
 					sendOnSignUp: false,
@@ -857,28 +861,53 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					}
 				}
 
+				if (ctx.path.startsWith("/email-otp/send-verification-otp")) {
+					const body = ctx.body as
+						| { email?: string; type?: string }
+						| undefined;
+					if (body?.email && body?.type === "email-verification") {
+						const rateLimit = await checkEmailResendRateLimit(body.email);
+
+						if (!rateLimit.allowed) {
+							const remainingMs = Math.max(0, rateLimit.resetTime - Date.now());
+							const retryAfterSeconds = Math.ceil(remainingMs / 1000);
+							const timeMessage = getTimeMessage(remainingMs);
+
+							return new Response(
+								JSON.stringify({
+									error: "too_many_requests",
+									message: `Please wait ${timeMessage} before requesting another code.`,
+									retryAfter: retryAfterSeconds,
+								}),
+								{
+									status: 429,
+									headers: {
+										"Content-Type": "application/json",
+										"Retry-After": retryAfterSeconds.toString(),
+									},
+								},
+							);
+						}
+					}
+				}
+
 				if (ctx.path.startsWith("/send-verification-email")) {
 					const body = ctx.body as { email?: string } | undefined;
 					if (body?.email) {
 						const rateLimit = await checkEmailResendRateLimit(body.email);
 
 						if (!rateLimit.allowed) {
-							const retryAfter = Math.ceil(
-								(rateLimit.resetTime - Date.now()) / 1000,
+							const timeMessage = getTimeMessage(
+								rateLimit.resetTime - Date.now(),
 							);
 
 							return new Response(
 								JSON.stringify({
 									error: "too_many_requests",
-									message: `Please wait ${retryAfter} seconds before requesting another email.`,
-									retryAfter,
+									message: `Please wait ${timeMessage} before requesting another email.`,
 								}),
 								{
 									status: 429,
-									headers: {
-										"Content-Type": "application/json",
-										"Retry-After": retryAfter.toString(),
-									},
 								},
 							);
 						}
