@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import { getCreditDepositLayout } from "@/emails/templates/credit-deposit.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
+import { generateCacheKey, getCache, setCache } from "@llmgateway/cache";
 import {
 	and,
 	asc,
@@ -43,7 +44,7 @@ const adminMetricsSchema = z.object({
 	customerInfraReplacementRate: z.number(),
 });
 
-const tokenWindowSchema = z.enum(["7d", "30d"]);
+const tokenWindowSchema = z.enum(["1d", "3d", "7d", "30d"]);
 
 const adminTokenMetricsSchema = z.object({
 	window: tokenWindowSchema,
@@ -114,6 +115,7 @@ const depositTransactionSchema = z.object({
 	createdAt: z.date(),
 	organizationId: z.string(),
 	organizationName: z.string(),
+	organizationEmail: z.string().nullable(),
 	amount: z.string().nullable(),
 	creditAmount: z.string().nullable(),
 	currency: z.string(),
@@ -130,6 +132,14 @@ const depositEventSchema = z.object({
 	type: z.enum(["created", "status_changed"]),
 	newStatus: z.enum(["pending", "completed", "failed"]).nullable(),
 	metadata: z.unknown().nullable(),
+	adminUser: z
+		.object({
+			id: z.string(),
+			name: z.string().nullable(),
+			email: z.string(),
+		})
+		.nullable()
+		.optional(),
 });
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -217,7 +227,7 @@ const getTokenMetrics = createRoute({
 	path: "/tokens",
 	request: {
 		query: z.object({
-			window: tokenWindowSchema.default("7d").optional(),
+			window: tokenWindowSchema.default("1d").optional(),
 		}),
 	},
 	responses: {
@@ -822,10 +832,33 @@ admin.openapi(getTokenMetrics, async (c) => {
 	}
 
 	const query = c.req.valid("query");
-	const windowParam = query.window ?? "7d";
+	const windowParam = query.window ?? "1d";
+
+	const cacheKey = generateCacheKey({
+		type: "admin_token_metrics",
+		window: windowParam,
+	});
+
+	try {
+		const cached = await getCache(cacheKey);
+		if (cached) {
+			return c.json(cached);
+		}
+	} catch (error) {
+		logger.warn("Failed to get cache for admin token metrics", {
+			error,
+			cacheKey,
+		});
+	}
 
 	const now = new Date();
-	const days = windowParam === "30d" ? 30 : 7;
+	const daysMap: Record<string, number> = {
+		"1d": 1,
+		"3d": 3,
+		"7d": 7,
+		"30d": 30,
+	};
+	const days = daysMap[windowParam] ?? 1;
 	const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
 	const rows = await db
@@ -906,7 +939,7 @@ admin.openapi(getTokenMetrics, async (c) => {
 		}
 	}
 
-	return c.json({
+	const responsePayload = {
 		window: windowParam,
 		startDate: startDate.toISOString(),
 		endDate: now.toISOString(),
@@ -923,7 +956,17 @@ admin.openapi(getTokenMetrics, async (c) => {
 		mostUsedModel,
 		mostUsedProvider,
 		mostUsedModelRequestCount,
+	};
+
+	setCache(cacheKey, responsePayload, 600).catch((error: unknown) => {
+		const message = error instanceof Error ? error.message : String(error);
+		logger.warn("Failed to set cache for admin token metrics", {
+			error: message,
+			cacheKey,
+		});
 	});
+
+	return c.json(responsePayload);
 });
 
 admin.openapi(getOrganizations, async (c) => {
@@ -1624,6 +1667,7 @@ admin.openapi(getDeposits, async (c) => {
 			stripeInvoiceId: tables.transaction.stripeInvoiceId,
 			description: tables.transaction.description,
 			organizationName: tables.organization.name,
+			organizationEmail: tables.organization.billingEmail,
 			paymentMethod:
 				sql<string>`CASE WHEN ${tables.transaction.stripePaymentIntentId} IS NOT NULL THEN 'Stripe' ELSE 'System' END`.as(
 					"paymentMethod",
@@ -1680,6 +1724,7 @@ admin.openapi(getDeposit, async (c) => {
 			stripeInvoiceId: tables.transaction.stripeInvoiceId,
 			description: tables.transaction.description,
 			organizationName: tables.organization.name,
+			organizationEmail: tables.organization.billingEmail,
 			paymentMethod:
 				sql<string>`CASE WHEN ${tables.transaction.stripePaymentIntentId} IS NOT NULL THEN 'Stripe' ELSE 'System' END`.as(
 					"paymentMethod",
@@ -1709,8 +1754,17 @@ admin.openapi(getDeposit, async (c) => {
 			type: tables.transactionEvent.type,
 			newStatus: tables.transactionEvent.newStatus,
 			metadata: tables.transactionEvent.metadata,
+			adminUser: {
+				id: tables.user.id,
+				name: tables.user.name,
+				email: tables.user.email,
+			},
 		})
 		.from(tables.transactionEvent)
+		.leftJoin(
+			tables.user,
+			sql`CAST(${tables.transactionEvent.metadata}->>'adminUserId' AS TEXT) = ${tables.user.id}`,
+		)
 		.where(eq(tables.transactionEvent.transactionId, id))
 		.orderBy(desc(tables.transactionEvent.createdAt));
 
@@ -1913,6 +1967,7 @@ const getVoucherRoute = createRoute({
 							z.object({
 								orgId: z.string(),
 								orgName: z.string(),
+								organizationEmail: z.string().nullable(),
 								usageCount: z.number(),
 								lastUsedAt: z.date(),
 							}),
@@ -2162,6 +2217,7 @@ admin.openapi(getVoucherRoute, async (c) => {
 		.select({
 			orgId: tables.organization.id,
 			orgName: tables.organization.name,
+			organizationEmail: tables.organization.billingEmail,
 			usageCount: sql<number>`count(${tables.voucherLog.id})::int`,
 			lastUsedAt: sql<Date>`max(${tables.voucherLog.redeemedAt})`,
 		})
@@ -2171,7 +2227,11 @@ admin.openapi(getVoucherRoute, async (c) => {
 			eq(tables.organization.id, tables.voucherLog.organizationId),
 		)
 		.where(eq(tables.voucherLog.voucherId, id))
-		.groupBy(tables.organization.id, tables.organization.name)
+		.groupBy(
+			tables.organization.id,
+			tables.organization.name,
+			tables.organization.billingEmail,
+		)
 		.orderBy(desc(sql`max(${tables.voucherLog.redeemedAt})`))
 		.limit(50);
 

@@ -14,7 +14,7 @@ export function DepositEventsTable({ events }: { events: DepositEvent[] }) {
 					<tr>
 						<th className="p-4 font-medium">Event Type</th>
 						<th className="p-4 font-medium">New Status</th>
-						<th className="p-4 font-medium">Admin User</th>
+						<th className="p-4 font-medium">Actor</th>
 						<th className="p-4 font-medium">Description</th>
 						<th className="p-4 font-medium">Date</th>
 					</tr>
@@ -24,10 +24,6 @@ export function DepositEventsTable({ events }: { events: DepositEvent[] }) {
 						const metadata = event.metadata as
 							| Record<string, unknown>
 							| undefined;
-						const adminUserId =
-							metadata && typeof metadata.adminUserId === "string"
-								? metadata.adminUserId
-								: undefined;
 						const description =
 							metadata && typeof metadata.description === "string"
 								? metadata.description
@@ -68,7 +64,14 @@ export function DepositEventsTable({ events }: { events: DepositEvent[] }) {
 									)}
 								</td>
 								<td className="p-4 text-gray-600 font-mono text-xs">
-									{adminUserId || "-"}
+									{event.adminUser ? (
+										<span>
+											{event.adminUser.name ?? event.adminUser.email} (
+											{event.adminUser.email})
+										</span>
+									) : (
+										"System"
+									)}
 								</td>
 								<td
 									className="p-4 text-gray-600 max-w-[200px] truncate"

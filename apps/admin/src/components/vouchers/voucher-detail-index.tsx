@@ -145,8 +145,8 @@ export function VoucherDetailIndex({ data }: { data: VoucherDetailResponse }) {
 												<span className="font-medium text-foreground">
 													{org.orgName}
 												</span>
-												<span className="text-xs text-muted-foreground font-mono">
-													{org.orgId}
+												<span className="text-xs text-muted-foreground">
+													{org.organizationEmail || "-"}
 												</span>
 											</div>
 										</td>
