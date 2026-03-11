@@ -1,10 +1,8 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { z } from "zod";
 
-import {
-	generateLowBalanceAlertEmailHtml,
-	sendTransactionalEmail,
-} from "@/utils/email.js";
+import { getLowBalanceAlertEmail } from "@/emails/templates/low-balance-alert.js";
+import { sendTransactionalEmail } from "@/utils/email.js";
 
 import { db, eq, tables } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
@@ -151,11 +149,11 @@ internalBilling.openapi(sendLowBalanceAlertRoute, async (c) => {
 	const uniqueEmails = [...new Set(org.alertRecipients.map((r) => r.email))];
 
 	// 5. Generate email HTML
-	const html = generateLowBalanceAlertEmailHtml(
-		org.name,
+	const html = getLowBalanceAlertEmail({
+		orgName: org.name,
 		currentBalance,
 		threshold,
-	);
+	});
 
 	// 6. Send email to every unique recipient, tracking successes
 	const subject = `Low balance alert: ${org.name}`;
