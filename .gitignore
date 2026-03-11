@@ -25,3 +25,4 @@ benchmark_results.json
 *.csv
 goauth.json
 .cursor/
+.serena/

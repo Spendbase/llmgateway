@@ -14,6 +14,39 @@ export class ThinkTagStreamStripper {
 	private insideThinkTag = false;
 	private buffer = "";
 
+	/**
+	 * Scans buf for tag. Returns:
+	 *  - found=true:  safeBuf = content before the tag, remainder = content after the tag
+	 *  - found=false: safeBuf = content safe to emit, remainder = trailing partial fragment to keep
+	 */
+	private findTag(
+		buf: string,
+		tag: string,
+	): { safeBuf: string; found: boolean; remainder: string } {
+		const idx = buf.indexOf(tag);
+		if (idx !== -1) {
+			return {
+				safeBuf: buf.slice(0, idx),
+				found: true,
+				remainder: buf.slice(idx + tag.length),
+			};
+		}
+
+		const max = Math.min(buf.length, tag.length - 1);
+		for (let i = max; i >= 1; i--) {
+			if (tag.startsWith(buf.slice(-i))) {
+				const partialStart = buf.length - i;
+				return {
+					safeBuf: buf.slice(0, partialStart),
+					found: false,
+					remainder: buf.slice(partialStart),
+				};
+			}
+		}
+
+		return { safeBuf: buf, found: false, remainder: "" };
+	}
+
 	public process(chunk: string): string {
 		this.buffer += chunk;
 
@@ -22,36 +55,22 @@ export class ThinkTagStreamStripper {
 
 		while (buf.length > 0) {
 			if (this.insideThinkTag) {
-				const closeIdx = buf.indexOf("</think>");
-				if (closeIdx !== -1) {
-					this.insideThinkTag = false;
-					buf = buf.slice(closeIdx + "</think>".length).replace(/^\s+/, "");
-				} else {
-					buf = "";
+				const { found, remainder } = this.findTag(buf, "</think>");
+				if (!found) {
+					buf = remainder;
+					break;
 				}
+				this.insideThinkTag = false;
+				buf = remainder.replace(/^\s+/, "");
 			} else {
-				const openIdx = buf.indexOf("<think>");
-				if (openIdx !== -1) {
-					output += buf.slice(0, openIdx);
-					this.insideThinkTag = true;
-					buf = buf.slice(openIdx + "<think>".length);
-				} else {
-					const maxPrefix = Math.min(buf.length, "<think>".length - 1);
-					let partialIdx = -1;
-					for (let i = maxPrefix; i >= 1; i--) {
-						if ("<think>".startsWith(buf.slice(-i))) {
-							partialIdx = buf.length - i;
-							break;
-						}
-					}
-					if (partialIdx !== -1) {
-						output += buf.slice(0, partialIdx);
-						buf = buf.slice(partialIdx);
-					} else {
-						output += buf;
-						buf = "";
-					}
+				const { safeBuf, found, remainder } = this.findTag(buf, "<think>");
+				output += safeBuf;
+				if (!found) {
+					buf = remainder;
+					break;
 				}
+				this.insideThinkTag = true;
+				buf = remainder;
 			}
 		}
 
