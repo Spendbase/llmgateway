@@ -71,7 +71,8 @@ function CorporateLoginContent() {
 		setIsLoading(true);
 		try {
 			const secureAttr = location.protocol === "https:" ? "; Secure" : "";
-			document.cookie = `${CORPORATE_LOGIN_COOKIE_NAME}=corporate; Path=/; Max-Age=600; SameSite=Lax${secureAttr}`;
+			const domainAttr = "; Domain=.llmapi.ai";
+			document.cookie = `${CORPORATE_LOGIN_COOKIE_NAME}=corporate; Path=/; Max-Age=600; SameSite=None${secureAttr}${domainAttr}`;
 
 			await signIn.email(
 				{
@@ -102,7 +103,8 @@ function CorporateLoginContent() {
 		setIsLoading(true);
 		try {
 			const secureAttr = location.protocol === "https:" ? "; Secure" : "";
-			document.cookie = `${CORPORATE_LOGIN_COOKIE_NAME}=corporate; Path=/; Max-Age=600; SameSite=Lax${secureAttr}`;
+			const domainAttr = "; Domain=.llmapi.ai";
+			document.cookie = `${CORPORATE_LOGIN_COOKIE_NAME}=corporate; Path=/; Max-Age=600; SameSite=None${secureAttr}${domainAttr}`;
 
 			const res = await signIn.social({
 				provider: "google",

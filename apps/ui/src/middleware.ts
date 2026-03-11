@@ -30,7 +30,11 @@ export function middleware(request: NextRequest) {
 
 	const isCorpLogin = nextUrl.pathname === "/corporate-login";
 	if (!isCorpLogin) {
-		response.cookies.delete(CORPORATE_AUTH_FLOW_COOKIE_NAME);
+		response.cookies.delete({
+			name: CORPORATE_AUTH_FLOW_COOKIE_NAME,
+			domain: ".llmapi.ai",
+			path: "/",
+		});
 	}
 
 	return response;
