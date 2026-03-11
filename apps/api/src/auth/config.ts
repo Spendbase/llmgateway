@@ -2,11 +2,13 @@ import { instrumentBetterAuth } from "@kubiks/otel-better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { passkey } from "better-auth/plugins/passkey";
 import { Redis } from "ioredis";
 
 import { getResetPasswordEmail } from "@/emails/templates/reset-password.js";
 import { getVerifyEmail } from "@/emails/templates/verify-email.js";
+import { getTimeMessage } from "@/utils/convert-time.js";
 import { validateEmail, isCorporateEmail } from "@/utils/email-validation.js";
 import { sendTransactionalEmail } from "@/utils/email.js";
 
@@ -22,6 +24,10 @@ const originUrls =
 	"http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:4002,http://localhost:3006";
 const isHosted = process.env.HOSTED === "true";
 const CORPORATE_LOGIN_COOKIE_NAME = "llmapi_corporate_auth_flow";
+
+export const AUTH_ERROR_CODES = {
+	CORPORATE_ONLY: "CORPORATE_ONLY",
+} as const;
 
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
@@ -93,6 +99,20 @@ function isCorporateAuthFlow(cookieHeader: string): boolean {
 	return (
 		getCookieValue(cookieHeader, CORPORATE_LOGIN_COOKIE_NAME) === "corporate"
 	);
+}
+
+function isCorporateLoginRequest(ctx: { request?: Request }): boolean {
+	const cookieHeader = ctx.request?.headers?.get("cookie") ?? "";
+	if (isCorporateAuthFlow(cookieHeader)) {
+		return true;
+	}
+	const referer = ctx.request?.headers?.get("referer") ?? "";
+	try {
+		const url = new URL(referer);
+		return url.pathname.includes("/corporate-login");
+	} catch {
+		return false;
+	}
 }
 
 export async function checkResetPasswordRateLimit(
@@ -513,6 +533,32 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 				rpName: process.env.PASSKEY_RP_NAME || "LLMGateway",
 				origin: uiUrl,
 			}),
+			emailOTP({
+				overrideDefaultEmailVerification: true,
+				otpLength: 6,
+				expiresIn: 15 * 60,
+				async sendVerificationOTP({ email, otp, type }) {
+					if (type !== "email-verification") {
+						return;
+					}
+					try {
+						const html = getVerifyEmail({ code: otp });
+						await sendTransactionalEmail({
+							to: email,
+							subject: "Verify your email address",
+							html,
+						});
+					} catch (error) {
+						logger.error(
+							"Failed to send verification OTP",
+							error instanceof Error ? error : new Error(String(error)),
+						);
+						throw new Error(
+							"Failed to send verification email. Please try again.",
+						);
+					}
+				},
+			}),
 		],
 		emailAndPassword: {
 			enabled: true,
@@ -575,6 +621,40 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					},
 				},
 			},
+			session: {
+				create: {
+					before: async (session, ctx) => {
+						const currentUser = await db.query.user.findFirst({
+							where: {
+								id: session.userId,
+							},
+						});
+
+						if (
+							isCorporateLoginRequest({ request: ctx?.request }) &&
+							currentUser &&
+							!isCorporateEmail(currentUser.email)
+						) {
+							logger.warn("Non-corporate email blocked during sign-in", {
+								userId: currentUser.id,
+								email: maskEmail(currentUser.email),
+								path: ctx?.path || "",
+							});
+
+							const errorUrl = new URL("/corporate-login", uiUrl);
+							errorUrl.searchParams.set("error", "corporate_only");
+							if (!ctx) {
+								throw new Error(
+									"Auth context not available to perform redirect.",
+								);
+							}
+							throw ctx.redirect(errorUrl.toString());
+						}
+
+						return { data: session };
+					},
+				},
+			},
 		},
 		socialProviders: {
 			github: {
@@ -598,30 +678,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					// }) => {
 
 					// },
-					sendVerificationEmail: async ({ user, token }) => {
-						try {
-							const callbackURL = `${uiUrl}/dashboard?emailVerified=true`;
-							const url = `${apiUrl}/auth/verify-email?token=${encodeURIComponent(
-								token,
-							)}&callbackURL=${encodeURIComponent(callbackURL)}`;
-
-							const html = getVerifyEmail({ url });
-
-							await sendTransactionalEmail({
-								to: user.email,
-								subject: "Verify your email address",
-								html,
-							});
-						} catch (error) {
-							logger.error(
-								"Failed to send verification email",
-								error instanceof Error ? error : new Error(String(error)),
-							);
-							throw new Error(
-								"Failed to send verification email. Please try again.",
-							);
-						}
-					},
 				}
 			: {
 					sendOnSignUp: false,
@@ -662,6 +718,29 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 									headers: {
 										"Content-Type": "application/json",
 									},
+								},
+							);
+						}
+
+						if (
+							isCorporateLoginRequest(ctx) &&
+							user &&
+							!isCorporateEmail(normalizedEmail)
+						) {
+							logger.warn("Non-corporate email blocked during sign-in", {
+								userId: user.id,
+								email: maskEmail(normalizedEmail),
+								path: ctx?.path || "",
+							});
+							return new Response(
+								JSON.stringify({
+									error: AUTH_ERROR_CODES.CORPORATE_ONLY,
+									message:
+										"Only corporate email addresses are allowed. Please sign in with your work email.",
+								}),
+								{
+									status: 403,
+									headers: { "Content-Type": "application/json" },
 								},
 							);
 						}
@@ -782,28 +861,53 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 					}
 				}
 
+				if (ctx.path.startsWith("/email-otp/send-verification-otp")) {
+					const body = ctx.body as
+						| { email?: string; type?: string }
+						| undefined;
+					if (body?.email && body?.type === "email-verification") {
+						const rateLimit = await checkEmailResendRateLimit(body.email);
+
+						if (!rateLimit.allowed) {
+							const remainingMs = Math.max(0, rateLimit.resetTime - Date.now());
+							const retryAfterSeconds = Math.ceil(remainingMs / 1000);
+							const timeMessage = getTimeMessage(remainingMs);
+
+							return new Response(
+								JSON.stringify({
+									error: "too_many_requests",
+									message: `Please wait ${timeMessage} before requesting another code.`,
+									retryAfter: retryAfterSeconds,
+								}),
+								{
+									status: 429,
+									headers: {
+										"Content-Type": "application/json",
+										"Retry-After": retryAfterSeconds.toString(),
+									},
+								},
+							);
+						}
+					}
+				}
+
 				if (ctx.path.startsWith("/send-verification-email")) {
 					const body = ctx.body as { email?: string } | undefined;
 					if (body?.email) {
 						const rateLimit = await checkEmailResendRateLimit(body.email);
 
 						if (!rateLimit.allowed) {
-							const retryAfter = Math.ceil(
-								(rateLimit.resetTime - Date.now()) / 1000,
+							const timeMessage = getTimeMessage(
+								rateLimit.resetTime - Date.now(),
 							);
 
 							return new Response(
 								JSON.stringify({
 									error: "too_many_requests",
-									message: `Please wait ${retryAfter} seconds before requesting another email.`,
-									retryAfter,
+									message: `Please wait ${timeMessage} before requesting another email.`,
 								}),
 								{
 									status: 429,
-									headers: {
-										"Content-Type": "application/json",
-										"Retry-After": retryAfter.toString(),
-									},
 								},
 							);
 						}
@@ -852,25 +956,6 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 							},
 						},
 					);
-				}
-
-				const cookieHeader = ctx.request?.headers.get("cookie") || "";
-				const isRedirectFromCorporateLoginPage =
-					isCorporateAuthFlow(cookieHeader);
-				if (
-					isRedirectFromCorporateLoginPage &&
-					user &&
-					!isCorporateEmail(user.email)
-				) {
-					logger.warn("Non-corporate email blocked during sign-in", {
-						userId: user.id,
-						email: maskEmail(user.email),
-						path: ctx.path,
-					});
-
-					const errorUrl = new URL("/corporate-login", uiUrl);
-					errorUrl.searchParams.set("error", "corporate_only");
-					throw ctx.redirect(errorUrl.toString());
 				}
 
 				// Create default org/project for first-time sessions (email signup or first social sign-in)
