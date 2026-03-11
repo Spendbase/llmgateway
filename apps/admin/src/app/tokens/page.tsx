@@ -80,10 +80,10 @@ export default async function TokensPage({
 	searchParams?: Promise<{ window?: string }>;
 }) {
 	const params = await searchParams;
-	const windowParam =
-		params?.window === "30d" || params?.window === "7d"
-			? (params.window as TokenWindow)
-			: "7d";
+	const validWindows = ["1d", "3d", "7d", "30d"];
+	const windowParam = validWindows.includes(params?.window ?? "")
+		? (params!.window as TokenWindow)
+		: "1d";
 
 	const metrics = await getAdminTokenMetrics(windowParam);
 
@@ -91,7 +91,13 @@ export default async function TokensPage({
 		return <SignInPrompt />;
 	}
 
-	const windowLabel = windowParam === "30d" ? "Last 30 days" : "Last 7 days";
+	const windowLabels: Record<TokenWindow, string> = {
+		"1d": "Last 24 hours",
+		"3d": "Last 3 days",
+		"7d": "Last 7 days",
+		"30d": "Last 30 days",
+	};
+	const windowLabel = windowLabels[windowParam];
 
 	return (
 		<div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
