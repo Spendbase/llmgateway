@@ -1,4 +1,3 @@
-import { getGithubLastEdit } from "fumadocs-core/content/github";
 import { createRelativeLink } from "fumadocs-ui/mdx";
 import {
 	DocsPage,
@@ -54,13 +53,6 @@ export default async function Page(props: {
 		notFound();
 	}
 
-	const time = await getGithubLastEdit({
-		owner: "spendbase",
-		repo: "llmgateway",
-		path: `apps/docs/content/${page.path}`,
-		token: process.env.GITHUB_TOKEN,
-	});
-
 	const MDXContent = page.data.body;
 
 	return (
@@ -70,7 +62,6 @@ export default async function Page(props: {
 			tableOfContent={{
 				style: "clerk",
 			}}
-			lastUpdate={time ? new Date(time) : new Date()}
 		>
 			<div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
 				<ViewOptions
