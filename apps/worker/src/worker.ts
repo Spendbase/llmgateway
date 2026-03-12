@@ -44,6 +44,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_123", {
 });
 
 const AUTO_TOPUP_LOCK_KEY = "auto_topup_check";
+const LOW_BALANCE_ALERT_LOCK_KEY = "low_balance_alert_check";
 const CREDIT_PROCESSING_LOCK_KEY = "credit_processing";
 const DATA_RETENTION_LOCK_KEY = "data_retention_cleanup";
 const API_KEY_RESET_LOCK_KEY = "api_key_usage_reset";
@@ -339,6 +340,140 @@ async function processAutoTopUp(): Promise<void> {
 		}
 	} finally {
 		await releaseLock(AUTO_TOPUP_LOCK_KEY);
+	}
+}
+
+async function processLowBalanceAlerts(): Promise<void> {
+	const apiUrl = process.env.API_URL || "http://localhost:4002";
+	const apiSecret = process.env.INTERNAL_API_SECRET;
+
+	const lockAcquired = await acquireLock(LOW_BALANCE_ALERT_LOCK_KEY);
+	if (!lockAcquired) {
+		return;
+	}
+
+	let stats = { candidateOrgs: 0, alertsTriggered: 0, latchesReset: 0 };
+
+	try {
+		// Phase 1 - trigger alerts
+		if (!apiSecret) {
+			logger.error(
+				"Low balance alert job missing INTERNAL_API_SECRET in environment. Skipping Phase 1 (sending alerts).",
+			);
+		} else {
+			const candidateOrgs = await db.query.organization.findMany({
+				where: {
+					lowBalanceAlertEnabled: { eq: true },
+					lowBalanceAlertLastStateBelow: { eq: false },
+					lowBalanceAlertThreshold: { isNotNull: true },
+					status: { ne: "deleted" },
+				},
+			});
+
+			const filteredOrgs = candidateOrgs.filter((org) => {
+				const credits = Number(org.credits || 0);
+				const threshold = Number(org.lowBalanceAlertThreshold);
+				return credits < threshold;
+			});
+
+			stats.candidateOrgs = filteredOrgs.length;
+
+			for (const org of filteredOrgs) {
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => {
+					controller.abort();
+				}, 10000); // 10s timeout
+
+				try {
+					const response = await fetch(
+						`${apiUrl}/internal/billing/low-balance-alert`,
+						{
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+								"X-Internal-Secret": apiSecret,
+							},
+							body: JSON.stringify({ organizationId: org.id }),
+							signal: controller.signal,
+						},
+					);
+
+					if (response.status === 200) {
+						stats.alertsTriggered++;
+					} else if (response.status === 409) {
+						// Expected race condition, omit from logs entirely to reduce noise or debug level
+						logger.debug(
+							`Low balance alert for org ${org.id} returned 409: org no longer qualifies.`,
+						);
+					} else {
+						let errorMessage = "";
+						try {
+							errorMessage = await response.text();
+						} catch {
+							errorMessage = "Could not read response body";
+						}
+						logger.error(
+							`Low balance alert for org ${org.id} failed with status ${response.status}. Response: ${errorMessage}`,
+						);
+					}
+				} catch (error) {
+					if (error instanceof Error && error.name === "AbortError") {
+						logger.error(
+							`Error sending low balance alert for org ${org.id}: Request timed out after 10s`,
+						);
+					} else {
+						logger.error(
+							`Error sending low balance alert for org ${org.id}`,
+							error instanceof Error ? error : new Error(String(error)),
+						);
+					}
+				} finally {
+					clearTimeout(timeoutId);
+				}
+			}
+		}
+
+		// Phase 2 - reset latch when balance recovers
+		const recoveryCandidates = await db.query.organization.findMany({
+			where: {
+				lowBalanceAlertLastStateBelow: { eq: true },
+				lowBalanceAlertThreshold: { isNotNull: true },
+				status: { ne: "deleted" },
+			},
+		});
+
+		const recoveredOrgs = recoveryCandidates.filter((org) => {
+			const credits = Number(org.credits || 0);
+			const threshold = Number(org.lowBalanceAlertThreshold);
+			return credits >= threshold;
+		});
+
+		if (recoveredOrgs.length > 0) {
+			const recoveredOrgIds = recoveredOrgs.map((org) => org.id);
+			await db
+				.update(organization)
+				.set({ lowBalanceAlertLastStateBelow: false })
+				.where(inArray(organization.id, recoveredOrgIds));
+
+			stats.latchesReset = recoveredOrgIds.length;
+		}
+
+		if (
+			stats.candidateOrgs > 0 ||
+			stats.alertsTriggered > 0 ||
+			stats.latchesReset > 0
+		) {
+			logger.info(
+				`Low balance alert iteration: ${stats.candidateOrgs} candidate orgs evaluated, ${stats.alertsTriggered} alerts triggered, ${stats.latchesReset} latches reset`,
+			);
+		}
+	} catch (error) {
+		logger.error(
+			"Error in processLowBalanceAlerts",
+			error instanceof Error ? error : new Error(String(error)),
+		);
+	} finally {
+		await releaseLock(LOW_BALANCE_ALERT_LOCK_KEY);
 	}
 }
 
@@ -946,6 +1081,42 @@ async function runAutoTopUpLoop() {
 	}
 }
 
+async function runLowBalanceAlertLoop() {
+	activeLoops++;
+	const interval = (process.env.NODE_ENV === "production" ? 120 : 5) * 1000;
+	logger.info(
+		`Starting low balance alert loop (interval: ${interval / 1000} seconds)...`,
+	);
+
+	try {
+		// eslint-disable-next-line no-unmodified-loop-condition
+		while (!shouldStop) {
+			try {
+				await processLowBalanceAlerts();
+
+				if (!shouldStop) {
+					await new Promise((resolve) => {
+						setTimeout(resolve, interval);
+					});
+				}
+			} catch (error) {
+				logger.error(
+					"Error in low balance alert loop",
+					error instanceof Error ? error : new Error(String(error)),
+				);
+				if (!shouldStop) {
+					await new Promise((resolve) => {
+						setTimeout(resolve, 5000);
+					});
+				}
+			}
+		}
+	} finally {
+		activeLoops--;
+		logger.info("Low balance alert loop stopped");
+	}
+}
+
 async function runBatchProcessLoop() {
 	activeLoops++;
 	const interval = BATCH_PROCESSING_INTERVAL_SECONDS * 1000;
@@ -1314,6 +1485,7 @@ export async function startWorker() {
 	// Start all parallel worker loops
 	void runLogQueueLoop();
 	void runAutoTopUpLoop();
+	void runLowBalanceAlertLoop();
 	void runBatchProcessLoop();
 	void runDataRetentionLoop();
 	void runApiKeyResetLoop();
