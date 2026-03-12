@@ -103,6 +103,30 @@ export function extractToolCalls(data: any, provider: Provider): any[] | null {
 			}
 			return null;
 		}
+		case "azure":
+			// Handle Responses API streaming events
+			if (
+				data.type === "response.output_item.added" &&
+				data.item?.type === "function_call"
+			) {
+				return [
+					{
+						id: data.item.call_id,
+						type: "function",
+						function: { name: data.item.name, arguments: "" },
+					},
+				];
+			}
+			if (data.type === "response.function_call_arguments.delta") {
+				return [
+					{
+						_contentBlockIndex: data.output_index || 0,
+						function: { arguments: data.delta || "" },
+					},
+				];
+			}
+			// Fall through to standard chat completions format
+			return data.choices?.[0]?.delta?.tool_calls || null;
 		default: // OpenAI format
 			return data.choices?.[0]?.delta?.tool_calls || null;
 	}
