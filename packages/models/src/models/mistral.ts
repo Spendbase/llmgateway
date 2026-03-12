@@ -249,19 +249,18 @@ export const mistralModels = [
 	},
 	{
 		id: "devstral-small-2507",
-		name: "Devstral Small 1.1",
-		description:
-			"Compact code model for codebase exploration and multi-file editing.",
+		name: "Devstral 2.1",
+		description: "Frontier code agents model for software engineering tasks.",
 		family: "mistral",
-		releasedAt: new Date("2025-07-21"),
+		releasedAt: new Date("2025-12-09"),
 		providers: [
 			{
 				providerId: "mistral",
-				modelName: "devstral-small-2507",
-				inputPrice: 0.1 / 1e6,
-				outputPrice: 0.3 / 1e6,
+				modelName: "devstral-latest",
+				inputPrice: 0.4 / 1e6,
+				outputPrice: 2 / 1e6,
 				requestPrice: 0,
-				contextSize: 131072,
+				contextSize: 256000,
 				maxOutput: undefined,
 				streaming: true,
 				vision: false,
