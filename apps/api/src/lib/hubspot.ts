@@ -50,3 +50,59 @@ export async function submitToHubSpot(data: {
 		return error;
 	}
 }
+
+export async function trackHubSpotClosedWon(email: string) {
+	const token = process.env.HUBSPOT_ACCESS_TOKEN;
+	if (!token) {
+		return null;
+	}
+
+	try {
+		await fetch(
+			`https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email`,
+			{
+				method: "PATCH",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					properties: {
+						lifecyclestage: "customer",
+					},
+				}),
+			},
+		);
+		return true;
+	} catch (error) {
+		return error;
+	}
+}
+
+export async function trackHubSpotMQL(email: string) {
+	const token = process.env.HUBSPOT_ACCESS_TOKEN;
+	if (!token) {
+		return null;
+	}
+
+	try {
+		await fetch(
+			`https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email`,
+			{
+				method: "PATCH",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					properties: {
+						lifecyclestage: "marketingqualifiedlead",
+					},
+				}),
+			},
+		);
+		return true;
+	} catch (error) {
+		return error;
+	}
+}
