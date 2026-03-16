@@ -230,6 +230,7 @@ export function transformResponseToOpenai(
 			};
 			break;
 		}
+		case "azure":
 		case "openai": {
 			// Handle OpenAI responses format transformation to chat completions format
 			if (json.output && Array.isArray(json.output)) {

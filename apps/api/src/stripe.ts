@@ -6,6 +6,7 @@ import { and, db, eq, isNull, sql, tables } from "@llmgateway/db";
 import { logger } from "@llmgateway/logger";
 import { getDevPlanCreditsLimit, type DevPlanTier } from "@llmgateway/shared";
 
+import { trackHubSpotClosedWon } from "./lib/hubspot.js";
 import { posthog } from "./posthog.js";
 import { grantReferralReward } from "./referral-reward.js";
 import { stripe } from "./routes/payments.js";
@@ -571,6 +572,13 @@ async function handlePaymentIntentSucceeded(
 
 	// Convert amount from cents to dollars
 	const totalAmountInDollars = amount / 100;
+
+	// Check if summ >= 10$
+	if (totalAmountInDollars >= 10) {
+		logger.info("jump into HS closed won");
+		const res = await trackHubSpotClosedWon(organization.billingEmail);
+		logger.info("trackHubSpotClosedWon result", { res });
+	}
 
 	// Calculate bonus for first-time credit purchases
 	let bonusAmount = 0;
