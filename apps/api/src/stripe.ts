@@ -575,7 +575,9 @@ async function handlePaymentIntentSucceeded(
 
 	// Check if summ >= 10$
 	if (totalAmountInDollars >= 10) {
-		await trackHubSpotClosedWon(organization.billingEmail);
+		logger.info("jump into HS closed won");
+		const res = await trackHubSpotClosedWon(organization.billingEmail);
+		logger.info("trackHubSpotClosedWon result", { res });
 	}
 
 	// Calculate bonus for first-time credit purchases
