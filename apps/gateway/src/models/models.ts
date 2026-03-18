@@ -40,6 +40,7 @@ const modelSchema = z.object({
 					prompt: z.string(),
 					completion: z.string(),
 					image: z.string().optional(),
+					web_search: z.string().optional(),
 				})
 				.optional(),
 			streaming: z.boolean(),
@@ -55,6 +56,7 @@ const modelSchema = z.object({
 			stability: z
 				.enum(["stable", "beta", "unstable", "experimental"])
 				.optional(),
+			web_search: z.boolean(),
 		}),
 	),
 	pricing: z.object({
@@ -204,7 +206,8 @@ modelsApi.openapi(listModels, async (c) => {
 					(p: ProviderModelMapping) =>
 						p.inputPrice !== undefined ||
 						p.outputPrice !== undefined ||
-						p.imageInputPrice !== undefined,
+						p.imageInputPrice !== undefined ||
+						p.webSearchPrice !== undefined,
 				);
 
 				const inputPrice =
@@ -213,6 +216,8 @@ modelsApi.openapi(listModels, async (c) => {
 					firstProviderWithPricing?.outputPrice?.toString() || "0";
 				const imagePrice =
 					firstProviderWithPricing?.imageInputPrice?.toString() || "0";
+				const webSearchPrice =
+					firstProviderWithPricing?.webSearchPrice?.toString() || "0";
 
 				return {
 					id: model.id,
@@ -246,6 +251,7 @@ modelsApi.openapi(listModels, async (c) => {
 											prompt: provider.inputPrice?.toString() || "0",
 											completion: provider.outputPrice?.toString() || "0",
 											image: provider.imageInputPrice?.toString() || "0",
+											web_search: provider.webSearchPrice?.toString() || "0",
 										}
 									: undefined,
 							streaming: provider.streaming,
@@ -255,6 +261,7 @@ modelsApi.openapi(listModels, async (c) => {
 							parallelToolCalls: provider.parallelToolCalls || false,
 							reasoning: provider.reasoning || false,
 							reasoningLevels: provider.reasoningLevels || null,
+							web_search: provider.webSearch || false,
 							stability: provider.stability || model.stability,
 						};
 					}),
@@ -266,7 +273,7 @@ modelsApi.openapi(listModels, async (c) => {
 						input_cache_read:
 							firstProviderWithPricing?.cachedInputPrice?.toString() || "0",
 						input_cache_write: "0", // Not defined in model definitions yet
-						web_search: "0", // Not defined in model definitions yet
+						web_search: webSearchPrice,
 						internal_reasoning: "0", // Not defined in model definitions yet
 					},
 					// Use context length from model definition (take the largest from active providers)
