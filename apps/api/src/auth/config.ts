@@ -833,6 +833,27 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 						);
 					}
 
+					// Disable email registration on production (hosted mode)
+					if (isHosted && ctx.path === "/sign-up/email") {
+						logger.warn("Signup via email blocked on production", {
+							ip: ipAddress,
+						});
+
+						return new Response(
+							JSON.stringify({
+								error: "registration_disabled",
+								message:
+									"Registration via email is currently disabled. Please use Google or GitHub to sign up.",
+							}),
+							{
+								status: 403,
+								headers: {
+									"Content-Type": "application/json",
+								},
+							},
+						);
+					}
+
 					// Validate email for blocked domains and + sign (only in HOSTED mode)
 					if (isHosted) {
 						const body = ctx.body as { email?: string } | undefined;
