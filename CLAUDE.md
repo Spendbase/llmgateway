@@ -2,6 +2,10 @@
 
 This file provides guidance to AI agents when working with code in this repository.
 
+## Project Status
+
+This repository is in maintenance mode and is no longer actively developed. Only security fixes are in scope — the goal is to keep the GitHub Security tab free of open alerts. Do not add new features or sync with upstream. See the "Project status" section in README.md for background.
+
 ## Development Commands
 
 ### Setup and Dependencies
