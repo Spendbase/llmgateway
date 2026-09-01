@@ -73,18 +73,4 @@ curl -X POST https://internal.llmapi.ai/v1/chat/completions \
 
 ## License
 
-LLMAPI is available under a dual license:
-
-- **Open Source**: Core functionality is licensed under AGPLv3 - see the [LICENSE](LICENSE) file for details.
-- **Enterprise**: Commercial features in the `ee/` directory require an Enterprise license - see [ee/LICENSE](ee/LICENSE) for details.
-
-### Enterprise features include:
-
-- Advanced billing and subscription management
-- Extended data retention (90 days vs 3 days)
-- Provider API key management (Pro plan)
-- Team and organization management
-- Priority support
-- And more to be defined
-
-For enterprise licensing, please contact us at contact@llmapi.ai
+LLMAPI is licensed under AGPLv3 - see the [LICENSE](LICENSE) file for details.
