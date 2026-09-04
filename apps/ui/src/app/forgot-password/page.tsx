@@ -37,7 +37,7 @@ const formSchema = z.object({
 export default function ForgotPassword() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSuccess, setIsSuccess] = useState(false);
-	const { forgetPassword } = useAuth();
+	const { requestPasswordReset } = useAuth();
 	const { toast } = useToast();
 
 	const form = useForm<z.infer<typeof formSchema>>({
@@ -52,7 +52,7 @@ export default function ForgotPassword() {
 		try {
 			let retryAfterSeconds: number | undefined;
 
-			const { error } = await forgetPassword(
+			const { error } = await requestPasswordReset(
 				{
 					email: values.email,
 					redirectTo: "/reset-password",

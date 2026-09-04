@@ -1,4 +1,5 @@
-import { emailOTPClient, passkeyClient } from "better-auth/client/plugins";
+import { passkeyClient } from "@better-auth/passkey/client";
+import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { useMemo } from "react";
 
@@ -27,7 +28,7 @@ export function useAuth() {
 			signOut: authClient.signOut,
 			useSession: authClient.useSession,
 			getSession: authClient.getSession,
-			forgetPassword: authClient.forgetPassword,
+			requestPasswordReset: authClient.requestPasswordReset,
 			resetPassword: authClient.resetPassword,
 		}),
 		[authClient],

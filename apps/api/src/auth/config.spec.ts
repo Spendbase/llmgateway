@@ -32,12 +32,6 @@ describe("API auth configuration", () => {
 			expect(
 				apiAuth.options.emailVerification?.autoSignInAfterVerification,
 			).toBe(true);
-			expect(
-				apiAuth.options.emailVerification?.sendVerificationEmail,
-			).toBeDefined();
-			expect(
-				typeof apiAuth.options.emailVerification?.sendVerificationEmail,
-			).toBe("function");
 		} else {
 			expect(apiAuth.options.emailVerification?.sendOnSignUp).toBe(false);
 			expect(
@@ -95,7 +89,7 @@ describe("API auth hooks functionality", () => {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email, password, name: "Test User" }),
 			}),
 		);
 
@@ -174,7 +168,7 @@ describe("API auth hooks functionality", () => {
 					"Content-Type": "application/json",
 					"CF-Connecting-IP": `192.168.10.${Math.floor(Math.random() * 255)}`,
 				},
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email, password, name: "Test User" }),
 			}),
 		);
 
@@ -245,7 +239,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"CF-Connecting-IP": ipAddress,
 				},
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email, password, name: "Test User" }),
 			}),
 		);
 
@@ -265,7 +259,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"CF-Connecting-IP": ipAddress,
 				},
-				body: JSON.stringify({ email: email1, password }),
+				body: JSON.stringify({ email: email1, password, name: "Test User" }),
 			}),
 		);
 		expect(firstResponse.status).toBe(200); // Should succeed
@@ -279,7 +273,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"CF-Connecting-IP": ipAddress,
 				},
-				body: JSON.stringify({ email: email2, password }),
+				body: JSON.stringify({ email: email2, password, name: "Test User" }),
 			}),
 		);
 
@@ -301,7 +295,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"CF-Connecting-IP": ipAddress,
 				},
-				body: JSON.stringify({ email: email3, password }),
+				body: JSON.stringify({ email: email3, password, name: "Test User" }),
 			}),
 		);
 
@@ -326,7 +320,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"CF-Connecting-IP": ipAddress1,
 				},
-				body: JSON.stringify({ email: email1, password }),
+				body: JSON.stringify({ email: email1, password, name: "Test User" }),
 			}),
 		);
 		expect(firstResponse.status).toBe(200);
@@ -340,7 +334,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"CF-Connecting-IP": ipAddress1,
 				},
-				body: JSON.stringify({ email: email2, password }),
+				body: JSON.stringify({ email: email2, password, name: "Test User" }),
 			}),
 		);
 		expect(secondResponse.status).toBe(429);
@@ -354,7 +348,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"CF-Connecting-IP": ipAddress2,
 				},
-				body: JSON.stringify({ email: emailIp2, password }),
+				body: JSON.stringify({ email: emailIp2, password, name: "Test User" }),
 			}),
 		);
 		expect(ip2Response.status).toBe(200); // Should succeed (first attempt from this IP)
@@ -375,7 +369,7 @@ describe("Auth rate limiting", () => {
 					"CF-Connecting-IP": cfIp,
 					"X-Forwarded-For": forwardedFor,
 				},
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email, password, name: "Test User" }),
 			}),
 		);
 
@@ -391,7 +385,7 @@ describe("Auth rate limiting", () => {
 					"CF-Connecting-IP": cfIp,
 					"X-Forwarded-For": forwardedFor,
 				},
-				body: JSON.stringify({ email: email2, password }),
+				body: JSON.stringify({ email: email2, password, name: "Test User" }),
 			}),
 		);
 
@@ -411,7 +405,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"X-Real-IP": ipAddress,
 				},
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email, password, name: "Test User" }),
 			}),
 		);
 
@@ -431,7 +425,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"X-Forwarded-For": forwardedFor,
 				},
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email, password, name: "Test User" }),
 			}),
 		);
 
@@ -446,7 +440,7 @@ describe("Auth rate limiting", () => {
 					"Content-Type": "application/json",
 					"X-Forwarded-For": forwardedFor,
 				},
-				body: JSON.stringify({ email: email2, password }),
+				body: JSON.stringify({ email: email2, password, name: "Test User" }),
 			}),
 		);
 

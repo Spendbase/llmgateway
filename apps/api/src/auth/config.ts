@@ -1,9 +1,9 @@
+import { passkey } from "@better-auth/passkey";
 import { instrumentBetterAuth } from "@kubiks/otel-better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
 import { emailOTP } from "better-auth/plugins/email-otp";
-import { passkey } from "better-auth/plugins/passkey";
 import { Redis } from "ioredis";
 
 import { getResetPasswordEmail } from "@/emails/templates/reset-password.js";
@@ -15,6 +15,8 @@ import { sendTransactionalEmail } from "@/utils/email.js";
 import { db, eq, tables, shortid } from "@llmgateway/db";
 import { signupCounter } from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
+
+import type { BetterAuthOptions, Session, User } from "better-auth/types";
 
 const apiUrl = process.env.API_URL || "http://localhost:4002";
 const cookieDomain = process.env.COOKIE_DOMAIN || "localhost";
@@ -28,6 +30,16 @@ const CORPORATE_LOGIN_COOKIE_NAME = "llmapi_corporate_auth_flow";
 export const AUTH_ERROR_CODES = {
 	CORPORATE_ONLY: "CORPORATE_ONLY",
 } as const;
+
+type SessionHookContext = Parameters<
+	NonNullable<
+		NonNullable<
+			NonNullable<
+				NonNullable<BetterAuthOptions["databaseHooks"]>["session"]
+			>["create"]
+		>["before"]
+	>
+>[1];
 
 export const redisClient = new Redis({
 	host: process.env.REDIS_HOST || "localhost",
@@ -506,7 +518,7 @@ export async function checkRateLimit(
 	}
 }
 
-export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
+export const apiAuth = instrumentBetterAuth(
 	betterAuth({
 		advanced: {
 			crossSubDomainCookies: {
@@ -564,7 +576,14 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 			enabled: true,
 			requireEmailVerification: true,
 			resetPasswordTokenExpiresIn: 60 * 60 * 24, // 24 hours
-			async sendResetPassword({ user, token }) {
+			async sendResetPassword({
+				user,
+				token,
+			}: {
+				user: User;
+				url: string;
+				token: string;
+			}) {
 				const url = `${uiUrl}/reset-password?token=${encodeURIComponent(token)}`;
 				const html = getResetPasswordEmail({ url });
 
@@ -607,7 +626,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 		databaseHooks: {
 			user: {
 				create: {
-					after: async (user) => {
+					after: async (user: User) => {
 						if (!isHosted) {
 							await db
 								.update(tables.user)
@@ -623,7 +642,7 @@ export const apiAuth: ReturnType<typeof betterAuth> = instrumentBetterAuth(
 			},
 			session: {
 				create: {
-					before: async (session, ctx) => {
+					before: async (session: Session, ctx: SessionHookContext) => {
 						const currentUser = await db.query.user.findFirst({
 							where: {
 								id: session.userId,

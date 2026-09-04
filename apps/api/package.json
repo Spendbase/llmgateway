@@ -16,7 +16,8 @@
 		"start": "node --enable-source-maps dist/serve.js"
 	},
 	"dependencies": {
-		"@hono/node-server": "^1.19.0",
+		"@better-auth/passkey": "catalog:",
+		"@hono/node-server": "^1.19.15",
 		"@hono/swagger-ui": "^0.5.2",
 		"@hono/zod-openapi": "^0.19.6",
 		"@hono/zod-validator": "^0.7.2",
@@ -29,7 +30,7 @@
 		"@llmgateway/shared": "workspace:*",
 		"@llmgateway/storage": "workspace:*",
 		"@opentelemetry/api": "1.9.0",
-		"@opentelemetry/sdk-node": "0.205.0",
+		"@opentelemetry/sdk-node": "0.222.0",
 		"bcrypt-ts": "8.0.0",
 		"better-auth": "catalog:",
 		"disposable-email-domains-js": "1.20.0",
@@ -37,11 +38,11 @@
 		"drizzle-zod": "0.8.3",
 		"gateway": "workspace:*",
 		"google-auth-library": "10.5.0",
-		"hono": "^4.11.4",
+		"hono": "^4.12.34",
 		"hono-openapi": "^1.1.1",
 		"ioredis": "5.7.0",
-		"jspdf": "4.0.0",
-		"nodemailer": "^7.0.11",
+		"jspdf": "4.2.1",
+		"nodemailer": "9.0.1",
 		"openai": "^5.19.1",
 		"posthog-node": "5.10.4",
 		"stripe": "18.1.1",
@@ -49,6 +50,6 @@
 		"zod-openapi": "^5.4.3"
 	},
 	"devDependencies": {
-		"@types/nodemailer": "7.0.2"
+		"@types/nodemailer": "8.0.1"
 	}
 }
