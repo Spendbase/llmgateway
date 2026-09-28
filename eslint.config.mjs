@@ -116,6 +116,7 @@ export default [
 			"**/.conductor/",
 			"**/out/",
 			"**/.content-collections/",
+			"**/next-env.d.ts",
 		],
 	},
 ];
